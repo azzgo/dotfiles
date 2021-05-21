@@ -6,7 +6,7 @@ set updatetime=300
 set timeoutlen=500
 
 " 插件管理
-call plug#begin('~/.vim/plugged')
+call plug#begin('~/config/nvim/plugged')
 
 Plug 'tpope/vim-surround'
 Plug 'tpope/vim-repeat'
