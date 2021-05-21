@@ -63,9 +63,6 @@ set relativenumber
 " 标尺
 set ruler
 
-" 不允许换行
-set nowrap
-
 " 展示命令
 set showcmd
 
