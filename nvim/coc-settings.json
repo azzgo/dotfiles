@@ -1,0 +1,31 @@
+{
+  "javascript.suggestionActions.enabled": false,
+  "javascript.validate.enable": false,
+  "javascript.suggest.enabled": false,
+  "typescript.validate.enable": true,
+  "vetur.format.enable": true,
+  "git.addGBlameToVirtualText": true,
+  "explorer.icon.enableVimDevicons": true,
+  "vetur.languageFeatures.codeActions": true,
+  "list.source.files.args": ["--hidden", "--files"],
+  "list.source.symbols.defaultOptions": [
+    "--number-select",
+    "--interactive",
+    "--ignore-case"
+  ],
+  "list.source.grep.defaultOptions": [
+    "--interactive",
+    "--auto-preview"
+  ],
+  "list.insertMappings": {
+    "<C-c>": "do:exit"
+  },
+  "list.normalMappings": {
+    "<C-c>": "do:exit"
+  },
+  "project.rootPatterns": [
+    ".git"
+  ],
+  "git.enableGutters": true,
+  "coc.preferences.extensionUpdateCheck": "daily"
+}
