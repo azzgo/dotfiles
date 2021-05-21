@@ -20,6 +20,7 @@ Plug 'tpope/vim-commentary'        " 快速注释
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'martinda/Jenkinsfile-vim-syntax' " 语法文件
+Plug 'easymotion/vim-easymotion'  " 快速移动
 
 call plug#end()
 
