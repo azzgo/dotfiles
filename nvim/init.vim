@@ -18,6 +18,9 @@ Plug 'tpope/vim-commentary'        " 快速注释
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'easymotion/vim-easymotion'  " 快速移动
+" vim ts 高亮，还是需要
+Plug 'leafgarland/typescript-vim'
+Plug 'peitalin/vim-jsx-typescript'
 
 call plug#end()
 
@@ -80,6 +83,7 @@ set noswapfile
 
 " 快速保存
 nnoremap <leader>w :w<CR>
+nnoremap <leader>q :bd<CR>
 
 " 取消高亮
 nnoremap <leader><cr> :noh<CR>
@@ -206,12 +210,13 @@ nnoremap <silent> <space>o  :<C-u>CocList outline<cr>
 command! -nargs=0 Format :call CocActionAsync('format')
 
 " ========coc Mapping 相关==========
-" Fix autofix problem of current line
-nmap <leader>qf  <Plug>(coc-fix-current) 
+
 " Format file
 nmap <leader>cff  :call CocActionAsync('format')<CR>
 
 " 一些常见的 coc 命令
+" Fix autofix problem of current line
+nmap <leader>cq  <Plug>(coc-fix-current)            
 nmap <silent><nowait><leader>cm :<C-u>CocCommand<CR>
 nmap <silent><nowait><leader>cl :<C-u>CocList<CR>
 nmap <silent><nowait><leader>co :<C-u>CocList outline<CR>
