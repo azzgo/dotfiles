@@ -61,6 +61,7 @@ set noswapfile
 
 " 快速保存
 nnoremap <leader>w :w<CR>
+nnoremap <leader>q :bd<CR>
 
 " 取消高亮
 nnoremap <leader><cr> :noh<CR>
@@ -102,4 +103,27 @@ colorscheme koehler
 
 " 具备 tree 风格
 let g:netrw_liststyle = 3
+
+if executable("rg")
+  set grepprg=rg\ --vimgrep\ --no-heading
+  set grepformat=%f:%l:%c:%m,%f:%l:%m
+endif
+
+"==============VIM Plug========================
+call plug#begin('~/.vim/plugged')
+
+Plug 'vimwiki/vimwiki'
+Plug 'easymotion/vim-easymotion'  " 快速移动
+Plug 'tpope/vim-commentary'        " 快速注释
+Plug 'tpope/vim-surround'
+Plug 'tpope/vim-repeat'
+
+call plug#end()
+
+" maping
+map <Leader>e <Plug>(easymotion-prefix)
+
+" vim wiki configuration
+
+let g:vimwiki_list = [{'path': '~/Documents/dark-training/', 'path_html': '~/Documents/dark-training/public_html/'}]
 
