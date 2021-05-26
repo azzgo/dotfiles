@@ -124,9 +124,17 @@ nnoremap <silent> ]B :blast<CR>
 :tnoremap <Esc> <C-\><C-n>
 nnoremap <silent> <C-w>t :<C-u>CocCommand terminal.Toggle<CR>
 
+" 更改 grep use riggrep
+if executable("rg")
+    set grepprg=rg\ --vimgrep\ --no-heading
+    set grepformat=%f:%l:%c:%m,%f:%l:%m
+endif
+
 " ---------------------------
 "  插件相关配置
 " ---------------------------
+" remap easymotion prefix
+map <Leader>e <Plug>(easymotion-prefix)
 
 " toggle 文件浏览器
 nnoremap <silent> <leader>nn :CocCommand explorer<CR>
@@ -153,6 +161,13 @@ let g:coc_global_extensions = [
   \ 'coc-jest'
   \ ]
 " from readme
+
+" Add `:Fold` command to fold current buffer.
+command! -nargs=? Fold :call     CocAction('fold', <f-args>)
+
+" Add `:OR` command for organize imports of the current buffer.
+command! -nargs=0 OR   :call     CocAction('runCommand', 'editor.action.organizeImport')
+
 
 " Use K to show documentation in preview window.
 nnoremap <silent> K :call <SID>show_documentation()<CR>
@@ -271,4 +286,5 @@ endif
 
 " 开屏问候语
 let g:startify_custom_header = map(split(system('fortune -s chinese | cowsay | cat'), '\n'), '"   ". v:val') + ['','']
+
 
