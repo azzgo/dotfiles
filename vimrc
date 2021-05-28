@@ -72,6 +72,9 @@ nnoremap <silent> ]b :bnext<CR>
 nnoremap <silent> [B :bfirst<CR> 
 nnoremap <silent> ]B :blast<CR> 
 
+nnoremap <silent> <leader>nt :tabnew<CR> 
+
+
 " 插入状态下，类emacs 行首行尾操作
 inoremap <c-a> <Esc>I
 inoremap <c-e> <Esc>A

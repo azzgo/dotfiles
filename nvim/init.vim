@@ -120,6 +120,9 @@ nnoremap <silent> ]b :bnext<CR>
 nnoremap <silent> [B :bfirst<CR> 
 nnoremap <silent> ]B :blast<CR> 
 
+" tabNew
+nnoremap <silent> <leader>nt :tabnew<CR> 
+
 " set terminal esc
 :tnoremap <Esc> <C-\><C-n>
 nnoremap <silent> <C-w>t :<C-u>CocCommand terminal.Toggle<CR>
