@@ -21,6 +21,10 @@ Plug 'easymotion/vim-easymotion'  " 快速移动
 " vim ts 高亮，还是需要
 Plug 'leafgarland/typescript-vim'
 Plug 'peitalin/vim-jsx-typescript'
+" markdown 所需
+Plug 'godlygeek/tabular'
+Plug 'plasticboy/vim-markdown'
+Plug 'ferrine/md-img-paste.vim'
 
 call plug#end()
 
@@ -92,19 +96,6 @@ nnoremap <leader><cr> :noh<CR>
 " 插入状态下，类emacs 行首行尾操作
 inoremap <c-a> <c-o>I
 inoremap <c-e> <c-o>A
-
-" 折叠相关
-let g:FoldMethod = 0
-nmap <leader>zz :call ToggleFold()<cr>
-function! ToggleFold()
-    if g:FoldMethod == 0
-        exe "normal! zM"
-        let g:FoldMethod = 1
-    else
-        exe "normal! zR"
-        let g:FoldMethod = 0
-    endif
-endfunc
 
 " 纠正拼写 个人拼写习惯容错
 iabbrev cosnt const
@@ -290,4 +281,16 @@ endif
 " 开屏问候语
 let g:startify_custom_header = map(split(system('fortune -s chinese | cowsay | cat'), '\n'), '"   ". v:val') + ['','']
 
+" plasticboy/vim-markdown Configuration
+let g:vim_markdown_folding_disabled = 1
+let g:vim_markdown_emphasis_multiline = 0
+
+
+" Markdown configuration
+autocmd FileType markdown set nowrap
+command! -nargs=0 ImgPaste :call mdip#MarkdownClipboardImage()<CR> 
+autocmd FileType markdown nmap <silent><leader>pi :<C-u>ImgPaste<CR> 
+" there are some defaults for image directory and image name, you can change them
+let g:mdip_imgdir = 'assets'
+let g:mdip_imgname = 'pic'
 

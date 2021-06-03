@@ -79,18 +79,6 @@ nnoremap <silent> <leader>nt :tabnew<CR>
 inoremap <c-a> <Esc>I
 inoremap <c-e> <Esc>A
 
-" 折叠相关
-let g:FoldMethod = 0
-nmap <leader>zz :call ToggleFold()<cr>
-function! ToggleFold()
-    if g:FoldMethod == 0
-        exe "normal! zM"
-        let g:FoldMethod = 1
-    else
-        exe "normal! zR"
-        let g:FoldMethod = 0
-    endif
-endfunc
 
 " 纠正拼写 个人拼写习惯容错¬
 iabbrev cosnt const¬
@@ -115,7 +103,6 @@ endif
 "==============VIM Plug========================
 call plug#begin('~/.vim/plugged')
 
-Plug 'vimwiki/vimwiki'
 Plug 'easymotion/vim-easymotion'  " 快速移动
 Plug 'tpope/vim-commentary'        " 快速注释
 Plug 'tpope/vim-surround'
@@ -126,7 +113,5 @@ call plug#end()
 " maping
 map <Leader>e <Plug>(easymotion-prefix)
 
-" vim wiki configuration
 
-let g:vimwiki_list = [{'path': '~/Documents/dark-training/', 'path_html': '~/Documents/dark-training/public_html/'}]
 
