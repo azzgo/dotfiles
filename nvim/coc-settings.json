@@ -7,6 +7,7 @@
   "git.addGBlameToVirtualText": true,
   "explorer.icon.enableVimDevicons": true,
   "vetur.languageFeatures.codeActions": true,
+  "coc.preferences.enableMarkdown": false,
   "list.source.files.args": ["--hidden", "--files"],
   "list.source.symbols.defaultOptions": [
     "--number-select",
