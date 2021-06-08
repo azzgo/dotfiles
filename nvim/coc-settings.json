@@ -24,9 +24,6 @@
   "list.normalMappings": {
     "<C-c>": "do:exit"
   },
-  "project.rootPatterns": [
-    ".git"
-  ],
   "git.enableGutters": true,
   "coc.preferences.extensionUpdateCheck": "daily"
 }

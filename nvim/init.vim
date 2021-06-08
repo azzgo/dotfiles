@@ -148,10 +148,8 @@ let g:coc_global_extensions = [
   \ 'coc-prettier', 
   \ 'coc-json', 
   \ 'coc-lists',
-  \ 'coc-project',
   \ 'coc-git',
   \ 'coc-explorer',
-  \ 'coc-terminal',
   \ 'coc-jest'
   \ ]
 " from readme
