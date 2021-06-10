@@ -12,6 +12,7 @@ Plug 'tpope/vim-surround'
 Plug 'tpope/vim-repeat'
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'ryanoasis/vim-devicons'
+Plug 'jiangmiao/auto-pairs'
 Plug 'NLKNguyen/papercolor-theme'  " 样式插件
 Plug 'mhinz/vim-startify'          " 开屏页
 Plug 'tpope/vim-commentary'        " 快速注释
