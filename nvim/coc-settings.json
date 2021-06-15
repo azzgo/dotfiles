@@ -18,7 +18,8 @@
     ],
     "filenames": [],
     "patternMatches": [
-      "node_modules"
+      "node_modules",
+      "^\\."
     ]
   },
   "list.source.symbols.defaultOptions": [
