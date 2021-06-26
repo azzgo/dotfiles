@@ -105,7 +105,8 @@ iabbrev cosnt const
 " .vimrc 编辑生效
 nnoremap <leader>ev :e $MYVIMRC<CR>
 nnoremap <leader>sv :source $MYVIMRC<CR>
-
+" open with current buffer workdir
+nnoremap <leader>ew :e %:h
 
 " bufferNavigate
 nnoremap <silent> [b :bprevious<CR> 
@@ -252,6 +253,8 @@ nmap ]h <Plug>(coc-git-nextchunk)
 nmap <leader>gs :<C-u>CocList --normal gstatus<CR>
 nmap <leader>gh :<C-u>:CocCommand git.chunkInfo<CR>
 nmap <leader>gc :<C-u>:CocCommand git.showCommit<CR>
+" Not want shift + G
+nmap <leader>gg :<C-u>Git 
 
 " coc-git 相关 End=========
 
