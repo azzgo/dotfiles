@@ -5,23 +5,9 @@
   "typescript.validate.enable": true,
   "vetur.format.enable": true,
   "git.addGBlameToVirtualText": true,
-  "explorer.icon.enableVimDevicons": true,
   "vetur.languageFeatures.codeActions": true,
   "coc.preferences.enableMarkdown": false,
   "list.source.files.args": ["--hidden", "--files"],
-  "explorer.file.hiddenRules": {
-    "extensions": [
-      "o",
-      "a",
-      "obj",
-      "pyc"
-    ],
-    "filenames": [],
-    "patternMatches": [
-      "node_modules",
-      "^\\."
-    ]
-  },
   "list.source.symbols.defaultOptions": [
     "--number-select",
     "--interactive",
