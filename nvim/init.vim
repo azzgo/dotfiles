@@ -11,6 +11,7 @@ call plug#begin('~/.config/nvim/plugged')
 Plug 'tpope/vim-surround'
 Plug 'tpope/vim-repeat'
 Plug 'tpope/vim-fugitive'                         " git cmmand support
+Plug 'preservim/nerdtree'                         " Vim Exporer
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'ryanoasis/vim-devicons'
 Plug 'jiangmiao/auto-pairs'
@@ -134,8 +135,8 @@ endif
 map <Leader>e <Plug>(easymotion-prefix)
 
 " toggle 文件浏览器
-nnoremap <silent> <leader>nn :CocCommand explorer<CR>
-nnoremap <silent> <leader>nf :CocCommand explorer --preset buffer<CR>
+nnoremap <silent> <leader>nn ::NERDTreeToggleVCS<CR>
+nnoremap <silent> <leader>nf ::NERDTreeFind<CR>
 
 " 设置主题样式
 set t_Co=256   " This is may or may not needed.
@@ -152,7 +153,6 @@ let g:coc_global_extensions = [
   \ 'coc-json', 
   \ 'coc-lists',
   \ 'coc-git',
-  \ 'coc-explorer',
   \ 'coc-jest'
   \ ]
 " from readme
@@ -255,6 +255,7 @@ nmap <leader>gh :<C-u>:CocCommand git.chunkInfo<CR>
 nmap <leader>gc :<C-u>:CocCommand git.showCommit<CR>
 " Not want shift + G
 nmap <leader>gg :<C-u>Git 
+nmap <leader>gl :<C-u>Gclog<CR>
 
 " coc-git 相关 End=========
 
