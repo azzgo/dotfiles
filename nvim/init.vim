@@ -9,6 +9,7 @@ set timeoutlen=500
 call plug#begin('~/.config/nvim/plugged')
 
 Plug 'tpope/vim-surround'
+Plug 'aklt/plantuml-syntax'
 Plug 'tpope/vim-repeat'
 Plug 'tpope/vim-fugitive'                         " git cmmand support
 Plug 'preservim/nerdtree'                         " Vim Exporer
