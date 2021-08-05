@@ -113,5 +113,3 @@ call plug#end()
 " maping
 map <Leader>e <Plug>(easymotion-prefix)
 
-
-
