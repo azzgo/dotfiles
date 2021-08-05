@@ -149,12 +149,10 @@ colorscheme PaperColor
 " coc config
 let g:coc_global_extensions = [
   \ 'coc-tsserver',
-  \ 'coc-eslint', 
   \ 'coc-prettier', 
   \ 'coc-json', 
   \ 'coc-lists',
   \ 'coc-git',
-  \ 'coc-jest'
   \ ]
 " from readme
 

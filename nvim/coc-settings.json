@@ -3,9 +3,7 @@
   "javascript.validate.enable": false,
   "javascript.suggest.enabled": false,
   "typescript.validate.enable": true,
-  "vetur.format.enable": true,
   "git.addGBlameToVirtualText": true,
-  "vetur.languageFeatures.codeActions": true,
   "coc.preferences.enableMarkdown": false,
   "list.source.files.args": ["--hidden", "--files"],
   "list.source.symbols.defaultOptions": [
