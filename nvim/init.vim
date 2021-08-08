@@ -13,6 +13,8 @@ Plug 'aklt/plantuml-syntax'
 Plug 'tpope/vim-repeat'
 Plug 'tpope/vim-fugitive'                         " git cmmand support
 Plug 'preservim/nerdtree'                         " Vim Exporer
+Plug 'mattn/emmet-vim'
+Plug 'honza/vim-snippets'                         " Snippet
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'ryanoasis/vim-devicons'
 Plug 'jiangmiao/auto-pairs'
@@ -150,6 +152,7 @@ colorscheme PaperColor
 let g:coc_global_extensions = [
   \ 'coc-tsserver',
   \ 'coc-prettier', 
+  \ 'coc-snippets', 
   \ 'coc-json', 
   \ 'coc-lists',
   \ 'coc-git',
@@ -175,6 +178,18 @@ function! s:show_documentation()
     execute '!' . &keywordprg . " " . expand('<cword>')
   endif
 endfunction
+
+" Use <C-l> for trigger snippet expand.
+imap <C-l> <Plug>(coc-snippets-expand)
+
+" Use <C-j> for select text for visual placeholder of snippet.
+vmap <C-j> <Plug>(coc-snippets-select)
+
+" Use <C-j> for jump to next placeholder, it's default of coc.nvim
+let g:coc_snippet_next = '<c-j>'
+
+" Use <C-k> for jump to previous placeholder, it's default of coc.nvim
+let g:coc_snippet_prev = '<c-k>'
 
 
 " Tab 自动补全
@@ -269,7 +284,10 @@ omap ic <Plug>(coc-classobj-i)
 xmap ac <Plug>(coc-classobj-a)
 omap ac <Plug>(coc-classobj-a)
 " Map function and class text objects End
-"
+
+
+" snippet related
+
 " Remap <C-f> and <C-b> for scroll float windows/popups.
 if has('nvim-0.4.0') || has('patch-8.2.0750')
   nnoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-f>"
@@ -297,3 +315,12 @@ autocmd FileType markdown nmap <silent><leader>pi :<C-u>ImgPaste<CR>
 let g:mdip_imgdir = 'assets'
 let g:mdip_imgname = 'pic'
 
+function! SourceIfExists(file)
+  if filereadable(expand(a:file))
+    exe 'source' a:file
+  endif
+endfunction
+
+"" local config for overide
+call SourceIfExists("~/.config/nvim/local.vim")
+""
