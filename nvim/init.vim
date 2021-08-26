@@ -30,6 +30,7 @@ Plug 'peitalin/vim-jsx-typescript'
 " markdown 所需
 Plug 'godlygeek/tabular'
 Plug 'plasticboy/vim-markdown'
+Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && npm install'  }
 Plug 'ferrine/md-img-paste.vim'
 
 call plug#end()
