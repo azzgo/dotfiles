@@ -139,7 +139,7 @@ endif
 map <Leader>e <Plug>(easymotion-prefix)
 
 " toggle 文件浏览器
-nnoremap <silent> <leader>nn ::NERDTreeToggleVCS<CR>
+nnoremap <silent> <leader>nn ::NERDTreeToggle<CR>
 nnoremap <silent> <leader>nf ::NERDTreeFind<CR>
 
 " 设置主题样式
