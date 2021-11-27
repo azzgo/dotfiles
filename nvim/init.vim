@@ -13,9 +13,7 @@ Plug 'aklt/plantuml-syntax'
 Plug 'tpope/vim-repeat'
 Plug 'tpope/vim-fugitive'                         " git cmmand support
 Plug 'preservim/nerdtree'                         " Vim Exporer
-Plug 'mattn/emmet-vim'
 Plug 'honza/vim-snippets'                         " Snippet
-Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'ryanoasis/vim-devicons'
 Plug 'jiangmiao/auto-pairs'
 Plug 'NLKNguyen/papercolor-theme'  " 样式插件
@@ -124,7 +122,6 @@ nnoremap <silent> <leader>nt :tabnew<CR>
 
 " set terminal esc
 :tnoremap <Esc> <C-\><C-n>
-nnoremap <silent> <C-w>t :<C-u>CocCommand terminal.Toggle<CR>
 
 " 更改 grep use riggrep
 if executable("rg")
@@ -149,156 +146,9 @@ set background=dark
 colorscheme PaperColor
 
 
-" coc config
-let g:coc_global_extensions = [
-  \ 'coc-tsserver',
-  \ 'coc-prettier', 
-  \ 'coc-snippets', 
-  \ 'coc-json', 
-  \ 'coc-lists',
-  \ 'coc-git',
-  \ ]
-" from readme
-
-" Add `:Fold` command to fold current buffer.
-command! -nargs=? Fold :call     CocAction('fold', <f-args>)
-
-" Add `:OR` command for organize imports of the current buffer.
-command! -nargs=0 OR   :call     CocAction('runCommand', 'editor.action.organizeImport')
-
-
-" Use K to show documentation in preview window.
-nnoremap <silent> K :call <SID>show_documentation()<CR>
-
-function! s:show_documentation()
-  if (index(['vim','help'], &filetype) >= 0)
-    execute 'h '.expand('<cword>')
-  elseif (coc#rpc#ready())
-    call CocActionAsync('doHover')
-  else
-    execute '!' . &keywordprg . " " . expand('<cword>')
-  endif
-endfunction
-
-" Use <C-l> for trigger snippet expand.
-imap <C-l> <Plug>(coc-snippets-expand)
-
-" Use <C-j> for select text for visual placeholder of snippet.
-vmap <C-j> <Plug>(coc-snippets-select)
-
-" Use <C-j> for jump to next placeholder, it's default of coc.nvim
-let g:coc_snippet_next = '<c-j>'
-
-" Use <C-k> for jump to previous placeholder, it's default of coc.nvim
-let g:coc_snippet_prev = '<c-k>'
-
-
-" Tab 自动补全
-inoremap <silent><expr> <TAB>
-      \ pumvisible() ? "\<C-n>" :
-      \ <SID>check_back_space() ? "\<TAB>" :
-      \ coc#refresh()
-inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
-
-function! s:check_back_space() abort
-  let col = col('.') - 1
-  return !col || getline('.')[col - 1]  =~# '\s'
-endfunction
-
-" Use <c-space> to trigger completion.
-inoremap <silent><expr> <c-space> coc#refresh()
-" fix: Iterm <c-space> 会发出 nul 字符，没有找到解绑的地方
-inoremap <silent><expr> <Nul> coc#refresh()
-
-" Use <cr> to confirm completion, `<C-g>u` means break undo chain at current
-" position. Coc only does snippet and additional edit on confirm.
-if exists('*complete_info')
-  inoremap <expr> <cr> complete_info()["selected"] != "-1" ? "\<C-y>" : "\<C-g>u\<CR>"
-else
-  imap <expr> <cr> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
-endif
-
-
-" Remap keys for gotos
-nmap <silent> gd <Plug>(coc-definition)
-nmap <silent> gh <Plug>(coc-type-definition)
-nmap <silent> gi <Plug>(coc-implementation)
-nmap <silent> gr <Plug>(coc-references)
-
-" Remap for rename current word
-nmap <F2> <Plug>(coc-rename)
-
-" Find symbol of current document.
-nnoremap <silent> <space>o  :<C-u>CocList outline<cr>
-
-" Add `:Format` command to format current buffer.
-command! -nargs=0 Format :call CocActionAsync('format')
-
-" ========coc Mapping 相关==========
-
-" Format file
-nmap <leader>cff  :call CocActionAsync('format')<CR>
-
-" 一些常见的 coc 命令
-" Fix autofix problem of current line
-nmap <leader>cq  <Plug>(coc-fix-current)            
-nmap <silent><nowait><leader>cm :<C-u>CocCommand<CR>
-nmap <silent><nowait><leader>cl :<C-u>CocList<CR>
-nmap <silent><nowait><leader>co :<C-u>CocList outline<CR>
-nmap <silent><nowait><leader>ca :<C-u>CocList diagnostics<CR>
-nmap <silent><nowait><leader>cr :<C-u>CocListResume<CR>
-" Do default action for next item.
-nnoremap <silent><nowait> <leader>j  :<C-u>CocNext<CR>
-" Do default action for previous item.
-nnoremap <silent><nowait> <leader>k  :<C-u>CocPrev<CR>
-
-" 搜索文件
-nnoremap <leader>p :CocList files<CR>
-nnoremap <leader>pp :CocList files<CR>
-" Grep 项目搜索
-nnoremap <leader>pg :CocList grep<CR>
-" ========coc Mapping 相关==========
-
-" coc-git 相关=========
-
-" navigate chunks of current buffer
-nmap [h <Plug>(coc-git-prevchunk)
-nmap ]h <Plug>(coc-git-nextchunk)
-" show chunk diff at current position
-nmap <leader>gs :<C-u>CocList --normal gstatus<CR>
-nmap <leader>gh :<C-u>:CocCommand git.chunkInfo<CR>
-nmap <leader>gc :<C-u>:CocCommand git.showCommit<CR>
 " Not want shift + G
 nmap <leader>gg :<C-u>Git 
 nmap <leader>gl :<C-u>Gclog<CR>
-
-" coc-git 相关 End=========
-
-" Map function and class text objects
-" NOTE: Requires 'textDocument.documentSymbol' support from the language server.
-xmap if <Plug>(coc-funcobj-i)
-omap if <Plug>(coc-funcobj-i)
-xmap af <Plug>(coc-funcobj-a)
-omap af <Plug>(coc-funcobj-a)
-xmap ic <Plug>(coc-classobj-i)
-omap ic <Plug>(coc-classobj-i)
-xmap ac <Plug>(coc-classobj-a)
-omap ac <Plug>(coc-classobj-a)
-" Map function and class text objects End
-
-
-" snippet related
-
-" Remap <C-f> and <C-b> for scroll float windows/popups.
-if has('nvim-0.4.0') || has('patch-8.2.0750')
-  nnoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-f>"
-  nnoremap <silent><nowait><expr> <C-b> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-b>"
-  inoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(1)\<cr>" : "\<Right>"
-  inoremap <silent><nowait><expr> <C-b> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(0)\<cr>" : "\<Left>"
-  vnoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-f>"
-  vnoremap <silent><nowait><expr> <C-b> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-b>"
-endif
-" Remap <C-f> and <C-b> for scroll float windows/popups. End
 
 " 开屏问候语
 let g:startify_custom_header = map(split(system('fortune -s chinese | cowsay | cat'), '\n'), '"   ". v:val') + ['','']
