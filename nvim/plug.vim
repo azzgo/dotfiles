@@ -21,6 +21,8 @@ Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && npm install'  }
 Plug 'ferrine/md-img-paste.vim'
 
 " lua plugin start
+" deps
+Plug 'nvim-lua/plenary.nvim'
 
 " lsp config
 Plug 'neovim/nvim-lspconfig'
@@ -31,7 +33,6 @@ Plug 'simrat39/symbols-outline.nvim'
 Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'} 
 
 " fuzzy finder
-Plug 'nvim-lua/plenary.nvim'
 Plug 'nvim-telescope/telescope.nvim'
 
 " completion
@@ -39,6 +40,9 @@ Plug 'nvim-telescope/telescope.nvim'
 Plug 'ms-jpq/coq_nvim', {'branch': 'coq'}
 " 9000+ Snippets
 Plug 'ms-jpq/coq.artifacts', {'branch': 'artifacts'}
+
+" git
+Plug 'lewis6991/gitsigns.nvim'
 
 " lua plugin end
 
