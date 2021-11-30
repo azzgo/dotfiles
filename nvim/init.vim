@@ -1,3 +1,5 @@
+" import plug config
+runtime ./plug.vim
 " 设置 leader key
 let mapleader=" "
 let g:mapleader=" "
@@ -5,33 +7,6 @@ let g:mapleader=" "
 set updatetime=300
 set timeoutlen=500
 
-" 插件管理
-call plug#begin('~/.config/nvim/plugged')
-
-Plug 'tpope/vim-surround'
-Plug 'aklt/plantuml-syntax'
-Plug 'tpope/vim-repeat'
-Plug 'tpope/vim-fugitive'                         " git cmmand support
-Plug 'preservim/nerdtree'                         " Vim Exporer
-Plug 'honza/vim-snippets'                         " Snippet
-Plug 'ryanoasis/vim-devicons'
-Plug 'jiangmiao/auto-pairs'
-Plug 'NLKNguyen/papercolor-theme'  " 样式插件
-Plug 'mhinz/vim-startify'          " 开屏页
-Plug 'tpope/vim-commentary'        " 快速注释
-Plug 'vim-airline/vim-airline'
-Plug 'vim-airline/vim-airline-themes'
-Plug 'easymotion/vim-easymotion'  " 快速移动
-" vim ts 高亮，还是需要
-Plug 'leafgarland/typescript-vim'
-Plug 'peitalin/vim-jsx-typescript'
-" markdown 所需
-Plug 'godlygeek/tabular'
-Plug 'plasticboy/vim-markdown'
-Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && npm install'  }
-Plug 'ferrine/md-img-paste.vim'
-
-call plug#end()
 
 " 语法高亮
 syntax on
