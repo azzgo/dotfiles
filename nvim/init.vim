@@ -111,8 +111,8 @@ endif
 map <Leader>e <Plug>(easymotion-prefix)
 
 " toggle 文件浏览器
-nnoremap <silent> <leader>nn ::NERDTreeToggle<CR>
-nnoremap <silent> <leader>nf ::NERDTreeFind<CR>
+nnoremap <silent> <leader>nn :NvimTreeToggle<CR>
+nnoremap <silent> <leader>nf :NvimTreeFindFile<CR>
 
 " 设置主题样式
 set t_Co=256   " This is may or may not needed.

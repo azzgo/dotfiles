@@ -5,9 +5,7 @@ Plug 'tpope/vim-surround'
 " Plug 'aklt/plantuml-syntax'
 Plug 'tpope/vim-repeat'
 Plug 'tpope/vim-fugitive'                         " git cmmand support
-Plug 'preservim/nerdtree'                         " Vim Exporer
 Plug 'honza/vim-snippets'                         " Snippet
-Plug 'ryanoasis/vim-devicons'
 Plug 'jiangmiao/auto-pairs'
 Plug 'NLKNguyen/papercolor-theme'  " 样式插件
 Plug 'mhinz/vim-startify'          " 开屏页
@@ -24,9 +22,15 @@ Plug 'ferrine/md-img-paste.vim'
 " deps
 Plug 'nvim-lua/plenary.nvim'
 
+" web icon 
+Plug 'kyazdani42/nvim-web-devicons'
+
+" explorer
+Plug 'kyazdani42/nvim-tree.lua'
+
 " lsp config
 Plug 'neovim/nvim-lspconfig'
-Plug 'tami5/lspsaga.nvim', { 'branch': 'nvim51' }
+Plug 'tami5/lspsaga.nvim'
 Plug 'simrat39/symbols-outline.nvim'
 
 " syntax
