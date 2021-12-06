@@ -5,7 +5,6 @@ Plug 'tpope/vim-surround'
 " Plug 'aklt/plantuml-syntax'
 Plug 'tpope/vim-repeat'
 Plug 'tpope/vim-fugitive'                         " git cmmand support
-Plug 'honza/vim-snippets'                         " Snippet
 Plug 'jiangmiao/auto-pairs'
 Plug 'NLKNguyen/papercolor-theme'  " 样式插件
 Plug 'mhinz/vim-startify'          " 开屏页
@@ -16,7 +15,8 @@ Plug 'easymotion/vim-easymotion'  " 快速移动
 Plug 'godlygeek/tabular'
 Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && npm install'  }
 Plug 'ferrine/md-img-paste.vim'
-
+" todo
+Plug 'freitass/todo.txt-vim'
 " profill
 Plug 'dstein64/vim-startuptime'
 
@@ -31,7 +31,7 @@ Plug 'kyazdani42/nvim-web-devicons'
 Plug 'numToStr/Comment.nvim'
 
 " explorer
-Plug 'kyazdani42/nvim-tree.lua'
+Plug 'kyazdani42/nvim-tree.lua' ", { 'on': ['NvimTreeFindFile', 'NvimTreeToggle'] }
 
 " lsp config
 Plug 'neovim/nvim-lspconfig'
