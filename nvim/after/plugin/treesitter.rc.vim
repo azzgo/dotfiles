@@ -12,8 +12,12 @@ require'nvim-treesitter.configs'.setup {
     "html",
     "scss",
     "vue",
-    "go"
+    "go",
+    "fish",
   },
+  highlight = {
+    enable = true,
+  }
 }
 
 local parser_config = require "nvim-treesitter.parsers".get_parser_configs()
