@@ -125,8 +125,6 @@ colorscheme PaperColor
 nmap <leader>gg :<C-u>Git 
 nmap <leader>gl :<C-u>Gclog<CR>
 
-" 开屏问候语
-let g:startify_custom_header = map(split(system('fortune -s chinese | cowsay | cat'), '\n'), '"   ". v:val') + ['','']
 
 " plasticboy/vim-markdown Configuration
 let g:vim_markdown_folding_disabled = 1
