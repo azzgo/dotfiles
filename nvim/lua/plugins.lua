@@ -11,8 +11,6 @@ return require('packer').startup(function()
   use 'tpope/vim-fugitive'
   use 'jiangmiao/auto-pairs'
   use 'NLKNguyen/papercolor-theme'
-  -- 开屏页
-  use 'mhinz/vim-startify'
   -- 快速移动
   use 'easymotion/vim-easymotion'
   -- markdown 所需
@@ -35,11 +33,18 @@ return require('packer').startup(function()
     cmd = { 'NvimTreeToggle', 'NvimTreeFindFileToggle' },
     config = function() require'nvim-tree'.setup {} end,
   }
+  -- 开屏页
+  use {
+    'goolord/alpha-nvim',
+    config = function ()
+      require'alpha'.setup(require'alpha.themes.dashboard'.opts)
+    end
+  }
 
   -- statusline
   use {
     'nvim-lualine/lualine.nvim',
-    requires = {'kyazdani42/nvim-web-devicons', opt = true}
+    requires = { 'kyazdani42/nvim-web-devicons', opt = true }
   }
 
   --  lsp config
