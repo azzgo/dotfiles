@@ -85,7 +85,7 @@ iabbrev cosnt const
 nnoremap <leader>ev :e $MYVIMRC<CR>
 nnoremap <leader>sv :source $MYVIMRC<CR>
 " open with current buffer workdir
-nnoremap <leader>ew :e %:h
+nnoremap <expr><leader>ew ":e ".expand('%:h')
 
 " bufferNavigate
 nnoremap <silent> [b :bprevious<CR> 
