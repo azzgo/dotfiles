@@ -87,6 +87,9 @@ iabbrev cosnt const¬
 nnoremap <leader>ev :e $MYVIMRC<CR>
 nnoremap <leader>sv :source $MYVIMRC<CR>
 
+" open with current buffer workdir
+nnoremap <expr><leader>ew ":e ".expand('%:h')
+
 colorscheme koehler
 
 
