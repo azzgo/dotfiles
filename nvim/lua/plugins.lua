@@ -33,6 +33,7 @@ return require('packer').startup(function()
     requires = {
       'kyazdani42/nvim-web-devicons', -- optional, for file icon
     },
+    opt = true,
     cmd = { 'NvimTreeToggle', 'NvimTreeFindFileToggle' },
     config = function() require'nvim-tree'.setup {} end,
   }
@@ -57,7 +58,10 @@ return require('packer').startup(function()
   use { 'ms-jpq/coq.artifacts', branch = 'artifacts'}
 
   -- git
-  use 'lewis6991/gitsigns.nvim'
+  use {
+    'lewis6991/gitsigns.nvim', requires = { 'nvim-lua/plenary.nvim' },
+    config = function() require('gitsigns').setup() end
+  }
 
   -- ###### lua plugin end ##########
 end)
