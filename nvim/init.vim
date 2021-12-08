@@ -1,5 +1,6 @@
 " import plug config
-runtime ./plug.vim
+lua require('plugins')
+
 " 设置 leader key
 let mapleader=" "
 let g:mapleader=" "
@@ -112,7 +113,7 @@ map <Leader>e <Plug>(easymotion-prefix)
 
 " toggle 文件浏览器
 nnoremap <silent> <leader>nn :NvimTreeToggle<CR>
-nnoremap <silent> <leader>nf :NvimTreeFindFile<CR>
+nnoremap <silent> <leader>nf :NvimTreeFindFileToggle<CR>
 
 " 设置主题样式
 set t_Co=256   " This is may or may not needed.
