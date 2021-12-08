@@ -44,7 +44,12 @@ return require('packer').startup(function()
   -- statusline
   use {
     'nvim-lualine/lualine.nvim',
-    requires = { 'kyazdani42/nvim-web-devicons', opt = true }
+    requires = { 'kyazdani42/nvim-web-devicons', opt = true },
+    config = function()
+      require'lualine'.setup {
+        options = { theme  = 'ayu_dark' },
+      }
+    end
   }
 
   --  lsp config
