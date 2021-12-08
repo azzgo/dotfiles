@@ -14,6 +14,7 @@ require'nvim-treesitter.configs'.setup {
     "vue",
     "go",
     "fish",
+    "lua",
   },
   highlight = {
     enable = true,
