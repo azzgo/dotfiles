@@ -21,13 +21,13 @@ return require('packer').startup(function()
   use 'freitass/todo.txt-vim'
   -- profill
   use 'dstein64/vim-startuptime'
-  -- use 'NLKNguyen/papercolor-theme'
+  -- theme
+  use 'NLKNguyen/papercolor-theme'
 
   -- ##########lua plugins start##############
-  -- theme
-  use {'folke/tokyonight.nvim', branch = 'main' }
 
   use 'numToStr/Comment.nvim'
+  use 'kyazdani42/nvim-web-devicons'
   use {
     'kyazdani42/nvim-tree.lua',
     requires = {
@@ -48,7 +48,7 @@ return require('packer').startup(function()
   -- statusline
   use {
     'nvim-lualine/lualine.nvim',
-    requires = { 'kyazdani42/nvim-web-devicons', opt = true },
+    requires = { 'kyazdani42/nvim-web-devicons' },
     config = function()
       require'lualine'.setup {
         options = { theme  = 'auto' },
@@ -65,9 +65,11 @@ return require('packer').startup(function()
   use {'nvim-treesitter/nvim-treesitter', run = ':TSUpdate'} 
 
   -- fuzzy finder
-   use {
+  use {
     'nvim-telescope/telescope.nvim',
-    requires = { {'nvim-lua/plenary.nvim'} }
+    requires = { 
+      {'nvim-lua/plenary.nvim'},
+     }
   }
 
   -- completion
