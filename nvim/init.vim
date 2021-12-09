@@ -119,7 +119,8 @@ nnoremap <silent> <leader>nf :NvimTreeFindFileToggle<CR>
 set t_Co=256   " This is may or may not needed.
 
 set background=dark
-colorscheme PaperColor
+let g:tokyonight_style = "night"
+colorscheme tokyonight
 
 
 " Not want shift + G

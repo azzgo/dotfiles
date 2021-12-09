@@ -10,7 +10,7 @@ return require('packer').startup(function()
   -- git cmmand support
   use 'tpope/vim-fugitive'
   use 'jiangmiao/auto-pairs'
-  use 'NLKNguyen/papercolor-theme'
+
   -- 快速移动
   use 'easymotion/vim-easymotion'
   -- markdown 所需
@@ -21,8 +21,12 @@ return require('packer').startup(function()
   use 'freitass/todo.txt-vim'
   -- profill
   use 'dstein64/vim-startuptime'
+  -- use 'NLKNguyen/papercolor-theme'
 
   -- ##########lua plugins start##############
+  -- theme
+  use {'folke/tokyonight.nvim', branch = 'main' }
+
   use 'numToStr/Comment.nvim'
   use {
     'kyazdani42/nvim-tree.lua',
@@ -47,7 +51,7 @@ return require('packer').startup(function()
     requires = { 'kyazdani42/nvim-web-devicons', opt = true },
     config = function()
       require'lualine'.setup {
-        options = { theme  = 'ayu_dark' },
+        options = { theme  = 'auto' },
       }
     end
   }
