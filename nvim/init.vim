@@ -109,7 +109,7 @@ endif
 "  插件相关配置
 " ---------------------------
 " remap easymotion prefix
-map <Leader>e <Plug>(easymotion-prefix)
+map <Leader>ee <Plug>(easymotion-prefix)
 
 " toggle 文件浏览器
 nnoremap <silent> <leader>nn :NvimTreeToggle<CR>
@@ -119,8 +119,8 @@ nnoremap <silent> <leader>nf :NvimTreeFindFileToggle<CR>
 set t_Co=256   " This is may or may not needed.
 
 set background=dark
-let g:tokyonight_style = "night"
-colorscheme tokyonight
+set termguicolors
+colorscheme PaperColor
 
 
 " Not want shift + G
