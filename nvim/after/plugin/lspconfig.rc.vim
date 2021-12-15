@@ -47,7 +47,7 @@ end
 
 
 
-local servers = { 'tsserver', 'pyright' }
+local servers = { 'tsserver', 'pyright', 'gopls' }
 for _, lsp in ipairs(servers) do
   nvim_lsp[lsp].setup(
     coq.lsp_ensure_capabilities({on_attach = on_attach,flags = { debounce_text_changes = 150 }})
