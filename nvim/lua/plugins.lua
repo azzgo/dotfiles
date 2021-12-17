@@ -41,7 +41,7 @@ return require('packer').startup(function()
   use {
     'goolord/alpha-nvim',
     config = function ()
-      require'alpha'.setup(require'alpha.themes.dashboard'.opts)
+      require'alpha'.setup(require'alpha.themes.startify'.opts)
     end
   }
 
