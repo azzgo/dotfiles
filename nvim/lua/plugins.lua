@@ -59,7 +59,6 @@ return require('packer').startup(function()
   --  lsp config
   use 'neovim/nvim-lspconfig'
   use 'tami5/lspsaga.nvim'
-  use 'simrat39/symbols-outline.nvim'
 
   -- syntax
   use {'nvim-treesitter/nvim-treesitter', run = ':TSUpdate'} 
