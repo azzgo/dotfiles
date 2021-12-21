@@ -1,2 +1,2 @@
-autocmd BufWritePre <buffer> call CocAction("format")
+" autocmd BufWritePre <buffer> call CocAction("format")
 
