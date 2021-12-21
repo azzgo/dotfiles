@@ -14,7 +14,6 @@ return require('packer').startup(function()
   -- 快速移动
   use 'easymotion/vim-easymotion'
   -- markdown 所需
-  use 'godlygeek/tabular'
   use { 'iamcco/markdown-preview.nvim', run = 'cd app && npm install' }
   use 'ferrine/md-img-paste.vim'
   -- todo
