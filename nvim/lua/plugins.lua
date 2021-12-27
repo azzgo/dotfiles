@@ -72,10 +72,12 @@ return require('packer').startup(function()
      }
   }
 
-  -- completion
-  use { 'ms-jpq/coq_nvim', branch = 'coq'}
-  -- 9000+ Snippets
-  use { 'ms-jpq/coq.artifacts', branch = 'artifacts'}
+  --- cmp
+  use 'hrsh7th/cmp-nvim-lsp'
+  use 'hrsh7th/cmp-buffer'
+  use 'hrsh7th/cmp-path'
+  use 'hrsh7th/cmp-cmdline'
+  use 'hrsh7th/nvim-cmp'
 
   -- git
   use {
