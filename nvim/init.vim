@@ -149,4 +149,4 @@ endfunction
 
 "" local config for overide
 call SourceIfExists("~/.config/nvim/local.vim")
-""
+

@@ -9,8 +9,49 @@ EOF
 
 lua << EOF
 local nvim_lsp = require('lspconfig')
-local coq = require "coq" -- add this
+local cmp = require('cmp')
 
+cmp.setup({
+  mapping = {
+    ['<C-b>'] = cmp.mapping(cmp.mapping.scroll_docs(-4), { 'i', 'c' }),
+    ['<C-f>'] = cmp.mapping(cmp.mapping.scroll_docs(4), { 'i', 'c' }),
+    ['<C-Space>'] = cmp.mapping(cmp.mapping.complete(), { 'i', 'c' }),
+    ['<C-y>'] = cmp.config.disable, -- Specify `cmp.config.disable` if you want to remove the default `<C-y>` mapping.
+    ['<C-e>'] = cmp.mapping({
+      i = cmp.mapping.abort(),
+      c = cmp.mapping.close(),
+    }),
+    ['<CR>'] = cmp.mapping.confirm({ select = true }), -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items.
+  },
+  sources = cmp.config.sources({
+    { name = 'nvim_lsp' },
+    -- { name = 'luasnip' }, -- For luasnip users.
+    -- { name = 'ultisnips' }, -- For ultisnips users.
+    -- { name = 'snippy' }, -- For snippy users.
+  }, {
+    { name = 'buffer' },
+    { name = 'path' },
+  })
+})
+
+-- Use buffer source for `/` (if you enabled `native_menu`, this won't work anymore).
+cmp.setup.cmdline('/', {
+  sources = {
+    { name = 'buffer' }
+  }
+})
+
+-- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
+cmp.setup.cmdline(':', {
+  sources = cmp.config.sources({
+    { name = 'path' }
+  }, {
+    { name = 'cmdline' }
+  })
+})
+
+-- Setup lspconfig.
+local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
 
 -- Use an on_attach function to only map the following keys
 -- after the language server attaches to the current buffer
@@ -50,9 +91,7 @@ end
 
 local servers = { 'tsserver', 'pyright', 'gopls' }
 for _, lsp in ipairs(servers) do
-  nvim_lsp[lsp].setup(
-    coq.lsp_ensure_capabilities({on_attach = on_attach,flags = { debounce_text_changes = 150 }})
-  )
+  nvim_lsp[lsp].setup {on_attach = on_attach, capabilities = capabilities, flags = { debounce_text_changes = 150 }}
 end
 
 nvim_lsp.diagnosticls.setup {
@@ -116,7 +155,5 @@ nvim_lsp.diagnosticls.setup {
   }
 }
 
--- must to start coq, vim.g.coq_settings not works seems;
-coq.Now()
 
 EOF
