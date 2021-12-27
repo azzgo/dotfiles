@@ -5,11 +5,13 @@ return require('packer').startup(function()
   use 'wbthomason/packer.nvim'
   --  origin vim plugin
   use 'tpope/vim-surround'
-  -- use 'aklt/plantuml-syntax'
+  use 'aklt/plantuml-syntax'
   use 'tpope/vim-repeat'
   -- git cmmand support
   use 'tpope/vim-fugitive'
-  use 'jiangmiao/auto-pairs'
+
+
+  -- use 'jiangmiao/auto-pairs'
 
   -- 快速移动
   use 'easymotion/vim-easymotion'
