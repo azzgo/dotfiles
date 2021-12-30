@@ -6,11 +6,14 @@ local saga = require 'lspsaga'
 saga.init_lsp_saga {
   border_style = "round",
 }
+
 EOF
 
 nnoremap <silent> ]d :Lspsaga diagnostic_jump_next<CR>
 nnoremap <silent> [d :Lspsaga diagnostic_jump_prev<CR>
-"nnoremap <silent> K <cmd>lua require('lspsaga.hover').render_hover_doc()<CR>
-nnoremap <silent> gh :Lspsaga lsp_finder<CR>
+nnoremap <silent> <C-k> :Lspsaga show_line_diagnostics<CR>
+nnoremap <silent> K :Lspsaga hover_doc<CR>
+" nnoremap <silent> gh :Lspsaga lsp_finder<CR>
 nnoremap <silent> gp :Lspsaga preview_definition<CR>
+
 
