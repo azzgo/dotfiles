@@ -118,7 +118,8 @@ nnoremap <silent> <leader>nf :NvimTreeFindFileToggle<CR>
 " 设置主题样式
 set t_Co=256   " This is may or may not needed.
 
-set background=dark
+" set background=dark
+set background=light
 set termguicolors
 colorscheme PaperColor
 
