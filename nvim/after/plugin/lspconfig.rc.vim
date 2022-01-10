@@ -109,10 +109,32 @@ end
 
 
 
-local servers = { 'tsserver', 'pyright', 'gopls', 'rls' }
+local servers = { 'pyright', 'gopls', 'rls' }
 for _, lsp in ipairs(servers) do
   nvim_lsp[lsp].setup {on_attach = on_attach, capabilities = capabilities, flags = { debounce_text_changes = 150 }}
 end
+
+-- tsserver
+
+
+nvim_lsp.tsserver.setup {
+  on_attach = on_attach,
+  capabilities = capabilities,
+  flags = { debounce_text_changes = 150 },
+  commands = {
+    OrganizeImports = {
+      function ()
+        local params = {
+          command = "_typescript.organizeImports",
+          arguments = {vim.api.nvim_buf_get_name(0)},
+          title = ""
+        }
+        vim.lsp.buf.execute_command(params)
+      end,
+      description = "Organize Imports"
+    }
+  }
+}
 
 -- noise when lots of diagnose reports.
 vim.diagnostic.config({
@@ -180,5 +202,5 @@ nvim_lsp.diagnosticls.setup {
   }
 }
 
-
 EOF
+
