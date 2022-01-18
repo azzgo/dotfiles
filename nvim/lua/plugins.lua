@@ -72,6 +72,8 @@ return require('packer').startup(function()
      }
   }
 
+  use {'nvim-telescope/telescope-fzf-native.nvim', run = 'make' }
+
   --- cmp
   use 'L3MON4D3/LuaSnip'
   use 'hrsh7th/cmp-nvim-lsp'
