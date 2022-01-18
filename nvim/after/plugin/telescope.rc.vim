@@ -3,6 +3,11 @@ if !exists('g:loaded_telescope') | finish | endif
 lua << EOF
 
 require('telescope').setup {
+  defaults = {
+    preview = {
+      filesize_limit = 5
+    }
+  },
   extensions = {
     fzf = {
       fuzzy = true,                    -- false will only do exact matching
