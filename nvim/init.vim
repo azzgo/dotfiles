@@ -99,6 +99,15 @@ nnoremap <silent> <leader>nt :tabnew<CR>
 " set terminal esc
 :tnoremap <Esc> <C-\><C-n>
 
+" remap C-C for lua error sometimes
+inoremap <C-c> <Esc>`^
+cnoremap <C-c> <Esc>`^
+xnoremap <C-c> <Esc>`^
+nnoremap <C-c> <Esc>`^
+lnoremap <C-c> <Esc>`^
+snoremap <C-c> <Esc>`^
+tnoremap <C-c> <Esc>`^
+
 " 更改 grep use riggrep
 if executable("rg")
     set grepprg=rg\ --vimgrep\ --no-heading
