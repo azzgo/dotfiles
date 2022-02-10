@@ -237,54 +237,28 @@ command! -nargs=0 Format :call CocActionAsync('format')
 " ========coc Mapping 相关==========
 
 " Format file
-nmap <leader>cff  :call CocActionAsync('format')<CR>
+nmap <leader>cf  :call CocActionAsync('format')<CR>
 
 " 一些常见的 coc 命令
 " Fix autofix problem of current line
 nmap <leader>cq  <Plug>(coc-fix-current)            
-nmap <silent><nowait><leader>cm :<C-u>CocCommand<CR>
-nmap <silent><nowait><leader>cl :<C-u>CocList<CR>
 nmap <silent><nowait><leader>co :<C-u>CocList outline<CR>
-nmap <silent><nowait><leader>ca :<C-u>CocList diagnostics<CR>
-nmap <silent><nowait><leader>cr :<C-u>CocListResume<CR>
+nmap <silent><nowait><leader>ca <Plug>(coc-codeaction)
 " Do default action for next item.
 nnoremap <silent><nowait> <leader>j  :<C-u>CocNext<CR>
 " Do default action for previous item.
 nnoremap <silent><nowait> <leader>k  :<C-u>CocPrev<CR>
 
 " 搜索文件
-nnoremap <leader>p :CocList files<CR>
-nnoremap <leader>pp :CocList files<CR>
+nnoremap <leader>ff :CocList files<CR>
 " Grep 项目搜索
-nnoremap <leader>pg :CocList grep<CR>
+nnoremap <leader>fg :CocList grep<CR>
 " ========coc Mapping 相关==========
 
-" coc-git 相关=========
-
-" navigate chunks of current buffer
-nmap [h <Plug>(coc-git-prevchunk)
-nmap ]h <Plug>(coc-git-nextchunk)
-" show chunk diff at current position
-nmap <leader>gs :<C-u>CocList --normal gstatus<CR>
-nmap <leader>gh :<C-u>:CocCommand git.chunkInfo<CR>
-nmap <leader>gc :<C-u>:CocCommand git.showCommit<CR>
-" Not want shift + G
-nmap <leader>gg :<C-u>Git 
-nmap <leader>gl :<C-u>Gclog<CR>
+nmap [d <Plug>(coc-diagnostic-next)
+nmap ]d <Plug>(coc-diagnostic-prev)
 
 " coc-git 相关 End=========
-
-" Map function and class text objects
-" NOTE: Requires 'textDocument.documentSymbol' support from the language server.
-xmap if <Plug>(coc-funcobj-i)
-omap if <Plug>(coc-funcobj-i)
-xmap af <Plug>(coc-funcobj-a)
-omap af <Plug>(coc-funcobj-a)
-xmap ic <Plug>(coc-classobj-i)
-omap ic <Plug>(coc-classobj-i)
-xmap ac <Plug>(coc-classobj-a)
-omap ac <Plug>(coc-classobj-a)
-" Map function and class text objects End
 
 
 " snippet related
