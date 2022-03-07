@@ -105,6 +105,14 @@ nvim_lsp.tsserver.setup {
   on_attach = on_attach,
   capabilities = capabilities,
   flags = { debounce_text_changes = 150 },
+  handlers = {
+   ["textDocument/publishDiagnostics"] = vim.lsp.with(
+     vim.lsp.diagnostic.on_publish_diagnostics, {
+       -- Disable virtual_text
+       virtual_text = false
+     }
+   ),
+  },
   commands = {
     OrganizeImports = {
       function ()
