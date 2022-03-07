@@ -121,9 +121,9 @@ nvim_lsp.tsserver.setup {
 }
 
 -- noise when lots of diagnose reports.
-vim.diagnostic.config({
+vim.diagnostic.config {
   virtual_text = false,
-})
+}
 
 nvim_lsp.diagnosticls.setup {
   on_attach = on_attach,
@@ -185,6 +185,9 @@ nvim_lsp.diagnosticls.setup {
     }
   }
 }
-
 EOF
 
+" vista config
+let g:vista_default_executive = 'nvim_lsp'
+
+nnoremap <leader>o :Vista<CR>

@@ -47,5 +47,4 @@ nnoremap gd <cmd>lua require('telescope.builtin').lsp_definitions()<cr>
 nnoremap gi <cmd>lua require('telescope.builtin').lsp_implementations()<cr>
 nnoremap gD <cmd>lua require('telescope.builtin').lsp_type_definitions()<cr>
 nnoremap gK <cmd>lua require('telescope.builtin').diagnostics()<cr>
-nnoremap <leader>o <cmd>lua require('telescope.builtin').lsp_document_symbols()<cr>
 nnoremap <leader>ca <cmd>lua require('telescope.builtin').lsp_code_actions()<cr>

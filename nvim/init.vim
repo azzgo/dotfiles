@@ -73,6 +73,9 @@ nnoremap <leader>q :bd<CR>
 " 取消高亮
 nnoremap <leader><cr> :noh<CR>
 
+" 当前行个高亮
+set cursorline
+
 
 " 插入状态下，类emacs 行首行尾操作
 inoremap <c-a> <c-o>I
