@@ -17,7 +17,7 @@ require'nvim-treesitter.configs'.setup {
     "lua",
   },
   highlight = {
-    enable = true,
+    enable = false,
   }
 }
 

@@ -39,8 +39,8 @@ require('telescope').load_extension('fzf')
 EOF
 
 nnoremap <leader>ff <cmd>lua require('telescope.builtin').find_files { previewer = false }<cr>
-nnoremap <leader>fg <cmd>lua require('telescope.builtin').live_grep()<cr>
-nnoremap <leader>fq <cmd>lua require('telescope.builtin').quickfix()<cr>
+nnoremap <leader>fg <cmd>lua require('telescope.builtin').live_grep { previewer = false }<cr>
+nnoremap <leader>fq <cmd>lua require('telescope.builtin').quickfix { previewer = false }<cr>
 nnoremap <leader>fb <cmd>lua require('telescope.builtin').buffers()<cr>
 nnoremap <leader>fh <cmd>lua require('telescope.builtin').help_tags()<cr>
 nnoremap gr <cmd>lua require('telescope.builtin').lsp_references()<cr>
