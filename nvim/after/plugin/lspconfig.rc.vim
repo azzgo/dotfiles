@@ -71,10 +71,29 @@ cmp.setup({
     { name = 'path' },
   }),
   formatting = {
-    format = lspkind.cmp_format({
-      with_text = false, -- do not show text alongside icons
-      maxwidth = 50, -- prevent the popup from showing more than provided characters (e.g 50 will not show more than 50 characters)
-    })
+    format = function(entry, vim_item)
+      if not prsnt then
+        -- Source
+        vim_item.menu = ({
+          buffer = "[Buffer]",
+          nvim_lsp = "[LSP]",
+          luasnip = "[LuaSnip]",
+          nvim_lua = "[Lua]",
+        })[entry.source.name]
+        return vim_item
+      else
+        return lspkind.cmp_format({
+          mode = 'symbol_text',
+          with_text = false, -- do not show text alongside icons
+          maxwidth = 50, -- prevent the popup from showing more than provided characters (e.g 50 will not show more than 50 characters)
+        })
+      end
+    end
+
+
+
+
+
   }
 })
 
