@@ -3,7 +3,7 @@ vim.cmd [[packadd packer.nvim]]
 return require('packer').startup(function()
   -- Packer can manage itself
   use 'wbthomason/packer.nvim'
-  --  origin vim plugin
+  --  origin vim plugin use 'tpope/vim-surround'
   use 'tpope/vim-surround'
   use 'aklt/plantuml-syntax'
   use 'tpope/vim-repeat'
@@ -99,11 +99,13 @@ return require('packer').startup(function()
 
   --- cmp
   use 'L3MON4D3/LuaSnip'
+  use 'rafamadriz/friendly-snippets'
   use 'hrsh7th/cmp-nvim-lsp'
   use 'hrsh7th/cmp-buffer'
   use 'hrsh7th/cmp-path'
   use 'hrsh7th/cmp-cmdline'
   use 'hrsh7th/nvim-cmp'
+  use 'saadparwaiz1/cmp_luasnip'
   use 'onsails/lspkind-nvim'
 
   -- git
