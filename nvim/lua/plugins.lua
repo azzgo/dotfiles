@@ -36,7 +36,7 @@ return require('packer').startup(function()
     },
     opt = true,
     cmd = { 'NvimTreeToggle', 'NvimTreeFindFileToggle' },
-    config = function() require'nvim-tree'.setup {} end,
+    config = function() require'nvim-tree'.setup { view = { width = 50 } } end,
   }
   -- 开屏页
   use {
