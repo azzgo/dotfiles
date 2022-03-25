@@ -39,7 +39,7 @@ require('telescope').load_extension('fzf')
 EOF
 
 nnoremap <leader>ff <cmd>lua require('telescope.builtin').find_files { previewer = false }<cr>
-nnoremap <leader>fc <cmd>lua require('telescope.builtin').find_files( { cwd = vim.fn.expand('%:p:h') })<cr>
+nnoremap <leader>fc <cmd>lua require('telescope.builtin').find_files( { previewer = false, cwd = vim.fn.expand('%:p:h') })<cr>
 nnoremap <leader>fg <cmd>lua require('telescope.builtin').live_grep { previewer = false }<cr>
 nnoremap <leader>fq <cmd>lua require('telescope.builtin').quickfix { previewer = false }<cr>
 nnoremap <leader>fb <cmd>lua require('telescope.builtin').buffers()<cr>
