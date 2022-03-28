@@ -24,6 +24,7 @@ return require('packer').startup(function()
   use 'dstein64/vim-startuptime'
   -- theme
   use 'NLKNguyen/papercolor-theme'
+  use 'sainnhe/gruvbox-material'
 
   -- ##########lua plugins start##############
 
