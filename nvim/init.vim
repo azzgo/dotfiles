@@ -133,8 +133,17 @@ set t_Co=256   " This is may or may not needed.
 " set background=dark
 set background=light
 set termguicolors
-colorscheme PaperColor
+" colorscheme PaperColor
 
+" Set contrast.
+" This configuration option should be placed before `colorscheme gruvbox-material`.
+" Available values: 'hard', 'medium'(default), 'soft'
+let g:gruvbox_material_background = 'hard'
+
+" For better performance
+let g:gruvbox_material_better_performance = 1
+
+colorscheme gruvbox-material
 
 " Not want shift + G
 nmap <leader>gg :<C-u>Git 
