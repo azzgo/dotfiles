@@ -18,8 +18,6 @@ return require('packer').startup(function()
   -- markdown 所需
   use { 'iamcco/markdown-preview.nvim', run = 'cd app && npm install' }
   use 'ferrine/md-img-paste.vim'
-  -- todo
-  use 'freitass/todo.txt-vim'
   -- profill
   use 'dstein64/vim-startuptime'
   -- theme
