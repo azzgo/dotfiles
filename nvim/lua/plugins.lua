@@ -10,6 +10,17 @@ return require('packer').startup(function()
   -- git cmmand support
   use 'tpope/vim-fugitive'
 
+  -- which key
+  use {
+  "folke/which-key.nvim",
+   config = function()
+    require("which-key").setup {
+      -- your configuration comes here
+      -- or leave it empty to use the default settings
+      -- refer to the configuration section below
+    }
+   end
+  }
 
   -- use 'jiangmiao/auto-pairs'
 
