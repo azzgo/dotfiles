@@ -1,4 +1,5 @@
 " import plug config
+lua require('impatient').enable_profile()
 lua require('plugins')
 
 " 设置 leader key
@@ -120,12 +121,6 @@ endif
 " ---------------------------
 "  插件相关配置
 " ---------------------------
-" remap easymotion prefix
-map <Leader>ee <Plug>(easymotion-prefix)
-
-" toggle 文件浏览器
-nnoremap <silent> <leader>nn :NvimTreeToggle<CR>
-nnoremap <silent> <leader>nf :NvimTreeFindFileToggle<CR>
 
 " 设置主题样式
 set t_Co=256   " This is may or may not needed.
@@ -145,15 +140,9 @@ let g:gruvbox_material_better_performance = 1
 
 colorscheme gruvbox-material
 
-" Not want shift + G
-nmap <leader>gg :<C-u>Git 
-nmap <leader>gl :<C-u>Gclog<CR>
-
-
 " plasticboy/vim-markdown Configuration
 let g:vim_markdown_folding_disabled = 1
 let g:vim_markdown_emphasis_multiline = 0
-
 
 " Markdown configuration
 autocmd FileType markdown set nowrap

@@ -3,6 +3,13 @@ vim.cmd [[packadd packer.nvim]]
 return require('packer').startup(function()
   -- Packer can manage itself
   use 'wbthomason/packer.nvim'
+
+  -- Improve startup time for Neovim
+  use {'lewis6991/impatient.nvim', config=function() 
+  --  require('impatient');
+  end}
+
+
   --  origin vim plugin use 'tpope/vim-surround'
   use 'tpope/vim-surround'
   use 'aklt/plantuml-syntax'
@@ -22,10 +29,6 @@ return require('packer').startup(function()
    end
   }
 
-  -- use 'jiangmiao/auto-pairs'
-
-  -- 快速移动
-  use 'easymotion/vim-easymotion'
   -- markdown 所需
   use { 'iamcco/markdown-preview.nvim', run = 'cd app && npm install' }
   use 'ferrine/md-img-paste.vim'
@@ -44,9 +47,12 @@ return require('packer').startup(function()
     requires = {
       'kyazdani42/nvim-web-devicons', -- optional, for file icon
     },
-    opt = true,
-    cmd = { 'NvimTreeToggle', 'NvimTreeFindFileToggle' },
-    config = function() require'nvim-tree'.setup { view = { width = 50 } } end,
+    config = function()
+      require'nvim-tree'.setup { view = { width = 50 } } 
+      -- toggle 文件浏览器
+      vim.api.nvim_set_keymap('n', '<leader>nn', ':NvimTreeToggle<CR>', {  noremap = true, silent = true })
+      vim.api.nvim_set_keymap('n', '<leader>nf', ':NvimTreeFindFileToggle<CR>', {  noremap = true, silent = true })
+    end,
   }
   -- 开屏页
   use {
