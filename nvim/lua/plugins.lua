@@ -9,6 +9,8 @@ return require('packer').startup(function()
   --  require('impatient');
   end}
 
+  --- quick move
+  use 'justinmk/vim-sneak'
 
   --  origin vim plugin use 'tpope/vim-surround'
   use 'tpope/vim-surround'
