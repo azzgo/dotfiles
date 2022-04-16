@@ -81,8 +81,10 @@ set cursorline
 " 插入状态下，类emacs 行首行尾操作
 inoremap <c-a> <home>
 inoremap <c-e> <end>
-inoremap <c-f> <right>
-inoremap <c-b> <left>
+inoremap <c-h> <left>
+inoremap <c-j> <down>
+inoremap <c-k> <up>
+inoremap <c-l> <right>
 
 " 纠正拼写 个人拼写习惯容错
 iabbrev cosnt const
