@@ -77,10 +77,8 @@ nnoremap <silent> <leader>nt :tabnew<CR>
 " 插入状态下，类emacs 行首行尾操作
 inoremap <c-a> <home>
 inoremap <c-e> <end>
-inoremap <c-h> <left>
-inoremap <c-j> <down>
-inoremap <c-k> <up>
-inoremap <c-l> <right>
+inoremap <c-f> <right>
+inoremap <c-b> <left>
 
 " 纠正拼写 个人拼写习惯容错¬
 iabbrev cosnt const¬
@@ -108,13 +106,9 @@ endif
 "==============VIM Plug========================
 call plug#begin('~/.vim/plugged')
 
-Plug 'easymotion/vim-easymotion'  " 快速移动
 Plug 'tpope/vim-commentary'        " 快速注释
 Plug 'tpope/vim-surround'
 Plug 'tpope/vim-repeat'
 
 call plug#end()
-
-" maping
-map <Leader>e <Plug>(easymotion-prefix)
 
