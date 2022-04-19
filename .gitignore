@@ -1,3 +1,6 @@
 *DS_Store
 nvim/.netrwhist
-
+nvim/plugged/
+nvim/autoload
+nvim/local.vim
+nvim/plugin/
