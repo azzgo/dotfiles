@@ -1,4 +1,4 @@
---vim.lsp.set_log_level("debug")
+-- vim.lsp.set_log_level("debug")
 if vim.g.lspconfig == nil then
 	return
 end
@@ -123,6 +123,7 @@ local on_attach = function(client, bufnr)
 
 	buf_set_keymap("n", "<F2>", "<cmd>lua vim.lsp.buf.rename()<CR>", opts)
 	buf_set_keymap("n", "<leader>cf", "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
+  buf_set_keymap("n", "<leader>o", ":Vista<CR>", { noremap = true, silent = true })
 	if client.name == "tsserver" then
 		client.resolved_capabilities.document_formatting = false
 	end
@@ -167,4 +168,3 @@ vim.diagnostic.config({
 
 vim.g.vista_default_executive = "nvim_lsp"
 -- vista config
-vim.api.nvim_set_keymap("n", "<leader>o", ":Vista<CR>", { noremap = true, silent = true })
