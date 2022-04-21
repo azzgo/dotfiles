@@ -163,3 +163,5 @@ endfunction
 "" local config for overide
 call SourceIfExists("~/.config/nvim/local.vim")
 
+" change git fugitive summary format
+let g:fugitive_summary_format = "%s %cr"
