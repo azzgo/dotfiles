@@ -1,17 +1,13 @@
-if !exists('g:lspconfig')
-  finish
-endif
-
-if !exists('g:loaded_cmp')
-  finish
-endif
-
-" Debug 时开启
-lua << EOF
 --vim.lsp.set_log_level("debug")
-EOF
+if vim.g.lspconfig == nil then
+  return
+end
 
-lua << EOF
+if vim.g.loaded_cmp == nil then
+  return
+end
+
+
 local nvim_lsp = require('lspconfig')
 local cmp = require('cmp')
 local lspkind = require('lspkind')
@@ -175,9 +171,7 @@ nvim_lsp.tsserver.setup {
 vim.diagnostic.config {
   virtual_text = false,
 }
-EOF
 
-" vista config
-let g:vista_default_executive = 'nvim_lsp'
-
-nnoremap <leader>o :Vista<CR>
+vim.g.vista_default_executive = 'nvim_lsp'
+-- vista config
+vim.api.nvim_set_keymap('n', '<leader>o', ':Vista<CR>', { noremap = true, silent = true })
