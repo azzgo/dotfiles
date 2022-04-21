@@ -1,149 +1,160 @@
-vim.cmd [[packadd packer.nvim]]
+vim.cmd([[packadd packer.nvim]])
 
-return require('packer').startup(function()
-  -- Packer can manage itself
-  use 'wbthomason/packer.nvim'
+return require("packer").startup(function()
+	-- Packer can manage itself
+	use("wbthomason/packer.nvim")
 
-  -- Improve startup time for Neovim
-  use {'lewis6991/impatient.nvim', config=function() 
-  --  require('impatient');
-  end}
+	-- Improve startup time for Neovim
+	use({
+		"lewis6991/impatient.nvim",
+		config = function()
+			--  require('impatient');
+		end,
+	})
 
-  --- quick move
-  use 'justinmk/vim-sneak'
+	--- quick move
+	use("justinmk/vim-sneak")
 
-  --  origin vim plugin use 'tpope/vim-surround'
-  use 'tpope/vim-surround'
-  use 'aklt/plantuml-syntax'
-  use 'tpope/vim-repeat'
-  -- git cmmand support
-  use 'tpope/vim-fugitive'
+	--  origin vim plugin use 'tpope/vim-surround'
+	use("tpope/vim-surround")
+	use("aklt/plantuml-syntax")
+	use("tpope/vim-repeat")
+	-- git cmmand support
+	use("tpope/vim-fugitive")
 
-  -- which key
-  use {
-  "folke/which-key.nvim",
-   config = function()
-    require("which-key").setup {
-      -- your configuration comes here
-      -- or leave it empty to use the default settings
-      -- refer to the configuration section below
-    }
-   end
-  }
+	-- which key
+	use({
+		"folke/which-key.nvim",
+		config = function()
+			require("which-key").setup({
+				-- your configuration comes here
+				-- or leave it empty to use the default settings
+				-- refer to the configuration section below
+			})
+		end,
+	})
 
-  -- markdown 所需
-  use { 'iamcco/markdown-preview.nvim', run = 'cd app && npm install' }
-  use 'ferrine/md-img-paste.vim'
-  -- profill
-  use 'dstein64/vim-startuptime'
-  -- theme
-  use 'NLKNguyen/papercolor-theme'
-  use 'sainnhe/gruvbox-material'
+	-- markdown 所需
+	use({ "iamcco/markdown-preview.nvim", run = "cd app && npm install" })
+	use("ferrine/md-img-paste.vim")
+	-- profill
+	use("dstein64/vim-startuptime")
+	-- theme
+	use("NLKNguyen/papercolor-theme")
+	use("sainnhe/gruvbox-material")
 
-  -- ##########lua plugins start##############
+	-- ##########lua plugins start##############
 
-  use 'numToStr/Comment.nvim'
-  use 'kyazdani42/nvim-web-devicons'
-  use {
-    'kyazdani42/nvim-tree.lua',
-    requires = {
-      'kyazdani42/nvim-web-devicons', -- optional, for file icon
-    },
-    config = function()
-      require'nvim-tree'.setup { view = { width = 50 } } 
-      -- toggle 文件浏览器
-      vim.api.nvim_set_keymap('n', '<leader>nn', ':NvimTreeToggle<CR>', {  noremap = true, silent = true })
-      vim.api.nvim_set_keymap('n', '<leader>nf', ':NvimTreeFindFileToggle<CR>', {  noremap = true, silent = true })
-    end,
-  }
-  -- 开屏页
-  use {
-    'goolord/alpha-nvim',
-    config = function ()
-      require'alpha'.setup(require'alpha.themes.startify'.opts)
-    end
-  }
+	use("numToStr/Comment.nvim")
+	use("kyazdani42/nvim-web-devicons")
+	use({
+		"kyazdani42/nvim-tree.lua",
+		requires = {
+			"kyazdani42/nvim-web-devicons", -- optional, for file icon
+		},
+		config = function()
+			require("nvim-tree").setup({ view = { width = 50 } })
+			-- toggle 文件浏览器
+			vim.api.nvim_set_keymap("n", "<leader>nn", ":NvimTreeToggle<CR>", { noremap = true, silent = true })
+			vim.api.nvim_set_keymap("n", "<leader>nf", ":NvimTreeFindFileToggle<CR>", { noremap = true, silent = true })
+		end,
+	})
+	-- 开屏页
+	use({
+		"goolord/alpha-nvim",
+		config = function()
+			require("alpha").setup(require("alpha.themes.startify").opts)
+		end,
+	})
 
-  -- statusline
-  use {
-    'nvim-lualine/lualine.nvim',
-    requires = { 'kyazdani42/nvim-web-devicons' },
-    config = function()
-      require'lualine'.setup {
-        options = { theme  = 'auto' },
-      }
-    end
-  }
+	-- statusline
+	use({
+		"nvim-lualine/lualine.nvim",
+		requires = { "kyazdani42/nvim-web-devicons" },
+		config = function()
+			require("lualine").setup({
+				options = { theme = "auto" },
+			})
+		end,
+	})
 
-  --  lsp config
-  use 'neovim/nvim-lspconfig'
-  use 'tami5/lspsaga.nvim'
-  use { 'liuchengxu/vista.vim', requires = { 'neovim/nvim-lspconfig' } }
-  use { 'jose-elias-alvarez/null-ls.nvim', config = function() 
-    local null_ls = require("null-ls");
-      null_ls.setup({
-        sources = {
-          null_ls.builtins.diagnostics.eslint_d,
-          null_ls.builtins.formatting.stylua,
-          null_ls.builtins.formatting.tidy,
-          null_ls.builtins.formatting.prettier,
-        },
-      })
-    end,
-    requires = { "nvim-lua/plenary.nvim", "neovim/nvim-lsp" }, 
-}
+	--  lsp config
+	use("neovim/nvim-lspconfig")
+	use("tami5/lspsaga.nvim")
+	use({ "liuchengxu/vista.vim", requires = { "neovim/nvim-lspconfig" } })
+	use({
+		"jose-elias-alvarez/null-ls.nvim",
+		config = function()
+			local null_ls = require("null-ls")
+			null_ls.setup({
+				on_attach = function(client, bufnr)
+					local opts = { noremap = true, silent = true }
+					vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>cf", "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
+				end,
+				sources = {
+					null_ls.builtins.diagnostics.eslint_d,
+					null_ls.builtins.formatting.stylua,
+					null_ls.builtins.formatting.prettier,
+				},
+			})
+		end,
+		requires = { "nvim-lua/plenary.nvim", "neovim/nvim-lsp" },
+	})
 
-  -- syntax
-  use {'nvim-treesitter/nvim-treesitter', run = ':TSUpdate'} 
+	-- syntax
+	use({ "nvim-treesitter/nvim-treesitter", run = ":TSUpdate" })
 
-  -- fuzzy finder
-  use {
-    'nvim-telescope/telescope.nvim',
-    requires = { 
-      {'nvim-lua/plenary.nvim'},
-     }
-  }
+	-- fuzzy finder
+	use({
+		"nvim-telescope/telescope.nvim",
+		requires = {
+			{ "nvim-lua/plenary.nvim" },
+		},
+	})
 
-  use {
-    "folke/todo-comments.nvim",
-    requires = "nvim-lua/plenary.nvim",
-    config = function()
-      require("todo-comments").setup {
-        keywords = {
-          FIX = {
-            icon = " ", -- icon used for the sign, and in search results
-            color = "error", -- can be a hex color, or a named color (see below)
-            alt = { "FIXME", "BUG", "FIXIT", "ISSUE" }, -- a set of other keywords that all map to this FIX keywords
-            -- signs = false, -- configure signs for some keywords individually
-          },
-          TODO = { icon = " ", color = "info" },
-          HACK = { icon = " ", color = "warning" },
-          WARN = { icon = " ", color = "warning", alt = { "WARNING", "XXX" } },
-          PERF = { icon = " ", alt = { "OPTIM", "PERFORMANCE", "OPTIMIZE" } },
-          NOTE = { icon = " ", color = "hint", alt = { "INFO" } },
-        },
-      }
-    end
-  }
+	use({
+		"folke/todo-comments.nvim",
+		requires = "nvim-lua/plenary.nvim",
+		config = function()
+			require("todo-comments").setup({
+				keywords = {
+					FIX = {
+						icon = " ", -- icon used for the sign, and in search results
+						color = "error", -- can be a hex color, or a named color (see below)
+						alt = { "FIXME", "BUG", "FIXIT", "ISSUE" }, -- a set of other keywords that all map to this FIX keywords
+						-- signs = false, -- configure signs for some keywords individually
+					},
+					TODO = { icon = " ", color = "info" },
+					HACK = { icon = " ", color = "warning" },
+					WARN = { icon = " ", color = "warning", alt = { "WARNING", "XXX" } },
+					PERF = { icon = " ", alt = { "OPTIM", "PERFORMANCE", "OPTIMIZE" } },
+					NOTE = { icon = " ", color = "hint", alt = { "INFO" } },
+				},
+			})
+		end,
+	})
 
-  use {'nvim-telescope/telescope-fzf-native.nvim', run = 'make' }
+	use({ "nvim-telescope/telescope-fzf-native.nvim", run = "make" })
 
-  --- cmp
-  use 'L3MON4D3/LuaSnip'
-  use 'rafamadriz/friendly-snippets'
-  use 'hrsh7th/cmp-nvim-lsp'
-  use 'hrsh7th/cmp-buffer'
-  use 'hrsh7th/cmp-path'
-  use 'hrsh7th/cmp-cmdline'
-  use 'hrsh7th/nvim-cmp'
-  use 'saadparwaiz1/cmp_luasnip'
-  use 'onsails/lspkind-nvim'
+	--- cmp
+	use("L3MON4D3/LuaSnip")
+	use("rafamadriz/friendly-snippets")
+	use("hrsh7th/cmp-nvim-lsp")
+	use("hrsh7th/cmp-buffer")
+	use("hrsh7th/cmp-path")
+	use("hrsh7th/cmp-cmdline")
+	use("hrsh7th/nvim-cmp")
+	use("saadparwaiz1/cmp_luasnip")
+	use("onsails/lspkind-nvim")
 
-  -- git
-  use {
-    'lewis6991/gitsigns.nvim', requires = { 'nvim-lua/plenary.nvim' },
-    config = function() require('gitsigns').setup() end
-  }
+	-- git
+	use({
+		"lewis6991/gitsigns.nvim",
+		requires = { "nvim-lua/plenary.nvim" },
+		config = function()
+			require("gitsigns").setup()
+		end,
+	})
 
-  -- ###### lua plugin end ##########
+	-- ###### lua plugin end ##########
 end)
