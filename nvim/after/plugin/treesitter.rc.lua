@@ -1,9 +1,8 @@
-if !exists('g:loaded_nvim_treesitter')
-  echom "Not loaded treesitter"
-  finish
-endif
+if vim.g.loaded_nvim_treesitter == nil then
+  print("Not loaded treesitter")
+  return
+end
 
-lua << EOF
 require'nvim-treesitter.configs'.setup {
   ensure_installed = {
     "tsx",
@@ -21,15 +20,15 @@ require'nvim-treesitter.configs'.setup {
     additional_vim_regex_highlighting = false,
   },
   intent = {
-    enable = true,
+    enable = false,
   }
 }
 
 local parser_config = require "nvim-treesitter.parsers".get_parser_configs()
 parser_config.tsx.filetype_to_parsername = { "javascript", "typescript.tsx" }
-EOF
 
-" foldding with treesitter
-set foldmethod=expr
-set foldexpr=nvim_treesitter#foldexpr()
-set nofoldenable
+
+-- set options
+vim.api.nvim_set_option('foldmethod', 'expr')
+vim.api.nvim_set_option('foldexpr', 'nvim_treesitter#foldexpr()')
+vim.api.nvim_set_option('foldenable', false)
