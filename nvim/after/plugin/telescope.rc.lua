@@ -40,7 +40,7 @@ require("telescope").load_extension("fzf")
 vim.api.nvim_set_keymap(
 	"n",
 	"<leader>ff",
-	"<cmd>lua require('telescope.builtin').find_files { previewer = false }<cr>",
+	"<cmd>lua require('telescope.builtin').find_files { previewer = false, find_command={ 'fd', '--type', 'f', '--ignore', '--hidden' , '--strip-cwd-prefix' } }<cr>",
 	{ noremap = true, silent = true }
 )
 vim.api.nvim_set_keymap(
