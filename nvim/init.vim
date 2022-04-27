@@ -165,3 +165,9 @@ call SourceIfExists("~/.config/nvim/local.vim")
 
 " change git fugitive summary format
 let g:fugitive_summary_format = "%s %cr"
+
+" You can configure Neovim to automatically run :PackerCompile whenever plugins.lua is updated with an autocommand:
+augroup packer_user_config
+  autocmd!
+  autocmd BufWritePost plugins.lua source <afile> | PackerCompile
+augroup end
