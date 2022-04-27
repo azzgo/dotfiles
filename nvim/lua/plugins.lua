@@ -47,16 +47,32 @@ return require("packer").startup(function()
 
 	use("numToStr/Comment.nvim")
 	use("kyazdani42/nvim-web-devicons")
+
+  vim.cmd([[ let g:neo_tree_remove_legacy_commands = 1 ]])
 	use({
-		"kyazdani42/nvim-tree.lua",
+		"nvim-neo-tree/neo-tree.nvim",
+		branch = "v2.x",
 		requires = {
-			"kyazdani42/nvim-web-devicons", -- optional, for file icon
+			"nvim-lua/plenary.nvim",
+			"kyazdani42/nvim-web-devicons", -- not strictly required, but recommended
+			"MunifTanjim/nui.nvim",
 		},
 		config = function()
-			require("nvim-tree").setup({ view = { width = 50 } })
+
+      require("neo-tree").setup({
+         window = {
+           mappings = {
+            ["<space>"] = { 
+                "toggle_node", 
+                nowait = true, -- disable `nowait` if you have existing combos starting with this char that you want to use 
+            },
+          },
+         },
+      })
 			-- toggle 文件浏览器
-			vim.api.nvim_set_keymap("n", "<leader>nn", ":NvimTreeToggle<CR>", { noremap = true, silent = true })
-			vim.api.nvim_set_keymap("n", "<leader>nf", ":NvimTreeFindFileToggle<CR>", { noremap = true, silent = true })
+			vim.api.nvim_set_keymap("n", "<leader>nn", ":Neotree toggle<CR>", { noremap = true, silent = true })
+			vim.api.nvim_set_keymap("n", "<leader>nb", ":Neotree buffers<CR>", { noremap = true, silent = true })
+			vim.api.nvim_set_keymap("n", "<leader>nf", ":Neotree reveal_force_cwd<CR>", { noremap = true, silent = true })
 		end,
 	})
 	-- 开屏页
