@@ -129,7 +129,7 @@ local on_attach = function(client, bufnr)
 	end
 end
 
-local servers = { "pyright", "gopls", "rls", "cssls" }
+local servers = { "pyright", "gopls", "rls", "cssls", "tailwindcss" }
 for _, lsp in ipairs(servers) do
 	nvim_lsp[lsp].setup({ on_attach = on_attach, capabilities = capabilities, flags = { debounce_text_changes = 150 } })
 end
