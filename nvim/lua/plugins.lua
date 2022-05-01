@@ -48,7 +48,7 @@ return require("packer").startup(function()
 	use("numToStr/Comment.nvim")
 	use("kyazdani42/nvim-web-devicons")
 
-  vim.cmd([[ let g:neo_tree_remove_legacy_commands = 1 ]])
+	vim.cmd([[ let g:neo_tree_remove_legacy_commands = 1 ]])
 	use({
 		"nvim-neo-tree/neo-tree.nvim",
 		branch = "v2.x",
@@ -58,21 +58,25 @@ return require("packer").startup(function()
 			"MunifTanjim/nui.nvim",
 		},
 		config = function()
-
-      require("neo-tree").setup({
-         window = {
-           mappings = {
-            ["<space>"] = { 
-                "toggle_node", 
-                nowait = true, -- disable `nowait` if you have existing combos starting with this char that you want to use 
-            },
-          },
-         },
-      })
+			require("neo-tree").setup({
+				window = {
+					mappings = {
+						["<space>"] = {
+							"toggle_node",
+							nowait = true, -- disable `nowait` if you have existing combos starting with this char that you want to use
+						},
+					},
+				},
+			})
 			-- toggle 文件浏览器
 			vim.api.nvim_set_keymap("n", "<leader>nn", ":Neotree toggle<CR>", { noremap = true, silent = true })
 			vim.api.nvim_set_keymap("n", "<leader>nb", ":Neotree buffers<CR>", { noremap = true, silent = true })
-			vim.api.nvim_set_keymap("n", "<leader>nf", ":Neotree reveal_force_cwd<CR>", { noremap = true, silent = true })
+			vim.api.nvim_set_keymap(
+				"n",
+				"<leader>nf",
+				":Neotree reveal_force_cwd<CR>",
+				{ noremap = true, silent = true }
+			)
 		end,
 	})
 	-- 开屏页
@@ -119,6 +123,29 @@ return require("packer").startup(function()
 
 	-- syntax
 	use({ "nvim-treesitter/nvim-treesitter", run = ":TSUpdate" })
+	use({
+		"nvim-treesitter/nvim-treesitter-textobjects",
+		config = function()
+			require("nvim-treesitter.configs").setup({
+				textobjects = {
+					select = {
+						enable = true,
+
+						-- Automatically jump forward to textobj, similar to targets.vim
+						lookahead = true,
+
+						keymaps = {
+							-- You can use the capture groups defined in textobjects.scm
+							["af"] = "@function.outer",
+							["if"] = "@function.inner",
+							["ac"] = "@class.outer",
+							["ic"] = "@class.inner",
+						},
+					},
+				},
+			})
+		end,
+	})
 
 	-- fuzzy finder
 	use({
