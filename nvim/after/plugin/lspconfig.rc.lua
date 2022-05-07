@@ -166,5 +166,6 @@ vim.diagnostic.config({
 	virtual_text = false,
 })
 
+vim.g.vista_sidebar_width=50
 vim.g.vista_default_executive = "nvim_lsp"
 -- vista config
