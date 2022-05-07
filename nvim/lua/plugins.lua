@@ -48,6 +48,7 @@ return require("packer").startup(function()
 	use("numToStr/Comment.nvim")
 	use("kyazdani42/nvim-web-devicons")
 
+	-- neotree
 	vim.cmd([[ let g:neo_tree_remove_legacy_commands = 1 ]])
 	use({
 		"nvim-neo-tree/neo-tree.nvim",
@@ -79,6 +80,17 @@ return require("packer").startup(function()
 			)
 		end,
 	})
+
+	-- bufferline
+	use({
+		"akinsho/bufferline.nvim",
+		tag = "v2.*",
+		requires = "kyazdani42/nvim-web-devicons",
+		config = function()
+			require("bufferline").setup({})
+		end,
+	})
+
 	-- 开屏页
 	use({
 		"goolord/alpha-nvim",
