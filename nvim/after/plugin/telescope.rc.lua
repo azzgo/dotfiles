@@ -104,9 +104,16 @@ vim.api.nvim_set_keymap(
 	"<cmd>lua require('telescope.builtin').diagnostics { previewer = false }<cr>",
 	{ noremap = true, silent = true }
 )
-vim.api.nvim_set_keymap(
-	"n",
-	"ca",
-	"<cmd>lua require('telescope.builtin').lsp_code_actions { previewer = false }<cr>",
-	{ noremap = true, silent = true }
-)
+-- vim.api.nvim_set_keymap(
+-- 	"n",
+-- 	"ca",
+-- 	"<cmd>lua require('telescope.builtin').lsp_code_actions { previewer = false }<cr>",
+-- 	{ noremap = true, silent = true }
+-- )
+--
+-- vim.api.nvim_set_keymap(
+-- 	"v",
+-- 	"ca",
+-- 	"<cmd>lua require('telescope.builtin').lsp_code_actions { previewer = false }<cr>",
+-- 	{ noremap = true, silent = true }
+-- )
