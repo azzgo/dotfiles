@@ -124,6 +124,7 @@ local on_attach = function(client, bufnr)
 	buf_set_keymap("n", "<F2>", "<cmd>lua vim.lsp.buf.rename()<CR>", opts)
 	buf_set_keymap("n", "<leader>cf", "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
   buf_set_keymap("n", "<leader>o", ":Vista<CR>", { noremap = true, silent = true })
+  buf_set_keymap("i", "<c-k>", "<cmd>lua vim.lsp.buf.signature_help()<CR>", { noremap = true, silent = true })
 
   -- set saga keymap use buf_set_keymap in case in non lsp config file trigger error
   if vim.g.loaded_lspsaga then
