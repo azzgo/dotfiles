@@ -1,3 +1,7 @@
+" import plug config
+" lua require('impatient').enable_profile()
+lua require('plugins')
+
 " 设置 leader key
 let mapleader=" "
 let g:mapleader=" "
@@ -5,41 +9,12 @@ let g:mapleader=" "
 set updatetime=300
 set timeoutlen=500
 
-" 插件管理
-call plug#begin('~/.config/nvim/plugged')
-
-Plug 'tpope/vim-surround'
-Plug 'aklt/plantuml-syntax'
-Plug 'tpope/vim-repeat'
-Plug 'tpope/vim-fugitive'                         " git cmmand support
-Plug 'preservim/nerdtree'                         " Vim Exporer
-Plug 'mattn/emmet-vim'
-Plug 'honza/vim-snippets'                         " Snippet
-Plug 'neoclide/coc.nvim', {'branch': 'release'}
-Plug 'ryanoasis/vim-devicons'
-Plug 'jiangmiao/auto-pairs'
-Plug 'NLKNguyen/papercolor-theme'  " 样式插件
-Plug 'mhinz/vim-startify'          " 开屏页
-Plug 'tpope/vim-commentary'        " 快速注释
-Plug 'vim-airline/vim-airline'
-Plug 'vim-airline/vim-airline-themes'
-Plug 'easymotion/vim-easymotion'  " 快速移动
-" vim ts 高亮，还是需要
-Plug 'leafgarland/typescript-vim'
-Plug 'peitalin/vim-jsx-typescript'
-" markdown 所需
-Plug 'godlygeek/tabular'
-Plug 'plasticboy/vim-markdown'
-Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && npm install'  }
-Plug 'ferrine/md-img-paste.vim'
-
-call plug#end()
 
 " 语法高亮
 syntax on
 
-" 开启鼠标，主要为了拖拽
-" set mouse=a
+" 开启鼠标操作, 不追求完全全键盘操作
+set mouse=a
 
 " 换行
 set wrap
@@ -96,13 +71,21 @@ set noswapfile
 nnoremap <leader>w :w<CR>
 nnoremap <leader>q :bd<CR>
 
+" map Q to q for ex mode is not usable for me
+map Q q
+
 " 取消高亮
 nnoremap <leader><cr> :noh<CR>
 
+" 当前行个高亮
+set cursorline
+
 
 " 插入状态下，类emacs 行首行尾操作
-inoremap <c-a> <c-o>I
-inoremap <c-e> <c-o>A
+inoremap <c-a> <home>
+inoremap <c-e> <end>
+inoremap <c-f> <right>
+inoremap <c-b> <left>
 
 " 纠正拼写 个人拼写习惯容错
 iabbrev cosnt const
@@ -111,7 +94,7 @@ iabbrev cosnt const
 nnoremap <leader>ev :e $MYVIMRC<CR>
 nnoremap <leader>sv :source $MYVIMRC<CR>
 " open with current buffer workdir
-nnoremap <leader>ew :e %:h
+nnoremap <expr><leader>ew ":e ".expand('%:h')
 
 " bufferNavigate
 nnoremap <silent> [b :bprevious<CR> 
@@ -124,7 +107,15 @@ nnoremap <silent> <leader>nt :tabnew<CR>
 
 " set terminal esc
 :tnoremap <Esc> <C-\><C-n>
-nnoremap <silent> <C-w>t :<C-u>CocCommand terminal.Toggle<CR>
+
+" remap C-C for lua error sometimes
+inoremap <C-c> <Esc>`^
+cnoremap <C-c> <Esc>`^
+xnoremap <C-c> <Esc>`^
+nnoremap <C-c> <Esc>`^
+lnoremap <C-c> <Esc>`^
+snoremap <C-c> <Esc>`^
+tnoremap <C-c> <Esc>`^
 
 " 更改 grep use riggrep
 if executable("rg")
@@ -135,152 +126,28 @@ endif
 " ---------------------------
 "  插件相关配置
 " ---------------------------
-" remap easymotion prefix
-map <Leader>e <Plug>(easymotion-prefix)
-
-" toggle 文件浏览器
-nnoremap <silent> <leader>nn ::NERDTreeToggle<CR>
-nnoremap <silent> <leader>nf ::NERDTreeFind<CR>
 
 " 设置主题样式
 set t_Co=256   " This is may or may not needed.
 
+" set background=dark
 set background=dark
-colorscheme PaperColor
+set termguicolors
+" colorscheme PaperColor
 
+" Set contrast.
+" This configuration option should be placed before `colorscheme gruvbox-material`.
+" Available values: 'hard', 'medium'(default), 'soft'
+let g:gruvbox_material_background = 'hard'
 
-" coc config
-let g:coc_global_extensions = [
-  \ 'coc-tsserver',
-  \ 'coc-prettier', 
-  \ 'coc-snippets', 
-  \ 'coc-json', 
-  \ 'coc-lists',
-  \ 'coc-git',
-  \ ]
-" from readme
+" For better performance
+let g:gruvbox_material_better_performance = 1
 
-" Add `:Fold` command to fold current buffer.
-command! -nargs=? Fold :call     CocAction('fold', <f-args>)
-
-" Add `:OR` command for organize imports of the current buffer.
-command! -nargs=0 OR   :call     CocAction('runCommand', 'editor.action.organizeImport')
-
-
-" Use K to show documentation in preview window.
-nnoremap <silent> K :call <SID>show_documentation()<CR>
-
-function! s:show_documentation()
-  if (index(['vim','help'], &filetype) >= 0)
-    execute 'h '.expand('<cword>')
-  elseif (coc#rpc#ready())
-    call CocActionAsync('doHover')
-  else
-    execute '!' . &keywordprg . " " . expand('<cword>')
-  endif
-endfunction
-
-" Use <C-l> for trigger snippet expand.
-imap <C-l> <Plug>(coc-snippets-expand)
-
-" Use <C-j> for select text for visual placeholder of snippet.
-vmap <C-j> <Plug>(coc-snippets-select)
-
-" Use <C-j> for jump to next placeholder, it's default of coc.nvim
-let g:coc_snippet_next = '<c-j>'
-
-" Use <C-k> for jump to previous placeholder, it's default of coc.nvim
-let g:coc_snippet_prev = '<c-k>'
-
-
-" Tab 自动补全
-inoremap <silent><expr> <TAB>
-      \ pumvisible() ? "\<C-n>" :
-      \ <SID>check_back_space() ? "\<TAB>" :
-      \ coc#refresh()
-inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
-
-function! s:check_back_space() abort
-  let col = col('.') - 1
-  return !col || getline('.')[col - 1]  =~# '\s'
-endfunction
-
-" Use <c-space> to trigger completion.
-inoremap <silent><expr> <c-space> coc#refresh()
-" fix: Iterm <c-space> 会发出 nul 字符，没有找到解绑的地方
-inoremap <silent><expr> <Nul> coc#refresh()
-
-" Use <cr> to confirm completion, `<C-g>u` means break undo chain at current
-" position. Coc only does snippet and additional edit on confirm.
-if exists('*complete_info')
-  inoremap <expr> <cr> complete_info()["selected"] != "-1" ? "\<C-y>" : "\<C-g>u\<CR>"
-else
-  imap <expr> <cr> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
-endif
-
-
-" Remap keys for gotos
-nmap <silent> gd <Plug>(coc-definition)
-nmap <silent> gh <Plug>(coc-type-definition)
-nmap <silent> gi <Plug>(coc-implementation)
-nmap <silent> gr <Plug>(coc-references)
-
-" Remap for rename current word
-nmap <F2> <Plug>(coc-rename)
-
-" Find symbol of current document.
-nnoremap <silent> <space>o  :<C-u>CocList outline<cr>
-
-" Add `:Format` command to format current buffer.
-command! -nargs=0 Format :call CocActionAsync('format')
-
-" ========coc Mapping 相关==========
-
-" Format file
-nmap <leader>cf  :call CocActionAsync('format')<CR>
-
-" 一些常见的 coc 命令
-" Fix autofix problem of current line
-nmap <leader>cq  <Plug>(coc-fix-current)            
-nmap <silent><nowait><leader>co :<C-u>CocList outline<CR>
-nmap <silent><nowait><leader>ca <Plug>(coc-codeaction)
-" Do default action for next item.
-nnoremap <silent><nowait> <leader>j  :<C-u>CocNext<CR>
-" Do default action for previous item.
-nnoremap <silent><nowait> <leader>k  :<C-u>CocPrev<CR>
-
-" 搜索文件
-nnoremap <leader>ff :CocList files<CR>
-" Grep 项目搜索
-nnoremap <leader>fg :CocList grep<CR>
-" ========coc Mapping 相关==========
-
-nmap [d <Plug>(coc-diagnostic-next)
-nmap ]d <Plug>(coc-diagnostic-prev)
-
-" coc-git 相关 End=========
-
-
-" snippet related
-
-" Remap <C-f> and <C-b> for scroll float windows/popups.
-if has('nvim-0.4.0') || has('patch-8.2.0750')
-  nnoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-f>"
-  nnoremap <silent><nowait><expr> <C-b> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-b>"
-  inoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(1)\<cr>" : "\<Right>"
-  inoremap <silent><nowait><expr> <C-b> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(0)\<cr>" : "\<Left>"
-  vnoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-f>"
-  vnoremap <silent><nowait><expr> <C-b> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-b>"
-endif
-" Remap <C-f> and <C-b> for scroll float windows/popups. End
-
-" 开屏问候语
-let g:startify_custom_header = map(split(system('fortune -s chinese | cowsay | cat'), '\n'), '"   ". v:val') + ['','']
+colorscheme gruvbox-material
 
 " plasticboy/vim-markdown Configuration
 let g:vim_markdown_folding_disabled = 1
 let g:vim_markdown_emphasis_multiline = 0
-
 
 " Markdown configuration
 autocmd FileType markdown set nowrap
@@ -298,4 +165,12 @@ endfunction
 
 "" local config for overide
 call SourceIfExists("~/.config/nvim/local.vim")
-""
+
+" change git fugitive summary format
+let g:fugitive_summary_format = "%s %cr"
+
+" You can configure Neovim to automatically run :PackerCompile whenever plugins.lua is updated with an autocommand:
+augroup packer_user_config
+  autocmd!
+  autocmd BufWritePost plugins.lua source <afile> | PackerCompile
+augroup end

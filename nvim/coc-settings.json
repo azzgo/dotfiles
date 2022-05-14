@@ -3,7 +3,6 @@
   "javascript.validate.enable": false,
   "javascript.suggest.enabled": false,
   "typescript.validate.enable": true,
-  "git.addGBlameToVirtualText": true,
   "coc.preferences.enableMarkdown": false,
   "list.source.files.args": ["--hidden", "--files"],
   "snippets.extends": {
