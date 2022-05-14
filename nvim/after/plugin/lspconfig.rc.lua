@@ -64,6 +64,7 @@ cmp.setup({
 		{ name = "luasnip" }, -- For luasnip users.
 		{ name = "buffer" },
 		{ name = "path" },
+		{ name = "nvim_lsp_signature_help" },
 	}),
 	formatting = {
 		format = function(entry, vim_item)
@@ -123,18 +124,18 @@ local on_attach = function(client, bufnr)
 
 	buf_set_keymap("n", "<F2>", "<cmd>lua vim.lsp.buf.rename()<CR>", opts)
 	buf_set_keymap("n", "<leader>cf", "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
-  buf_set_keymap("n", "<leader>o", ":Vista<CR>", { noremap = true, silent = true })
-  buf_set_keymap("i", "<c-k>", "<cmd>lua vim.lsp.buf.signature_help()<CR>", { noremap = true, silent = true })
+	buf_set_keymap("n", "<leader>o", ":Vista<CR>", { noremap = true, silent = true })
+	buf_set_keymap("i", "<c-k>", "<cmd>lua vim.lsp.buf.signature_help()<CR>", { noremap = true, silent = true })
 
-  -- set saga keymap use buf_set_keymap in case in non lsp config file trigger error
-  if vim.g.loaded_lspsaga then
-    buf_set_keymap("n", "]d", ":Lspsaga diagnostic_jump_next<CR>", { noremap = true, silent = true })
-    buf_set_keymap("n", "[d", ":Lspsaga diagnostic_jump_prev<CR>", { noremap = true, silent = true })
-    buf_set_keymap("n", "<c-k>", ":Lspsaga show_line_diagnostics<CR>", { noremap = true, silent = true })
-    buf_set_keymap("n", "K", ":Lspsaga hover_doc<CR>", { noremap = true, silent = true })
-    buf_set_keymap("n", "ca", ":Lspsaga code_action<CR>", { noremap = true, silent = true })
-    buf_set_keymap("x", "ca", ":<c-u>Lspsaga range_code_action<CR>", { noremap = true, silent = true })
-  end
+	-- set saga keymap use buf_set_keymap in case in non lsp config file trigger error
+	if vim.g.loaded_lspsaga then
+		buf_set_keymap("n", "]d", ":Lspsaga diagnostic_jump_next<CR>", { noremap = true, silent = true })
+		buf_set_keymap("n", "[d", ":Lspsaga diagnostic_jump_prev<CR>", { noremap = true, silent = true })
+		buf_set_keymap("n", "<c-k>", ":Lspsaga show_line_diagnostics<CR>", { noremap = true, silent = true })
+		buf_set_keymap("n", "K", ":Lspsaga hover_doc<CR>", { noremap = true, silent = true })
+		buf_set_keymap("n", "ca", ":Lspsaga code_action<CR>", { noremap = true, silent = true })
+		buf_set_keymap("x", "ca", ":<c-u>Lspsaga range_code_action<CR>", { noremap = true, silent = true })
+	end
 
 	if client.name == "tsserver" then
 		client.resolved_capabilities.document_formatting = false
@@ -178,6 +179,6 @@ vim.diagnostic.config({
 	virtual_text = false,
 })
 
-vim.g.vista_sidebar_width=50
+vim.g.vista_sidebar_width = 50
 vim.g.vista_default_executive = "nvim_lsp"
 -- vista config

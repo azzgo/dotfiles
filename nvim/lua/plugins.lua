@@ -204,6 +204,7 @@ return require("packer").startup(function()
 	use("hrsh7th/cmp-cmdline")
 	use("hrsh7th/nvim-cmp")
 	use("saadparwaiz1/cmp_luasnip")
+  use("hrsh7th/cmp-nvim-lsp-signature-help")
 	use("onsails/lspkind-nvim")
 
 	-- git
