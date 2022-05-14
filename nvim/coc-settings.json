@@ -22,7 +22,5 @@
   },
   "list.normalMappings": {
     "<C-c>": "do:exit"
-  },
-  "git.enableGutters": true,
-  "coc.preferences.extensionUpdateCheck": "daily"
+  }
 }
