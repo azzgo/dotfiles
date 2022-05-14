@@ -4,23 +4,10 @@
   "javascript.suggest.enabled": false,
   "typescript.validate.enable": true,
   "coc.preferences.enableMarkdown": false,
-  "list.source.files.args": ["--hidden", "--files"],
   "snippets.extends": {
     "cpp": ["c"],
     "javascriptreact": ["javascript"],
     "typescript": ["javascript"],
     "typescriptreact": ["javascriptreact"]
-  },
-  "list.source.symbols.defaultOptions": [
-    "--number-select",
-    "--interactive",
-    "--ignore-case"
-  ],
-  "list.source.grep.defaultOptions": ["--interactive", "--auto-preview"],
-  "list.insertMappings": {
-    "<C-c>": "do:exit"
-  },
-  "list.normalMappings": {
-    "<C-c>": "do:exit"
   }
 }

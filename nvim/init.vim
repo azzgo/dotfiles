@@ -1,5 +1,5 @@
 " import plug config
-" lua require('impatient').enable_profile()
+lua require('impatient').enable_profile()
 lua require('plugins')
 
 " 设置 leader key
