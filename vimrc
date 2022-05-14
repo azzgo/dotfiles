@@ -63,6 +63,9 @@ set noswapfile
 nnoremap <leader>w :w<CR>
 nnoremap <leader>q :bd<CR>
 
+" map Q to q for ex mode is not usable for me
+map Q q
+
 " 取消高亮
 nnoremap <leader><cr> :noh<CR>
 
