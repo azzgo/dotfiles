@@ -1,5 +1,9 @@
 vim.cmd([[packadd packer.nvim]])
 
+require("packer").init({
+  auto_clean = false
+})
+
 return require("packer").startup(function()
 	-- Packer can manage itself
 	use("wbthomason/packer.nvim")
