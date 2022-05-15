@@ -25,15 +25,14 @@ When i prepare the config, learned a lot from this repo [dotfiles-public](https:
 
 ### Language Server 
 
-- typescript
-  - nodejs
-  - typescript
-  - typescript-language-server
-- tailwindcss
-  - nodejs
-  - tailwindcss-language-server
+use [lsp-install](https://github.com/williamboman/nvim-lsp-installer) manage Language Server, you need prepare
 
-and so on add later
+- nodejs with npm globally
+- golang globally
+
+#### null-ls
+
+only `prettier` you need install globally.
 
 ## Vim 
 
