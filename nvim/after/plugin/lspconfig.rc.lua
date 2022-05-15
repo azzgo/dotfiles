@@ -7,6 +7,11 @@ if vim.g.loaded_cmp == nil then
 	return
 end
 
+-- load lsp-install before lsp config
+require("nvim-lsp-installer").setup({
+  automatic_installation = true,
+})
+
 local nvim_lsp = require("lspconfig")
 local cmp = require("cmp")
 local lspkind = require("lspkind")

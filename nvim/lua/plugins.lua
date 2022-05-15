@@ -124,7 +124,10 @@ return require("packer").startup(function()
 	})
 
 	--  lsp config
-	use("neovim/nvim-lspconfig")
+  use {
+    "williamboman/nvim-lsp-installer",
+    "neovim/nvim-lspconfig",
+  }
 	use("tami5/lspsaga.nvim")
 	use({ "liuchengxu/vista.vim", requires = { "neovim/nvim-lspconfig" } })
 	use({
