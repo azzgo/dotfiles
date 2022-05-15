@@ -4,6 +4,9 @@
   "javascript.suggest.enabled": false,
   "typescript.validate.enable": true,
   "coc.preferences.enableMarkdown": false,
+  "diagnostic.checkCurrentLine": true,
+  "diagnostic.enableMessage": "never",
+  "snippets.ultisnips.enable": false,
   "snippets.extends": {
     "cpp": ["c"],
     "javascriptreact": ["javascript"],
