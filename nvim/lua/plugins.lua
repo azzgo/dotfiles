@@ -24,7 +24,16 @@ return require("packer").startup(function()
 	use("aklt/plantuml-syntax")
 	use("tpope/vim-repeat")
 	-- git cmmand support
-	use("tpope/vim-fugitive")
+	use({
+		"tpope/vim-fugitive",
+		config = function()
+			vim.api.nvim_set_keymap("n", "<leader>gg", ":<c-u>G<CR>", { noremap = true, silent = true })
+			vim.api.nvim_set_keymap("n", "<leader>ga", ":<c-u>G add ", { noremap = true })
+			vim.api.nvim_set_keymap("n", "<leader>gp", ":<c-u>G push<CR>", { noremap = true, silent = true })
+			vim.api.nvim_set_keymap("n", "<leader>gup", ":<c-u>G pull --rebase<CR>", { noremap = true, silent = true })
+			vim.api.nvim_set_keymap("n", "<leader>gc", ":<c-u>G commit -v<CR>", { noremap = true, silent = true })
+		end,
+	})
 
 	-- which key
 	use({
