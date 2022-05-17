@@ -47,9 +47,6 @@ return require("packer").startup(function()
 		end,
 	})
 
-	-- markdown 所需
-	use({ "iamcco/markdown-preview.nvim", run = "cd app && npm install" })
-	use("ferrine/md-img-paste.vim")
 	-- profill
 	use("dstein64/vim-startuptime")
 	-- theme
