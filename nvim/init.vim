@@ -145,18 +145,6 @@ let g:gruvbox_material_better_performance = 1
 
 colorscheme gruvbox-material
 
-" plasticboy/vim-markdown Configuration
-let g:vim_markdown_folding_disabled = 1
-let g:vim_markdown_emphasis_multiline = 0
-
-" Markdown configuration
-autocmd FileType markdown set nowrap
-command! -nargs=0 ImgPaste :call mdip#MarkdownClipboardImage()<CR> 
-autocmd FileType markdown nmap <silent><leader>pi :<C-u>ImgPaste<CR> 
-" there are some defaults for image directory and image name, you can change them
-let g:mdip_imgdir = 'assets'
-let g:mdip_imgname = 'pic'
-
 function! SourceIfExists(file)
   if filereadable(expand(a:file))
     exe 'source' a:file
