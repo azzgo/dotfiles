@@ -101,6 +101,8 @@ nnoremap <silent> [b :bprevious<CR>
 nnoremap <silent> ]b :bnext<CR> 
 nnoremap <silent> [B :bfirst<CR> 
 nnoremap <silent> ]B :blast<CR> 
+nnoremap <silent> [q :cprevious<CR> 
+nnoremap <silent> ]q :cnext<CR> 
 
 " tabNew
 nnoremap <silent> <leader>nt :tabnew<CR> 
