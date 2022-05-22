@@ -126,7 +126,7 @@ return require("packer").startup(function()
     "neovim/nvim-lspconfig",
   }
 	use("tami5/lspsaga.nvim")
-	use({ "liuchengxu/vista.vim", requires = { "neovim/nvim-lspconfig" } })
+  use({ 'stevearc/aerial.nvim', requires = { 'neovim/nvim-lspconfig' } })
 	use({
 		"jose-elias-alvarez/null-ls.nvim",
 		config = function()

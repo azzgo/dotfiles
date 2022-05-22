@@ -115,6 +115,8 @@ local capabilities = require("cmp_nvim_lsp").update_capabilities(vim.lsp.protoco
 -- Use an on_attach function to only map the following keys
 -- after the language server attaches to the current buffer
 local on_attach = function(client, bufnr)
+  -- init aerial with lsp
+  require("aerial").on_attach(client, bufnr);
 	local function buf_set_keymap(...)
 		vim.api.nvim_buf_set_keymap(bufnr, ...)
 	end
@@ -124,12 +126,11 @@ local on_attach = function(client, bufnr)
 
 	-- Enable completion triggered by <c-x><c-o>
 	buf_set_option("omnifunc", "v:lua.vim.lsp.omnifunc")
-	-- Mappings.
+	-- Mappings start
 	local opts = { noremap = true, silent = true }
 
 	buf_set_keymap("n", "<F2>", "<cmd>lua vim.lsp.buf.rename()<CR>", opts)
 	buf_set_keymap("n", "<leader>cf", "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
-	buf_set_keymap("n", "<leader>o", ":Vista<CR>", { noremap = true, silent = true })
 	buf_set_keymap("i", "<c-k>", "<cmd>lua vim.lsp.buf.signature_help()<CR>", { noremap = true, silent = true })
 
 	-- set saga keymap use buf_set_keymap in case in non lsp config file trigger error
@@ -141,6 +142,7 @@ local on_attach = function(client, bufnr)
 		buf_set_keymap("n", "ca", ":Lspsaga code_action<CR>", { noremap = true, silent = true })
 		buf_set_keymap("x", "ca", ":<c-u>Lspsaga range_code_action<CR>", { noremap = true, silent = true })
 	end
+	-- Mappings end
 
 	if client.name == "tsserver" then
 		client.resolved_capabilities.document_formatting = false
@@ -184,6 +186,19 @@ vim.diagnostic.config({
 	virtual_text = false,
 })
 
-vim.g.vista_sidebar_width = 50
-vim.g.vista_default_executive = "nvim_lsp"
--- vista config
+
+--- setup aerial
+require("aerial").setup({
+  on_attach = function(bufnr)
+    local function buf_set_keymap(...)
+      vim.api.nvim_buf_set_keymap(bufnr, ...)
+    end
+    local opts = { noremap = true, silent = true }
+    -- aerial
+    buf_set_keymap("n", "<leader>o", "<cmd>AerialToggle!<CR>", { noremap = true, silent = true })
+    buf_set_keymap("n", "[o", "<cmd>AerialPrev<CR>", { noremap = true, silent = true })
+    buf_set_keymap("n", "]o", "<cmd>AerialNext<CR>", { noremap = true, silent = true })
+  end
+})
+
+
