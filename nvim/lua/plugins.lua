@@ -51,7 +51,8 @@ return require("packer").startup(function()
 	use("dstein64/vim-startuptime")
 	-- theme
 	-- use("NLKNguyen/papercolor-theme")
-	use("sainnhe/gruvbox-material")
+	-- use("sainnhe/gruvbox-material")
+	use({ "shaunsingh/nord.nvim" })
 
 	-- ##########lua plugins start##############
 
@@ -121,12 +122,12 @@ return require("packer").startup(function()
 	})
 
 	--  lsp config
-  use {
-    "williamboman/nvim-lsp-installer",
-    "neovim/nvim-lspconfig",
-  }
+	use({
+		"williamboman/nvim-lsp-installer",
+		"neovim/nvim-lspconfig",
+	})
 	use("tami5/lspsaga.nvim")
-  use({ 'stevearc/aerial.nvim', requires = { 'neovim/nvim-lspconfig' } })
+	use({ "stevearc/aerial.nvim", requires = { "neovim/nvim-lspconfig" } })
 	use({
 		"jose-elias-alvarez/null-ls.nvim",
 		config = function()
