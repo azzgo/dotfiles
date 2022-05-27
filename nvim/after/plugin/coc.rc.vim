@@ -33,8 +33,8 @@ endfunction
 " Symbol renaming.
 nmap <f2> <Plug>(coc-rename)
 
-xmap <leader>cf <Plug>(coc-format-selected)
-nmap <leader>cf <Plug>(coc-format-selected)
+xmap <leader>cff <Plug>(coc-format-selected)
+nmap <leader>cff <Plug>(coc-format)
 
 " Applying codeAction to the selected region.
 xmap <leader>ca  <Plug>(coc-codeaction-selected)
