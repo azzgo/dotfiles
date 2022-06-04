@@ -7,5 +7,7 @@
         "globals": [
             "vim"
         ]
-    }
+    },
+    "runtime.version": "LuaJIT",
+    "$schema": "https://raw.githubusercontent.com/sumneko/vscode-lua/master/setting/schema.json"
 }
