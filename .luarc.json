@@ -1,5 +1,11 @@
 {
-  "diagnostics": {
-    "globals": ["vim"]
-  }
+    "Lua.diagnostics.globals": [
+        "vim",
+        "use"
+    ],
+    "diagnostics": {
+        "globals": [
+            "vim"
+        ]
+    }
 }
