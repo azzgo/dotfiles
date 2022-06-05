@@ -16,6 +16,7 @@ local nvim_lsp = require("lspconfig")
 local cmp = require("cmp")
 local lspkind = require("lspkind")
 local luasnip = require("luasnip")
+local ts_utils = require("nvim-lsp-ts-utils")
 
 -- load vscode style snippets
 require("luasnip.loaders.from_vscode").lazy_load()
@@ -157,7 +158,12 @@ end
 -- tsserver
 
 nvim_lsp.tsserver.setup({
-	on_attach = on_attach,
+	on_attach = function(client, bufnr) 
+    ts_utils.setup {}
+    on_attach(client, bufnr)
+
+    ts_utils.setup_client(client)
+  end,
 	capabilities = capabilities,
 	flags = { debounce_text_changes = 150 },
 	handlers = {
@@ -165,19 +171,6 @@ nvim_lsp.tsserver.setup({
 			-- Disable virtual_text
 			virtual_text = false,
 		}),
-	},
-	commands = {
-		OrganizeImports = {
-			function()
-				local params = {
-					command = "_typescript.organizeImports",
-					arguments = { vim.api.nvim_buf_get_name(0) },
-					title = "",
-				}
-				vim.lsp.buf.execute_command(params)
-			end,
-			description = "Organize Imports",
-		},
 	},
 })
 
