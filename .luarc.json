@@ -1,13 +1,14 @@
 {
+    "$schema": "https://raw.githubusercontent.com/sumneko/vscode-lua/master/setting/schema.json",
     "Lua.diagnostics.globals": [
         "vim",
         "use"
     ],
     "diagnostics": {
         "globals": [
-            "vim"
+            "vim",
+            "use"
         ]
     },
-    "runtime.version": "LuaJIT",
-    "$schema": "https://raw.githubusercontent.com/sumneko/vscode-lua/master/setting/schema.json"
+    "runtime.version": "LuaJIT"
 }
