@@ -8,6 +8,7 @@ saga.init_lsp_saga({
 	border_style = "round",
   code_action_prompt = {
     sign = false,
-  }
+  },
+  rename_prompt_prefix = "",
 })
 
