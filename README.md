@@ -18,10 +18,13 @@ When i prepare the config, learned a lot from this repo [dotfiles-public](https:
 
 - g++, gcc: for syntax file compile
 
-#### telescope
+#### fzf.lua
 
-- fzf: for extension for telescope-fzf-native
-  - make: for plugin install compile
+- fzf: a fatasitc binary executable program dependency you must install first.
+- optional: suggest to install for better performance in search file and text
+  - fd
+  - riggrep
+  
 
 ### Language Server 
 
@@ -37,3 +40,7 @@ only `prettier` you need install globally.
 ## Vim 
 
 The vim config is only a minimal config for liking server enviroment editor, so it doesn't have magic here.
+
+## wezterm
+
+A amazing gui based terminal i liked
