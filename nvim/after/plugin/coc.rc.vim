@@ -19,7 +19,7 @@ nmap <silent> gi <Plug>(coc-implementation)
 nmap <silent> gr <Plug>(coc-references)
 
 " coc list
-nmap <silent><leader>ggr :<c-u>CocListResume<cr>
+nmap <silent>ggr :<c-u>CocListResume<cr>
 
 
 " do hover
