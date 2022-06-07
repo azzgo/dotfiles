@@ -18,6 +18,9 @@ nmap <silent> gD <Plug>(coc-type-definition)
 nmap <silent> gi <Plug>(coc-implementation)
 nmap <silent> gr <Plug>(coc-references)
 
+" coc list
+nmap <silent><leader>clr :<c-u>CocListResume<cr>
+
 
 " do hover
 nnoremap <silent> K :call ShowDocumentation()<CR>
