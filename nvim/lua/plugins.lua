@@ -126,7 +126,7 @@ return require("packer").startup(function()
 		"williamboman/nvim-lsp-installer",
 		"neovim/nvim-lspconfig",
 	})
-  use({"jose-elias-alvarez/nvim-lsp-ts-utils", require = { "neovim/nvim-lspconfig" }})
+	use({ "jose-elias-alvarez/nvim-lsp-ts-utils", require = { "neovim/nvim-lspconfig" } })
 	use("tami5/lspsaga.nvim")
 	use({ "stevearc/aerial.nvim", requires = { "neovim/nvim-lspconfig" } })
 	use({
@@ -134,7 +134,7 @@ return require("packer").startup(function()
 		config = function()
 			local null_ls = require("null-ls")
 			null_ls.setup({
-        ---@diagnostic disable-next-line: unused-local
+				---@diagnostic disable-next-line: unused-local
 				on_attach = function(client, bufnr)
 					local opts = { noremap = true, silent = true }
 					vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>cf", "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
@@ -175,13 +175,7 @@ return require("packer").startup(function()
 		end,
 	})
 
-	-- fuzzy finder
-	use({
-		"nvim-telescope/telescope.nvim",
-		requires = {
-			{ "nvim-lua/plenary.nvim" },
-		},
-	})
+	use({ "ibhagwan/fzf-lua", requires = { "kyazdani42/nvim-web-devicons" } })
 
 	use({
 		"folke/todo-comments.nvim",
@@ -204,8 +198,6 @@ return require("packer").startup(function()
 			})
 		end,
 	})
-
-	use({ "nvim-telescope/telescope-fzf-native.nvim", run = "make" })
 
 	--- cmp
 	use("L3MON4D3/LuaSnip")
