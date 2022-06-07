@@ -17,9 +17,18 @@ nmap <silent> gd <Plug>(coc-definition)
 nmap <silent> gD <Plug>(coc-type-definition)
 nmap <silent> gi <Plug>(coc-implementation)
 nmap <silent> gr <Plug>(coc-references)
+nmap <silent> gK :<c-u>CocList diagnostics<cr>
 
 " coc list
 nmap <silent>ggr :<c-u>CocListResume<cr>
+
+" fuzzy search
+nnoremap <silent> <leader>ff  :<c-u>CocList files<CR>
+nnoremap <silent> <leader>fg  :<c-u>CocList grep<CR>
+nnoremap <silent> <leader>fh  :<c-u>CocList helptags<CR>
+nnoremap <silent> <leader>fq  :<c-u>CocList quickfix<CR>
+nnoremap <silent> <leader>fb  :<c-u>CocList buffers<CR>
+
 
 
 " do hover

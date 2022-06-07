@@ -127,14 +127,6 @@ return require("packer").startup(function()
 	-- syntax
 	use({ "nvim-treesitter/nvim-treesitter", run = ":TSUpdate" })
 
-	-- fuzzy finder
-	use({
-		"nvim-telescope/telescope.nvim",
-		requires = {
-			{ "nvim-lua/plenary.nvim" },
-		},
-	})
-
 	use({
 		"folke/todo-comments.nvim",
 		requires = "nvim-lua/plenary.nvim",
@@ -156,8 +148,6 @@ return require("packer").startup(function()
 			})
 		end,
 	})
-
-	use({ "nvim-telescope/telescope-fzf-native.nvim", run = "make" })
 
 	-- git
 	use({
