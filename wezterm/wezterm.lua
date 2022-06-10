@@ -14,6 +14,7 @@ return {
 	disable_default_key_bindings = true,
 	hide_tab_bar_if_only_one_tab = true,
 	adjust_window_size_when_changing_font_size = false,
+  warn_about_missing_glyphs = false,
 	keys = {
 		{ key = "[", mods = "LEADER", action = "ActivateCopyMode" },
 		{ key = "=", mods = "CTRL", action = "DisableDefaultAssignment" },
