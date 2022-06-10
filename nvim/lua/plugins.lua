@@ -19,9 +19,10 @@ return require("packer").startup(function()
 	--- quick move
 	use("justinmk/vim-sneak")
 
-	--  origin vim plugin use 'tpope/vim-surround'
-	use("tpope/vim-surround")
+  -- syntaxs
 	use("aklt/plantuml-syntax")
+--  origin vim plugin use 'tpope/vim-surround'
+	use("tpope/vim-surround")
 	use("tpope/vim-repeat")
 	-- git cmmand support
 	use({
