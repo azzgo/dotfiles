@@ -37,6 +37,10 @@ use [lsp-install](https://github.com/williamboman/nvim-lsp-installer) manage Lan
 
 only `prettier` you need install globally.
 
+### other notes
+
+- the sql syntax file is forked copy from [Improved SQL syntax for vim](https://github.com/shmup/vim-sql-syntax)
+
 ## Vim 
 
 The vim config is only a minimal config for liking server enviroment editor, so it doesn't have magic here.
