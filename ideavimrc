@@ -1,0 +1,59 @@
+" 设置 leader key
+let mapleader=" "
+let g:mapleader=" "
+
+set updatetime=300
+set timeoutlen=800
+"========================
+"       basics
+"========================
+" buffer navigation
+:map <leader>q bq
+:map [b :bprevious<CR>
+:map ]b :bnext<CR>
+
+" 插入状态下，类emacs 行首行尾操作
+inoremap <c-a> <Home>
+inoremap <c-e> <End>
+
+" no sound
+set visualbell
+set noerrorbells
+
+" use system clipboard
+set clipboard+=unnamedplus
+
+set relativenumber
+set showcmd
+set hlsearch
+
+"========================
+"       Action Mapper
+"========================
+" code format
+:map <leader>cf <Action>(ReformatCode)
+
+" code action
+:map ca <Action>(ShowIntentionActions)
+
+" code navigation
+:map gr <Action>(GotoRelated)
+:map gi <Action>(GotoImplementation)
+:map gd <Action>(GotoDeclaration)
+:map gD <Action>(GotoTypeDeclaration)
+
+
+"========================
+"       Plugins
+"========================
+
+Plug 'preservim/nerdtree'
+Plug 'tpope/vim-surround'
+Plug 'tpope/vim-commentary'
+
+
+" Exploerer
+:map <leader>nn :NERDTreeToggle<CR>
+:map <leader>nf ::NERDTreeFind<CR>
+
+
