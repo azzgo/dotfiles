@@ -5,7 +5,6 @@
   "typescript.validate.enable": true,
   "coc.preferences.enableMarkdown": false,
   "suggest.autoTrigger": "none",
-  "list.source.files.args": ["--hidden", "--files"],
   "diagnostic.checkCurrentLine": true,
   "diagnostic.enableMessage": "never",
   "snippets.ultisnips.enable": false,

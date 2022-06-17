@@ -79,4 +79,4 @@ command! -nargs=0 Format :call CocActionAsync('format')
 " Add `:Fold` command to fold current buffer.
 command! -nargs=? Fold :call     CocAction('fold', <f-args>)
 
-nnoremap <silent> <leader>o :Vista coc<CR>
+nnoremap <silent> <leader>o :<c-u>CocOutline<CR>
