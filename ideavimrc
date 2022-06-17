@@ -42,6 +42,9 @@ set hlsearch
 :map gd <Action>(GotoDeclaration)
 :map gD <Action>(GotoTypeDeclaration)
 
+" find file
+:map <leader>ff <Action>(GotoFile)
+:map <leader>fg <Action>(SearchEverywhere)
 
 "========================
 "       Plugins
