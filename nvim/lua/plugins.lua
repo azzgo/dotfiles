@@ -121,7 +121,7 @@ return require("packer").startup(function()
 	})
 
 	--  lsp config
-  vim.g.coc_global_extensions = { 'coc-json', 'coc-tsserver', 'coc-eslint', 'coc-css', 'coc-prettier', 'coc-lists', 'coc-snippets' }
+  vim.g.coc_global_extensions = { 'coc-json', 'coc-tsserver', 'coc-eslint', 'coc-css', 'coc-prettier', 'coc-lists', 'coc-snippets', 'coc-java' }
   use({ "neoclide/coc.nvim", branch = "release" })
 
 	-- syntax
