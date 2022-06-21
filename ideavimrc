@@ -23,6 +23,7 @@ set noerrorbells
 " use system clipboard
 set clipboard+=unnamedplus
 
+set number
 set relativenumber
 set showcmd
 set hlsearch
