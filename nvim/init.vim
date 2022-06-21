@@ -14,7 +14,7 @@ set timeoutlen=500
 syntax on
 
 " 开启鼠标操作, 不追求完全全键盘操作
-set mouse=a
+set mouse=n
 
 " 换行
 set wrap
