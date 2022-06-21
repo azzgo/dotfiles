@@ -97,7 +97,11 @@ return require("packer").startup(function()
 		tag = "v2.*",
 		requires = "kyazdani42/nvim-web-devicons",
 		config = function()
-			require("bufferline").setup({})
+			require("bufferline").setup({
+        options = {
+          mode = "tabs"
+        }
+      })
 		end,
 	})
 
