@@ -43,9 +43,29 @@ set hlsearch
 :map gd <Action>(GotoDeclaration)
 :map gD <Action>(GotoTypeDeclaration)
 
+" quick navigation
+:map [b :bprevious<cr>
+:map ]b :bnext<cr>
+:map [t :tabprevious<cr>
+:map ]t :tabnext<cr>
+:map [d <Action>(GotoPreviousError)
+:map ]d <Action>(GotoNextError)
+
+" vsc
+:map <leader>ghp <Action>(VcsShowCurrentChangeMarker)
+:map [h <Action>(VcsShowPrevChangeMarker)
+:map ]h <Action>(VcsShowNextChangeMarker)
+
+
 " find file
 :map <leader>ff <Action>(GotoFile)
 :map <leader>fg <Action>(FindInPath)
+
+" outline
+:map <leader>o <Action>(ActivateStructureToolWindow)
+
+" dignostic 
+:map <C-k> <Action>(ShowErrorDescription)
 
 " fix c-o can not back
 :map <C-o> <Action>(Back)
