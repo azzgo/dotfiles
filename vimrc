@@ -77,7 +77,10 @@ nnoremap <silent> ]B :blast<CR>
 nnoremap <silent> [q :cprevious<CR> 
 nnoremap <silent> ]q :cnext<CR> 
 
+" tabs 
 nnoremap <silent> <leader>nt :tabnew<CR> 
+nnoremap <silent> [t :tabprevious<CR> 
+nnoremap <silent> ]t :tabnext<CR> 
 
 " 插入状态下，类emacs 行首行尾操作
 inoremap <c-a> <home>

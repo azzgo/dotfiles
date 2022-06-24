@@ -70,6 +70,17 @@ set hlsearch
 " fix c-o can not back
 :map <C-o> <Action>(Back)
 
+" tabs
+nnoremap <silent> <leader>nt :tabnew<CR> 
+nnoremap <silent> [t :tabprevious<CR> 
+nnoremap <silent> ]t :tabnext<CR> 
+" map alt + n -> tab n
+:map <M-1> 1gt
+:map <M-2> 2gt 
+:map <M-3> 3gt 
+:map <M-4> 4gt 
+:map <M-5> 5gt 
+
 "========================
 "       Plugins
 "========================
