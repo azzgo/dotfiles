@@ -1,32 +1,4 @@
-" 设置 leader key
-let mapleader=" "
-let g:mapleader=" "
-
-set updatetime=300
-set timeoutlen=800
-"========================
-"       basics
-"========================
-" buffer navigation
-:map <leader>q bq
-:map [b :bprevious<CR>
-:map ]b :bnext<CR>
-
-" 插入状态下，类emacs 行首行尾操作
-inoremap <c-a> <Home>
-inoremap <c-e> <End>
-
-" no sound
-set visualbell
-set noerrorbells
-
-" use system clipboard
-set clipboard+=unnamedplus
-
-set number
-set relativenumber
-set showcmd
-set hlsearch
+source ~/.vimrc
 
 "========================
 "       Action Mapper
@@ -36,6 +8,8 @@ set hlsearch
 
 " code action
 :map ca <Action>(ShowIntentionActions)
+:map cr <Action>(Refactorings.QuickListPopupAction)
+:map cff <Action>(ReformatCode)
 
 " code navigation
 :map gr <Action>(GotoRelated)
@@ -43,18 +17,15 @@ set hlsearch
 :map gd <Action>(GotoDeclaration)
 :map gD <Action>(GotoTypeDeclaration)
 
-" quick navigation
-:map [b :bprevious<cr>
-:map ]b :bnext<cr>
-:map [t :tabprevious<cr>
-:map ]t :tabnext<cr>
 :map [d <Action>(GotoPreviousError)
 :map ]d <Action>(GotoNextError)
+
 
 " vsc
 :map <leader>ghp <Action>(VcsShowCurrentChangeMarker)
 :map [h <Action>(VcsShowPrevChangeMarker)
 :map ]h <Action>(VcsShowNextChangeMarker)
+:map <leader>a <Action>(Annotate)
 
 
 " find file
@@ -69,17 +40,6 @@ set hlsearch
 
 " fix c-o can not back
 :map <C-o> <Action>(Back)
-
-" tabs
-nnoremap <silent> <leader>nt :tabnew<CR> 
-nnoremap <silent> [t :tabprevious<CR> 
-nnoremap <silent> ]t :tabnext<CR> 
-" map alt + n -> tab n
-:map <M-1> 1gt
-:map <M-2> 2gt 
-:map <M-3> 3gt 
-:map <M-4> 4gt 
-:map <M-5> 5gt 
 
 "========================
 "       Plugins
