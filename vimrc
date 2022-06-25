@@ -81,6 +81,12 @@ nnoremap <silent> ]q :cnext<CR>
 nnoremap <silent> <leader>nt :tabnew<CR> 
 nnoremap <silent> [t :tabprevious<CR> 
 nnoremap <silent> ]t :tabnext<CR> 
+" map alt + n -> tab n
+nnoremap <M-1> 1gt
+nnoremap <M-2> 2gt
+nnoremap <M-3> 3gt
+nnoremap <M-4> 4gt
+nnoremap <M-5> 5gt
 
 " 插入状态下，类emacs 行首行尾操作
 inoremap <c-a> <home>
@@ -110,13 +116,4 @@ if executable("rg")
   set grepprg=rg\ --vimgrep\ --no-heading
   set grepformat=%f:%l:%c:%m,%f:%l:%m
 endif
-
-"==============VIM Plug========================
-call plug#begin('~/.vim/plugged')
-
-Plug 'tpope/vim-commentary'        " 快速注释
-Plug 'tpope/vim-surround'
-Plug 'tpope/vim-repeat'
-
-call plug#end()
 
