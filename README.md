@@ -41,7 +41,11 @@ only `prettier` you need install globally.
 
 - the sql syntax file is forked copy from [Improved SQL syntax for vim](https://github.com/shmup/vim-sql-syntax)
 
-## Vim 
+## vimrc - with coc 
+
+- sometime i need a simple but quick develop enviroment, coc with vim is suit for me
+
+## Vim bare - the vimrc.bare
 
 The vim config is only a minimal config for liking server enviroment editor, so it doesn't have magic here.
 
