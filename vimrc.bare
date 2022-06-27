@@ -1,0 +1,116 @@
+" setting leader key
+let mapleader=" "
+let g:mapleader=" "
+
+set updatetime=300
+set timeoutlen=800
+
+" syntax highlight
+syntax on
+
+" switch buffer not prompt saving
+set hidden
+set autowrite
+
+" fily type detect
+filetype on
+
+" default encoding
+set fileencodings=utf-8,gb2312,gb18030,gbk,ucs-bom,cp936,latin1
+set encoding=UTF-8
+
+" intent
+set tabstop=2
+set softtabstop=2
+set shiftwidth=2
+set autoindent
+set smartindent
+set expandtab
+set list listchars=eol:¬,tab:▸\ ,trail:.,
+
+" search highlight
+set hlsearch
+set incsearch
+
+" line numbers
+set number
+set relativenumber
+
+" show ruler
+set ruler
+" disable wrap
+set nowrap
+
+" show cmd on triggering
+set showcmd
+
+" always show statusline
+set laststatus=2
+
+" disable vi mode
+set nocompatible
+set backspace=indent,eol,start
+
+" no backup file
+set nobackup
+set nowritebackup
+set noswapfile
+
+" quick save and quit
+nnoremap <leader>w :w<CR>
+nnoremap <leader>q :bd<CR>
+
+" map Q to q for ex mode is not usable for me
+map Q q
+
+" cancal highlight keymap
+nnoremap <leader><cr> :noh<CR>
+
+" bufferNavigate
+nnoremap <silent> [b :bprevious<CR> 
+nnoremap <silent> ]b :bnext<CR> 
+nnoremap <silent> [B :bfirst<CR> 
+nnoremap <silent> ]B :blast<CR> 
+nnoremap <silent> [q :cprevious<CR> 
+nnoremap <silent> ]q :cnext<CR> 
+
+" tabs 
+nnoremap <silent> <leader>nt :tabnew<CR> 
+nnoremap <silent> [t :tabprevious<CR> 
+nnoremap <silent> ]t :tabnext<CR> 
+" map alt + n -> tab n
+nnoremap <M-1> 1gt
+nnoremap <M-2> 2gt
+nnoremap <M-3> 3gt
+nnoremap <M-4> 4gt
+nnoremap <M-5> 5gt
+
+" emacs  like kemap in insert mode
+inoremap <c-a> <home>
+inoremap <c-e> <end>
+inoremap <c-f> <right>
+inoremap <c-b> <left>
+
+" spell correct
+iabbrev cosnt const¬
+
+" .vimrc quick kemap source and edit
+nnoremap <leader>ev :e $MYVIMRC<CR>
+nnoremap <leader>sv :source $MYVIMRC<CR>
+
+" open with current buffer workdir
+nnoremap <expr><leader>ew ":e ".expand('%:h')
+
+colorscheme koehler
+
+
+"============ netrw setting ==============
+
+" tree style
+let g:netrw_liststyle = 3
+
+if executable("rg")
+  set grepprg=rg\ --vimgrep\ --no-heading
+  set grepformat=%f:%l:%c:%m,%f:%l:%m
+endif
+

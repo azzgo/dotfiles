@@ -1,0 +1,17 @@
+{
+  "javascript.suggestionActions.enabled": true,
+  "javascript.validate.enable": false,
+  "javascript.suggest.enabled": false,
+  "typescript.validate.enable": true,
+  "coc.preferences.enableMarkdown": false,
+  "suggest.autoTrigger": "none",
+  "diagnostic.checkCurrentLine": true,
+  "diagnostic.enableMessage": "never",
+  "snippets.ultisnips.enable": false,
+  "snippets.extends": {
+    "cpp": ["c"],
+    "javascriptreact": ["javascript"],
+    "typescript": ["javascript"],
+    "typescriptreact": ["javascriptreact"]
+  }
+}
