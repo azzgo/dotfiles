@@ -104,8 +104,16 @@ nnoremap <silent> ]B :blast<CR>
 nnoremap <silent> [q :cprevious<CR> 
 nnoremap <silent> ]q :cnext<CR> 
 
-" tabNew
+" tabs 
 nnoremap <silent> <leader>nt :tabnew<CR> 
+nnoremap <silent> [t :tabprevious<CR> 
+nnoremap <silent> ]t :tabnext<CR> 
+" map alt + n -> tab n
+nnoremap <M-1> 1gt
+nnoremap <M-2> 2gt
+nnoremap <M-3> 3gt
+nnoremap <M-4> 4gt
+nnoremap <M-5> 5gt
 
 " set terminal esc
 :tnoremap <Esc> <C-\><C-n>
