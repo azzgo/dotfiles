@@ -1,4 +1,3 @@
-
 call plug#begin()
 " quick move
 Plug 'justinmk/vim-sneak'
@@ -8,12 +7,14 @@ Plug 'tpope/vim-surround'
 Plug 'tpope/vim-repeat'
 Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-commentary'
+Plug 'airblade/vim-gitgutter'
 
 " coc powered up
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 
 " theme
 Plug 'arcticicestudio/nord-vim'
+Plug 'itchyny/lightline.vim'
  
 call plug#end()
 
@@ -120,9 +121,6 @@ nnoremap <leader>sv :source $MYVIMRC<CR>
 
 " open with current buffer workdir
 nnoremap <expr><leader>ew ":e ".expand('%:h')
-
-colorscheme koehler
-
 
 "============ netrw setting ==============
 
@@ -237,5 +235,11 @@ nnoremap <leader>gp :<c-u>G push<CR>
 nnoremap <leader>gup :<c-u>G pull --rebase<CR>
 nnoremap <leader>gc :<c-u>G commit -v<CR>
 
+nnoremap ]h :GitGutterNextHunk<CR>
+nnoremap [h :GitGutterPrevHunk<CR>
+nnoremap ghp :GitGutterPreviewHunk<CR>
+
 " === theme ===
+set background=dark
+set termguicolors
 colorscheme nord
