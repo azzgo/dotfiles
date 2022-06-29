@@ -159,6 +159,7 @@ return require("packer").startup(function()
 	use({
 		"nvim-treesitter/nvim-treesitter-textobjects",
 		config = function()
+      require("nvim-treesitter.install").prefer_git = true
 			require("nvim-treesitter.configs").setup({
 				textobjects = {
 					select = {
