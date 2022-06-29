@@ -117,6 +117,7 @@ nnoremap <M-5> 5gt
 
 " set terminal esc
 :tnoremap <Esc> <C-\><C-n>
+:tnoremap <C-o> <C-\><C-n>
 
 " remap C-C for lua error sometimes
 inoremap <C-c> <Esc>`^
