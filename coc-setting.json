@@ -1,8 +1,4 @@
 {
-  "javascript.suggestionActions.enabled": true,
-  "javascript.validate.enable": false,
-  "javascript.suggest.enabled": false,
-  "typescript.validate.enable": true,
   "coc.preferences.enableMarkdown": false,
   "suggest.autoTrigger": "none",
   "diagnostic.checkCurrentLine": true,
