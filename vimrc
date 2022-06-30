@@ -132,6 +132,12 @@ if executable("rg")
   set grepformat=%f:%l:%c:%m,%f:%l:%m
 endif
 
+"============ Some vim 9 feature ==============
+
+if has('wildmenu')
+  set wildmenu
+endif
+
 "============ Coc Configs ==============
 inoremap <silent><expr> <TAB>
       \ pumvisible() ? "\<C-n>" :
@@ -227,7 +233,7 @@ command! -nargs=? Fold :call     CocAction('fold', <f-args>)
 
 nnoremap <silent> <leader>o :<c-u>CocOutline<CR>
 
-let g:coc_global_extensions = ['coc-json', 'coc-tsserver', 'coc-eslint', 'coc-css', 'coc-prettier', 'coc-lists', 'coc-snippets']
+let g:coc_global_extensions = ['coc-json', 'coc-lists', 'coc-snippets']
 " ======= Git fugive config ===========
 nnoremap <leader>gg :<c-u>G<CR>
 nnoremap <leader>ga :<c-u>G add
