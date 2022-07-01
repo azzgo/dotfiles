@@ -8,20 +8,12 @@ return require("packer").startup(function()
 	-- Packer can manage itself
 	use("wbthomason/packer.nvim")
 
-	-- Improve startup time for Neovim
-	use({
-		"lewis6991/impatient.nvim",
-		config = function()
-			--  require('impatient');
-		end,
-	})
-
 	--- quick move
 	use("justinmk/vim-sneak")
 
-  -- syntaxs
+	-- syntaxs
 	use("aklt/plantuml-syntax")
---  origin vim plugin use 'tpope/vim-surround'
+	--  origin vim plugin use 'tpope/vim-surround'
 	use("tpope/vim-surround")
 	use("tpope/vim-repeat")
 	-- git cmmand support
@@ -100,10 +92,10 @@ return require("packer").startup(function()
 		requires = "kyazdani42/nvim-web-devicons",
 		config = function()
 			require("bufferline").setup({
-        options = {
-          mode = "tabs"
-        }
-      })
+				options = {
+					mode = "tabs",
+				},
+			})
 		end,
 	})
 
@@ -154,14 +146,14 @@ return require("packer").startup(function()
 		requires = { "nvim-lua/plenary.nvim", "neovim/nvim-lsp" },
 	})
 
-  use("mfussenegger/nvim-jdtls")
+	use("mfussenegger/nvim-jdtls")
 
 	-- syntax
 	use({ "nvim-treesitter/nvim-treesitter", run = ":TSUpdate" })
 	use({
 		"nvim-treesitter/nvim-treesitter-textobjects",
 		config = function()
-      require("nvim-treesitter.install").prefer_git = true
+			require("nvim-treesitter.install").prefer_git = true
 			require("nvim-treesitter.configs").setup({
 				textobjects = {
 					select = {
@@ -183,7 +175,13 @@ return require("packer").startup(function()
 		end,
 	})
 
-	use({ "ibhagwan/fzf-lua", requires = { "kyazdani42/nvim-web-devicons" } })
+	use({
+		"ibhagwan/fzf-lua",
+		requires = { "kyazdani42/nvim-web-devicons" },
+		config = function()
+			require("fzf-lua").setup({})
+		end,
+	})
 
 	use({
 		"folke/todo-comments.nvim",
