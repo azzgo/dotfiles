@@ -1,8 +1,8 @@
-if vim.g.loaded_lspsaga == nil then
-	return
-end
+local ok, saga = pcall(require,"lspsaga")
 
-local saga = require("lspsaga")
+if not ok then
+  return
+end
 
 saga.init_lsp_saga({
 	border_style = "round",

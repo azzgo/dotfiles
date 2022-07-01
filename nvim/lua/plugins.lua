@@ -154,6 +154,8 @@ return require("packer").startup(function()
 		requires = { "nvim-lua/plenary.nvim", "neovim/nvim-lsp" },
 	})
 
+  use("mfussenegger/nvim-jdtls")
+
 	-- syntax
 	use({ "nvim-treesitter/nvim-treesitter", run = ":TSUpdate" })
 	use({
