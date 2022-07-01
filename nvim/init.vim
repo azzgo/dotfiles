@@ -2,6 +2,12 @@
 lua require('impatient').enable_profile()
 lua require('plugins')
 
+lua require('users.comment')
+lua require('users.fzf')
+lua require('users.gitsigns')
+lua require('users.lspconfig')
+lua require('users.treesitter')
+
 " 设置 leader key
 let mapleader=" "
 let g:mapleader=" "

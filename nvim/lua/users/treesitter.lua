@@ -1,9 +1,10 @@
-if vim.g.loaded_nvim_treesitter == nil then
-	print("Not loaded treesitter")
-	return
+local ok, treesitter_config = pcall(require, "nvim-treesitter.configs")
+
+if not ok then
+  return
 end
 
-require("nvim-treesitter.configs").setup({
+treesitter_config.setup({
 	ensure_installed = {
 		"tsx",
 		"json",
