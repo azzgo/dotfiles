@@ -1,19 +1,17 @@
-" import plug config
-lua require('impatient').enable_profile()
-lua require('plugins')
-
-lua require('users.comment')
-lua require('users.fzf')
-lua require('users.gitsigns')
-lua require('users.lspconfig')
-lua require('users.treesitter')
-
 " 设置 leader key
 let mapleader=" "
 let g:mapleader=" "
 
 set updatetime=300
 set timeoutlen=500
+
+" import plugins config
+lua require('plugins')
+lua require('users.comment')
+lua require('users.gitsigns')
+lua require('users.lspconfig')
+lua require('users.treesitter')
+lua require('users.fzf')
 
 
 " 语法高亮
@@ -173,3 +171,4 @@ augroup packer_user_config
   autocmd!
   autocmd BufWritePost plugins.lua source <afile> | PackerCompile
 augroup end
+
