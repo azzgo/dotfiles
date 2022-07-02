@@ -45,7 +45,7 @@ vim.api.nvim_set_keymap(
 vim.api.nvim_set_keymap(
 	"n",
 	"gd",
-	"<cmd>lua require('fzf-lua').lsp_definitions()<cr>",
+	"<cmd>lua require('fzf-lua').lsp_definitions({ jump_to_single_result = true })<cr>",
 	{ noremap = true, silent = true }
 )
 vim.api.nvim_set_keymap(
