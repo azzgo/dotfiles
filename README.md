@@ -37,6 +37,12 @@ use [lsp-install](https://github.com/williamboman/nvim-lsp-installer) manage Lan
 
 only `prettier` you need install globally.
 
+#### Java jdtls
+
+I use nvim-jdtls for java Language client, but the plugin follow kiss principle, so you need configure the java and [jdtls](https://github.com/eclipse/eclipse.jdt.ls) by your self.
+
+For my configuration you need add a named "java-lsp" script on you path, the script you can follow the [nvim-jdtls official wiki](https://github.com/eclipse/eclipse.jdt.ls)
+
 ### other notes
 
 - the sql syntax file is forked copy from [Improved SQL syntax for vim](https://github.com/shmup/vim-sql-syntax)
