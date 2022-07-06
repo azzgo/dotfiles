@@ -58,3 +58,10 @@ The vim config is only a minimal config for liking server enviroment editor, so 
 ## wezterm
 
 A amazing gui based terminal i liked
+
+## For Macos
+
+I use the yabai and skhd is to provide the tilling wm experience.
+
+for the additional, I use [Simple Bar](https://github.com/Jean-Tinland/simple-bar) get beauity bar in Macos, it is worth.
+
