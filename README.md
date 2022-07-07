@@ -3,8 +3,6 @@
 
 The dotfiles are common used in my work and life.
 
-In nowadays, just use neovim and vim
-
 ## Neovim
 
 Neovim must 7.0+，for use some lua plugin which is only supported after 7.0
