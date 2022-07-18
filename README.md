@@ -1,13 +1,12 @@
 # DotFiles for Archives
 
-
 The dotfiles are common used in my work and life.
+
+[TOC]
 
 ## Neovim
 
 Neovim must 7.0+，for use some lua plugin which is only supported after 7.0
-
-When i prepare the config, learned a lot from this repo [dotfiles-public](https://github.com/craftzdog/dotfiles-public/blob/master/.config/nvim/after/plugin/telescope.rc.vim)
 
 
 ### Requirement for my plugins
@@ -18,11 +17,10 @@ When i prepare the config, learned a lot from this repo [dotfiles-public](https:
 
 #### fzf.lua
 
-- fzf: a fatasitc binary executable program dependency you must install first.
+- [fzf](https://github.com/junegunn/fzf): a fatasitc binary executable program dependency you must install first.
 - optional: suggest to install for better performance in search file and text
-  - fd
-  - riggrep
-  
+  - [fd](https://github.com/sharkdp/fd): better find
+  - [ripgrep](https://github.com/BurntSushi/ripgrep): better grep
 
 ### Language Server 
 
