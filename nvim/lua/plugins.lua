@@ -87,11 +87,10 @@ return require("packer").startup(function()
 
 	-- bufferline
 	use({
-		"akinsho/bufferline.nvim",
-		tag = "v2.*",
+    "nanozuki/tabby.nvim",
 		requires = "kyazdani42/nvim-web-devicons",
 		config = function()
-			require("bufferline").setup({
+			require("tabby").setup({
 				options = {
 					mode = "tabs",
 				},
