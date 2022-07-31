@@ -25,18 +25,7 @@ return require("packer").startup(function()
 			vim.api.nvim_set_keymap("n", "<leader>gp", ":<c-u>G push<CR>", { noremap = true, silent = true })
 			vim.api.nvim_set_keymap("n", "<leader>gup", ":<c-u>G pull --rebase<CR>", { noremap = true, silent = true })
 			vim.api.nvim_set_keymap("n", "<leader>gc", ":<c-u>G commit -v<CR>", { noremap = true, silent = true })
-		end,
-	})
-
-	-- which key
-	use({
-		"folke/which-key.nvim",
-		config = function()
-			-- require("which-key").setup({
-			-- 	-- your configuration comes here
-			-- 	-- or leave it empty to use the default settings
-			-- 	-- refer to the configuration section below
-			-- })
+			vim.api.nvim_set_keymap("n", "<leader>gb", ":<c-u>G blame<CR>", { noremap = true, silent = true })
 		end,
 	})
 
@@ -179,28 +168,6 @@ return require("packer").startup(function()
 		requires = { "kyazdani42/nvim-web-devicons" },
 		config = function()
 			require("fzf-lua").setup({})
-		end,
-	})
-
-	use({
-		"folke/todo-comments.nvim",
-		requires = "nvim-lua/plenary.nvim",
-		config = function()
-			require("todo-comments").setup({
-				keywords = {
-					FIX = {
-						icon = " ", -- icon used for the sign, and in search results
-						color = "error", -- can be a hex color, or a named color (see below)
-						alt = { "FIXME", "BUG", "FIXIT", "ISSUE" }, -- a set of other keywords that all map to this FIX keywords
-						-- signs = false, -- configure signs for some keywords individually
-					},
-					TODO = { icon = " ", color = "info" },
-					HACK = { icon = " ", color = "warning" },
-					WARN = { icon = " ", color = "warning", alt = { "WARNING", "XXX" } },
-					PERF = { icon = " ", alt = { "OPTIM", "PERFORMANCE", "OPTIMIZE" } },
-					NOTE = { icon = " ", color = "hint", alt = { "INFO" } },
-				},
-			})
 		end,
 	})
 
