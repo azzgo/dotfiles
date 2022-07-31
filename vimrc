@@ -240,6 +240,7 @@ nnoremap <leader>ga :<c-u>G add
 nnoremap <leader>gp :<c-u>G push<CR>
 nnoremap <leader>gup :<c-u>G pull --rebase<CR>
 nnoremap <leader>gc :<c-u>G commit -v<CR>
+nnoremap <leader>gb :<c-u>G blame<CR>
 
 nnoremap ]h :GitGutterNextHunk<CR>
 nnoremap [h :GitGutterPrevHunk<CR>
