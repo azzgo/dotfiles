@@ -25,7 +25,7 @@ source ~/.vimrc
 :map <leader>ghp <Action>(VcsShowCurrentChangeMarker)
 :map [h <Action>(VcsShowPrevChangeMarker)
 :map ]h <Action>(VcsShowNextChangeMarker)
-:map <leader>a <Action>(Annotate)
+:map <leader>gb <Action>(Annotate)
 
 
 " find file
