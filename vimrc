@@ -175,11 +175,11 @@ nmap <silent> gK :<c-u>CocList diagnostics<cr>
 nmap <silent>ggr :<c-u>CocListResume<cr>
 
 " fuzzy search
-nnoremap <silent> <leader>ff  :<c-u>CocList files<CR>
-nnoremap <silent> <leader>fg  :<c-u>CocList grep<CR>
-nnoremap <silent> <leader>fh  :<c-u>CocList helptags<CR>
-nnoremap <silent> <leader>fq  :<c-u>CocList quickfix<CR>
-nnoremap <silent> <leader>fb  :<c-u>CocList buffers<CR>
+nnoremap <silent> <leader>f  :<c-u>CocList files<CR>
+nnoremap <silent> <leader>/  :<c-u>CocList grep<CR>
+nnoremap <silent> <leader>h  :<c-u>CocList helptags<CR>
+nnoremap <silent> <leader>zq  :<c-u>CocList quickfix<CR>
+nnoremap <silent> <leader>b  :<c-u>CocList buffers<CR>
 
 
 
@@ -197,8 +197,8 @@ endfunction
 " Symbol renaming.
 nmap <f2> <Plug>(coc-rename)
 
-xmap <leader>cff <Plug>(coc-format-selected)
-nmap <leader>cff <Plug>(coc-format)
+xmap <leader>cf <Plug>(coc-format-selected)
+nmap <leader>cf <Plug>(coc-format)
 
 " Applying codeAction to the selected region.
 xmap <leader>ca  <Plug>(coc-codeaction-selected)
