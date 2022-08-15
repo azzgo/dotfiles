@@ -13,18 +13,6 @@ vim.api.nvim_set_keymap(
 )
 vim.api.nvim_set_keymap(
 	"n",
-	"<leader>c",
-	"<cmd>lua require('fzf-lua').files { cwd=vim.fn.expand('%:p:h') }<cr>",
-	{ noremap = true, silent = true }
-)
-vim.api.nvim_set_keymap(
-	"n",
-	"<leader>zq",
-	"<cmd>lua require('fzf-lua').quickfix()<cr>",
-	{ noremap = true, silent = true }
-)
-vim.api.nvim_set_keymap(
-	"n",
 	"<leader>b",
 	"<cmd>lua require('fzf-lua').buffers()<cr>",
 	{ noremap = true, silent = true }
@@ -35,7 +23,6 @@ vim.api.nvim_set_keymap(
 	"<cmd>lua require('fzf-lua').help_tags()<cr>",
 	{ noremap = true, silent = true }
 )
-
 vim.api.nvim_set_keymap(
 	"n",
 	"gr",
