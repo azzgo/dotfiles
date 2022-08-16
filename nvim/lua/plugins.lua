@@ -134,7 +134,8 @@ return require("packer").startup(function()
 		requires = { "nvim-lua/plenary.nvim", "neovim/nvim-lsp" },
 	})
 
-	use("mfussenegger/nvim-jdtls")
+  -- jdtls is slow just Comment it, and open when needed
+	-- use("mfussenegger/nvim-jdtls")
 
 	-- syntax
 	use({ "nvim-treesitter/nvim-treesitter", run = ":TSUpdate" })
