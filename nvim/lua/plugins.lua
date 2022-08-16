@@ -76,7 +76,7 @@ return require("packer").startup(function()
 
 	-- bufferline
 	use({
-    "nanozuki/tabby.nvim",
+		"nanozuki/tabby.nvim",
 		requires = "kyazdani42/nvim-web-devicons",
 		config = function()
 			require("tabby").setup({
@@ -134,7 +134,7 @@ return require("packer").startup(function()
 		requires = { "nvim-lua/plenary.nvim", "neovim/nvim-lsp" },
 	})
 
-  -- jdtls is slow just Comment it, and open when needed
+	-- jdtls is slow just Comment it, and open when needed
 	-- use("mfussenegger/nvim-jdtls")
 
 	-- syntax
@@ -168,7 +168,16 @@ return require("packer").startup(function()
 		"ibhagwan/fzf-lua",
 		requires = { "kyazdani42/nvim-web-devicons" },
 		config = function()
-			require("fzf-lua").setup({})
+			require("fzf-lua").setup({
+				fzf_opts = {
+					["--ansi"] = "",
+					["--info"] = "inline",
+					["--height"] = "100%",
+					["--layout"] = "reverse",
+					["--border"] = "none",
+					["--cycle"] = "",
+				},
+			})
 		end,
 	})
 
