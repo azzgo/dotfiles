@@ -39,6 +39,8 @@ I use nvim-jdtls for java Language client, but the plugin follow kiss principle,
 
 For my configuration you need add a named "java-lsp" script on you path, the script you can follow the [nvim-jdtls official wiki](https://github.com/eclipse/eclipse.jdt.ls)
 
+-- you need comment off the plugin.lua `use("mfussenegger/nvim-jdtls")` becaues i am not used it for now.
+
 ### other notes
 
 - the sql syntax file is forked copy from [Improved SQL syntax for vim](https://github.com/shmup/vim-sql-syntax)
