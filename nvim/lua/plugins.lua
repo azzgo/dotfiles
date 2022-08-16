@@ -112,7 +112,14 @@ return require("packer").startup(function()
 		"neovim/nvim-lspconfig",
 	})
 	use({ "jose-elias-alvarez/nvim-lsp-ts-utils", require = { "neovim/nvim-lspconfig" } })
-	use("tami5/lspsaga.nvim")
+	use({
+		"glepnir/lspsaga.nvim",
+		branch = "main",
+		config = function()
+			local saga = require("lspsaga")
+			saga.init_lsp_saga({})
+		end,
+	})
 	use({ "stevearc/aerial.nvim", requires = { "neovim/nvim-lspconfig" } })
 	use({
 		"jose-elias-alvarez/null-ls.nvim",

@@ -1,6 +1,7 @@
 local mod = {}
 
 local aerial = require("aerial")
+local saga_ok = pcall(require, 'lspsaga')
 
 function mod.lsp_on_attach(client, bufnr)
 	-- init aerial with lsp
@@ -21,7 +22,7 @@ function mod.lsp_on_attach(client, bufnr)
 	buf_set_keymap("i", "<c-k>", "<cmd>lua vim.lsp.buf.signature_help()<CR>", { noremap = true, silent = true })
 
 	-- set saga keymap use buf_set_keymap in case in non lsp config file trigger error
-	if vim.g.loaded_lspsaga then
+	if saga_ok then
 		buf_set_keymap("n", "]d", ":Lspsaga diagnostic_jump_next<CR>", { noremap = true, silent = true })
 		buf_set_keymap("n", "[d", ":Lspsaga diagnostic_jump_prev<CR>", { noremap = true, silent = true })
 		buf_set_keymap("n", "<c-k>", ":Lspsaga show_line_diagnostics<CR>", { noremap = true, silent = true })
