@@ -160,7 +160,7 @@ function! SourceIfExists(file)
   endif
 endfunction
 
-"" local config for overide
+"" local config for override
 call SourceIfExists("~/.config/nvim/local.vim")
 
 " change git fugitive summary format
