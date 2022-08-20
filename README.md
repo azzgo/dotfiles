@@ -39,7 +39,7 @@ I use nvim-jdtls for java Language client, but the plugin follow kiss principle,
 
 For my configuration you need add a named "java-lsp" script on you path, the script you can follow the [nvim-jdtls official wiki](https://github.com/eclipse/eclipse.jdt.ls)
 
--- you need comment off the plugin.lua `use("mfussenegger/nvim-jdtls")` becaues i am not used it for now.
+-- you need comment off the plugin.lua `use("mfussenegger/nvim-jdtls")` because i am not used it for now.
 
 ### other notes
 
@@ -47,11 +47,11 @@ For my configuration you need add a named "java-lsp" script on you path, the scr
 
 ## vimrc - with coc 
 
-- sometime i need a simple but quick develop enviroment, coc with vim is suit for me
+- sometime i need a simple but quick develop environment, coc with vim is suit for me
 
 ## Vim bare - the vimrc.bare
 
-The vim config is only a minimal config for liking server enviroment editor, so it doesn't have magic here.
+The vim config is only a minimal config for liking server environment editor, so it doesn't have magic here.
 
 ## wezterm
 

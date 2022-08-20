@@ -25,7 +25,7 @@ return {
 		{ key = "w", mods = "LEADER", action = wezterm.action({ CloseCurrentTab = { confirm = true } }) },
 		{ key = "{", mods = "SHIFT|ALT", action = wezterm.action({ MoveTabRelative = -1 }) },
 		{ key = "}", mods = "SHIFT|ALT", action = wezterm.action({ MoveTabRelative = 1 }) },
-		-- defautl keys i needed
+		-- default keys i needed
 		{ key = "c", mods = "CTRL|SHIFT", action = wezterm.action({ CopyTo = "ClipboardAndPrimarySelection" }) },
 		{ key = "t", mods = "SUPER", action = wezterm.action({ SpawnTab = "DefaultDomain" }) },
 		{ key = "+", mods = "SHIFT|CTRL", action = "IncreaseFontSize" },
