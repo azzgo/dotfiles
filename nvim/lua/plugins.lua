@@ -80,10 +80,8 @@ return require("packer").startup(function()
 		requires = "kyazdani42/nvim-web-devicons",
 		config = function()
 			require("tabby").setup({
-				options = {
-					mode = "tabs",
-				},
-			})
+        tabline = require("tabby.presets").tab_only
+      })
 		end,
 	})
 
