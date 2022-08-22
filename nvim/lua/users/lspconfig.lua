@@ -20,7 +20,7 @@ user_cmp.setup()
 
 
 
-local servers = { "volar", "pyright", "gopls", "rls", "cssls", "tailwindcss", "sumneko_lua", "jsonls" }
+local servers = { "vuels", "pyright", "gopls", "rls", "cssls", "tailwindcss", "sumneko_lua", "jsonls" }
 for _, lsp in ipairs(servers) do
 	nvim_lsp[lsp].setup({
 		on_attach = user_util.lsp_on_attach,
