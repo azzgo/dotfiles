@@ -7,6 +7,7 @@ end
 treesitter_config.setup({
 	ensure_installed = {
 		"tsx",
+		"typescript",
 		"json",
 		"yaml",
 		"html",
