@@ -80,8 +80,8 @@ return require("packer").startup(function()
 		requires = "kyazdani42/nvim-web-devicons",
 		config = function()
 			require("tabby").setup({
-        tabline = require("tabby.presets").tab_only
-      })
+				tabline = require("tabby.presets").tab_only,
+			})
 		end,
 	})
 
@@ -105,7 +105,14 @@ return require("packer").startup(function()
 	})
 
 	--  lsp config
-  use({ 'neoclide/coc.nvim', branch= 'release' })
+	use({ "neoclide/coc.nvim", branch = "release" })
+	use({
+		"stevearc/aerial.nvim",
+		config = function()
+			require("aerial").setup()
+			vim.api.nvim_set_keymap("n", "<leader>o", "<cmd>AerialToggle!<CR>", { noremap = true, silent = true })
+		end,
+	})
 	use({
 		"jose-elias-alvarez/null-ls.nvim",
 		config = function()
@@ -124,6 +131,23 @@ return require("packer").startup(function()
 			})
 		end,
 		requires = { "nvim-lua/plenary.nvim", "neovim/nvim-lsp" },
+	})
+
+	-- wilder
+	use({
+		"gelguy/wilder.nvim",
+		config = function()
+      local wilder = require('wilder')
+      wilder.setup({
+        modes = {':', '/', '?'},
+        previous_key = '<m-p>',
+        next_key = '<m-n>'
+      })
+      wilder.set_option('renderer', wilder.popupmenu_renderer({
+        -- highlighter applies highlighting to the candidates
+        highlighter = wilder.basic_highlighter(),
+      }))
+		end,
 	})
 
 	-- jdtls is slow just Comment it, and open when needed
@@ -148,18 +172,6 @@ return require("packer").startup(function()
 			})
 		end,
 	})
-
-	--- cmp
-	use("L3MON4D3/LuaSnip")
-	use("rafamadriz/friendly-snippets")
-	use("hrsh7th/cmp-nvim-lsp")
-	use("hrsh7th/cmp-buffer")
-	use("hrsh7th/cmp-path")
-	use("hrsh7th/cmp-cmdline")
-	use("hrsh7th/nvim-cmp")
-	use("saadparwaiz1/cmp_luasnip")
-	use("hrsh7th/cmp-nvim-lsp-signature-help")
-	use("onsails/lspkind-nvim")
 
 	-- git
 	use({
