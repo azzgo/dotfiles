@@ -105,20 +105,7 @@ return require("packer").startup(function()
 	})
 
 	--  lsp config
-	use({
-		"williamboman/nvim-lsp-installer",
-		"neovim/nvim-lspconfig",
-	})
-	use({ "jose-elias-alvarez/nvim-lsp-ts-utils", require = { "neovim/nvim-lspconfig" } })
-	use({
-		"glepnir/lspsaga.nvim",
-		branch = "main",
-		config = function()
-			local saga = require("lspsaga")
-			saga.init_lsp_saga({})
-		end,
-	})
-	use({ "stevearc/aerial.nvim", requires = { "neovim/nvim-lspconfig" } })
+  use({ 'neoclide/coc.nvim', branch= 'release' })
 	use({
 		"jose-elias-alvarez/null-ls.nvim",
 		config = function()
@@ -144,30 +131,6 @@ return require("packer").startup(function()
 
 	-- syntax
 	use({ "nvim-treesitter/nvim-treesitter", run = ":TSUpdate" })
-	use({
-		"nvim-treesitter/nvim-treesitter-textobjects",
-		config = function()
-			require("nvim-treesitter.install").prefer_git = true
-			require("nvim-treesitter.configs").setup({
-				textobjects = {
-					select = {
-						enable = true,
-
-						-- Automatically jump forward to textobj, similar to targets.vim
-						lookahead = true,
-
-						keymaps = {
-							-- You can use the capture groups defined in textobjects.scm
-							["af"] = "@function.outer",
-							["if"] = "@function.inner",
-							["ac"] = "@class.outer",
-							["ic"] = "@class.inner",
-						},
-					},
-				},
-			})
-		end,
-	})
 
 	use({
 		"ibhagwan/fzf-lua",
