@@ -9,7 +9,6 @@ set timeoutlen=500
 lua require('plugins')
 lua require('users.comment')
 lua require('users.gitsigns')
-lua require('users.lspconfig')
 lua require('users.treesitter')
 lua require('users.fzf')
 
@@ -160,6 +159,7 @@ function! SourceIfExists(file)
   endif
 endfunction
 
+call SourceIfExists("~/.config/nvim/coc.vim")
 "" local config for override
 call SourceIfExists("~/.config/nvim/local.vim")
 
