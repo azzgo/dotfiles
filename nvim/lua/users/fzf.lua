@@ -29,30 +29,6 @@ vim.api.nvim_set_keymap(
 	"<cmd>lua require('fzf-lua').lsp_references()<cr>",
 	{ noremap = true, silent = true }
 )
-vim.api.nvim_set_keymap(
-	"n",
-	"gd",
-	"<cmd>lua require('fzf-lua').lsp_definitions({ jump_to_single_result = true })<cr>",
-	{ noremap = true, silent = true }
-)
-vim.api.nvim_set_keymap(
-	"n",
-	"gi",
-	"<cmd>lua require('fzf-lua').lsp_implementations({ jump_to_single_result = true })<cr>",
-	{ noremap = true, silent = true }
-)
-vim.api.nvim_set_keymap(
-	"n",
-	"gD",
-	"<cmd>lua require('fzf-lua').lsp_typedefs()<cr>",
-	{ noremap = true, silent = true }
-)
-vim.api.nvim_set_keymap(
-	"n",
-	"gK",
-	"<cmd>lua require('fzf-lua').lsp_document_diagnostics()<cr>",
-	{ noremap = true, silent = true }
-)
 
 -- resume
 vim.api.nvim_set_keymap(
