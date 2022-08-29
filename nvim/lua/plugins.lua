@@ -85,14 +85,6 @@ return require("packer").startup(function()
 		end,
 	})
 
-	-- 开屏页
-	use({
-		"goolord/alpha-nvim",
-		config = function()
-			require("alpha").setup(require("alpha.themes.startify").opts)
-		end,
-	})
-
 	-- statusline
 	use({
 		"nvim-lualine/lualine.nvim",
