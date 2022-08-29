@@ -1,7 +1,7 @@
 sudo yabai --load-sa
 
 # layout
-yabai -m config layout bsp
+yabai -m config layout float
 
 # gap
 yabai -m config top_padding    10
