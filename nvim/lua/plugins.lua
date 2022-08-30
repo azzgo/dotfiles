@@ -11,8 +11,6 @@ return require("packer").startup(function()
 	--- quick move
 	use("justinmk/vim-sneak")
 
-	-- syntaxs
-	use("aklt/plantuml-syntax")
 	--  origin vim plugin use 'tpope/vim-surround'
 	use("tpope/vim-surround")
 	use("tpope/vim-repeat")
@@ -29,8 +27,6 @@ return require("packer").startup(function()
 		end,
 	})
 
-	-- profill
-	use("dstein64/vim-startuptime")
 	-- theme
 	-- use("NLKNguyen/papercolor-theme")
 	-- use("sainnhe/gruvbox-material")
