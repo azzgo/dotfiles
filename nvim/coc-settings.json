@@ -1,6 +1,7 @@
 {
   "coc.preferences.enableMarkdown": false,
   "suggest.autoTrigger": "none",
+  "javascript.suggestionActions.enabled": false,
   "diagnostic.checkCurrentLine": true,
   "diagnostic.enableMessage": "never",
   "snippets.ultisnips.enable": false,
