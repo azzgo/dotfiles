@@ -4,7 +4,7 @@ return {
   check_for_updates = false,
 	color_scheme = "nord",
 	font = wezterm.font_with_fallback({
-		"Agave Nerd Font Mono",
+		"Hack Nerd Font Mono",
 		"Noto Color Emoji",
 		"Material-Design-Iconic-Font",
 		"Font Awesome 6 Free",
