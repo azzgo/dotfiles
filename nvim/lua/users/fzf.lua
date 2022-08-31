@@ -23,12 +23,6 @@ vim.api.nvim_set_keymap(
 	"<cmd>lua require('fzf-lua').help_tags()<cr>",
 	{ noremap = true, silent = true }
 )
-vim.api.nvim_set_keymap(
-	"n",
-	"gr",
-	"<cmd>lua require('fzf-lua').lsp_references()<cr>",
-	{ noremap = true, silent = true }
-)
 
 -- resume
 vim.api.nvim_set_keymap(
