@@ -11,6 +11,9 @@ return require("packer").startup(function()
 	--- quick move
 	use("justinmk/vim-sneak")
 
+	-- matchup
+	use("andymass/vim-matchup")
+
 	--  origin vim plugin use 'tpope/vim-surround'
 	use("tpope/vim-surround")
 	use("tpope/vim-repeat")
@@ -125,16 +128,19 @@ return require("packer").startup(function()
 	use({
 		"gelguy/wilder.nvim",
 		config = function()
-      local wilder = require('wilder')
-      wilder.setup({
-        modes = {':', '/', '?'},
-        previous_key = '<m-p>',
-        next_key = '<m-n>'
-      })
-      wilder.set_option('renderer', wilder.popupmenu_renderer({
-        -- highlighter applies highlighting to the candidates
-        highlighter = wilder.basic_highlighter(),
-      }))
+			local wilder = require("wilder")
+			wilder.setup({
+				modes = { ":", "/", "?" },
+				previous_key = "<m-p>",
+				next_key = "<m-n>",
+			})
+			wilder.set_option(
+				"renderer",
+				wilder.popupmenu_renderer({
+					-- highlighter applies highlighting to the candidates
+					highlighter = wilder.basic_highlighter(),
+				})
+			)
 		end,
 	})
 
