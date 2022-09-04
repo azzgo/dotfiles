@@ -115,11 +115,14 @@ return require("packer").startup(function()
 					vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>cf", "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
 				end,
 				sources = {
-					null_ls.builtins.diagnostics.eslint,
 					null_ls.builtins.formatting.stylua,
 					null_ls.builtins.formatting.prettier,
 				},
 			})
+      -- noise when lots of diagnose reports.
+      vim.diagnostic.config({
+        virtual_text = false,
+      })
 		end,
 		requires = { "nvim-lua/plenary.nvim", "neovim/nvim-lsp" },
 	})
