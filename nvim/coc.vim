@@ -33,7 +33,7 @@ nmap <silent> gr <Plug>(coc-references)
 nmap <silent> gK :<c-u>CocList diagnostics<cr>
 
 " outline
-nmap <silent>o :<c-u>CocOutline<cr>
+nmap <silent><leader>o :<c-u>CocOutline<cr>
 
 " coc list
 nmap <silent>gcr :<c-u>CocListResume<cr>
