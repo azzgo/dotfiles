@@ -98,13 +98,6 @@ return require("packer").startup(function()
 	--  lsp config
 	use({ "neoclide/coc.nvim", branch = "release" })
 	use({
-		"stevearc/aerial.nvim",
-		config = function()
-			require("aerial").setup()
-			vim.api.nvim_set_keymap("n", "<leader>o", "<cmd>AerialToggle!<CR>", { noremap = true, silent = true })
-		end,
-	})
-	use({
 		"jose-elias-alvarez/null-ls.nvim",
 		config = function()
 			local null_ls = require("null-ls")
