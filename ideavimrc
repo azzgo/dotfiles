@@ -21,7 +21,7 @@ source ~/.vimrc
 
 
 " vsc
-:map <leader>ghp <Action>(VcsShowCurrentChangeMarker)
+:map <leader>hp <Action>(VcsShowCurrentChangeMarker)
 :map [h <Action>(VcsShowPrevChangeMarker)
 :map ]h <Action>(VcsShowNextChangeMarker)
 :map <leader>gb <Action>(Annotate)
