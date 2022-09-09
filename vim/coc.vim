@@ -42,7 +42,6 @@ nmap <silent>ggr :<c-u>CocListResume<cr>
 " fuzzy search
 nnoremap <silent> <leader>f  :<c-u>CocList files<CR>
 nnoremap <silent> <leader>/  :<c-u>CocList grep<CR>
-nnoremap <silent> <leader>h  :<c-u>CocList helptags<CR>
 nnoremap <silent> <leader>zq  :<c-u>CocList quickfix<CR>
 nnoremap <silent> <leader>b  :<c-u>CocList buffers<CR>
 
