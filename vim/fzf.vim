@@ -6,5 +6,4 @@ nnoremap <leader>/ :Rg
 
 nnoremap <silent> <leader>b :Buffers<cr>
 
-nnoremap <silent> <leader>h :Helptags<cr>
 
