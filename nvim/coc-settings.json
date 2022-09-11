@@ -10,5 +10,6 @@
     "javascriptreact": ["javascript"],
     "typescript": ["javascript"],
     "typescriptreact": ["javascriptreact"]
-  }
+  },
+  "Lua.telemetry.enable": false
 }
