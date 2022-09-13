@@ -24,22 +24,11 @@ Neovim must 7.0+，for use some lua plugin which is only supported after 7.0
 
 ### Language Server 
 
-use [lsp-install](https://github.com/williamboman/nvim-lsp-installer) manage Language Server, you need prepare
-
-- nodejs with npm globally
-- golang globally
+- Coc is the yyds
 
 #### null-ls
 
 only `prettier` you need install globally.
-
-#### Java jdtls
-
-I use nvim-jdtls for java Language client, but the plugin follow kiss principle, so you need configure the java and [jdtls](https://github.com/eclipse/eclipse.jdt.ls) by your self.
-
-For my configuration you need add a named "java-lsp" script on you path, the script you can follow the [nvim-jdtls official wiki](https://github.com/eclipse/eclipse.jdt.ls)
-
--- you need comment off the plugin.lua `use("mfussenegger/nvim-jdtls")` because i am not used it for now.
 
 ### other notes
 
