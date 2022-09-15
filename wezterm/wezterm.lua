@@ -27,6 +27,7 @@ return {
 		{ key = "}", mods = "SHIFT|ALT", action = wezterm.action({ MoveTabRelative = 1 }) },
 		-- default keys i needed
 		{ key = "c", mods = "CTRL|SHIFT", action = wezterm.action({ CopyTo = "ClipboardAndPrimarySelection" }) },
+		{ key = "v", mods = "CTRL|SHIFT", action = wezterm.action.PastePrimarySelection },
 		{ key = "t", mods = "SUPER", action = wezterm.action({ SpawnTab = "DefaultDomain" }) },
 		{ key = "+", mods = "SHIFT|CTRL", action = "IncreaseFontSize" },
 		{ key = "_", mods = "SHIFT|CTRL", action = "DecreaseFontSize" },
