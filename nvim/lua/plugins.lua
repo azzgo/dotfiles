@@ -91,6 +91,9 @@ return require("packer").startup(function()
 		config = function()
 			require("lualine").setup({
 				options = { theme = "auto" },
+        sections = {
+          lualine_b = {}
+        }
 			})
 		end,
 	})
@@ -112,10 +115,10 @@ return require("packer").startup(function()
 					null_ls.builtins.formatting.prettier,
 				},
 			})
-      -- noise when lots of diagnose reports.
-      vim.diagnostic.config({
-        virtual_text = false,
-      })
+			-- noise when lots of diagnose reports.
+			vim.diagnostic.config({
+				virtual_text = false,
+			})
 		end,
 		requires = { "nvim-lua/plenary.nvim", "neovim/nvim-lsp" },
 	})
@@ -168,9 +171,9 @@ return require("packer").startup(function()
 		"lewis6991/gitsigns.nvim",
 		requires = { "nvim-lua/plenary.nvim" },
 		config = function()
-			require("gitsigns").setup {
-        current_line_blame = true
-      }
+			require("gitsigns").setup({
+				current_line_blame = true,
+			})
 		end,
 	})
 
