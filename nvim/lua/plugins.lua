@@ -93,6 +93,12 @@ return require("packer").startup(function()
 			require("auto-session").setup({
 				log_level = "error",
 				auto_session_suppress_dirs = { "~/", "~/projects", "~/Downloads", "/" },
+				pre_save_cmds = {
+					function()
+						require("neo-tree.sources.manager").close_all()
+						vim.notify("closed all")
+					end,
+				},
 			})
 		end,
 	})
