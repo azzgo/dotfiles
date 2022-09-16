@@ -73,17 +73,6 @@ return require("packer").startup(function()
 		end,
 	})
 
-	-- bufferline
-	use({
-		"nanozuki/tabby.nvim",
-		requires = "kyazdani42/nvim-web-devicons",
-		config = function()
-			require("tabby").setup({
-				tabline = require("tabby.presets").tab_only,
-			})
-		end,
-	})
-
 	-- statusline
 	use({
 		"nvim-lualine/lualine.nvim",
@@ -91,22 +80,22 @@ return require("packer").startup(function()
 		config = function()
 			require("lualine").setup({
 				options = { theme = "auto" },
-        sections = {
-          lualine_b = {}
-        }
+				sections = {
+					lualine_b = {},
+				},
 			})
 		end,
 	})
-  -- session
-  use {
-    'rmagatti/auto-session',
-    config = function()
-      require("auto-session").setup {
-        log_level = "error",
-        auto_session_suppress_dirs = { "~/", "~/projects", "~/Downloads", "/"},
-      }
-    end
-  }
+	-- session
+	use({
+		"rmagatti/auto-session",
+		config = function()
+			require("auto-session").setup({
+				log_level = "error",
+				auto_session_suppress_dirs = { "~/", "~/projects", "~/Downloads", "/" },
+			})
+		end,
+	})
 
 	--  lsp config
 	use({ "neoclide/coc.nvim", branch = "release" })
@@ -153,9 +142,6 @@ return require("packer").startup(function()
 		end,
 	})
 
-	-- jdtls is slow just Comment it, and open when needed
-	-- use("mfussenegger/nvim-jdtls")
-
 	-- syntax
 	use({ "nvim-treesitter/nvim-treesitter", run = ":TSUpdate" })
 
@@ -185,6 +171,12 @@ return require("packer").startup(function()
 				current_line_blame = true,
 			})
 		end,
+	})
+
+	-- ufo
+	use({
+		"kevinhwang91/nvim-ufo",
+		requires = "kevinhwang91/promise-async",
 	})
 
 	-- ###### lua plugin end ##########
