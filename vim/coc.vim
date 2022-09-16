@@ -26,8 +26,7 @@ inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm()
 " coc-diagnostic
 nnoremap <silent> [d <Plug>(coc-diagnostic-prev)
 nnoremap <silent> ]d <Plug>(coc-diagnostic-next)
-nnoremap <silent> <c-k>  :<c-u>call CocAction('diagnosticInfo')<CR>
-
+nnoremap <silent> <c-k> <Plug>(coc-diagnostic-info)
 
 " GoTo code navigation.
 nmap <silent> gd <Plug>(coc-definition)

@@ -3,7 +3,7 @@
   "suggest.autoTrigger": "none",
   "javascript.suggestionActions.enabled": false,
   "diagnostic.checkCurrentLine": true,
-  "diagnostic.enableMessage": "never",
+  "diagnostic.enableMessage": "jump",
   "snippets.ultisnips.enable": false,
   "snippets.extends": {
     "cpp": ["c"],
