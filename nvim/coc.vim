@@ -22,7 +22,7 @@ inoremap <silent><expr> <c-@> coc#refresh()
 " coc-diagnostic
 nnoremap <silent> [d <Plug>(coc-diagnostic-prev)
 nnoremap <silent> ]d <Plug>(coc-diagnostic-next)
-nnoremap <silent> <c-k>  :<c-u>call CocAction('diagnosticInfo')<CR>
+nnoremap <silent> <c-k> <Plug>(coc-diagnostic-info)
 
 
 " GoTo code navigation.
