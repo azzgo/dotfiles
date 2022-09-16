@@ -11,7 +11,7 @@ lua require('users.comment')
 lua require('users.gitsigns')
 lua require('users.treesitter')
 lua require('users.fzf')
-
+lua require('users.ufo')
 
 " 语法高亮
 syntax on
