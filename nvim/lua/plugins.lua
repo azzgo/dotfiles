@@ -151,22 +151,8 @@ return require("packer").startup(function()
 	-- syntax
 	use({ "nvim-treesitter/nvim-treesitter", run = ":TSUpdate" })
 
-	use({
-		"ibhagwan/fzf-lua",
-		requires = { "kyazdani42/nvim-web-devicons" },
-		config = function()
-			require("fzf-lua").setup({
-				fzf_opts = {
-					["--ansi"] = "",
-					["--info"] = "inline",
-					["--height"] = "100%",
-					["--layout"] = "reverse",
-					["--border"] = "none",
-					["--cycle"] = "",
-				},
-			})
-		end,
-	})
+  use({'nvim-telescope/telescope.nvim' })
+  use {'nvim-telescope/telescope-fzf-native.nvim', run = 'make' }
 
 	-- git
 	use({
