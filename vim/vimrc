@@ -127,5 +127,6 @@ endif
 
 call SourceIfExists("~/.vim/coc.vim")
 call SourceIfExists("~/.vim/fzf.vim")
+call SourceIfExists("~/.vim/git.vim")
 "" local config for override
 call SourceIfExists("~/.vim/local.vim")
