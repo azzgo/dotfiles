@@ -72,7 +72,7 @@ set noswapfile
 
 " 快速保存
 nnoremap <leader>w :w<CR>
-nnoremap <leader>q :bd<CR>
+nnoremap <leader>q <c-w>c
 
 " map Q to q for ex mode is not usable for me
 map Q q
