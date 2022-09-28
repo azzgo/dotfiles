@@ -15,9 +15,8 @@ Neovim must 7.0+，for use some lua plugin which is only supported after 7.0
 
 - g++, gcc: for syntax file compile
 
-#### fzf.lua
+#### telescope
 
-- [fzf](https://github.com/junegunn/fzf): a fatasitc binary executable program dependency you must install first.
 - optional: suggest to install for better performance in search file and text
   - [fd](https://github.com/sharkdp/fd): better find
   - [ripgrep](https://github.com/BurntSushi/ripgrep): better grep
