@@ -6,6 +6,7 @@ end
 
 gitsigns.setup({
 	current_line_blame = true,
+  word_diff = true,
 })
 
 local function map(mode, l, r, opts)
@@ -21,6 +22,7 @@ map({ "n", "v" }, "<leader>hs", ":Gitsigns stage_hunk<CR>")
 map({ "n", "v" }, "<leader>hr", ":Gitsigns reset_hunk<CR>")
 map('n', '<leader>hu', gitsigns.undo_stage_hunk)
 map('n', '<leader>hp', gitsigns.preview_hunk)
+map('n', '<leader>hb', function() gitsigns.blame_line{full=true} end)
 
 map('n', '<leader>hd', gitsigns.diffthis)
 map('n', '<leader>hD', function() gitsigns.diffthis('~') end)
