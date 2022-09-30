@@ -109,7 +109,6 @@ return require("packer").startup(function()
 				virtual_text = false,
 			})
 		end,
-		requires = { "nvim-lua/plenary.nvim", "neovim/nvim-lsp" },
 	})
 
 	-- wilder
