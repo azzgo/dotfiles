@@ -16,6 +16,17 @@ vim.keymap.set("n", "zR", ufo.openAllFolds)
 vim.keymap.set("n", "zM", ufo.closeAllFolds)
 vim.keymap.set('n', 'zr', require('ufo').openFoldsExceptKinds)
 vim.keymap.set('n', 'zm', require('ufo').closeFoldsWith)
+
+vim.keymap.set('n', 'K', function()
+    local winid = require('ufo').peekFoldedLinesUnderCursor()
+    if not winid then
+        -- choose one of them
+        -- coc.nvim
+        vim.fn.CocActionAsync('definitionHover')
+        -- nvimlsp
+        -- vim.lsp.buf.hover()
+    end
+end)
 local handler = function(virtText, lnum, endLnum, width, truncate)
 	local newVirtText = {}
 	local suffix = ("  %d "):format(endLnum - lnum)
