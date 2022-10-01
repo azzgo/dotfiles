@@ -23,5 +23,8 @@ Plug 'itchyny/lightline.vim'
 
 " rcfile
 Plug 'zaid/vim-rec'
+
+" org mode
+Plug 'axvr/org.vim'
  
 call plug#end()
