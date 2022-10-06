@@ -31,7 +31,6 @@ return require("packer").startup(function()
 	use("kyazdani42/nvim-web-devicons")
 
 	-- neotree
-	vim.cmd([[ let g:neo_tree_remove_legacy_commands = 1 ]])
 	use({
 		"nvim-neo-tree/neo-tree.nvim",
 		branch = "v2.x",
@@ -40,41 +39,12 @@ return require("packer").startup(function()
 			"kyazdani42/nvim-web-devicons", -- not strictly required, but recommended
 			"MunifTanjim/nui.nvim",
 		},
-		config = function()
-			require("neo-tree").setup({
-				window = {
-					mappings = {
-						["<space>"] = {
-							"toggle_node",
-							nowait = true, -- disable `nowait` if you have existing combos starting with this char that you want to use
-						},
-					},
-				},
-			})
-			-- toggle 文件浏览器
-			vim.api.nvim_set_keymap("n", "<leader>nn", ":Neotree toggle<CR>", { noremap = true, silent = true })
-			vim.api.nvim_set_keymap("n", "<leader>nb", ":Neotree buffers<CR>", { noremap = true, silent = true })
-			vim.api.nvim_set_keymap(
-				"n",
-				"<leader>nf",
-				":Neotree reveal_force_cwd<CR>",
-				{ noremap = true, silent = true }
-			)
-		end,
 	})
 
 	-- statusline
 	use({
 		"nvim-lualine/lualine.nvim",
 		requires = { "kyazdani42/nvim-web-devicons" },
-		config = function()
-			require("lualine").setup({
-				options = { theme = "auto" },
-				sections = {
-					lualine_b = {},
-				},
-			})
-		end,
 	})
 
 	--  lsp config

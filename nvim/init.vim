@@ -13,6 +13,8 @@ lua require('users.treesitter')
 lua require('users.telescope')
 lua require('users.ufo')
 lua require('users.fugitive')
+lua require('users.lualine')
+lua require('users.neotree')
 
 " 语法高亮
 syntax on
