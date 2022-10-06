@@ -18,17 +18,7 @@ return require("packer").startup(function()
 	use("tpope/vim-surround")
 	use("tpope/vim-repeat")
 	-- git cmmand support
-	use({
-		"tpope/vim-fugitive",
-		config = function()
-			vim.api.nvim_set_keymap("n", "<leader>gg", ":<c-u>G<CR>", { noremap = true, silent = true })
-			vim.api.nvim_set_keymap("n", "<leader>ga", ":<c-u>G add ", { noremap = true })
-			vim.api.nvim_set_keymap("n", "<leader>gp", ":<c-u>G push<CR>", { noremap = true, silent = true })
-			vim.api.nvim_set_keymap("n", "<leader>gup", ":<c-u>G pull --rebase<CR>", { noremap = true, silent = true })
-			vim.api.nvim_set_keymap("n", "<leader>gc", ":<c-u>G commit -v<CR>", { noremap = true, silent = true })
-			vim.api.nvim_set_keymap("n", "<leader>gb", ":<c-u>G blame<CR>", { noremap = true, silent = true })
-		end,
-	})
+	use("tpope/vim-fugitive")
 
 	-- theme
 	-- use("NLKNguyen/papercolor-theme")
@@ -172,17 +162,17 @@ return require("packer").startup(function()
 					line.tabs().foreach(function(tab)
 						local hl = tab.is_current() and theme.current_tab or theme.tab
 						return {
-              line.sep('█', hl, theme.fill),
+							line.sep("█", hl, theme.fill),
 							tab.is_current() and "" or "",
 							tab.number(),
 							tab.name(),
-              line.sep('█', hl, theme.fill),
+							line.sep("█", hl, theme.fill),
 							hl = hl,
 							margin = " ",
 						}
 					end),
-          line.spacer(),
-          hl = theme.fill,
+					line.spacer(),
+					hl = theme.fill,
 				}
 			end)
 		end,
