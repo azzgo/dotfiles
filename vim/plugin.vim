@@ -17,6 +17,9 @@ Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
 
+" nerdtree
+Plug 'preservim/nerdtree'
+
 " theme
 Plug 'arcticicestudio/nord-vim'
 Plug 'itchyny/lightline.vim'
