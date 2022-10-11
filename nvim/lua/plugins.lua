@@ -51,8 +51,11 @@ return require("packer").startup(function()
 	use({ "neoclide/coc.nvim", branch = "release" })
 	use("jose-elias-alvarez/null-ls.nvim")
 
-	-- wilder
-	use("gelguy/wilder.nvim")
+	-- cmp only for cmdline
+	use("hrsh7th/nvim-cmp")
+	use("hrsh7th/cmp-cmdline")
+	use("hrsh7th/cmp-buffer")
+	use("hrsh7th/cmp-path")
 
 	-- syntax
 	use({ "nvim-treesitter/nvim-treesitter", run = ":TSUpdate" })
