@@ -17,7 +17,7 @@ telescope.setup({
 		defaults = {
 			mappings = {
 				i = {
-					["<esc>"] = actions.close
+					["<esc>"] = actions.close,
 				},
 			},
 		},
@@ -26,31 +26,20 @@ telescope.setup({
 -- To get fzf loaded and working with telescope, you need to call
 -- load_extension, somewhere after setup function:
 telescope.load_extension("fzf")
-
+local buildin = require("telescope.builtin")
+local opts = { noremap = true, silent = true }
 -- nvim_set_keymap
-vim.api.nvim_set_keymap(
-	"n",
-	"<leader>f",
-	"<cmd>lua require('telescope.builtin').find_files({ debounce = 150 })<cr>",
-	{ noremap = true, silent = true }
-)
-vim.api.nvim_set_keymap(
-	"n",
-	"<leader>/",
-	"<cmd>lua require('telescope.builtin').live_grep({ debounce = 150 })<cr>",
-	{ noremap = true, silent = true }
-)
-vim.api.nvim_set_keymap(
-	"n",
-	"<leader>b",
-	"<cmd>lua require('telescope.builtin').buffers()<cr>",
-	{ noremap = true, silent = true }
-)
+vim.keymap.set("n", "<leader>f", function()
+	buildin.find_files({ debounce = 150 })
+end, opts)
+vim.keymap.set("n", "<leader>/", function()
+	buildin.live_grep({ debounce = 150 })
+end, opts)
+vim.keymap.set("n", "<leader>b", function()
+	buildin.buffers()
+end, opts)
 
 -- resume
-vim.api.nvim_set_keymap(
-	"n",
-	"ggr",
-	"<cmd>lua require('telescope.builtin').resume()<cr>",
-	{ noremap = true, silent = true }
-)
+vim.keymap.set("n", "ggr", function()
+	buildin.resume()
+end, opts)
