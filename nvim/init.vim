@@ -17,7 +17,7 @@ lua require('users.lualine')
 lua require('users.neotree')
 lua require('users.null-ls')
 lua require('users.tabby')
-lua require('users.wilder')
+lua require('users.cmp')
 
 " 语法高亮
 syntax on
