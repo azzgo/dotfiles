@@ -49,7 +49,6 @@ return require("packer").startup(function()
 
 	--  lsp config
 	use({ "neoclide/coc.nvim", branch = "release" })
-	use("jose-elias-alvarez/null-ls.nvim")
 
 	-- cmp only for cmdline
 	use("hrsh7th/nvim-cmp")
