@@ -7,7 +7,7 @@ null_ls.setup({
 	---@diagnostic disable-next-line: unused-local
 	on_attach = function(client, bufnr)
 		local opts = { noremap = true, silent = true }
-		vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>cf", "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
+		vim.api.nvim_buf_set_keymap(bufnr, "n", "<leader>cf", "<cmd>lua vim.lsp.buf.format()<CR>", opts)
 	end,
 	sources = {
 		null_ls.builtins.formatting.stylua,
