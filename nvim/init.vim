@@ -15,7 +15,6 @@ lua require('users.ufo')
 lua require('users.fugitive')
 lua require('users.lualine')
 lua require('users.neotree')
-lua require('users.null-ls')
 lua require('users.tabby')
 lua require('users.cmp')
 
