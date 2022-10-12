@@ -12,7 +12,6 @@ lua require('users.gitsigns')
 lua require('users.treesitter')
 lua require('users.telescope')
 lua require('users.ufo')
-lua require('users.fugitive')
 lua require('users.lualine')
 lua require('users.neotree')
 lua require('users.tabby')
@@ -165,6 +164,7 @@ function! SourceIfExists(file)
 endfunction
 
 call SourceIfExists("~/.config/nvim/coc.vim")
+call SourceIfExists("~/.config/nvim/fugitive.vim")
 "" local config for override
 call SourceIfExists("~/.config/nvim/local.vim")
 
