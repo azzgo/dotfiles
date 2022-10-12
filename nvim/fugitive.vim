@@ -5,5 +5,5 @@ nnoremap <leader>gup :<c-u>G pull --rebase<CR>
 nnoremap <leader>gc :<c-u>G commit -v<CR>
 nnoremap <leader>gb :<c-u>G blame<CR>
 
-command! -nargs=0 Gprp :G pull -r<CR> | : G push
+command! -nargs=0 Gprp :G pull -r | :G push
 
