@@ -40,6 +40,6 @@ vim.keymap.set("n", "<leader>b", function()
 end, opts)
 
 -- resume
-vim.keymap.set("n", "ggr", function()
+vim.keymap.set("n", "<leader>rt", function()
 	buildin.resume()
 end, opts)
