@@ -36,7 +36,8 @@ nmap <silent> gr <Plug>(coc-references)
 nmap <silent> gK :<c-u>CocList diagnostics<cr>
 
 " coc list
-nmap <silent>ggr :<c-u>CocListResume<cr>
+nmap <silent><leader>rc :<c-u>CocListResume<cr>
+nmap <silent><leader>rm :<c-u>CocList mru<cr>
 
 " fuzzy search
 nnoremap <silent> <leader>f  :<c-u>CocList files<CR>
