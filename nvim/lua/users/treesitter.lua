@@ -14,6 +14,7 @@ treesitter_config.setup({
 		"vue",
 		"lua",
 	},
+  ignore_install = { "javascript", "c", "vim" },
   matchup = {
     enable = true
   },
@@ -26,5 +27,5 @@ treesitter_config.setup({
 	},
 })
 
-local parser_config = require("nvim-treesitter.parsers").get_parser_configs()
-parser_config.tsx.filetype_to_parsername = { "javascript", "typescript.tsx" }
+local ft_to_parser = require"nvim-treesitter.parsers".filetype_to_parsername
+ft_to_parser.javascript = "typescript"
