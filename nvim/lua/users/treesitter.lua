@@ -9,12 +9,9 @@ treesitter_config.setup({
 		"tsx",
 		"typescript",
 		"json",
-		"yaml",
 		"html",
 		"scss",
 		"vue",
-		"go",
-		"fish",
 		"lua",
 	},
   matchup = {
