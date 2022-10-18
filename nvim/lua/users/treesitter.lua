@@ -11,7 +11,6 @@ treesitter_config.setup({
 		"json",
 		"html",
 		"scss",
-		"vue",
 		"lua",
 	},
   ignore_install = { "javascript", "c", "vim" },
