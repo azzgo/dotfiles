@@ -57,7 +57,6 @@ return require("packer").startup(function()
 
   -- syntax
   use({ "nvim-treesitter/nvim-treesitter" })
-  use({ 'posva/vim-vue' })
   -- fuzzy
   use({ "nvim-telescope/telescope.nvim" })
   use({ "nvim-telescope/telescope-fzf-native.nvim", run = "make" })
