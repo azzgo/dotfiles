@@ -46,11 +46,7 @@ source ~/.vimrc
 "========================
 
 Plug 'preservim/nerdtree'
-Plug 'tpope/vim-surround'
 Plug 'tpope/vim-commentary'
-
-" need idea plugin vim-seak
-set sneak
 
 " Exploerer
 :map <leader>nn :NERDTreeToggle<CR>

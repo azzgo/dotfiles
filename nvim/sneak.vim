@@ -1,2 +1,2 @@
-map f <Plug>Sneak_s
-map F <Plug>Sneak_S
+map t <Plug>Sneak_s
+map T <Plug>Sneak_S
