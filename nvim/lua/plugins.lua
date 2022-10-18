@@ -15,8 +15,7 @@ return require("packer").startup(function()
 	use("andymass/vim-matchup")
 
 	--  origin vim plugin use 'tpope/vim-surround'
-	use("tpope/vim-surround")
-	use("tpope/vim-repeat")
+  use("machakann/vim-sandwich")
 	-- git cmmand support
 	use("tpope/vim-fugitive")
 

@@ -4,8 +4,7 @@ call plug#begin()
 Plug 'justinmk/vim-sneak'
 
 " must plugin
-Plug 'tpope/vim-surround'
-Plug 'tpope/vim-repeat'
+Plug 'machakann/vim-sandwich'
 Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-commentary'
 Plug 'mhinz/vim-signify'
