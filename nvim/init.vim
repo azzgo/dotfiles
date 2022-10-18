@@ -164,6 +164,7 @@ function! SourceIfExists(file)
 endfunction
 
 call SourceIfExists("~/.config/nvim/coc.vim")
+call SourceIfExists("~/.config/nvim/sneak.vim")
 call SourceIfExists("~/.config/nvim/fugitive.vim")
 "" local config for override
 call SourceIfExists("~/.config/nvim/local.vim")
