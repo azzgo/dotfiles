@@ -1,5 +1,6 @@
 {
   "coc.preferences.enableMarkdown": false,
+  "semanticTokens.enable": true,
   "suggest.autoTrigger": "none",
   "javascript.suggestionActions.enabled": false,
   "diagnostic.checkCurrentLine": true,
