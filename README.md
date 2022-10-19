@@ -2,11 +2,9 @@
 
 The dotfiles are common used in my work and life.
 
-[TOC]
-
 ## Neovim
 
-Neovim must 7.0+，for use some lua plugin which is only supported after 7.0
+Neovim must 8.0+，for use some lua plugin which is only supported after 7.0
 
 
 ### Requirement for my plugins
