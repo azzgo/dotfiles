@@ -9,7 +9,7 @@ return require("packer").startup(function()
   use("wbthomason/packer.nvim")
 
   --- quick move
-  use("justinmk/vim-sneak")
+  use { "justinmk/vim-sneak", config = "vim.cmd[[source ~/.config/nvim/sneak.vim]]" }
 
   -- matchup
   use("andymass/vim-matchup")
@@ -17,8 +17,7 @@ return require("packer").startup(function()
   --  origin vim plugin use 'tpope/vim-surround'
   use("machakann/vim-sandwich")
   -- git cmmand support
-  use("tpope/vim-fugitive")
-
+  use { "tpope/vim-fugitive", config = "vim.cmd[[source ~/.config/nvim/fugitive.vim]]" }
   -- theme
   -- use("NLKNguyen/papercolor-theme")
   -- use("sainnhe/gruvbox-material")
@@ -26,7 +25,7 @@ return require("packer").startup(function()
 
   -- ##########lua plugins start##############
 
-  use("numToStr/Comment.nvim")
+  use { "numToStr/Comment.nvim", config = [[require('users.comment')]] }
   use("kyazdani42/nvim-web-devicons")
 
   -- neotree
@@ -38,43 +37,47 @@ return require("packer").startup(function()
       "kyazdani42/nvim-web-devicons", -- not strictly required, but recommended
       "MunifTanjim/nui.nvim",
     },
+    config = [[ require('users.neotree') ]]
   })
 
   -- statusline
   use({
     "nvim-lualine/lualine.nvim",
     requires = { "kyazdani42/nvim-web-devicons" },
+    config = [[ require('users.lualine') ]]
   })
 
   --  lsp config
-  use({ "neoclide/coc.nvim", branch = "release" })
+  use({ "neoclide/coc.nvim", branch = "release", config = "vim.cmd[[source ~/.config/nvim/coc.vim]]" })
 
   -- cmp only for cmdline
-  use("hrsh7th/nvim-cmp")
+  use { "hrsh7th/nvim-cmp", config = [[ require('users.cmp') ]] }
   use("hrsh7th/cmp-cmdline")
   use("hrsh7th/cmp-buffer")
   use("hrsh7th/cmp-path")
 
   -- syntax
-  use({ "nvim-treesitter/nvim-treesitter" })
+  use({ "nvim-treesitter/nvim-treesitter", config = [[ require('users.treesitter') ]] })
   -- fuzzy
-  use({ "nvim-telescope/telescope.nvim" })
+  use({ "nvim-telescope/telescope.nvim", config = [[ require('users.telescope') ]] })
   use({ "nvim-telescope/telescope-fzf-native.nvim", run = "make" })
 
   -- git
   use({
     "lewis6991/gitsigns.nvim",
     requires = { "nvim-lua/plenary.nvim" },
+    config = [[ require('users.gitsigns') ]]
   })
 
   -- ufo
   use({
     "kevinhwang91/nvim-ufo",
     requires = "kevinhwang91/promise-async",
+    config = [[ require('users.ufo') ]]
   })
 
   --- tabby
-  use("nanozuki/tabby.nvim")
+  use { "nanozuki/tabby.nvim", config = [[ require('users.tabby') ]] }
 
   -- ###### lua plugin end ##########
 end)
