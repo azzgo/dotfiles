@@ -31,10 +31,6 @@ Neovim must 8.0+，for use some lua plugin which is only supported after 7.0
 
 - sometime i need a simple edit environment
 
-## Vim bare -  for tmp edit environment
-
-The vim config is only a minimal config for liking server environment editor, so it doesn't have magic here.
-
 ## wezterm
 
 A amazing gui based terminal i liked
