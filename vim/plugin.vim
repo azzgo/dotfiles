@@ -9,9 +9,6 @@ Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-commentary'
 Plug 'mhinz/vim-signify'
 
-" coc powered up
-Plug 'neoclide/coc.nvim', {'branch': 'release'}
-
 " fzf
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
@@ -26,7 +23,4 @@ Plug 'itchyny/lightline.vim'
 " rcfile
 Plug 'zaid/vim-rec'
 
-" org mode
-Plug 'axvr/org.vim'
- 
 call plug#end()

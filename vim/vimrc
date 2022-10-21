@@ -125,7 +125,6 @@ if has('wildmenu')
   set wildmenu
 endif
 
-call SourceIfExists("~/.vim/coc.vim")
 call SourceIfExists("~/.vim/fzf.vim")
 call SourceIfExists("~/.vim/git.vim")
 call SourceIfExists("~/.vim/nerdtree.vim")
