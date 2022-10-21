@@ -1,4 +1,4 @@
-# DotFiles for Archives
+# DotFiles
 
 The dotfiles are common used in my work and life.
 
