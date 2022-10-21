@@ -2,45 +2,77 @@
 
 The dotfiles are common used in my work and life.
 
-## Neovim
+## Vim & Neovim
 
-Neovim must 8.0+，for use some lua plugin which is only supported after 7.0
+I'm a neovim & vim user from 2021. It really changed my promgramming life.
 
+Here are some of my neovim & vim config introduction
 
-### Requirement for my plugins
+### Neovim
 
-#### treesitter
+Neovim must 0.8+
 
-- g++, gcc: for syntax file compile
+If you want to use my configs you must do the following staffs
 
-#### telescope
+#### Requirement of experience
 
-- optional: suggest to install for better performance in search file and text
+- linux/macos environment. the dotfiles are not tested on windows
+- c compile toolchains in your promgramming environment - it is for treesitter
+- for telescope, charmming fuzzy finder
   - [fd](https://github.com/sharkdp/fd): better find
   - [ripgrep](https://github.com/BurntSushi/ripgrep): better grep
+- of course the neovim 0.8+
+- [packer](https://github.com/wbthomason/packer.nvim) the plugin management tool
 
-### Language Server 
+#### Quick start
 
-- Coc is the yyds
+```sh
+$ git clone https://github.com/azzgo/dotfiles
+$ ln -sf $PWD/dotfiles/nvim ~/.config/nvim      # linux or osx environment required
+$ nvim -c ":PackerSync"
+```
 
-### other notes
+### vimrc - for simple edit environment
 
-- the sql syntax file is forked copy from [Improved SQL syntax for vim](https://github.com/shmup/vim-sql-syntax)
+I also have a vim configs for some simple or old environment, there are not much plugin i used. you can starts with:
 
-## vimrc - for simple edit environment
+```sh
+$ git clone https://github.com/azzgo/dotfiles
+$ ln -sf $PWD/dotfiles/vim ~/.vim                 # linux or osx environment required
+$ ln -sf $PWD/dotfiles/vim/vimrc ~/.vimrc
+$ vim -c ":PlugInstall"
+```
 
-- sometime i need a simple edit environment
+### ideavimrc
 
-## wezterm
+en, only for java, because java sucks in vim
+
+## Other dotfils
+
+### wezterm
 
 A amazing gui based terminal i liked
 
-## For Macos
+### yabei & skhd
 
 I use the yabai and skhd is to provide the tilling wm experience.
 
-for the additional, I use [Simple Bar](https://github.com/Jean-Tinland/simple-bar) get beauity bar in Macos, it is worth.
+For the additional, I use [Simple Bar](https://github.com/Jean-Tinland/simple-bar) get beauity bar in Macos, it is worth.
 
 my porn
 
 ![osxporn](.assets/osxporn.jpeg)
+
+### shells
+
+Support zsh and bash
+
+In your shellrc file, source my shell configs like this:
+
+```sh
+# ~/.bashrc
+
+source ~/dotfiles/shell/bashrc
+
+# add your unique config after source
+```
