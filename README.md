@@ -23,19 +23,15 @@ Neovim must 8.0+，for use some lua plugin which is only supported after 7.0
 
 - Coc is the yyds
 
-#### null-ls
-
-only `prettier` you need install globally.
-
 ### other notes
 
 - the sql syntax file is forked copy from [Improved SQL syntax for vim](https://github.com/shmup/vim-sql-syntax)
 
-## vimrc - with coc 
+## vimrc - for simple edit environment
 
-- sometime i need a simple but quick develop environment, coc with vim is suit for me
+- sometime i need a simple edit environment
 
-## Vim bare - the vimrc.bare
+## Vim bare -  for tmp edit environment
 
 The vim config is only a minimal config for liking server environment editor, so it doesn't have magic here.
 
