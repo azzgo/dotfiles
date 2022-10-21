@@ -6,4 +6,3 @@ nnoremap <leader>/ :Rg
 
 nnoremap <silent> <leader>b :Buffers<cr>
 
-
