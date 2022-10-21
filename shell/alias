@@ -9,7 +9,21 @@ alias gst='git status'
 alias gco='git checkout'
 alias gprp='git pull --rebase && git push'
 alias ll='ls -alF'
-alias v='nvim'
-alias rr="ranger"
-alias pc="proxychains -q"
-alias rm="trash"
+
+if [[ -x $(command -v nvim) ]];then
+  alias v='nvim'
+else 
+  alias v='vim'
+fi
+
+if [[ -x $(command -v ranger) ]];then
+  alias rr="ranger"
+fi
+
+if [[ -x $(command -v proxychains) ]];then
+  alias pc="proxychains -q"
+fi
+
+if [[ -x $(command -v trash) ]];then
+  alias rm="trash"
+fi
