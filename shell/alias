@@ -1,0 +1,15 @@
+#!/bin/bash
+
+alias g='git'
+alias ga='git add'
+alias gc='git commit -v'
+alias gup='git pull --rebase'
+alias gp='git push'
+alias gst='git status'
+alias gco='git checkout'
+alias gprp='git pull --rebase && git push'
+alias ll='ls -alF'
+alias v='nvim'
+alias rr="ranger"
+alias pc="proxychains -q"
+alias rm="trash"
