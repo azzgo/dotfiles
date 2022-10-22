@@ -1,3 +1,8 @@
+" /* vim: set ft=vim : */
+" ==========================
+" Core config for Vim/Neovim
+" ==========================
+
 " setting leader key
 let mapleader=" "
 let g:mapleader=" "
@@ -94,6 +99,11 @@ inoremap <c-b> <left>
 " spell correct
 iabbrev cosnt const¬
 
+" wildmenu
+if has('wildmenu')
+  set wildmenu
+endif
+
 " .vimrc quick kemap source and edit
 nnoremap <leader>ev :e $MYVIMRC<CR>
 nnoremap <leader>sv :source $MYVIMRC<CR>
@@ -110,3 +120,4 @@ if executable("rg")
   set grepprg=rg\ --vimgrep\ --no-heading
   set grepformat=%f:%l:%c:%m,%f:%l:%m
 endif
+
