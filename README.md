@@ -49,6 +49,30 @@ en, only for java, because java sucks in vim
 
 ## Other dotfils
 
+### emacs
+
+Mainly to do some note taking work and daily work track
+
+If you want to use it.
+
+Make sure do some of the following:
+
+```sh
+$ git clone https://github.com/azzgo/dotfiles
+$ mkdir ~/.emacs.d
+$ ln -sf $ $PWD/dotfils/emacs/init.el ~/.emacs.d/init.el
+$ ln -sf $ $PWD/dotfils/emacs/lisp ~/.emacs.d/lisp
+```
+
+And add a `init-local.el` file in ~/.emacs.d/lisp 
+
+You should make the content init like this:
+
+```
+;; you can add your local config above this line
+(provide 'init-local)
+```
+
 ### wezterm
 
 A amazing gui based terminal i liked
