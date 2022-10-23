@@ -8,3 +8,5 @@ nvim/plugin/
 vim/plugged/
 vim/sessions/
 vim/.netrwhist
+
+emacs/lisp/init-local.el
