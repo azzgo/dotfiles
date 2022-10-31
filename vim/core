@@ -102,6 +102,7 @@ iabbrev cosnt const¬
 " wildmenu
 if has('wildmenu')
   set wildmenu
+  set wildoptions=pum,tagfile
 endif
 
 " .vimrc quick kemap source and edit
