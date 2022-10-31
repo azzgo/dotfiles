@@ -50,11 +50,6 @@ return require("packer").startup(function()
   --  lsp config
   use({ "neoclide/coc.nvim", branch = "release", config = "vim.cmd[[source ~/.config/nvim/coc.vim]]" })
 
-  -- cmp only for cmdline
-  use { "hrsh7th/nvim-cmp", config = [[ require('users.cmp') ]] }
-  use("hrsh7th/cmp-cmdline")
-  use("hrsh7th/cmp-buffer")
-  use("hrsh7th/cmp-path")
 
   -- syntax
   use({ "nvim-treesitter/nvim-treesitter", config = [[ require('users.treesitter') ]] })
