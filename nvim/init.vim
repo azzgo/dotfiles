@@ -4,6 +4,8 @@ function! SourceIfExists(file)
   endif
 endfunction
 
+" set winbar as file path
+set winbar=%f
 
 let s:vim_core_path = expand('<sfile>:h:h') . '/vim/core'
 
@@ -42,4 +44,4 @@ augroup packer_user_config
   autocmd BufWritePost plugins.lua source <afile> | PackerCompile
 augroup end
 
-set winbar=%f
+
