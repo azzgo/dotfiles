@@ -17,18 +17,15 @@
  '(default ((t (:family "文泉驿等宽微米黑" :foundry "WQYF" :slant normal :weight normal :height 181 :width normal)))))
 
 (use-package gruvbox-theme
-  :ensure t
   :config
   (load-theme 'gruvbox-dark-hard t)
 )
 
 (use-package doom-modeline
-  :ensure t
   :init (doom-modeline-mode 1))
 
 
 (use-package cnfonts
-  :ensure t
   :config
   (progn
     ;; 让 cnfonts 在 Emacs 启动时自动生效。

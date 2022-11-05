@@ -14,6 +14,8 @@
   ;; Following line is not needed if use-package.el is in ~/.emacs.d
   (require 'use-package))
 
+(setq use-package-always-ensure t)
+
 (require 'init-ui)
 (require 'init-custom)
 (require 'init-global-keymap)
