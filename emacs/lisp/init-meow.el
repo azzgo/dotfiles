@@ -1,7 +1,6 @@
 
 
 (use-package meow
-             :ensure t
              :config
              (progn
                (defun meow-setup ()
@@ -91,5 +90,7 @@
                    '("<escape>" . ignore)))
                (meow-setup)
                (meow-global-mode 1)
-               )
-             )
+	       (meow-define-keys 'insert
+		 '("ESC" . meow-insert-exit))
+
+(provide 'init-meow)

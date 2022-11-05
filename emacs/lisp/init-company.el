@@ -1,5 +1,4 @@
 (use-package company
-  :ensure t
   :config
   (progn
     ;; company settings
