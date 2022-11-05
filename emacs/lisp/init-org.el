@@ -8,5 +8,9 @@
 (setq org-startup-folded 'show2levels)
 (setq org-return-follows-link  t)
 (setq org-image-actual-width nil)
+;; org-babel
+(org-babel-do-load-languages
+ 'org-babel-load-languages '((perl . t)))
+(setq org-confirm-babel-evaluate nil)
 
 (provide 'init-org)

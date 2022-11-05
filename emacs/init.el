@@ -19,5 +19,6 @@
 (require 'init-global-keymap)
 (require 'init-org)
 (require 'init-company)
+(require 'init-meow)
 (require 'init-local)
 
