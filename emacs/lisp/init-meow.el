@@ -1,9 +1,6 @@
-
-
 (use-package meow
              :config
              (progn
-               (defun meow-setup ()
                  (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
                  (meow-motion-overwrite-define-key
                    '("j" . meow-next)
@@ -88,9 +85,9 @@
                    '("z" . meow-pop-selection)
                    '("'" . repeat)
                    '("<escape>" . ignore)))
-               (meow-setup)
                (meow-global-mode 1)
 	       (meow-define-keys 'insert
 		 '("ESC" . meow-insert-exit))
+)
 
 (provide 'init-meow)
