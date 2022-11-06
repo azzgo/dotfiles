@@ -10,7 +10,10 @@
 (setq org-image-actual-width nil)
 ;; org-babel
 (org-babel-do-load-languages
- 'org-babel-load-languages '((perl . t)))
+ 'org-babel-load-languages '(
+			    (perl . t)
+			    (clojure . t))
+)
 (setq org-confirm-babel-evaluate nil)
 
 (provide 'init-org)
