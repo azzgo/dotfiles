@@ -86,8 +86,6 @@
                    '("'" . repeat)
                    '("<escape>" . ignore)))
                (meow-global-mode 1)
-	       (meow-define-keys 'insert
-		 '("ESC" . meow-insert-exit))
 )
 
 (provide 'init-meow)
