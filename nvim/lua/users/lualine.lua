@@ -9,4 +9,5 @@ lualine.setup({
 	sections = {
 		lualine_b = {},
 	},
+  options = { section_separators = "", component_separators = "" }
 })
