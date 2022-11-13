@@ -100,3 +100,6 @@ source ~/dotfiles/shell/bashrc
 
 # add your unique config after source
 ```
+
+oh I use starship prompt which it also keep in the repo. Tt's realy nice. for performance i disable some git function, but keep others defalut.
+
