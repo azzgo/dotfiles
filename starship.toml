@@ -1,0 +1,10 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+[cmd_duration]
+min_time = 0
+
+[git_state]
+disabled = true
+
+[git_status]
+disabled = true
