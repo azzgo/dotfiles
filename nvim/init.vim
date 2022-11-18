@@ -5,7 +5,16 @@ function! SourceIfExists(file)
 endfunction
 
 " set winbar as file path
-set winbar=%f
+function! WinBarLine()
+  let l:symbol = get(b:,'coc_current_function', '')
+  if (empty(l:symbol))
+    return expand('%f')
+  else
+    return expand('%f') . '#' . symbol
+  endif
+endfunction
+
+set winbar=%{WinBarLine()}
 
 let s:vim_core_path = expand('<sfile>:h:h') . '/vim/core'
 
