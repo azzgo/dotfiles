@@ -11,7 +11,6 @@ call SourceIfExists("~/.vim/core")
 
 call SourceIfExists("~/.vim/fzf.vim")
 call SourceIfExists("~/.vim/git.vim")
-call SourceIfExists("~/.vim/nerdtree.vim")
 call SourceIfExists("~/.vim/sneak.vim")
 "" local config for override
 call SourceIfExists("~/.vim/local.vim")
