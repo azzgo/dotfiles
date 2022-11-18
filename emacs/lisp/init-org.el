@@ -16,4 +16,8 @@
 )
 (setq org-confirm-babel-evaluate nil)
 
+;; org-download
+(use-package org-download
+  :after org)
+
 (provide 'init-org)
