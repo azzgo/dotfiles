@@ -28,18 +28,6 @@ return require("packer").startup(function()
   use { "numToStr/Comment.nvim", config = [[require('users.comment')]] }
   use("kyazdani42/nvim-web-devicons")
 
-  -- neotree
-  use({
-    "nvim-neo-tree/neo-tree.nvim",
-    branch = "v2.x",
-    requires = {
-      "nvim-lua/plenary.nvim",
-      "kyazdani42/nvim-web-devicons", -- not strictly required, but recommended
-      "MunifTanjim/nui.nvim",
-    },
-    config = [[ require('users.neotree') ]]
-  })
-
   -- statusline
   use({
     "nvim-lualine/lualine.nvim",
