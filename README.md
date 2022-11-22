@@ -77,16 +77,6 @@ You should make the content init like this:
 
 A amazing gui based terminal i liked
 
-### yabei & skhd
-
-I use the yabai and skhd is to provide the tilling wm experience.
-
-For the additional, I use [Simple Bar](https://github.com/Jean-Tinland/simple-bar) get beauity bar in Macos, it is worth.
-
-my porn
-
-![osxporn](.assets/osxporn.jpeg)
-
 ### shells
 
 Support zsh and bash
