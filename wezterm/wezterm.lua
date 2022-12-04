@@ -5,9 +5,7 @@ return {
 	color_scheme = "nord",
 	font = wezterm.font_with_fallback({
 		"Hack Nerd Font Mono",
-		"Noto Color Emoji",
-		"Material-Design-Iconic-Font",
-		"Font Awesome 6 Free",
+		"Noto Color Emoji"
 	}),
 	font_size = 18,
 	audible_bell = "Disabled",
