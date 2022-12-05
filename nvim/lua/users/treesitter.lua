@@ -8,10 +8,7 @@ treesitter_config.setup({
 	ensure_installed = {
 		"tsx",
 		"typescript",
-		"json",
-		"html",
 		"scss",
-		"lua",
 	},
   ignore_install = { "javascript", "c", "vim" },
   matchup = {
