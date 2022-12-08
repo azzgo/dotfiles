@@ -35,6 +35,9 @@ return require("packer").startup(function()
     config = [[ require('users.lualine') ]]
   })
 
+  -- nvim-tree
+  use({ 'nvim-tree/nvim-tree.lua', config = [[ require('users.nvimtree') ]] })
+
   --  lsp config
   use({ "neoclide/coc.nvim", branch = "release", config = "vim.cmd[[source ~/.config/nvim/coc.vim]]" })
 

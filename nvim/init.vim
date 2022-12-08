@@ -21,6 +21,12 @@ let s:vim_core_path = expand('<sfile>:h:h') . '/vim/core'
 " source basic file of vim config
 exe 'source' s:vim_core_path
 
+" unmap netrw for prepare nvim tree
+unmap <leader>nn
+unmap <leader>nf
+let g:loaded_netrw = 1
+let g:loaded_netrwPlugin = 1
+
 " import plugins config
 lua require('plugins')
 
