@@ -38,8 +38,11 @@ end, opts)
 vim.keymap.set("n", "<leader>b", function()
 	buildin.buffers()
 end, opts)
+vim.keymap.set("n", "<leader>rf", function()
+	buildin.oldfiles()
+end, opts)
 
 -- resume
-vim.keymap.set("n", "<leader>rt", function()
+vim.keymap.set("n", "<leader>rs", function()
 	buildin.resume()
 end, opts)
