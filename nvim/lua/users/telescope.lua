@@ -41,6 +41,9 @@ end, opts)
 vim.keymap.set("n", "<leader>rf", function()
 	buildin.oldfiles()
 end, opts)
+vim.keymap.set("n", "<leader>rq", function()
+	buildin.quickfix()
+end, opts)
 
 -- resume
 vim.keymap.set("n", "<leader>rs", function()
