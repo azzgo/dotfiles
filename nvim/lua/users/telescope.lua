@@ -7,7 +7,10 @@ end
 local actions = require("telescope.actions")
 telescope.setup({
   defaults = {
-    path_display = { "smart" }
+    path_display = {
+      shorten = { len = 1, exclude = { -1, -2 } }, 
+      truncate = 3
+    }
   },
 	extensions = {
 		fzf = {
