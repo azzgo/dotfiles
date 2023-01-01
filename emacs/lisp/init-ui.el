@@ -22,7 +22,12 @@
 )
 
 (use-package doom-modeline
-  :init (doom-modeline-mode 1))
+  :init (doom-modeline-mode 1)
+  :config (progn
+      (column-number-mode t)
+      (size-indication-mode t)
+  )
+)
 
 
 (use-package cnfonts
