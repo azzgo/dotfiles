@@ -65,5 +65,10 @@ return require("packer").startup(function()
   --- tabby
   use { "nanozuki/tabby.nvim", config = [[ require('users.tabby') ]] }
 
+  -- undotree
+  use({"mbbill/undotree", config = function() 
+    vim.keymap.set('n', '<leader>u', vim.cmd.UndotreeToggle, {})
+  end})
+
   -- ###### lua plugin end ##########
 end)
