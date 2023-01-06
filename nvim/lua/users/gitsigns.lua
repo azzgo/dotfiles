@@ -13,8 +13,8 @@ gitsigns.setup({
       vim.keymap.set(mode, l, r, opts)
     end
 
-    vim.api.nvim_set_keymap("n", "]h", ":Gitsigns next_hunk<CR>", { noremap = true, silent = true })
-    vim.api.nvim_set_keymap("n", "[h", ":Gitsigns prev_hunk<CR>", { noremap = true, silent = true })
+    vim.keymap.set("n", "]h", ":Gitsigns next_hunk<CR>", { noremap = true, silent = true })
+    vim.keymap.set("n", "[h", ":Gitsigns prev_hunk<CR>", { noremap = true, silent = true })
 
     map({ "n", "v" }, "<leader>hs", ":Gitsigns stage_hunk<CR>")
     map({ "n", "v" }, "<leader>hr", ":Gitsigns reset_hunk<CR>")
