@@ -34,7 +34,6 @@ telescope.setup({
 telescope.load_extension("fzf")
 local buildin = require("telescope.builtin")
 local opts = { noremap = true, silent = true }
--- nvim_set_keymap
 vim.keymap.set("n", "<leader>f", function()
 	buildin.find_files({ debounce = 150 })
 end, opts)
