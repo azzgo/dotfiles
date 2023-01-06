@@ -39,7 +39,10 @@ vim.keymap.set("n", "<leader>f", function()
 	buildin.find_files({ debounce = 150 })
 end, opts)
 vim.keymap.set("n", "<leader>/", function()
-	buildin.grep_string({ search = vim.fn.input("Grep > ") })
+  local ok, grep_string = pcall(vim.fn.input, "Grep > ")
+  if ok then
+    buildin.grep_string({ search = grep_string })
+  end
 end, opts)
 vim.keymap.set("n", "<leader>b", function()
 	buildin.buffers()
