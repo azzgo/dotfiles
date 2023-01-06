@@ -70,5 +70,4 @@ return require("packer").startup(function()
     vim.keymap.set('n', '<leader>u', vim.cmd.UndotreeToggle, {})
   end})
 
-  -- ###### lua plugin end ##########
-end)
+  -- ###### lua plugin end ########## end)
