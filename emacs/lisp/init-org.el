@@ -20,4 +20,6 @@
 (use-package org-download
   :after org)
 
+(use-package d2-mode)
+
 (provide 'init-org)
