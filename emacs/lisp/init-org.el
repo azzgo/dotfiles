@@ -20,6 +20,9 @@
 (use-package org-download
   :after org)
 
-(use-package d2-mode)
+(use-package d2-mode
+  :after org
+  :config (setenv "PATH" (concat (getenv "PATH") ":" (getenv "HOME") "/.local/bin"))
+)
 
 (provide 'init-org)
