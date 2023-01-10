@@ -9,13 +9,13 @@ return require("packer").startup(function()
   use("wbthomason/packer.nvim")
 
   --- quick move
-  use { "justinmk/vim-sneak", config = "vim.cmd[[source ~/.config/nvim/sneak.vim]]" }
+  use { "justinmk/vim-sneak" }
 
   -- matchup
   use("andymass/vim-matchup")
 
   --  origin vim plugin use 'tpope/vim-surround'
-  use("machakann/vim-sandwich")
+  use("tpope/vim-surround")
   -- git cmmand support
   use { "tpope/vim-fugitive", config = "vim.cmd[[source ~/.config/nvim/fugitive.vim]]" }
   -- theme
