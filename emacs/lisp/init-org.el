@@ -25,4 +25,11 @@
   :config (setenv "PATH" (concat (getenv "PATH") ":" (getenv "HOME") "/.local/bin"))
 )
 
+(use-package plantuml-mode
+  :config (progn
+     (setq plantuml-default-exec-mode 'jar)
+     (add-to-list 'auto-mode-alist '("\\.puml\\'" . plantuml-mode))
+   )
+)
+
 (provide 'init-org)
