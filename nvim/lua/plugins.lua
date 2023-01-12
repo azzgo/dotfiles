@@ -70,5 +70,8 @@ return require("packer").startup(function()
     vim.keymap.set('n', '<leader>u', vim.cmd.UndotreeToggle, {})
   end})
 
+  -- todo highlight
+  use({ "folke/todo-comments.nvim", config = [[ require('users.todo') ]]})
+
   -- ###### lua plugin end ########## 
 end)
