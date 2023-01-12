@@ -3,4 +3,11 @@ if not ok then
 	return
 end
 
-todo.setup { signs = false }
+-- TODO: 123123123 
+todo.setup {
+  signs = false, 
+  highlight = {
+    keyword = "fg",
+    after="fg"
+  }
+}
