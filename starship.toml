@@ -8,3 +8,6 @@ disabled = true
 
 [git_status]
 disabled = true
+
+[java]
+disabled = true
