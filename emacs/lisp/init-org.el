@@ -41,7 +41,7 @@
 
 ;; agenda files
 (setq org-agenda-files
-   '("bullet.org"))
+   '("bullet.org" "gtd.org"))
 
 ;; org-roam
 (use-package org-roam
@@ -59,5 +59,10 @@
 
 ;; default capture
 (setq org-default-notes-file (concat org-directory "/notes.org"))
+(setq org-capture-templates
+      '(("t" "Todo" entry (file+headline "gtd.org" "Tasks")
+         "* TODO %?\n  %i\n  %a")
+        ("c" "Capture" entry (file+headline "capture.org" "Short Idea")
+         "* %U\n%?")))
 
 (provide 'init-org)
