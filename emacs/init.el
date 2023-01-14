@@ -16,14 +16,14 @@
 
 (setq use-package-always-ensure t)
 
+(require 'init-local)
 (require 'init-ui)
 (require 'init-custom)
 (require 'init-lang)
 (require 'init-global-keymap)
-(require 'init-org)
 (require 'init-company)
 (require 'init-meow)
-(require 'init-local)
+(require 'init-org)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
