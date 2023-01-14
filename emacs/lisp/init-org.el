@@ -32,4 +32,32 @@
    )
 )
 
+;; keymap for open bullet file
+(defun open-bullet-notes()
+  (interactive)
+  (find-file (concat org-directory "/bullet.org")))
+
+(global-set-key (kbd "<f3>") 'open-bullet-notes)
+
+;; agenda files
+(setq org-agenda-files
+   '("bullet.org"))
+
+;; org-roam
+(use-package org-roam
+  :bind
+  (
+    ("C-c n i" . org-roam-node-insert)
+    ("C-c n f" . org-roam-node-find)
+  )
+  :config
+  (progn
+    (setq org-roam-directory (file-truename (concat org-directory "/org-roam")))
+    (org-roam-db-autosync-mode)
+  )
+)
+
+;; default capture
+(setq org-default-notes-file (concat org-directory "/notes.org"))
+
 (provide 'init-org)
