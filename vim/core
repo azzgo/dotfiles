@@ -63,7 +63,7 @@ set noswapfile
 
 " quick save and quit
 nnoremap <leader>w :w<CR>
-nnoremap <leader>q <c-w>c
+nnoremap <leader>q :q<CR>
 
 " netrw
 nnoremap <leader>nn :E .<CR>
@@ -110,8 +110,8 @@ if has('wildmenu')
 endif
 
 " .vimrc quick kemap source and edit
-nnoremap <leader>ev :e $MYVIMRC<CR>
-nnoremap <leader>sv :source $MYVIMRC<CR>
+nnoremap <leader>ve :e $MYVIMRC<CR>
+nnoremap <leader>vs :source $MYVIMRC<CR>
 
 " open with current buffer workdir
 nnoremap <expr><leader>ew ":e ".expand('%:h')
