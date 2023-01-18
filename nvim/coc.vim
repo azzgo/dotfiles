@@ -23,7 +23,7 @@ inoremap <silent><expr> <c-@> coc#refresh()
 nnoremap <silent> [d <Plug>(coc-diagnostic-prev)
 nnoremap <silent> ]d <Plug>(coc-diagnostic-next)
 nnoremap <silent> <c-k> <Plug>(coc-diagnostic-info)
-nnoremap <silent> <leader>d :CocDiagnostics<CR>
+nnoremap <silent> <leader>d :call CocAction('diagnosticToggleBuffer')<CR> 
 
 
 " format
