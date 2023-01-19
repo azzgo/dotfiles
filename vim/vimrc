@@ -11,5 +11,9 @@ call SourceIfExists("~/.vim/core")
 
 call SourceIfExists("~/.vim/fzf.vim")
 call SourceIfExists("~/.vim/git.vim")
+
+colorscheme nord
+
 "" local config for override
 call SourceIfExists("~/.vim/local.vim")
+
