@@ -20,4 +20,7 @@ Plug 'itchyny/lightline.vim'
 " rcfile
 Plug 'zaid/vim-rec'
 
+"rander
+Plug 'francoiscabrol/ranger.vim'
+
 call plug#end()
