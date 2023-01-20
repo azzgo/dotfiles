@@ -35,8 +35,16 @@ return require("packer").startup(function()
     config = [[ require('users.lualine') ]]
   })
 
-  -- nvim-tree
-  use({ 'nvim-tree/nvim-tree.lua', config = [[ require('users.nvimtree') ]] })
+  -- ranger
+  use({ 'francoiscabrol/ranger.vim',
+    config = function()
+      vim.g.ranger_map_keys = 0
+      vim.g.ranger_replace_netrw = 1
+      vim.keymap.set("n", "<leader>nn", vim.cmd.RangerWorkingDirectory, { noremap = true, silent = true })
+      vim.keymap.set("n", "<leader>nf", vim.cmd.Ranger, { noremap = true, silent = true })
+    end,
+    requires = { 'rbgrouleff/bclose.vim' }
+  })
 
   --  lsp config
   use({ "neoclide/coc.nvim", branch = "release", config = "vim.cmd[[source ~/.config/nvim/coc.vim]]" })
@@ -66,12 +74,12 @@ return require("packer").startup(function()
   use { "nanozuki/tabby.nvim", config = [[ require('users.tabby') ]] }
 
   -- undotree
-  use({"mbbill/undotree", config = function() 
+  use({ "mbbill/undotree", config = function()
     vim.keymap.set('n', '<leader>u', vim.cmd.UndotreeToggle, {})
-  end})
+  end })
 
   -- todo highlight
-  use({ "folke/todo-comments.nvim", config = [[ require('users.todo') ]]})
+  use({ "folke/todo-comments.nvim", config = [[ require('users.todo') ]] })
 
-  -- ###### lua plugin end ########## 
+  -- ###### lua plugin end ##########
 end)
