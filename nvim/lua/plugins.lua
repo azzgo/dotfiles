@@ -40,11 +40,10 @@ return require("packer").startup(function()
     config = function()
       vim.g.ranger_map_keys = 0
       vim.g.ranger_replace_netrw = 1
-      vim.cmd(":nunmap <leader>bd")
       vim.keymap.set("n", "<leader>nn", vim.cmd.RangerWorkingDirectory, { noremap = true, silent = true })
       vim.keymap.set("n", "<leader>nf", vim.cmd.Ranger, { noremap = true, silent = true })
     end,
-    requires = { 'rbgrouleff/bclose.vim' }
+    requires = { 'azzgo/bclose.vim' }
   })
 
   --  lsp config
