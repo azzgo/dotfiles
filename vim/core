@@ -101,6 +101,9 @@ inoremap <c-a> <home>
 inoremap <c-e> <end>
 inoremap <c-f> <right>
 inoremap <c-b> <left>
+cnoremap <c-a> <home>
+cnoremap <c-b> <left>
+cnoremap <c-e> <end>
 
 " spell correct
 iabbrev cosnt const¬
