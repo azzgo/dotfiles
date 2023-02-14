@@ -53,6 +53,14 @@ vim.keymap.set("n", "<leader>tq", function()
 	buildin.quickfix()
 end, opts)
 
+vim.keymap.set("n", "<leader>tc", function()
+	buildin.commands()
+end, opts)
+
+vim.keymap.set("n", "<leader>tg", function()
+	buildin.git_bcommits()
+end, opts)
+
 -- resume
 vim.keymap.set("n", "<leader>tr", function()
 	buildin.resume()
