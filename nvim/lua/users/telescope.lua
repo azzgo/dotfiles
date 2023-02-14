@@ -58,7 +58,7 @@ vim.keymap.set("n", "<leader>tc", function()
 end, opts)
 
 vim.keymap.set("n", "<leader>tg", function()
-	buildin.git_bcommits()
+	pcall(buildin.git_bcommits)
 end, opts)
 
 -- resume
