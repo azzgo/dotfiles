@@ -36,7 +36,7 @@ nvim -c ":PackerSync"
 
 # Vim Setup 
 ln -sf $PWD/dotfiles/vim ~/.vim                 # linux or osx environment required
-ln -sf $PWD/dotfiles/vim/vimrc ~/.vimrc
+echo "source $PWD/dotfiles/vim/vimrc" >> ~/.vimrc
 vim -c ":PlugInstall"
 
 # IdeaVim 

@@ -6,14 +6,18 @@ endfunction
 
 let g:ranger_map_keys = 0
 
-call SourceIfExists("~/.vim/plugin.vim")
+let s:vim_config_path = expand('<sfile>:h:h') . '/vim'
 
-call SourceIfExists("~/.vim/core")
+" source basic file of vim config
+
+call SourceIfExists(s:vim_config_path . "/plugin.vim")
+
+call SourceIfExists(s:vim_config_path . "/core")
 "============ Some vim 9 feature ==============
 
-call SourceIfExists("~/.vim/fzf.vim")
-call SourceIfExists("~/.vim/git.vim")
-call SourceIfExists("~/.vim/ranger.vim")
+call SourceIfExists(s:vim_config_path . "/fzf.vim")
+call SourceIfExists(s:vim_config_path . "/git.vim")
+call SourceIfExists(s:vim_config_path . "/ranger.vim")
 
 colorscheme nord
 
