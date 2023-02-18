@@ -90,7 +90,7 @@ return require("packer").startup(function()
   end })
 
   -- todo highlight
-  use({ "folke/todo-comments.nvim", config = [[ require('users.todo') ]] })
+  use({ "folke/todo-comments.nvim", ft = { "typescript", "javascript", "typescriptreact", "javascriptreact" }, config = [[ require('users.todo') ]] })
 
   -- ###### lua plugin end ##########
 end)
