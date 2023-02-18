@@ -12,8 +12,12 @@ alias ll='ls -alF'
 
 if [[ -x $(command -v nvim) ]];then
   alias v='nvim'
-else 
+elif [[ -x  $(command -v vim) ]];then
   alias v='vim'
+fi
+
+if [[ -x  $(command -v vim) ]];then
+  alias vi='vim'
 fi
 
 if [[ -x $(command -v ranger) ]];then
