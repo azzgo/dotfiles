@@ -1,11 +1,12 @@
 
 let g:ranger_map_keys = 0
 
-let s:vim_config_path = expand('<sfile>:h:h') . '/vim'
+let g:vim_config_path = expand('<sfile>:h:h') . '/vim'
+let g:dot_config_path = expand('<sfile>:h:h')
 
 " source basic file of vim config
-exe 'source' (s:vim_config_path . '/core')
-exe 'source' (s:vim_config_path . '/plugin.vim')
+exe 'source' (g:vim_config_path . '/core')
+exe 'source' (g:vim_config_path . '/plugin.vim')
 "============ Some vim 9 feature ==============
 colorscheme nord
 
