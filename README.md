@@ -30,7 +30,8 @@ git clone https://github.com/azzgo/dotfiles
 
 
 # Neovim Setup
-ln -sf $PWD/dotfiles/nvim ~/.config/nvim      # linux or osx environment required
+mkdir -p ~/.config/nvim
+echo "source $PWD/dotfiles/vim/vimrc" >> ~/.config/nvim/init.vim
 nvim -c ":PackerSync"
 
 

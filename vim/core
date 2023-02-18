@@ -131,3 +131,10 @@ if executable("rg")
   set grepformat=%f:%l:%c:%m,%f:%l:%m
 endif
 
+function! SourceIfExists(file)
+  if filereadable(expand(a:file))
+    exe 'source' a:file
+  else
+    " echom a:file . " not exist"
+  endif
+endfunction

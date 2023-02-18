@@ -17,7 +17,11 @@ return require("packer").startup(function()
   --  origin vim plugin use 'tpope/vim-surround'
   use("tpope/vim-surround")
   -- git cmmand support
-  use { "tpope/vim-fugitive", config = "vim.cmd[[source ~/.config/nvim/fugitive.vim]]" }
+  use { "tpope/vim-fugitive", config = function()
+    vim.cmd[[
+      exe 'source' (g:vim_config_path . '/after/plugin/fugitive.vim')
+    ]]
+  end}
   -- theme
   -- use("NLKNguyen/papercolor-theme")
   -- use("sainnhe/gruvbox-material")
@@ -47,7 +51,14 @@ return require("packer").startup(function()
   })
 
   --  lsp config
-  use({ "neoclide/coc.nvim", branch = "release", config = "vim.cmd[[source ~/.config/nvim/coc.vim]]" })
+  use({ "neoclide/coc.nvim", branch = "release",
+    config = function()
+      vim.cmd[[
+        let g:coc_config_home=g:dot_config_path . '/coc'
+        exe 'source' (g:dot_config_path . '/coc/coc.vim')
+      ]]
+    end
+  })
 
 
   -- syntax

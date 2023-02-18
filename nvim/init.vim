@@ -1,9 +1,3 @@
-function! SourceIfExists(file)
-  if filereadable(expand(a:file))
-    exe 'source' a:file
-  endif
-endfunction
-
 " set winbar as file path
 function! WinBarLine()
   let l:symbol = get(b:,'coc_current_function', '')
@@ -16,10 +10,12 @@ endfunction
 
 set winbar=%{WinBarLine()}
 
-let s:vim_core_path = expand('<sfile>:h:h') . '/vim/core'
+let g:vim_config_path = expand('<sfile>:h:h') . '/vim'
+let g:neovim_config_path = expand('<sfile>:h:h') . '/nvim'
+let g:dot_config_path = expand('<sfile>:h:h')
 
 " source basic file of vim config
-exe 'source' s:vim_core_path
+exe 'source' (g:vim_config_path . '/core')
 
 set inccommand=split
 
@@ -30,6 +26,7 @@ let g:loaded_netrw = 1
 let g:loaded_netrwPlugin = 1
 
 " import plugins config
+lua package.path = vim.g.neovim_config_path .. "/lua/?.lua;" .. package.path
 lua require('plugins')
 
 " ---------------------------
