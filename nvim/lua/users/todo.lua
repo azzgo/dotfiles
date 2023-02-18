@@ -3,9 +3,8 @@ if not ok then
 	return
 end
 
--- TODO: 123123123 
 todo.setup {
-  signs = false, 
+  signs = false,
   highlight = {
     keyword = "fg",
     after="fg"
