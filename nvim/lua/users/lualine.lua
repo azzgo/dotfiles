@@ -5,9 +5,8 @@ if not ok then
 end
 
 lualine.setup({
-	options = { theme = "auto" },
 	sections = {
 		lualine_b = {},
 	},
-  options = { section_separators = "", component_separators = "" }
+  options = { theme = "auto", section_separators = "", component_separators = "" }
 })

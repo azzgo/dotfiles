@@ -1,24 +1,12 @@
-function! SourceIfExists(file)
-  if filereadable(expand(a:file))
-    exe 'source' a:file
-  endif
-endfunction
 
 let g:ranger_map_keys = 0
 
 let s:vim_config_path = expand('<sfile>:h:h') . '/vim'
 
 " source basic file of vim config
-
-call SourceIfExists(s:vim_config_path . "/plugin.vim")
-
-call SourceIfExists(s:vim_config_path . "/core")
+exe 'source' (s:vim_config_path . '/core')
+exe 'source' (s:vim_config_path . '/plugin.vim')
 "============ Some vim 9 feature ==============
-
-call SourceIfExists(s:vim_config_path . "/fzf.vim")
-call SourceIfExists(s:vim_config_path . "/git.vim")
-call SourceIfExists(s:vim_config_path . "/ranger.vim")
-
 colorscheme nord
 
 "" local config for override
