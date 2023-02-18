@@ -11,3 +11,7 @@ endfunction
 nnoremap <leader>/ :call <SID>FZF_GREP_STRING()<CR>
 
 nnoremap <silent> <leader>b :Buffers<cr>
+
+nnoremap <silent> <leader>tc :Commands<cr>
+nnoremap <silent> <leader>tg :BCommits<cr>
+
