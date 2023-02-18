@@ -23,4 +23,7 @@ Plug 'zaid/vim-rec'
 "rander
 Plug 'francoiscabrol/ranger.vim'
 
+" coc
+Plug 'neoclide/coc.nvim', {'branch': 'release'}
+
 call plug#end()
