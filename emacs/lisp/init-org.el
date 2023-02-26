@@ -5,7 +5,7 @@
 (setq org-log-done 'time)
 
 ;; 默认 org mode 的 折叠层数
-(setq org-startup-folded 'show2levels)
+(setq org-startup-folded t)
 (setq org-return-follows-link  t)
 (setq org-image-actual-width nil)
 ;; org-babel
