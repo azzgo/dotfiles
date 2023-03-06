@@ -15,6 +15,7 @@ For Neovim must 0.8+
   - [fd](https://github.com/sharkdp/fd): better find
   - [ripgrep](https://github.com/BurntSushi/ripgrep): better grep
 - [packer](https://github.com/wbthomason/packer.nvim) the plugin management tool
+- [python-neovim] `pip install --user neovim`, `coc-snippets` need neovim python support now
 
 ### IdeaVim
 
