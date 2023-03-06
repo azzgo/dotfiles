@@ -14,7 +14,7 @@ For Neovim must 0.8+
 - for telescope, charmming fuzzy finder
   - [fd](https://github.com/sharkdp/fd): better find
   - [ripgrep](https://github.com/BurntSushi/ripgrep): better grep
-- [packer](https://github.com/wbthomason/packer.nvim) the plugin management tool
+- [Lazy.nvim](https://github.com/folke/lazy.nvim) the plugin management tool
 - [python-neovim] `pip install --user neovim`, `coc-snippets` need neovim python support now
 
 ### IdeaVim
@@ -33,7 +33,7 @@ git clone https://github.com/azzgo/dotfiles
 # Neovim Setup
 mkdir -p ~/.config/nvim
 echo "source $PWD/dotfiles/vim/vimrc" >> ~/.config/nvim/init.vim
-nvim -c ":PackerSync"
+nvim -c ":Lazy install"
 
 
 # Vim Setup 
