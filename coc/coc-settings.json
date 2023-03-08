@@ -18,5 +18,6 @@
     "typescript": ["javascript"],
     "typescriptreact": ["javascriptreact"]
   },
+  "suggest.insertMode": "insert",
   "Lua.telemetry.enable": true
 }
