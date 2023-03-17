@@ -7,6 +7,9 @@ alias gup='git pull --rebase'
 alias gp='git push'
 alias gst='git status'
 alias gco='git checkout'
+alias grb="git rebase"
+alias grbc="git rebase --continue"
+alias grba="git rebase --abort"
 alias gprp='git pull --rebase && git push'
 alias ll='ls -alF'
 
