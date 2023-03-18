@@ -18,7 +18,12 @@
 
 ;; org-download
 (use-package org-download
-  :after org)
+  :after org
+  :config (progn
+     (setq org-download-display-inline-images nil)
+     (setq org-download-image-org-width 600)
+  )
+)
 
 (use-package d2-mode
   :after org
