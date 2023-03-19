@@ -26,4 +26,7 @@ Plug 'francoiscabrol/ranger.vim'
 " coc
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 
+" syntax
+Plug 'MaxMEllon/vim-jsx-pretty'
+
 call plug#end()
