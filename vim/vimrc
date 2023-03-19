@@ -9,6 +9,7 @@ exe 'source' (g:vim_config_path . '/core')
 exe 'source' (g:vim_config_path . '/plugin.vim')
 "============ Some vim 9 feature ==============
 colorscheme nord
+set ambiwidth=double
 
 "" local config for override
 call SourceIfExists("~/.vim/local.vim")
