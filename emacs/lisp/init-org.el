@@ -56,11 +56,13 @@
   :bind
   (
     ("C-c n i" . org-roam-node-insert)
+    ("C-c n f" . org-roam-node-find)
   )
   :config
   (progn
     (setq org-roam-directory (file-truename (concat org-directory "/org-roam")))
     (org-roam-db-autosync-mode)
+    (require 'org-roam-export)
   )
 )
 
@@ -98,7 +100,6 @@
     :preview-key (kbd "M-."))
    :bind
    ;; Define some convenient keybindings as an addition
-   ("C-c n f" . consult-org-roam-file-find)
    ("C-c n b" . consult-org-roam-backlinks)
    ("C-c n l" . consult-org-roam-forward-links)
    ("C-c n r" . consult-org-roam-search))
