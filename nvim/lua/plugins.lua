@@ -45,16 +45,14 @@ return require("lazy").setup({
   },
 
   -- ranger
-  { 'francoiscabrol/ranger.vim',
+  { 'kevinhwang91/rnvimr' ,
     init = function ()
-      vim.g.ranger_map_keys = 0
-      vim.g.ranger_replace_netrw = 1
+      vim.g.rnvimr_enable_ex = 1
+      vim.g.rnvimr_enable_picker = 1
     end,
     config = function()
-      vim.keymap.set("n", "<leader>nn", vim.cmd.RangerWorkingDirectory, { noremap = true, silent = true })
-      vim.keymap.set("n", "<leader>nf", vim.cmd.Ranger, { noremap = true, silent = true })
+      vim.keymap.set("n", "<leader>nf", vim.cmd.RnvimrToggle, { noremap = true, silent = true })
     end,
-    dependencies = { 'azzgo/bclose.vim' }
   },
 
   --  lsp config
