@@ -1,1 +1,5 @@
-.tigrc
+set mouse = yes
+
+bind status     ak    ?>git clean -f -d -- %(file)
+bind status     aa    ?>git commit --amend
+bind status     ac    >git commit
