@@ -1,5 +1,14 @@
 set mouse = yes
 
-bind status     ak    ?>git clean -f -d -- %(file)
-bind status     aa    ?>git commit --amend
-bind status     ac    >git commit
+# disable default mapping of status
+bind generic s none
+# disable c map to stage
+bind generic c none
+bind generic st view-stage
+bind generic ss view-status
+
+bind status     ck    ?>git clean -f -d -- %(file)
+bind status     ca    ?>git commit --amend
+bind status     cc    >git commit
+bind status     -     status-update
+bind status     X     status-revert
