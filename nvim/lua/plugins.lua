@@ -26,8 +26,7 @@ return require("lazy").setup({
     ]]
   end},
   -- theme
-  -- use("NLKNguyen/papercolor-theme")
-  -- use("sainnhe/gruvbox-material")
+  { "catppuccin/nvim", name = "catppuccin", lazy=true },
   { "shaunsingh/nord.nvim", lazy = true },
 
   -- ##########lua plugins start##############

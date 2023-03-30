@@ -43,7 +43,10 @@ set termguicolors
 
 
 let g:nord_italic = v:false
-colorscheme nord
+" colorscheme nord
+" colorscheme catppuccin " catppuccin-latte, catppuccin-frappe, catppuccin-macchiato, catppuccin-mocha
+colorscheme catppuccin-macchiato " catppuccin-latte, catppuccin-frappe, catppuccin-macchiato, catppuccin-mocha
+
 
 
 "" local config for override
