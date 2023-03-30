@@ -65,3 +65,8 @@ end, opts)
 vim.keymap.set("n", "<leader>tr", function()
 	buildin.resume()
 end, opts)
+
+-- marks
+vim.keymap.set("n", "<leader>tm", function()
+	buildin.marks()
+end, opts)
