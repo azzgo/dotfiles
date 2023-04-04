@@ -8,7 +8,7 @@ local actions = require("telescope.actions")
 telescope.setup({
   defaults = {
     path_display = {
-      shorten = { len = 1, exclude = { -1, -2 } }, 
+      shorten = { len = 1, exclude = { -1, -2 } },
       truncate = 3
     }
   },
@@ -38,8 +38,8 @@ vim.keymap.set("n", "<leader>f", function()
 	buildin.find_files({ debounce = 150 })
 end, opts)
 vim.keymap.set("n", "<leader>/", function()
-  local ok, grep_string = pcall(vim.fn.input, "Grep > ")
-  if ok then
+  local okk, grep_string = pcall(vim.fn.input, "Grep > ")
+  if okk then
     buildin.grep_string({ search = grep_string })
   end
 end, opts)
@@ -57,8 +57,13 @@ vim.keymap.set("n", "<leader>tc", function()
 	buildin.commands()
 end, opts)
 
-vim.keymap.set("n", "<leader>tg", function()
+-- git commit of buffer file
+vim.keymap.set("n", "<leader>gf", function()
 	pcall(buildin.git_bcommits)
+end, opts)
+
+vim.keymap.set("n", "<leader>gs", function()
+	pcall(buildin.git_status)
 end, opts)
 
 -- resume
