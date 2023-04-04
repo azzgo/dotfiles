@@ -6,7 +6,8 @@ return {
 	font = wezterm.font_with_fallback({
 		"Hack Nerd Font Mono",
 		"Noto Color Emoji",
-    "WenQuanYi Micro Hei"
+    "WenQuanYi Micro Hei",
+    "苹方-简"
 	}),
 	font_size = 18,
 	audible_bell = "Disabled",
