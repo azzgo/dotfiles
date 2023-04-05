@@ -44,13 +44,21 @@ vim.keymap.set("n", "<leader>/", function()
   end
 end, opts)
 vim.keymap.set("n", "<leader>b", function()
-	buildin.buffers()
+	buildin.buffers({ previewer = false })
 end, opts)
 vim.keymap.set("n", "<leader>to", function()
-	buildin.oldfiles()
+	buildin.oldfiles({ previewer = false })
 end, opts)
 vim.keymap.set("n", "<leader>tq", function()
 	buildin.quickfix()
+end, opts)
+
+vim.keymap.set("n", "<leader>tj", function()
+	buildin.jumplist({ previewer = false })
+end, opts)
+
+vim.keymap.set("n", "<leader>t@", function()
+	buildin.registers()
 end, opts)
 
 vim.keymap.set("n", "<leader>tc", function()
@@ -60,10 +68,6 @@ end, opts)
 -- git commit of buffer file
 vim.keymap.set("n", "<leader>gf", function()
 	pcall(buildin.git_bcommits)
-end, opts)
-
-vim.keymap.set("n", "<leader>gs", function()
-	pcall(buildin.git_status)
 end, opts)
 
 -- resume
