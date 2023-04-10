@@ -32,5 +32,4 @@ treesitter_config.setup({
 	},
 })
 
-local ft_to_parser = require"nvim-treesitter.parsers".filetype_to_parsername
-ft_to_parser.javascript = "typescript"
+vim.treesitter.language.register('javascript', 'typescript')
