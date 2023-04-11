@@ -74,6 +74,8 @@ map Q q
 
 " cancal highlight keymap
 nnoremap <leader><cr> :noh<CR>
+" reset cmdheight=1
+nnoremap <leader><esc> :set cmdheight=1<CR>
 
 " bufferNavigate
 nnoremap <silent> [b :bprevious<CR> 
