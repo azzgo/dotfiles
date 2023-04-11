@@ -42,10 +42,9 @@ nmap <silent> gK :<c-u>CocList diagnostics<cr>
 nmap <silent><leader>o :<c-u>CocOutline<cr>
 
 " coc list
-nmap <silent><leader>cr :<c-u>CocList mru<cr>
+nmap <silent><leader>cr :<c-u>CocListResume<cr>
 nmap <silent><leader>cl :<c-u>CocList<cr>
 nmap <silent><leader>cm :<c-u>CocList commands<cr>
-nmap <silent><leader>m :<c-u>CocList mru<cr>
 
 
 " do hover
