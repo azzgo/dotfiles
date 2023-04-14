@@ -26,4 +26,6 @@
 ;; follow link not ask
 (setq vc-follow-symlinks t)
 
+(setq custom-file (concat user-emacs-directory "custom.el"))
+
 (provide 'init-custom)
