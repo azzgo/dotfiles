@@ -61,10 +61,6 @@ vim.keymap.set("n", "<leader>t@", function()
 	buildin.registers()
 end, opts)
 
-vim.keymap.set("n", "<leader>tc", function()
-	buildin.commands()
-end, opts)
-
 -- git commit of buffer file
 vim.keymap.set("n", "<leader>gf", function()
 	pcall(buildin.git_bcommits)
@@ -76,6 +72,6 @@ vim.keymap.set("n", "<leader>tr", function()
 end, opts)
 
 -- marks
-vim.keymap.set("n", "<leader>tm", function()
+vim.keymap.set("n", "<leader>m", function()
 	buildin.marks()
 end, opts)
