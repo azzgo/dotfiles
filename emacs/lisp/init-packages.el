@@ -17,5 +17,7 @@
 
 (use-package rec-mode)
 
+(use-package consult)
+
 ;; export 
 (provide 'init-packages)
