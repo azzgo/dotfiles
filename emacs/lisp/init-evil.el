@@ -7,6 +7,7 @@
     (evil-define-key 'normal 'global (kbd "<leader>b") 'switch-to-buffer)
     (evil-define-key 'normal 'global (kbd "<leader>r") 'org-roam-node-find)
     (evil-define-key 'normal 'global (kbd "<leader>t") 'org-todo-list)
+    (evil-define-key 'normal 'global (kbd "<leader>c") 'org-capture)
     (evil-define-key 'normal 'global (kbd "<leader>nf") 'dired)
     (evil-define-key 'normal 'global (kbd "<leader>f") 'consult-find)
     (evil-define-key 'normal 'global (kbd "<leader>/") 'consult-ripgrep)
