@@ -19,5 +19,7 @@
 
 (use-package consult)
 
+(use-package typescript-mode)
+
 ;; export 
 (provide 'init-packages)
