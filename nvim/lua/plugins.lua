@@ -17,6 +17,17 @@ return require("lazy").setup({
   -- matchup
   "andymass/vim-matchup",
 
+  -- snippets plugin
+  { 'SirVer/ultisnips',
+    config = function ()
+     vim.cmd[[
+      let g:UltiSnipsSnippetDirectories = [g:neovim_config_path  . '/ultisnips']
+      let g:UltiSnipsExpandTrigger="<c-s>"
+      let g:UltiSnipsJumpForwardTrigger="<c-j>"
+      let g:UltiSnipsJumpBackwardTrigger="<c-k>"
+     ]]
+    end
+  },
   --  origin vim plugin use 'tpope/vim-surround'
   "tpope/vim-surround",
   -- git cmmand support
@@ -52,6 +63,7 @@ return require("lazy").setup({
     config = function()
       vim.keymap.set("n", "<leader>nf", vim.cmd.RnvimrToggle, { noremap = true, silent = true })
     end,
+    event = 'VeryLazy'
   },
 
   --  lsp config
@@ -82,7 +94,8 @@ return require("lazy").setup({
   {
     "kevinhwang91/nvim-ufo",
     dependencies = "kevinhwang91/promise-async",
-    config = function() require('users.ufo') end
+    config = function() require('users.ufo') end,
+    event = 'VeryLazy'
   },
 
   --- tabby
@@ -91,7 +104,9 @@ return require("lazy").setup({
   -- undotree
   { "mbbill/undotree", config = function()
     vim.keymap.set('n', '<leader>u', vim.cmd.UndotreeToggle, {})
-  end },
+    end,
+    event = 'VeryLazy'
+  },
 
   -- todo highlight
   { "folke/todo-comments.nvim", ft = { "typescript", "javascript", "typescriptreact", "javascriptreact" }, config = function() require('users.todo') end },
