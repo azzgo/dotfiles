@@ -33,3 +33,4 @@ treesitter_config.setup({
 })
 
 vim.treesitter.language.register('javascript', 'typescript')
+vim.treesitter.language.register('typescriptreact', 'tsx')
