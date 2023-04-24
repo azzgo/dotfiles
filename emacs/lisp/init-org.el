@@ -55,8 +55,8 @@
 (use-package org-roam
   :bind
   (
-    ("C-c n i" . org-roam-node-insert)
-    ("C-c n f" . org-roam-node-find)
+    ("C-c r i" . org-roam-node-insert)
+    ("C-c r f" . org-roam-node-insert)
   )
   :config
   (progn
