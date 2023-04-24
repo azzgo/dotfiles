@@ -7,9 +7,14 @@
                    '("k" . meow-prev)
                    '("<escape>" . ignore))
                  (meow-leader-define-key
-                   ;; SPC j/k will run the original command in MOTION state.
-                   '("j" . "H-j")
-                   '("k" . "H-k")
+		   '("r" . org-roam-node-find)
+		   '("c" . org-capture)
+		   '("/" . consult-ripgrep)
+		   '("t" . org-todo-list)
+		   '("b" . switch-to-buffer)
+		   '("f" . consult-findw)
+		   '("w" . save-buffer)
+		   '("n" . dired)
                    ;; Use SPC (0-9) for digit arguments.
                    '("1" . meow-digit-argument)
                    '("2" . meow-digit-argument)
