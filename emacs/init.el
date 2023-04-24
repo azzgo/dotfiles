@@ -22,7 +22,7 @@
 (require 'init-lang)
 (require 'init-global-keymap)
 (require 'init-company)
-;;(require 'init-meow)
-(require 'init-evil)
+(require 'init-meow)
+;;(require 'init-evil)
 (require 'init-org)
 
