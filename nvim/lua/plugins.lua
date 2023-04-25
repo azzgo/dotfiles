@@ -19,7 +19,7 @@ return require("lazy").setup({
 
   -- snippets plugin
   { 'SirVer/ultisnips',
-    config = function ()
+    init = function ()
      vim.cmd[[
       let g:UltiSnipsSnippetDirectories = [g:neovim_config_path  . '/ultisnips']
       let g:UltiSnipsExpandTrigger="<c-s>"
