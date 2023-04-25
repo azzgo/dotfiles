@@ -12,6 +12,7 @@
   "diagnostic.checkCurrentLine": true,
   "diagnostic.enableMessage": "jump",
   "diagnostic.enableSign": true,
+  "snippets.ultisnips.enable": false,
   "snippets.extends": {
     "cpp": ["c"],
     "javascriptreact": ["javascript"],
