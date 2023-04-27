@@ -25,6 +25,8 @@ source ~/.vimrc
 :map [h <Action>(VcsShowPrevChangeMarker)
 :map ]h <Action>(VcsShowNextChangeMarker)
 :map <leader>gb <Action>(Annotate)
+" git actions
+:map <leader>gg <Action>(ActivateVersionControlToolWindow)
 
 
 " find file
