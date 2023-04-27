@@ -12,6 +12,7 @@ source ~/.vimrc
 
 " code navigation
 :map gr <Action>(GotoRelated)
+:map gR <Action>(FindUsages)
 :map gi <Action>(GotoImplementation)
 :map gd <Action>(GotoDeclaration)
 :map gD <Action>(GotoTypeDeclaration)
@@ -27,6 +28,7 @@ source ~/.vimrc
 :map <leader>gb <Action>(Annotate)
 " git actions
 :map <leader>gg <Action>(ActivateVersionControlToolWindow)
+:map <leader>gf <Action>(Vcs.ShowTabbedFileHistory)
 
 
 " find file
@@ -49,6 +51,9 @@ source ~/.vimrc
 
 Plug 'preservim/nerdtree'
 Plug 'tpope/vim-commentary'
+
+"Find Actions
+:map <leader>hh <Action>(GotoAction)
 
 " Exploerer
 :map <leader>nn :NERDTreeToggle<CR>
