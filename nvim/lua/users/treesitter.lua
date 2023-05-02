@@ -23,7 +23,7 @@ treesitter_config.setup({
     },
   },
 	highlight = {
-		enable = true,
+		enable = false,
     disable = { "vim", "lua", "c" },
 		additional_vim_regex_highlighting = false,
 	},

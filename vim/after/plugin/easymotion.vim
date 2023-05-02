@@ -1,0 +1,6 @@
+nmap s <Plug>(easymotion-s)
+xmap s <Plug>(easymotion-s)
+omap s <Plug>(easymotion-s)
+nmap S <Plug>(easymotion-sn)
+xmap S <Plug>(easymotion-sn)
+omap S <Plug>(easymotion-sn)

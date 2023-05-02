@@ -13,7 +13,13 @@ vim.opt.rtp:prepend(lazypath)
 
 return require("lazy").setup({
   --- quick move
-  "justinmk/vim-sneak",
+  { "easymotion/vim-easymotion",
+    config = function ()
+    vim.cmd[[
+      exe 'source' (g:vim_config_path . '/after/plugin/easymotion.vim')
+    ]]
+    end
+  },
   -- matchup
   "andymass/vim-matchup",
 
