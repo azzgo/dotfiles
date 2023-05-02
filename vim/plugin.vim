@@ -1,7 +1,7 @@
 
 call plug#begin()
 " quick move
-Plug 'justinmk/vim-sneak'
+Plug 'easymotion/vim-easymotion'
 
 " must plugin
 Plug 'tpope/vim-surround'
