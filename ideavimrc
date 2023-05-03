@@ -20,6 +20,8 @@ source ~/.vimrc
 :map [d <Action>(GotoPreviousError)
 :map ]d <Action>(GotoNextError)
 
+" fold
+:map za <Action>(ExpandCollapseToggleAction)
 
 " vsc
 :map <leader>hp <Action>(VcsShowCurrentChangeMarker)
@@ -51,6 +53,7 @@ source ~/.vimrc
 
 Plug 'preservim/nerdtree'
 Plug 'tpope/vim-commentary'
+ 
 
 "Find Actions
 :map <leader>hh <Action>(GotoAction)
@@ -58,4 +61,10 @@ Plug 'tpope/vim-commentary'
 " Exploerer
 :map <leader>nn :NERDTreeToggle<CR>
 :map <leader>nf ::NERDTreeFind<CR>
+
+" KJump must install the plugin
+" easymotion has bugs on my machine
+nmap s :action KJumpAction<cr>
+vmap s :action KJumpAction<cr>
+omap <leader>s :action KJumpAction<cr>
 
