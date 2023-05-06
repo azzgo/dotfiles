@@ -90,7 +90,8 @@ nnoremap <silent> ]l :lnext<CR>
 " tabs 
 nnoremap <silent> <leader>nt :tabnew<CR> 
 nnoremap <silent> [t :tabprevious<CR> 
-nnoremap <silent> ]t :tabnext<CR> 
+nnoremap <silent> ]t :tabnext<CR>
+
 " map alt + n -> tab n
 nnoremap <A-1> 1gt
 nnoremap <A-2> 2gt
@@ -111,6 +112,12 @@ nnoremap <A-j> :m .+1<cr>==
 nnoremap <A-k> :m .-2<cr>==
 inoremap <A-j> <esc>:m .+1<cr>==gi
 inoremap <A-k> <esc>:m .-2<cr>==gi
+vnoremap <A-j> :m '>+1<cr>gv
+vnoremap <A-k> :m '<-2<cr>gv
+
+"better intent
+vnoremap < <gv
+vnoremap > >gv
 
 " spell correct
 iabbrev cosnt const¬
