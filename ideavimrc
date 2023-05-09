@@ -8,7 +8,10 @@ source ~/.vimrc
 
 " code action
 :map ca <Action>(ShowIntentionActions)
-:map cr <Action>(Refactorings.QuickListPopupAction)
+:map cv <Action>(IntroduceVariable)
+:map cu <Action>(FindUsages)
+:map cr <Action>(RefactoringMenu)
+:map cl <Action>(Refactorings.QuickListPopupAction)
 
 " code navigation
 :map gr <Action>(GotoRelated)
@@ -25,6 +28,7 @@ source ~/.vimrc
 
 " vsc
 :map <leader>hp <Action>(VcsShowCurrentChangeMarker)
+:map <leader>hr <Action>(Vcs.RollbackChangedLines)
 :map [h <Action>(VcsShowPrevChangeMarker)
 :map ]h <Action>(VcsShowNextChangeMarker)
 :map <leader>gb <Action>(Annotate)
