@@ -9,7 +9,6 @@ source ~/.vimrc
 " code action
 :map ca <Action>(ShowIntentionActions)
 :map cv <Action>(IntroduceVariable)
-:map cu <Action>(FindUsages)
 :map cr <Action>(RefactoringMenu)
 :map cl <Action>(Refactorings.QuickListPopupAction)
 
@@ -19,6 +18,7 @@ source ~/.vimrc
 :map gi <Action>(GotoImplementation)
 :map gd <Action>(GotoDeclaration)
 :map gD <Action>(GotoTypeDeclaration)
+:map gu <Action>(FindUsages)
 
 :map [d <Action>(GotoPreviousError)
 :map ]d <Action>(GotoNextError)
@@ -34,6 +34,7 @@ source ~/.vimrc
 :map <leader>gb <Action>(Annotate)
 " git actions
 :map <leader>gg <Action>(ActivateVersionControlToolWindow)
+:map <leader>gc <Action>(CheckinProject)
 :map <leader>gf <Action>(Vcs.ShowTabbedFileHistory)
 
 
@@ -43,6 +44,9 @@ source ~/.vimrc
 
 " outline
 :map <leader>o <Action>(ActivateStructureToolWindow)
+
+"only editor
+:map <A-o> <Action>(HideAllWindows)
 
 " dignostic 
 :map <C-k> <Action>(ShowErrorDescription)
