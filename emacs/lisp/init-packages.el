@@ -20,6 +20,8 @@
 (use-package consult)
 
 (use-package typescript-mode)
+(use-package password-store)
+(use-package password-store-otp)
 
 ;; export 
 (provide 'init-packages)
