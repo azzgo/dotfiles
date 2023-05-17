@@ -16,10 +16,12 @@
  ;; If there is more than one, they won't work right.
  '(default ((t (:family "文泉驿等宽微米黑" :foundry "WQYF" :slant normal :weight normal :height 181 :width normal)))))
 
-;; (use-package zenburn-theme
-;;   :config
-;;   (load-theme 'zenburn t)
-;; )
+(use-package doom-themes
+  :config
+  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+        doom-themes-enable-italic t) ; if nil, italics is universally disabled
+  (load-theme 'doom-one-light t)
+)
 
 (use-package doom-modeline
   :init (doom-modeline-mode 1)
