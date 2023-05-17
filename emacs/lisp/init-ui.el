@@ -16,10 +16,10 @@
  ;; If there is more than one, they won't work right.
  '(default ((t (:family "文泉驿等宽微米黑" :foundry "WQYF" :slant normal :weight normal :height 181 :width normal)))))
 
-(use-package zenburn-theme
-  :config
-  (load-theme 'zenburn t)
-)
+;; (use-package zenburn-theme
+;;   :config
+;;   (load-theme 'zenburn t)
+;; )
 
 (use-package doom-modeline
   :init (doom-modeline-mode 1)
