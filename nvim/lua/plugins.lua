@@ -100,9 +100,8 @@ return require("lazy").setup({
   {
     "kevinhwang91/nvim-ufo",
     dependencies = "kevinhwang91/promise-async",
-    -- wait for found not auto fold on open file
-    enabled = false,
-    config = function() require('users.ufo') end
+    config = function() require('users.ufo') end,
+    cmd = 'UfoEnable'
   },
 
   --- tabby
