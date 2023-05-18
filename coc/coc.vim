@@ -48,15 +48,7 @@ nmap <silent><leader>cm :<c-u>CocList commands<cr>
 
 
 " do hover
-" nnoremap <silent> K :call ShowDocumentation()<CR>
-
-" function! ShowDocumentation()
-"   if CocAction('hasProvider', 'hover')
-"     call CocActionAsync('doHover')
-"   else
-"     call feedkeys('K', 'in')
-"   endif
-" endfunction
+nnoremap <silent> K :call CocActionAsync('definitionHover')<CR>
 
 " Symbol renaming.
 nmap <f2> <Plug>(coc-rename)
