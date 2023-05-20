@@ -11,3 +11,11 @@ endsnippet
 snippet count "console.count" b
 console.count('${1:count}')
 endsnippet
+
+snippet rf "create basic React component" b
+import React from 'react';
+
+export function ${1:UIComponent}(): JSX.Element {
+	return ${2:<></>}
+}
+endsnippet
