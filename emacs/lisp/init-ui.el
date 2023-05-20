@@ -1,20 +1,22 @@
 ;; 关闭工具栏，tool-bar-mode 即为一个 Minor Mode
-(tool-bar-mode -1)
-(menu-bar-mode -1)
-
-;; 关闭文件滑动控件
-(scroll-bar-mode -1)
-
-;; 关闭默认的自动缩进
-(electric-indent-mode -1)
-
-;; 默认字体颜色
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(default ((t (:family "文泉驿等宽微米黑" :foundry "WQYF" :slant normal :weight normal :height 181 :width normal)))))
+(if (display-graphic-p)
+  (tool-bar-mode -1)
+  (menu-bar-mode -1)
+  
+  ;; 关闭文件滑动控件
+  (scroll-bar-mode -1)
+  
+  ;; 关闭默认的自动缩进
+  (electric-indent-mode -1)
+  
+  ;; 默认字体颜色
+  (custom-set-faces
+   ;; custom-set-faces was added by Custom.
+   ;; If you edit it by hand, you could mess it up, so be careful.
+   ;; Your init file should contain only one such instance.
+   ;; If there is more than one, they won't work right.
+   '(default ((t (:family "文泉驿等宽微米黑" :foundry "WQYF" :slant normal :weight normal :height 181 :width normal)))))
+)
 
 (use-package doom-themes
   :config
