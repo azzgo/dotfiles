@@ -5,14 +5,18 @@
 ;; -----------------------------------------------------------------
 (require 'init-packages)
 
-
-(require 'init-local)
+(let ((local-config "~/.emacs.d/lisp/init-local.el"))  
+  (when (file-exists-p local-config)
+    (load-file local-config)
+    )
+)
 (require 'init-ui)
 (require 'init-custom)
 (require 'init-lang)
 (require 'init-global-keymap)
 (require 'init-company)
 (require 'init-meow)
+(require 'init-magit)
 ;;(require 'init-evil)
 (require 'init-org)
 
