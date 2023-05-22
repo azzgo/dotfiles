@@ -7,6 +7,8 @@
                    '("k" . meow-prev)
                    '("<escape>" . ignore))
                  (meow-leader-define-key
+ 		   '("j" . "H-j")
+		   '("k" . "H-k")
 		   '("/" . consult-ripgrep)
 		   '("b" . switch-to-buffer)
 		   '("f" . consult-find)
