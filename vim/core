@@ -64,6 +64,9 @@ set noswapfile
 " quick save and quit
 nnoremap <leader>w :w<CR>
 nnoremap <leader>q :q<CR>
+" quick copy from primiary clipboard
+xnoremap <leader>y "+y
+xnoremap <leader>p "+p
 
 " netrw
 nnoremap <leader>nn :E .<CR>
