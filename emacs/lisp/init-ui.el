@@ -9,14 +9,6 @@
     
     ;; 关闭默认的自动缩进
     (electric-indent-mode -2)
-    
-    ;; 默认字体颜色
-    (custom-set-faces
-     ;; custom-set-faces was added by Custom.
-     ;; If you edit it by hand, you could mess it up, so be careful.
-     ;; Your init file should contain only one such instance.
-     ;; If there is more than one, they won't work right.
-     '(default ((t (:family "文泉驿等宽微米黑" :foundry "WQYF" :slant normal :weight normal :height 181 :width normal)))))
   )
 )
 
