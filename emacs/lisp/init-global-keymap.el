@@ -19,33 +19,25 @@
 (global-set-key (kbd "C-c o t") 'org-todo-list)
 (global-set-key (kbd "C-c o c") 'org-capture)
 
+;; bracket binding
 (defun insert-quotations (&optional arg)
-  "Enclose following ARG sexps in quotation marks.
-Leave point after open-paren."
   (interactive "*P")
   (insert-pair arg ?\' ?\'))
 
 (defun insert-quotes (&optional arg)
-  "Enclose following ARG sexps in quotes.
-Leave point after open-quote."
   (interactive "*P")
   (insert-pair arg ?\" ?\"))
 
 (defun insert-bracket (&optional arg)
-  "Enclose following ARG sexps in quotes.
-Leave point after open-quote."
   (interactive "*P")
   (insert-pair arg ?\[ ?\]))
 
 (defun insert-curly (&optional arg)
-  "Enclose following ARG sexps in quotes.
-Leave point after open-quote."
   (interactive "*P")
   (insert-pair arg ?\{ ?\}))
 
-;; bracket binding
 (global-set-key (kbd "C-c s '") 'insert-quotations)
-(global-set-key (kbd "C-c s \")" 'insert-quotes)
+(global-set-key (kbd "C-c s \"") 'insert-quotes)
 (global-set-key (kbd "C-c s [") 'insert-bracket)
 (global-set-key (kbd "C-c s {") 'insert-curly)
 (global-set-key (kbd "C-c s (") 'insert-parentheses)
