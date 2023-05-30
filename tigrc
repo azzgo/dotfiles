@@ -12,3 +12,4 @@ bind status     ca    ?>git commit --amend
 bind status     cc    >git commit
 bind status     -     status-update
 bind status     X     status-revert
+bind main     C    ?git checkout %(commit)
