@@ -21,6 +21,7 @@
   :after org
   :config (progn
      (setq org-download-display-inline-images nil)
+     (setq org-download-image-dir "./images")
      (setq org-download-image-org-width 600)
   )
 )
