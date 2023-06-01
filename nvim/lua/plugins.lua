@@ -82,9 +82,9 @@ return require("lazy").setup({
     end
   },
 
-
   -- syntax
-  { "nvim-treesitter/nvim-treesitter", config = function() require('users.treesitter') end },
+  { "leafgarland/typescript-vim" },
+  { "pangloss/vim-javascript" },
   -- fuzzy
   { "nvim-telescope/telescope.nvim", config = function() require('users.telescope') end },
   { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
