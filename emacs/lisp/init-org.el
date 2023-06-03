@@ -1,5 +1,5 @@
 ;;  扩展 TODO 的 keyword
-(setq org-todo-keywords '((type "TODO" "WAIT" "DOING" "|" "DONE" "CANCEL" "CONTINUE")))
+(setq org-todo-keywords '((type "TODO" "WAIT" "DOING" "|" "DONE" "CANCEL" "CONTINUE" "HOLD")))
 
 ;; 开启 toggle todo 自动加上完成时间
 (setq org-log-done 'time)
