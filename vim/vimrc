@@ -1,6 +1,3 @@
-
-let g:ranger_map_keys = 0
-
 let g:vim_config_path = expand('<sfile>:h:h') . '/vim'
 let g:dot_config_path = expand('<sfile>:h:h')
 

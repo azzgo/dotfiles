@@ -21,8 +21,8 @@ Plug 'itchyny/lightline.vim'
 " rcfile
 Plug 'zaid/vim-rec'
 
-"rander
-Plug 'francoiscabrol/ranger.vim'
+" vinegar
+Plug 'tpope/vim-vinegar'
 
 " coc
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
