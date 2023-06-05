@@ -61,18 +61,14 @@ return require("lazy").setup({
     config = function() require('users.lualine') end
   },
 
-  -- ranger
-  { 'kevinhwang91/rnvimr' ,
-    init = function ()
-      vim.g.rnvimr_enable_ex = 1
-      vim.g.rnvimr_enable_picker = 1
-    end,
+  {
+    'stevearc/oil.nvim',
+    opts = {},
     config = function()
-      vim.keymap.set("n", "<leader>nf", vim.cmd.RnvimrToggle, { noremap = true, silent = true })
-    end,
-    event = 'VeryLazy'
+      require("oil").setup()
+      vim.keymap.set('n', '<leader>nn', vim.cmd.Oil, {})
+    end
   },
-
   --  lsp config
   { "neoclide/coc.nvim", branch = "release",
     config = function()
