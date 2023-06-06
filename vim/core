@@ -123,7 +123,7 @@ vnoremap < <gv
 vnoremap > >gv
 
 " spell correct
-iabbrev cosnt const¬
+iabbrev cosnt const
 
 " wildmenu
 if has('wildmenu')

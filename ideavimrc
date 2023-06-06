@@ -1,4 +1,63 @@
-source ~/.vimrc
+" setting leader key
+let mapleader=" "
+let g:mapleader=" "
+
+set updatetime=300
+set timeoutlen=800
+
+" line numbers
+set number
+set relativenumber
+
+" disable wrap
+set nowrap
+
+" quick save and quit
+nnoremap <leader>w :w<CR>
+nnoremap <leader>q :q<CR>
+" quick copy from primiary clipboard
+xnoremap <leader>y "+y
+xnoremap <leader>p "+p
+
+" map Q to q for ex mode is not usable for me
+map Q q
+
+" cancal highlight keymap
+nnoremap <leader><cr> :noh<CR>
+" reset cmdheight=1
+nnoremap <leader><esc> :set cmdheight=1<CR>
+
+" tabs 
+nnoremap <silent> <leader>nt :tabnew<CR> 
+nnoremap <silent> [t :tabprevious<CR> 
+nnoremap <silent> ]t :tabnext<CR>
+
+" map alt + n -> tab n
+nnoremap <A-1> 1gt
+nnoremap <A-2> 2gt
+nnoremap <A-3> 3gt
+nnoremap <A-4> 4gt
+nnoremap <A-5> 5gt
+
+" emacs  like kemap in insert mode
+inoremap <c-a> <home>
+inoremap <c-e> <end>
+inoremap <c-f> <right>
+inoremap <c-b> <left>
+cnoremap <c-a> <home>
+cnoremap <c-b> <left>
+cnoremap <c-e> <end>
+" move line down/up
+nnoremap <A-j> :m .+1<cr>==
+nnoremap <A-k> :m .-2<cr>==
+inoremap <A-j> <esc>:m .+1<cr>==gi
+inoremap <A-k> <esc>:m .-2<cr>==gi
+vnoremap <A-j> :m '>+1<cr>gv
+vnoremap <A-k> :m '<-2<cr>gv
+
+"better intent
+vnoremap < <gv
+vnoremap > >gv
 
 "========================
 "       Action Mapper
