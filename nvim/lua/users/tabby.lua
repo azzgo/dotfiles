@@ -12,18 +12,27 @@ local theme = {
 
 tabline.set(function(line)
 	return {
-		line.tabs().foreach(function(tab)
-			local hl = tab.is_current() and theme.current_tab or theme.tab
-			return {
-				line.sep("█", hl, theme.fill),
-				tab.is_current() and "" or "",
-				tab.number(),
-				tab.name(),
-				line.sep("█", hl, theme.fill),
-				hl = hl,
-				margin = " ",
-			}
-		end),
+    {
+      {
+        line.sep(" ", theme.head, theme.tab),
+        vim.fn.fnamemodify(vim.fn.getcwd(), ':t'),
+        line.sep(" ", theme.head, theme.tab),
+        hl = theme.fill,
+      },
+      line.tabs().foreach(function(tab)
+        local hl = tab.is_current() and theme.current_tab or theme.tab
+        return {
+          line.sep("", hl, theme.fill),
+          tab.is_current() and "" or "",
+          line.sep("", hl, theme.fill),
+          tab.number(),
+          tab.name(),
+          line.sep("", hl, theme.fill),
+          hl = hl,
+          margin = " ",
+        }
+      end)
+    },
 		line.spacer(),
 		hl = theme.fill,
 	}
