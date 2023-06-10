@@ -14,5 +14,21 @@
     "typescript": ["javascript"],
     "typescriptreact": ["javascriptreact"]
   },
-  "suggest.insertMode": "insert"
+  "suggest.insertMode": "insert",
+  "languageserver": {
+    "nix": {
+      "command": "nil",
+      "filetypes": ["nix"],
+      "rootPatterns": ["flake.nix"],
+      "trace.server.verbosity": "verbose",
+      "enable": true,
+      "revealOutputChannelOn": "info",
+      "trace.server": "verbose",
+      "settings": {
+        "nil": {
+          "formatting": { "command": ["nixpkgs-fmt"] }
+        }
+      }
+    }
+  }
 }
