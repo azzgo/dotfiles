@@ -1,15 +1,3 @@
-" set winbar as file path
-function! WinBarLine()
-  let l:symbol = get(b:,'coc_current_function', '')
-  if (empty(l:symbol))
-    return expand('%f')
-  else
-    return expand('%f') . '#' . symbol
-  endif
-endfunction
-
-set winbar=%{WinBarLine()}
-
 let g:vim_config_path = expand('<sfile>:h:h') . '/vim'
 let g:neovim_config_path = expand('<sfile>:h:h') . '/nvim'
 let g:dot_config_path = expand('<sfile>:h:h')
