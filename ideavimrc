@@ -22,11 +22,6 @@ xnoremap <leader>p "+p
 " map Q to q for ex mode is not usable for me
 map Q q
 
-" cancal highlight keymap
-nnoremap <leader><cr> :noh<CR>
-" reset cmdheight=1
-nnoremap <leader><esc> :set cmdheight=1<CR>
-
 " tabs 
 nnoremap <silent> <leader>nt :tabnew<CR> 
 nnoremap <silent> [t :tabprevious<CR> 
