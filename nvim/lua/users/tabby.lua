@@ -13,7 +13,6 @@ local theme = {
 }
 
 tabline.set(function(line)
-  local bufPath = vim.fn.expand('%f')
 	return {
     {
       {
@@ -35,11 +34,6 @@ tabline.set(function(line)
           margin = " ",
         }
       end),
-      {
-        line.spacer(),
-        line.spacer(),
-        string.len(bufPath) > 50 and vim.fn.pathshorten(bufPath) or bufPath,
-      }
     },
 		line.spacer(),
 		hl = theme.fill,
