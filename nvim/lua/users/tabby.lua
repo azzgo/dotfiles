@@ -1,5 +1,7 @@
 local ok, tabline = pcall(require, "tabby.tabline")
 
+vim.o.showtabline = 2
+
 local theme = {
 	fill = "TabLineFill",
 	-- Also you can do this: fill = { fg='#f2e9de', bg='#907aa9', style='italic' }
@@ -11,6 +13,7 @@ local theme = {
 }
 
 tabline.set(function(line)
+  local bufPath = vim.fn.expand('%f')
 	return {
     {
       {
@@ -31,7 +34,12 @@ tabline.set(function(line)
           hl = hl,
           margin = " ",
         }
-      end)
+      end),
+      {
+        line.spacer(),
+        line.spacer(),
+        string.len(bufPath) > 50 and vim.fn.pathshorten(bufPath) or bufPath,
+      }
     },
 		line.spacer(),
 		hl = theme.fill,
