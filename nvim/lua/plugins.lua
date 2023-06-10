@@ -71,11 +71,15 @@ return require("lazy").setup({
   },
   --  lsp config
   { "neoclide/coc.nvim", branch = "release",
-    config = function()
+    init = function()
       vim.cmd[[
         let g:coc_config_home=g:dot_config_path . '/coc'
-        exe 'source' (g:dot_config_path . '/coc/coc.vim')
       ]]
+    end,
+    config = function ()
+     vim.cmd[[
+        exe 'source' (g:dot_config_path . '/coc/coc.vim')
+     ]]
     end
   },
 
