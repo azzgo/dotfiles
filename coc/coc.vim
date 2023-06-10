@@ -48,7 +48,7 @@ nmap <silent><leader>cm :<c-u>CocList commands<cr>
 
 
 " do hover
-nnoremap <silent> K :call CocActionAsync('definitionHover')<CR>
+autocmd FileType javascript,javascriptreact,typescript,typescriptreact,lua nnoremap <buffer><silent> K :call CocActionAsync('definitionHover')<CR>
 
 " Symbol renaming.
 nmap <f2> <Plug>(coc-rename)
