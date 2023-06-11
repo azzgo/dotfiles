@@ -26,7 +26,8 @@
       "trace.server": "verbose",
       "settings": {
         "nil": {
-          "formatting": { "command": ["nixpkgs-fmt"] }
+          "formatting": { "command": ["nixpkgs-fmt"] },
+          "diagnostics": { "ignored": ["uri_literal"] }
         }
       }
     }
