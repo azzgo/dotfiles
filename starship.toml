@@ -1,16 +1,22 @@
 "$schema" = 'https://starship.rs/config-schema.json'
+format = """
+$username\
+$hostname\
+$directory\
+$git_branch\
+$git_commit\
+$git_metrics\
+$custom\
+$sudo\
+$cmd_duration\
+$line_break\
+$jobs\
+$time\
+$status\
+$os\
+$shell\
+$character"""
 
 [cmd_duration]
 min_time = 0
 
-[git_state]
-disabled = true
-
-[git_status]
-disabled = true
-
-[java]
-disabled = true
-
-[python]
-disabled = true
