@@ -16,6 +16,7 @@
 (require 'init-global-keymap)
 (require 'init-company)
 (require 'init-meow)
+(require 'init-rime)
 (require 'init-magit)
 ;;(require 'init-evil)
 (require 'init-org)
