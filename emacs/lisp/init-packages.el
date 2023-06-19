@@ -30,8 +30,7 @@
 (use-package consult)
 
 (use-package typescript-mode)
-(use-package password-store)
-(use-package password-store-otp)
+(use-package pass)
 
 ;; export 
 (provide 'init-packages)
