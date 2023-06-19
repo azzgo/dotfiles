@@ -10,7 +10,9 @@
   (setq rime-disable-predicates
 	'(meow-normal-mode-p 
 	  meow-motion-mode-p
-          meow-keypad-mode-p))
+          meow-keypad-mode-p
+	  rime-predicate-punctuation-line-begin-p
+	  rime-predicate-punctuation-after-ascii-p))
   (setq rime-posframe-properties
       (list :background-color "#333333"
             :foreground-color "#dcdccc"
