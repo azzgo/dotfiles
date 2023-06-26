@@ -30,7 +30,6 @@
 (use-package consult)
 
 (use-package typescript-mode)
-(use-package pass)
 
 ;; export 
 (provide 'init-packages)
