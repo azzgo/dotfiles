@@ -24,6 +24,8 @@
   :config (progn
       (column-number-mode t)
       (size-indication-mode t)
+      (setq doom-modeline-hud t)
+      (setq doom-modeline-hud-min-height 1)
   )
 )
 
