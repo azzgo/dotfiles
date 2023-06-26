@@ -42,10 +42,4 @@
 (global-set-key (kbd "C-c s {") 'insert-curly)
 (global-set-key (kbd "C-c s (") 'insert-parentheses)
 
-
-;; passstore-copy
-(global-set-key (kbd "C-c p c") 'password-store-copy)
-(global-set-key (kbd "C-c p o") 'password-store-otp-token-copy)
-
-
 (provide 'init-global-keymap)
