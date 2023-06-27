@@ -1,8 +1,8 @@
 " mappings
-nmap s <Plug>(easymotion-s)
+nmap <leader>s <Plug>(easymotion-s)
 xmap <leader>s <Plug>(easymotion-s)
 omap <leader>s <Plug>(easymotion-s)
-nmap S <Plug>(easymotion-sn)
+nmap <leader>S <Plug>(easymotion-sn)
 xmap <leader>S <Plug>(easymotion-sn)
 omap <leader>S <Plug>(easymotion-sn)
 
