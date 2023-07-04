@@ -127,7 +127,7 @@ Plug 'tpope/vim-surround'
 
 " KJump must install the plugin
 " easymotion has bugs on my machine
-nmap s :action KJumpAction<cr>
-vmap s :action KJumpAction<cr>
+nmap <leader>s :action KJumpAction<cr>
+vmap <leader>s :action KJumpAction<cr>
 omap <leader>s :action KJumpAction<cr>
 
