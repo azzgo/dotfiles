@@ -22,6 +22,9 @@ Plug 'itchyny/lightline.vim'
 " rcfile
 Plug 'zaid/vim-rec'
 
+" snippets
+Plug 'SirVer/ultisnips'
+
 " vinegar
 Plug 'tpope/vim-vinegar'
 
