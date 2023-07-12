@@ -87,8 +87,17 @@ return require("lazy").setup({
   { "leafgarland/typescript-vim" },
   { "pangloss/vim-javascript" },
   -- fuzzy
-  { "nvim-telescope/telescope.nvim", config = function() require('users.telescope') end },
-  { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
+  { "Yggdroot/LeaderF", 
+    build = function()
+      vim.cmd.LeaderfInstallCExtension()
+    end,
+    dependencies = { 'Yggdroot/LeaderF-marks', 'linjiX/LeaderF-git' },
+    config = function()
+      vim.cmd[[
+        exe 'source' (g:vim_config_path . '/after/plugin/LeaderF.vim')
+      ]]
+    end
+  },
 
   -- git
   {
