@@ -27,10 +27,7 @@ return require("lazy").setup({
   { 'SirVer/ultisnips',
     init = function ()
      vim.cmd[[
-      let g:UltiSnipsSnippetDirectories = [g:neovim_config_path  . '/ultisnips']
-      let g:UltiSnipsExpandTrigger="<c-s>"
-      let g:UltiSnipsJumpForwardTrigger="<c-j>"
-      let g:UltiSnipsJumpBackwardTrigger="<c-k>"
+        exe 'source' (g:vim_config_path . '/after/plugin/ultisnips.vim')
      ]]
     end
   },
