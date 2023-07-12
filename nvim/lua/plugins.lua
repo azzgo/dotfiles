@@ -78,7 +78,7 @@ return require("lazy").setup({
     end,
     config = function ()
      vim.cmd[[
-        exe 'source' (g:dot_config_path . '/coc/coc.vim')
+        exe 'source' (g:neovim_config_path . '/coc.vim')
      ]]
     end
   },

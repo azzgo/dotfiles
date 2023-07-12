@@ -26,4 +26,8 @@ Plug 'tpope/vim-vinegar'
 " syntax
 Plug 'MaxMEllon/vim-jsx-pretty'
 
+" dadbod for sql connection
+Plug 'tpope/vim-dadbod'
+Plug 'kristijanhusak/vim-dadbod-ui'
+
 call plug#end()
