@@ -12,6 +12,8 @@ Plug 'mhinz/vim-signify'
 
 " LeaderF
 Plug 'Yggdroot/LeaderF', { 'do': ':LeaderfInstallCExtension' }
+Plug 'Yggdroot/LeaderF-marks'
+Plug 'linjiX/LeaderF-git'
 
 " theme
 Plug 'arcticicestudio/nord-vim'
