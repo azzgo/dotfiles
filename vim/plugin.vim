@@ -25,8 +25,8 @@ Plug 'zaid/vim-rec'
 " snippets
 Plug 'SirVer/ultisnips'
 
-" vinegar
-Plug 'tpope/vim-vinegar'
+" dirvish
+Plug 'justinmk/vim-dirvish'
 
 " syntax
 Plug 'MaxMEllon/vim-jsx-pretty'
