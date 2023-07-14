@@ -40,6 +40,9 @@ return require("lazy").setup({
       exe 'source' (g:vim_config_path . '/after/plugin/fugitive.vim')
     ]]
   end},
+  { 'rbong/vim-flog', config = function() 
+    vim.keymap.set('n', '<leader>gl', vim.cmd.Flog, {})
+  end},
   -- theme
   { "catppuccin/nvim", name = "catppuccin", lazy=true },
   { "shaunsingh/nord.nvim", lazy = true },
