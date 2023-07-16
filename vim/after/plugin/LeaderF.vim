@@ -1,6 +1,3 @@
-let g:Lf_WindowPosition = 'popup'
-let g:Lf_PopupAutoAdjustHeight = 0
-
 function! s:GREP_STRING()
   let s:search = input("Grep> ")
   execute 'Leaderf rg --input "' . s:search . '"'
