@@ -36,7 +36,7 @@ nmap <silent> gd <Plug>(coc-definition)
 nmap <silent> gD <Plug>(coc-type-definition)
 nmap <silent> gi <Plug>(coc-implementation)
 nmap <silent> gr <Plug>(coc-references)
-nmap <silent> gK :<c-u>CocList diagnostics<cr>
+nmap <silent> gK :<c-u>CocDiagnostics<cr>
 
 " outline
 nmap <silent><leader>o :<c-u>CocOutline<cr>
@@ -44,7 +44,7 @@ nmap <silent><leader>o :<c-u>CocOutline<cr>
 " coc list
 nmap <silent><leader>cr :<c-u>CocListResume<cr>
 nmap <silent><leader>cl :<c-u>CocList<cr>
-nmap <silent><leader>cm :<c-u>CocList commands<cr>
+nmap <silent><leader>cm :<c-u>CocCommand<cr>
 
 
 " do hover
@@ -95,5 +95,5 @@ command! -nargs=0 Format :call CocActionAsync('format')
 " Add `:Fold` command to fold current buffer.
 command! -nargs=? Fold :call     CocAction('fold', <f-args>)
 
-let g:coc_global_extensions = ['coc-prettier', 'coc-vetur', 'coc-tsserver', 'coc-json', 'coc-lists', 'coc-snippets', 'coc-eslint']
+let g:coc_global_extensions = ['coc-prettier', 'coc-vetur', 'coc-tsserver', 'coc-json', 'coc-snippets', 'coc-eslint']
 
