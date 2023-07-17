@@ -40,7 +40,7 @@ return require("lazy").setup({
       exe 'source' (g:vim_config_path . '/after/plugin/fugitive.vim')
     ]]
   end},
-  { 'rbong/vim-flog', config = function() 
+  { 'rbong/vim-flog', config = function()
     vim.keymap.set('n', '<leader>gl', vim.cmd.Flog, {})
   end},
   -- theme
@@ -50,7 +50,7 @@ return require("lazy").setup({
   -- ##########lua plugins start##############
 
   { "numToStr/Comment.nvim", config = function ()
-   require('users.comment') 
+    require('users.comment')
   end },
   "kyazdani42/nvim-web-devicons",
 
@@ -87,7 +87,7 @@ return require("lazy").setup({
   { "leafgarland/typescript-vim" },
   { "pangloss/vim-javascript" },
   -- fuzzy
-  { "Yggdroot/LeaderF", 
+  { "Yggdroot/LeaderF",
     build = function()
       vim.cmd.LeaderfInstallCExtension()
     end,
@@ -104,14 +104,6 @@ return require("lazy").setup({
     "lewis6991/gitsigns.nvim",
     dependencies = { "nvim-lua/plenary.nvim" },
     config = function() require('users.gitsigns') end
-  },
-
-  -- ufo
-  {
-    "kevinhwang91/nvim-ufo",
-    dependencies = "kevinhwang91/promise-async",
-    config = function() require('users.ufo') end,
-    cmd = 'UfoEnable'
   },
 
   --- tabby

@@ -1,6 +1,7 @@
 {
   "coc.preferences.currentFunctionSymbolAutoUpdate": true,
   "eslint.format.enable": false,
+  "outline.autoWidth": false,
   "semanticTokens.enable": true,
   "suggest.minTriggerInputLength": 2,
   "javascript.suggestionActions.enabled": false,
