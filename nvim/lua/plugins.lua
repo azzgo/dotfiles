@@ -118,6 +118,8 @@ return require("lazy").setup({
 
   -- todo highlight
   { "folke/todo-comments.nvim", ft = { "typescript", "javascript", "typescriptreact", "javascriptreact" }, config = function() require('users.todo') end },
+  -- color highlight
+  { "chrisbra/Colorizer" },
 
   -- ###### lua plugin end ##########
 })
