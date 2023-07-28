@@ -10,6 +10,9 @@ let g:Lf_PreviewResult = {
         \ 'Rg': 1,
         \ 'Gtags': 1
         \}
+
+let g:Lf_DefaultMode = 'Regex'
+
 function! s:GREP_STRING()
   let s:search = input("Grep> ")
   execute 'Leaderf rg --input "' . s:search . '"'
