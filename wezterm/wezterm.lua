@@ -9,7 +9,7 @@ return {
     "WenQuanYi Micro Hei",
     "苹方-简"
 	}),
-	font_size = 18,
+	font_size = 16,
 	audible_bell = "Disabled",
 	leader = { key = "i", mods = "SUPER", timeout_milliseconds = 1000 },
 	disable_default_key_bindings = true,
@@ -21,6 +21,13 @@ return {
     right = 0,
     top = 0,
     bottom = 0,
+  },
+  mouse_bindings = {
+      {
+        event = { Up = { streak = 1, button = 'Left' } },
+        mods = 'NONE',
+        action = wezterm.action.CompleteSelection 'ClipboardAndPrimarySelection',
+      },
   },
 	keys = {
 		{ key = "[", mods = "LEADER", action = "ActivateCopyMode" },
