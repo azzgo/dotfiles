@@ -67,7 +67,7 @@ vnoremap > >gv
 :map cl <Action>(Refactorings.QuickListPopupAction)
 
 " code navigation
-:map gr <Action>(GotoRelated)
+:map gr <Action>(ShowUsages)
 :map gR <Action>(FindUsages)
 :map gi <Action>(GotoImplementation)
 :map gd <Action>(GotoDeclaration)
@@ -95,6 +95,7 @@ vnoremap > >gv
 " find file
 :map <leader>f <Action>(GotoFile)
 :map <leader>/ <Action>(FindInPath)
+:map <leader>b <Action>(RecentFiles)
 
 " outline
 :map <leader>o <Action>(ActivateStructureToolWindow)
