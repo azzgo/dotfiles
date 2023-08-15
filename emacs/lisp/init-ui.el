@@ -26,6 +26,7 @@
       (size-indication-mode t)
       (setq doom-modeline-hud t)
       (setq doom-modeline-hud-min-height 1)
+      (setq doom-modeline-icon nil)
   )
 )
 
