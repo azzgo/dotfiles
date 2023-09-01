@@ -5,6 +5,9 @@ let g:dot_config_path = expand('<sfile>:h:h')
 " source basic file of vim config
 exe 'source' (g:vim_config_path . '/core')
 
+"" local config for override
+call SourceIfExists("~/.config/nvim/local.vim")
+
 set inccommand=split
 
 " unmap netrw for prepare nvim tree
@@ -29,16 +32,9 @@ set background=dark
 set termguicolors
 " colorscheme PaperColor
 
-
-let g:nord_italic = v:false
 " colorscheme nord
 " colorscheme catppuccin " catppuccin-latte, catppuccin-frappe, catppuccin-macchiato, catppuccin-mocha
 colorscheme catppuccin-macchiato " catppuccin-latte, catppuccin-frappe, catppuccin-macchiato, catppuccin-mocha
-
-
-
-"" local config for override
-call SourceIfExists("~/.config/nvim/local.vim")
 
 " change git fugitive summary format
 let g:fugitive_summary_format = "%s %cr"
