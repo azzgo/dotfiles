@@ -39,3 +39,4 @@ colorscheme catppuccin-macchiato " catppuccin-latte, catppuccin-frappe, catppucc
 " change git fugitive summary format
 let g:fugitive_summary_format = "%s %cr"
 
+au TextYankPost * silent! lua vim.highlight.on_yank {higroup="IncSearch", timeout=150}
