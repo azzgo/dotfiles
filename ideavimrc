@@ -117,6 +117,7 @@ vnoremap > >gv
 Plug 'preservim/nerdtree'
 Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-surround'
+Plug 'vim-easymotion'
  
 
 "Find Actions
@@ -126,9 +127,11 @@ Plug 'tpope/vim-surround'
 :map <leader>nn :NERDTreeToggle<CR>
 :map <leader>nf ::NERDTreeFind<CR>
 
-" KJump must install the plugin
-" easymotion has bugs on my machine
-nmap <leader>s :action KJumpAction<cr>
-vmap <leader>s :action KJumpAction<cr>
-omap <leader>s :action KJumpAction<cr>
+" mappings
+nmap <leader>s <Plug>(easymotion-sn)
+xmap <leader>s <Plug>(easymotion-sn)
+omap <leader>s <Plug>(easymotion-sn)
+nmap <leader>S <Plug>(easymotion-s)
+xmap <leader>S <Plug>(easymotion-s)
+omap <leader>S <Plug>(easymotion-s)
 
