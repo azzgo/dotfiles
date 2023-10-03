@@ -25,7 +25,8 @@ nnoremap <leader>tr :Leaderf --recall<CR>
 nnoremap <leader>to :Leaderf mru<CR>
 nnoremap <leader>tq :Leaderf quickfix<CR>
 nnoremap <leader>/  :call <SID>GREP_STRING()<CR>
-nnoremap <leader>f  :call <SID>FIND_FILES()<CR>
+nnoremap <leader>f  :Leaderf file<CR>
+nnoremap <leader><s-f>  :call <SID>FIND_FILES()<CR>
 nnoremap <leader>m  :Leaderf marks<CR>
 nnoremap <leader>gf :Leaderf bcommit<CR>
 
