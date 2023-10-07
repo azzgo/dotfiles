@@ -3,6 +3,12 @@
   (interactive)
   (find-file "~/.emacs.d/init.el"))
 
+(defun insert-pure-date ()
+  "Insert a timestamp without <>."
+  (interactive)
+  (let* ((current-time (current-time))
+         (formatted-time (format-time-string "%Y-%m-%d %a" current-time)))
+    (insert formatted-time)))
 
 ;; macos 特定
 (when (eq system-type 'darwin) ;; mac specific settings
@@ -41,5 +47,6 @@
 (global-set-key (kbd "C-c s [") 'insert-bracket)
 (global-set-key (kbd "C-c s {") 'insert-curly)
 (global-set-key (kbd "C-c s (") 'insert-parentheses)
+(global-set-key (kbd "C-c C-.") 'insert-pure-date)
 
 (provide 'init-global-keymap)
