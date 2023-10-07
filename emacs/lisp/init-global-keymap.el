@@ -6,8 +6,8 @@
 (defun insert-pure-date ()
   "Insert a timestamp without <>."
   (interactive)
-  (let* ((current-time (current-time))
-         (formatted-time (format-time-string "%Y-%m-%d %a" current-time)))
+  (let* ((selected-date (org-read-date nil 't))
+         (formatted-time (format-time-string "%Y-%m-%d %a" selected-date)))
     (insert formatted-time)))
 
 ;; macos 特定
