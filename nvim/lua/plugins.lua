@@ -83,6 +83,9 @@ return require("lazy").setup({
     end
   },
 
+  -- copilot
+  { "github/copilot.vim" },
+
   -- syntax
   { "leafgarland/typescript-vim" },
   { "pangloss/vim-javascript" },
