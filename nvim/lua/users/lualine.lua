@@ -15,6 +15,7 @@ lualine.setup({
 		lualine_c = {
       BufPath
     },
+    lualine_x = {'tabnine'}
 	},
   options = { theme = "auto", section_separators = "", component_separators = "" }
 })
