@@ -46,6 +46,7 @@ return require("lazy").setup({
   -- theme
   { "catppuccin/nvim", name = "catppuccin", lazy=true },
   { "shaunsingh/nord.nvim", lazy = true },
+  { 'rose-pine/neovim', name = 'rose-pine' },
 
   -- ##########lua plugins start##############
 

@@ -28,13 +28,14 @@ lua require('plugins')
 set t_Co=256   " This is may or may not needed.
 
 " set background=dark
-set background=dark
+set background=light
 set termguicolors
 " colorscheme PaperColor
 
 " colorscheme nord
 " colorscheme catppuccin " catppuccin-latte, catppuccin-frappe, catppuccin-macchiato, catppuccin-mocha
-colorscheme catppuccin-macchiato " catppuccin-latte, catppuccin-frappe, catppuccin-macchiato, catppuccin-mocha
+" colorscheme catppuccin-macchiato " catppuccin-latte, catppuccin-frappe, catppuccin-macchiato, catppuccin-mocha
+colorscheme rose-pine-dawn
 
 " change git fugitive summary format
 let g:fugitive_summary_format = "%s %cr"
