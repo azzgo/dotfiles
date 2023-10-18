@@ -83,8 +83,8 @@ return require("lazy").setup({
     end
   },
 
-  -- copilot
-  { "github/copilot.vim" },
+  -- tabnine
+  { 'codota/tabnine-nvim', build = "./dl_binaries.sh", config = function() require('users.tabnine') end },
 
   -- syntax
   { "leafgarland/typescript-vim" },
