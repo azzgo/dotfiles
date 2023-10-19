@@ -1,4 +1,4 @@
-inoremap <silent><expr> <TAB>
+inoremap <silent><expr> <C-Space>
       \ coc#pum#visible() ? coc#pum#next(1):
       \ CheckBackspace() ? "\<Tab>" :
       \ coc#refresh()
