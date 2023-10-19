@@ -2,7 +2,8 @@ local wezterm = require("wezterm")
 
 return {
   check_for_updates = false,
-	color_scheme = "Catppuccin Macchiato",
+	-- color_scheme = "Catppuccin Macchiato",
+  color_scheme = 'rose-pine-dawn',
 	font = wezterm.font_with_fallback({
 		"Hack Nerd Font Mono",
 		"Noto Color Emoji",
