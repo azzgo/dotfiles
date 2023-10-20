@@ -1,15 +1,16 @@
 set mouse = yes
 
 # disable default mapping of status
-bind generic s none
+bind generic    s     none
 # disable c map to stage
-bind generic c none
-bind generic st view-stage
-bind generic ss view-status
+bind generic    c     none
+bind generic    st    view-stage
+bind generic    ss    view-status
+bind generic    I     @sh -c "echo %(commit) | pbcopy"
 
 bind status     ck    ?>git clean -f -d -- %(file)
 bind status     ca    ?>git commit --amend
 bind status     cc    >git commit
 bind status     -     status-update
 bind status     X     status-revert
-bind main     C    ?git checkout %(commit)
+bind main       C     ?git checkout %(commit)
