@@ -1,16 +1,11 @@
-;; 关闭工具栏，tool-bar-mode 即为一个 Minor Mode
-(if (display-graphic-p)
-  (progn
-    (tool-bar-mode -2)
-    (menu-bar-mode -2)
-    
-    ;; 关闭文件滑动控件
-    (scroll-bar-mode -2)
-    
-    ;; 关闭默认的自动缩进
-    (electric-indent-mode -2)
-  )
-)
+(tool-bar-mode -2)
+(menu-bar-mode -2)
+
+;; 关闭文件滑动控件
+(scroll-bar-mode -2)
+
+;; 关闭默认的自动缩进
+(electric-indent-mode -2)
 
 (use-package doom-themes
   :config
