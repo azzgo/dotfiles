@@ -4,6 +4,9 @@ return {
   check_for_updates = false,
 	-- color_scheme = "Catppuccin Macchiato",
   color_scheme = 'rose-pine-dawn',
+  colors = {
+    selection_bg = '#b4b4b4',
+  },
 	font = wezterm.font_with_fallback({
 		"Hack Nerd Font Mono",
 		"Noto Color Emoji",
