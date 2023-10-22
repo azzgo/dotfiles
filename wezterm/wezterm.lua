@@ -48,7 +48,8 @@ return {
     { mods = "CTRL", key = "q", action = wezterm.action({ SendString="\x11" }) },
     -- default keys i needed
     { key = "c", mods = "CTRL|SHIFT", action = wezterm.action({ CopyTo = "ClipboardAndPrimarySelection" }) },
-    { key = "v", mods = "CTRL|SHIFT", action = wezterm.action.PasteFrom 'PrimarySelection'  },
+    { key = "v", mods = "CTRL|SHIFT", action = wezterm.action.PasteFrom 'Clipboard'  },
+    { key = "v", mods = "CTRL|SHIFT|ALT", action = wezterm.action.PasteFrom 'PrimarySelection'  },
     { key = "t", mods = "SUPER", action = wezterm.action({ SpawnTab = "DefaultDomain" }) },
     { key = "+", mods = "SHIFT|CTRL", action = "IncreaseFontSize" },
     { key = "_", mods = "SHIFT|CTRL", action = "DecreaseFontSize" },
