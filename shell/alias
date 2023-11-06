@@ -3,9 +3,11 @@
 alias g='git'
 alias ga='git add'
 alias gc='git commit -v'
+alias gcn='git commit -v --no-verify'
 alias gca='git commit -v --amend --no-edit'
 alias gup='git pull --rebase'
 alias gp='git push'
+alias gpn='git push --no-verify'
 alias gst='git status'
 alias gco='git checkout'
 alias grb="git rebase"
