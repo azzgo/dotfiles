@@ -1,0 +1,21 @@
+#!/bin/bash
+
+menu="$(command -v tofi)"
+
+
+function main() {
+  if [[ $# -lt 1 ]]; then
+    $0 $(echo -e "scrcpy\nnotify\nexit" | tofi)
+  else
+    option=$1
+    case $option in
+      "scrcpy") scrcpy -S -w ;;
+      "notify")
+        echo "Hello a Test" | notify-send msg -t 1600 ;;
+      "exit") ;;
+    esac
+  fi
+
+}
+
+main "$@"
