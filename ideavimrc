@@ -72,7 +72,7 @@ vnoremap > >gv
 :map gR <Action>(FindUsages)
 :map gi <Action>(GotoImplementation)
 :map gd <Action>(GotoDeclaration)
-:map gD <Action>(GotoTypeDeclaration)
+:map gD <Action>(GotoSuperMethod)
 :map gu <Action>(FindUsages)
 
 :map [d <Action>(GotoPreviousError)
