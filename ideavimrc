@@ -129,6 +129,9 @@ Plug 'vim-easymotion'
 :map <leader>nf ::NERDTreeFind<CR>
 
 " mappings
+let g:EasyMotion_re_anywhere = '\v' .
+    \       '(\s\zs\S)' . '|' . '(^\S)'
+
 nmap <leader>s <Plug>(easymotion-sn)
 xmap <leader>s <Plug>(easymotion-sn)
 omap <leader>s <Plug>(easymotion-sn)
