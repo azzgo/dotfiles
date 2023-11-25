@@ -102,7 +102,14 @@ return require("lazy").setup({
       ]]
     end
   },
-
+  -- bqf
+  { "kevinhwang91/nvim-bqf" },
+  {
+    'junegunn/fzf',
+    build = function()
+      vim.fn['fzf#install']()
+    end
+  },
   -- git
   {
     "lewis6991/gitsigns.nvim",
