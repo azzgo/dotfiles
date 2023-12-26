@@ -106,6 +106,7 @@ inoremap <c-a> <home>
 inoremap <c-e> <end>
 inoremap <c-f> <right>
 inoremap <c-b> <left>
+inoremap <c-k> <c-o>D
 cnoremap <c-a> <home>
 cnoremap <c-b> <left>
 cnoremap <c-e> <end>
