@@ -85,7 +85,7 @@ return require("lazy").setup({
   },
 
   -- tabnine
-  { 'codota/tabnine-nvim', build = "./dl_binaries.sh", config = function() require('users.tabnine') end },
+  -- { 'codota/tabnine-nvim', build = "./dl_binaries.sh", config = function() require('users.tabnine') end },
 
   -- syntax
   { "leafgarland/typescript-vim" },
