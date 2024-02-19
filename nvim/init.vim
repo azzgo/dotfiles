@@ -34,8 +34,8 @@ set termguicolors
 
 " colorscheme nord
 " colorscheme catppuccin " catppuccin-latte, catppuccin-frappe, catppuccin-macchiato, catppuccin-mocha
-" colorscheme catppuccin-macchiato " catppuccin-latte, catppuccin-frappe, catppuccin-macchiato, catppuccin-mocha
-colorscheme rose-pine-dawn
+colorscheme catppuccin-macchiato " catppuccin-latte, catppuccin-frappe, catppuccin-macchiato, catppuccin-mocha
+" colorscheme rose-pine-dawn
 
 " change git fugitive summary format
 let g:fugitive_summary_format = "%s %cr"
