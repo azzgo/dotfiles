@@ -2,8 +2,8 @@ local wezterm = require("wezterm")
 
 return {
   check_for_updates = false,
-  -- color_scheme = "Catppuccin Macchiato",
-  color_scheme = 'rose-pine-dawn',
+  color_scheme = "Catppuccin Macchiato",
+  -- color_scheme = 'rose-pine-dawn',
   colors = {
     selection_bg = '#b4b4b4',
   },
