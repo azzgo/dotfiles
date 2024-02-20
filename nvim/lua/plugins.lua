@@ -83,6 +83,7 @@ return require("lazy").setup({
      ]]
     end
   },
+  { 'antoinemadec/coc-fzf' },
 
   -- tabnine
   -- { 'codota/tabnine-nvim', build = "./dl_binaries.sh", config = function() require('users.tabnine') end },
