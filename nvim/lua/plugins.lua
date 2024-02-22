@@ -140,5 +140,14 @@ return require("lazy").setup({
       require("scrollbar").setup()
     end
   },
+  -- zen mode
+  {  "folke/zen-mode.nvim", opts = {
+      window = {
+        width = 1,
+      },
+    }, init = function()
+      vim.keymap.set('n', '<A-z>', vim.cmd.ZenMode, {})
+    end,
+  },
   -- ###### lua plugin end ##########
 })
