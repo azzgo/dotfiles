@@ -150,6 +150,6 @@ return require("lazy").setup({
     end,
   },
   -- vim-rec
-  { 'zaid/vim-rec' },
+  { 'zaid/vim-rec', init = function() vim.g.recutils_no_folding = 1 end },
   -- ###### lua plugin end ##########
 })
