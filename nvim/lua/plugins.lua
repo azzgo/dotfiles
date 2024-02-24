@@ -149,5 +149,7 @@ return require("lazy").setup({
       vim.keymap.set('n', '<A-z>', vim.cmd.ZenMode, {})
     end,
   },
+  -- vim-rec
+  { 'zaid/vim-rec' },
   -- ###### lua plugin end ##########
 })
