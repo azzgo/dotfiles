@@ -19,16 +19,7 @@ Plug 'linjiX/LeaderF-git'
 Plug 'arcticicestudio/nord-vim'
 Plug 'itchyny/lightline.vim'
 
-" rcfile
-Plug 'zaid/vim-rec'
-
-" snippets
-Plug 'SirVer/ultisnips'
-
 " dirvish
 Plug 'justinmk/vim-dirvish'
-
-" syntax
-Plug 'MaxMEllon/vim-jsx-pretty'
 
 call plug#end()
