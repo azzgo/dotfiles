@@ -111,6 +111,12 @@ return require("lazy").setup({
       vim.fn['fzf#install']()
     end
   },
+  {
+    "ThePrimeagen/harpoon",
+    branch = "harpoon2",
+    dependencies = { "nvim-lua/plenary.nvim" },
+    config = function() require('users.harpoon') end
+  },
   -- git
   {
     "lewis6991/gitsigns.nvim",
