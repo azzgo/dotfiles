@@ -6,6 +6,9 @@ end
 
 harpoon:setup()
 
+local extensions = require("harpoon.extensions")
+
+harpoon:extend(extensions.builtins.navigate_with_number())
 harpoon:extend({
   UI_CREATE = function(cx)
     vim.keymap.set("n", "<C-v>", function()
@@ -20,6 +23,12 @@ harpoon:extend({
       harpoon.ui:select_menu_item({ tabedit = true })
     end, { buffer = cx.bufnr })
   end,
+  ADD = function(cx)
+    print("[harpoon] file added, location of", cx.item.value)
+  end,
+  REMOVE = function(cx)
+    print("[harpoon] file removed, location of", cx.item.value)
+  end
 })
 
 vim.keymap.set("n", "<A-a>", function() harpoon:list():append() end)
