@@ -40,9 +40,6 @@ return require("lazy").setup({
       exe 'source' (g:vim_config_path . '/after/plugin/fugitive.vim')
     ]]
   end},
-  { 'rbong/vim-flog', config = function()
-    vim.keymap.set('n', '<leader>gl', vim.cmd.Flog, {})
-  end},
   -- theme
   { "catppuccin/nvim", name = "catppuccin", lazy=true },
   { "shaunsingh/nord.nvim", lazy = true },
@@ -96,7 +93,7 @@ return require("lazy").setup({
     build = function()
       vim.cmd.LeaderfInstallCExtension()
     end,
-    dependencies = { 'Yggdroot/LeaderF-marks', 'linjiX/LeaderF-git' },
+    dependencies = { 'Yggdroot/LeaderF-marks' },
     config = function()
       vim.cmd[[
         exe 'source' (g:vim_config_path . '/after/plugin/LeaderF.vim')
