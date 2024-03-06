@@ -143,13 +143,6 @@ return require("lazy").setup({
   -- color highlight
   { "lilydjwg/colorizer" },
 
- -- scrollbar
-  {
-    'petertriho/nvim-scrollbar',
-    config = function()
-      require("scrollbar").setup()
-    end
-  },
   -- zen mode
   {  "folke/zen-mode.nvim", opts = {
       window = {
