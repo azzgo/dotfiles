@@ -12,12 +12,7 @@ local function harpoon_fzf_popup(harpoon_files)
     table.insert(source, item.value)
   end
 
-  vim.fn['fzf#run']({
-    sink = 'e',
-    -- options = "  --expect=ctrl-v,ctrl-x,ctrl-t",
-    window = { height = 0.6, width = 0.9 },
-    source = source
-  })
+  vim.fn['_L_FZF_WRAPPER_RUN_']({ source = source })
 end
 
 vim.keymap.set("n", "<A-a>", function() harpoon:list():append() end)
