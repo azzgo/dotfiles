@@ -18,6 +18,6 @@ end
 vim.keymap.set("n", "<A-a>", function() harpoon:list():append() end)
 vim.keymap.set("n", "<A-r>", function() harpoon:list():remove() end)
 -- vim.keymap.set("n", "<leader><tab>", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end)
-vim.keymap.set("n", "<leader><tab>", function() harpoon_fzf_popup(harpoon:list()) end)
+vim.keymap.set("n", "<C-e>", function() harpoon_fzf_popup(harpoon:list()) end)
 vim.keymap.set("n", "<C-S-P>", function() harpoon:list():prev() end)
 vim.keymap.set("n", "<C-S-N>", function() harpoon:list():next() end)
