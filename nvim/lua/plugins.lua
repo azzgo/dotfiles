@@ -154,5 +154,9 @@ return require("lazy").setup({
   },
   -- vim-rec
   { 'zaid/vim-rec', init = function() vim.g.recutils_no_folding = 1 end },
+  --- weapp
+  { 'chemzqm/wxapp.vim' },
+  --- marks enhance
+  { 'chentoast/marks.nvim', config = function() require('marks').setup() end },
   -- ###### lua plugin end ##########
 })
