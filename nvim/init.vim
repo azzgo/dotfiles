@@ -12,7 +12,6 @@ set inccommand=split
 
 " unmap netrw for prepare nvim tree
 unmap <leader>nn
-unmap <leader>nf
 let g:loaded_netrw = 1
 let g:loaded_netrwPlugin = 1
 
