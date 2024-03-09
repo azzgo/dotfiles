@@ -13,9 +13,10 @@ vim.opt.rtp:prepend(lazypath)
 
 return require("lazy").setup({
   --- quick move
-  { "easymotion/vim-easymotion",
-    config = function ()
-    vim.cmd[[
+  {
+    "easymotion/vim-easymotion",
+    config = function()
+      vim.cmd [[
       exe 'source' (g:vim_config_path . '/after/plugin/easymotion.vim')
     ]]
     end
@@ -24,9 +25,10 @@ return require("lazy").setup({
   "andymass/vim-matchup",
 
   -- snippets plugin
-  { 'SirVer/ultisnips',
-    init = function ()
-     vim.cmd[[
+  {
+    'SirVer/ultisnips',
+    init = function()
+      vim.cmd [[
         exe 'source' (g:vim_config_path . '/after/plugin/ultisnips.vim')
      ]]
     end
@@ -35,21 +37,27 @@ return require("lazy").setup({
   "tpope/vim-surround",
   "tpope/vim-repeat",
   -- git cmmand support
-  { "tpope/vim-fugitive", config = function()
-    vim.cmd[[
+  {
+    "tpope/vim-fugitive",
+    config = function()
+      vim.cmd [[
       exe 'source' (g:vim_config_path . '/after/plugin/fugitive.vim')
     ]]
-  end},
+    end
+  },
   -- theme
-  { "catppuccin/nvim", name = "catppuccin", lazy=true },
+  { "catppuccin/nvim",      name = "catppuccin", lazy = true },
   { "shaunsingh/nord.nvim", lazy = true },
-  { 'rose-pine/neovim', name = 'rose-pine' },
+  { 'rose-pine/neovim',     name = 'rose-pine' },
 
   -- ##########lua plugins start##############
 
-  { "numToStr/Comment.nvim", config = function ()
-    require('users.comment')
-  end },
+  {
+    "numToStr/Comment.nvim",
+    config = function()
+      require('users.comment')
+    end
+  },
   "kyazdani42/nvim-web-devicons",
 
   -- statusline
@@ -68,14 +76,16 @@ return require("lazy").setup({
     end
   },
   --  lsp config
-  { "neoclide/coc.nvim", branch = "release",
+  {
+    "neoclide/coc.nvim",
+    branch = "release",
     init = function()
-      vim.cmd[[
+      vim.cmd [[
         let g:coc_config_home=g:dot_config_path . '/coc'
       ]]
     end,
-    config = function ()
-     vim.cmd[[
+    config = function()
+      vim.cmd [[
         exe 'source' (g:dot_config_path . '/coc/coc.vim')
      ]]
     end
@@ -89,13 +99,14 @@ return require("lazy").setup({
   { "leafgarland/typescript-vim" },
   { "pangloss/vim-javascript" },
   -- fuzzy
-  { "Yggdroot/LeaderF",
+  {
+    "Yggdroot/LeaderF",
     build = function()
       vim.cmd.LeaderfInstallCExtension()
     end,
     dependencies = { 'Yggdroot/LeaderF-marks' },
     config = function()
-      vim.cmd[[
+      vim.cmd [[
         exe 'source' (g:vim_config_path . '/after/plugin/LeaderF.vim')
       ]]
     end
@@ -103,12 +114,19 @@ return require("lazy").setup({
   -- bqf
   { "kevinhwang91/nvim-bqf" },
   {
+    'kevinhwang91/nvim-ufo',
+    dependencies = { 'kevinhwang91/promise-async' },
+    config = function()
+      require('users.ufo')
+    end
+  },
+  {
     'junegunn/fzf',
     build = function()
       vim.fn['fzf#install']()
     end,
     init = function()
-      vim.cmd[[
+      vim.cmd [[
         function! _L_FZF_WRAPPER_RUN_(opts) abort
           call fzf#run(fzf#wrap(a:opts))
         endfunction
@@ -129,31 +147,42 @@ return require("lazy").setup({
   },
 
   --- tabby
-  { "nanozuki/tabby.nvim", config = function() require('users.tabby') end },
+  { "nanozuki/tabby.nvim",  config = function() require('users.tabby') end },
 
   -- undotree
-  { "mbbill/undotree", config = function()
-    vim.keymap.set('n', '<leader>u', vim.cmd.UndotreeToggle, {})
+  {
+    "mbbill/undotree",
+    config = function()
+      vim.keymap.set('n', '<leader>u', vim.cmd.UndotreeToggle, {})
     end,
     event = 'VeryLazy'
   },
 
   -- todo highlight
-  { "folke/todo-comments.nvim", ft = { "typescript", "javascript", "typescriptreact", "javascriptreact" }, config = function() require('users.todo') end },
+  {
+    "folke/todo-comments.nvim",
+    ft = { "typescript", "javascript", "typescriptreact", "javascriptreact" },
+    config = function()
+      require('users.todo')
+    end
+  },
   -- color highlight
   { "lilydjwg/colorizer" },
 
   -- zen mode
-  {  "folke/zen-mode.nvim", opts = {
+  {
+    "folke/zen-mode.nvim",
+    opts = {
       window = {
         width = 1,
       },
-    }, init = function()
+    },
+    init = function()
       vim.keymap.set('n', '<A-z>', vim.cmd.ZenMode, {})
     end,
   },
   -- vim-rec
-  { 'zaid/vim-rec', init = function() vim.g.recutils_no_folding = 1 end },
+  { 'zaid/vim-rec',         init = function() vim.g.recutils_no_folding = 1 end },
   --- weapp
   { 'chemzqm/wxapp.vim' },
   --- marks enhance
