@@ -1,5 +1,9 @@
 local ok, tabline = pcall(require, "tabby.tabline")
 
+if not ok then
+  return
+end
+
 vim.o.showtabline = 2
 
 local theme = {
