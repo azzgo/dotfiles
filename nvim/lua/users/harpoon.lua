@@ -15,6 +15,24 @@ local function harpoon_fzf_popup(harpoon_files)
   vim.fn['_L_FZF_WRAPPER_RUN_']({ source = source })
 end
 
+local function harpoon_fzf_action_popup()
+  local menu = {
+    'add',
+    'remove',
+  }
+  vim.fn['_L_FZF_WRAPPER_RUN_']({
+    source = menu,
+    options = { '--prompt', 'harpoon actions: ' },
+    sink = function(action)
+      if action == 'add' then
+        return harpoon:list():append()
+      elseif action == 'remove' then
+        return harpoon:list():remove()
+      end
+    end
+  })
+end
+
 harpoon:extend({
   ADD = function(cx)
     print("[harpoon] file added, location of", cx.item.value)
@@ -24,9 +42,7 @@ harpoon:extend({
   end
 })
 
-vim.keymap.set("n", "<A-a>", function() harpoon:list():append() end)
-vim.keymap.set("n", "<A-r>", function() harpoon:list():remove() end)
--- vim.keymap.set("n", "<leader><tab>", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end)
-vim.keymap.set("n", "<C-e>", function() harpoon_fzf_popup(harpoon:list()) end)
-vim.keymap.set("n", "<C-S-P>", function() harpoon:list():prev() end)
-vim.keymap.set("n", "<C-S-N>", function() harpoon:list():next() end)
+vim.keymap.set("n", "<A-h>", function() harpoon_fzf_action_popup() end)
+vim.keymap.set("n", "<A-e>", function() harpoon_fzf_popup(harpoon:list()) end)
+vim.keymap.set("n", "<A-p>", function() harpoon:list():prev() end)
+vim.keymap.set("n", "<A-n>", function() harpoon:list():next() end)
