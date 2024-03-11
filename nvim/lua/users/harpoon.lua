@@ -12,7 +12,7 @@ local function harpoon_fzf_popup(harpoon_files)
     table.insert(source, item.value)
   end
 
-  vim.fn['_L_FZF_WRAPPER_RUN_']({ source = source })
+  vim.fn['_L_FZF_WRAPPER_RUN_']({ source = source, options = { '--layout=reverse-list', '--cycle' } })
 end
 
 local function harpoon_fzf_action_popup()
