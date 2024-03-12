@@ -19,15 +19,18 @@ local function harpoon_fzf_action_popup()
   local menu = {
     'add',
     'remove',
+    'clear',
   }
   vim.fn['_L_FZF_WRAPPER_RUN_']({
     source = menu,
-    options = { '--prompt', 'harpoon actions: ' },
+    options = { '--prompt', 'harpoon actions: ', '--layout=reverse-list', '--cycle' },
     sink = function(action)
       if action == 'add' then
         return harpoon:list():append()
       elseif action == 'remove' then
         return harpoon:list():remove()
+      elseif action == 'clear' then
+        return harpoon:list():clear()
       end
     end
   })
