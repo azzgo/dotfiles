@@ -28,8 +28,8 @@ nnoremap <leader>/  :call <SID>GREP_STRING()<CR>
 nnoremap <leader>f  :Leaderf file<CR>
 nnoremap <leader><s-f>  :call <SID>FIND_FILES()<CR>
 nnoremap <leader>m  :Leaderf marks<CR>
-nnoremap <leader>gl :Leaderf git log --explorer<CR>
-nnoremap <leader>gf :Leaderf git log --current<CR>
+nnoremap <leader>gl :Leaderf git log --explorer --popup<CR>
+nnoremap <leader>gf :Leaderf git log --current --popup<CR>
 
 nnoremap <silent> <leader>b :Leaderf buffer<cr>
 
