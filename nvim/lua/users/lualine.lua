@@ -11,7 +11,7 @@ end
 
 lualine.setup({
 	sections = {
-    lualine_b = {},
+    lualine_b = { 'g:coc_status' },
 		lualine_c = {
       BufPath
     },
