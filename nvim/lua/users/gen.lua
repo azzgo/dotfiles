@@ -12,4 +12,3 @@ gen.setup({
   debug = false,
 })
 
-vim.keymap.set({ 'n', 'v' }, '<leader>]', ':Gen<CR>')
