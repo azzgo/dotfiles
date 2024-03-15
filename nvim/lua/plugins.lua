@@ -187,5 +187,12 @@ return require("lazy").setup({
   { 'chemzqm/wxapp.vim' },
   --- marks enhance
   { 'chentoast/marks.nvim', config = function() require('marks').setup() end },
+  --- ollama
+  {
+    'David-Kunz/gen.nvim',
+    config = function()
+      require('users.gen')
+    end,
+  },
   -- ###### lua plugin end ##########
 })
