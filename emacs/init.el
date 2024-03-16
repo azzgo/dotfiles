@@ -18,6 +18,7 @@
 (require 'init-meow)
 (require 'init-rime)
 (require 'init-magit)
+(require 'init-ai)
 ;;(require 'init-evil)
 (require 'init-org)
 
