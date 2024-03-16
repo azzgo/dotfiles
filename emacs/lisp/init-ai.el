@@ -7,6 +7,7 @@
     "opeai-sb"
     :host "api.openai-sb.com"
     :stream t
+    :key #'gptel-api-key
     :models '("gpt-3.5-turbo" "gpt-4")
   ))
 ))
