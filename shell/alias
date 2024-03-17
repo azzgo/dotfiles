@@ -26,10 +26,6 @@ if [[ -x  $(command -v vim) ]];then
   alias vi='vim'
 fi
 
-if [[ -x $(command -v ranger) ]];then
-  alias rr="ranger"
-fi
-
 if [[ -x $(command -v proxychains) ]];then
   alias pc="proxychains -q"
 fi
