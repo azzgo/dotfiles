@@ -24,13 +24,14 @@ return require("lazy").setup({
   -- matchup
   "andymass/vim-matchup",
 
-  -- snippets plugin
   {
-    'SirVer/ultisnips',
-    init = function()
-      vim.cmd [[
-        exe 'source' (g:vim_config_path . '/after/plugin/ultisnips.vim')
-     ]]
+    "L3MON4D3/LuaSnip",
+    -- follow latest release.
+    version = "v2.*", -- Replace <CurrentMajor> by the latest released major (first number of latest release)
+    -- install jsregexp (optional!).
+    build = "make install_jsregexp",
+    config = function ()
+      require('users.luasnip') 
     end
   },
   --  origin vim plugin use 'tpope/vim-surround'
