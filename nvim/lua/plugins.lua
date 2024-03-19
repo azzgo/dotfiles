@@ -30,8 +30,8 @@ return require("lazy").setup({
     version = "v2.*", -- Replace <CurrentMajor> by the latest released major (first number of latest release)
     -- install jsregexp (optional!).
     build = "make install_jsregexp",
-    config = function ()
-      require('users.luasnip') 
+    config = function()
+      require('users.luasnip')
     end
   },
   --  origin vim plugin use 'tpope/vim-surround'
@@ -104,6 +104,9 @@ return require("lazy").setup({
     "Yggdroot/LeaderF",
     build = function()
       vim.cmd.LeaderfInstallCExtension()
+    end,
+    cond = function()
+     return vim.fn.has('python3');
     end,
     dependencies = { 'Yggdroot/LeaderF-marks' },
     config = function()
