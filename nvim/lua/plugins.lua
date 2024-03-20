@@ -106,7 +106,7 @@ return require("lazy").setup({
       vim.cmd.LeaderfInstallCExtension()
     end,
     cond = function()
-     return vim.fn.has('python3');
+     return vim.fn.has('python3') == 1;
     end,
     dependencies = { 'Yggdroot/LeaderF-marks' },
     config = function()
