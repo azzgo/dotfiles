@@ -30,13 +30,17 @@ local jsLogSnipet = s("log", {
   t("console.log("), i(1, "message"), t(");")
 })
 local jsLetPrefixSnipet = postfix('.let', {
+  t('let '),
+  i(1, 'variable'),
   f(function(_, parent)
-    return "let variable = " .. parent.snippet.env.POSTFIX_MATCH .. ";"
+    return " = " .. parent.snippet.env.POSTFIX_MATCH .. ";"
   end, {}),
 })
 local jsConstPrefixSnipet = postfix('.const', {
+  t('const '),
+  i(1, 'variable'),
   f(function(_, parent)
-    return "let variable = " .. parent.snippet.env.POSTFIX_MATCH .. ";"
+    return " = " .. parent.snippet.env.POSTFIX_MATCH .. ";"
   end, {}),
 })
 
