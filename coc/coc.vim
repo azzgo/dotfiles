@@ -92,8 +92,5 @@ endif
 
 command! -nargs=0 Format :call CocActionAsync('format')
 
-" Add `:Fold` command to fold current buffer.
-command! -nargs=? Fold :call     CocAction('fold', <f-args>)
-
 let g:coc_global_extensions = ['coc-prettier', 'coc-tsserver', 'coc-json', 'coc-eslint']
 
