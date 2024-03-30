@@ -5,8 +5,6 @@ let g:dot_config_path = expand('<sfile>:h:h')
 " source basic file of vim config
 exe 'source' (g:vim_config_path . '/core')
 
-"" local config for override
-call SourceIfExists("~/.config/nvim/local.vim")
 
 set inccommand=split
 
@@ -26,8 +24,8 @@ lua require('plugins')
 " 设置主题样式
 set t_Co=256   " This is may or may not needed.
 
-" set background=dark
-set background=light
+set background=dark
+" set background=light
 set termguicolors
 " colorscheme PaperColor
 
@@ -40,3 +38,6 @@ colorscheme catppuccin-macchiato " catppuccin-latte, catppuccin-frappe, catppucc
 let g:fugitive_summary_format = "%s %cr"
 
 au TextYankPost * silent! lua vim.highlight.on_yank {higroup="IncSearch", timeout=150}
+
+"" local config for override
+call SourceIfExists("~/.config/nvim/local.vim")
