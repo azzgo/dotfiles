@@ -4,6 +4,7 @@ return {
   check_for_updates = false,
   color_scheme = "Catppuccin Macchiato",
   -- color_scheme = 'rose-pine-dawn',
+  enable_wayland = false,
   colors = {
     selection_bg = '#b4b4b4',
   },
