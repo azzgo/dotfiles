@@ -1,4 +1,3 @@
-(use-package markdown-mode)
 (use-package gptel
 :config (progn
  (setq-default
