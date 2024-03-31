@@ -36,5 +36,11 @@
 
 (use-package typescript-mode)
 
+(use-package markdown-mode
+  :config (progn
+    (setq markdown-fontify-code-blocks-natively t)
+  )
+)
+
 ;; export 
 (provide 'init-packages)
