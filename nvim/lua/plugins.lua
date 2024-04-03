@@ -37,7 +37,7 @@ return require("lazy").setup({
   --  origin vim plugin use 'tpope/vim-surround'
   "tpope/vim-surround",
   "tpope/vim-repeat",
-  -- git cmmand support
+  -- git command support
   {
     "tpope/vim-fugitive",
     config = function()
