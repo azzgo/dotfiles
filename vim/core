@@ -121,12 +121,6 @@ nnoremap <A-M> zA
 " mkview & loadview
 nnoremap <f9> :mkview<CR>
 nnoremap <f10> :loadview<CR>
-" .vimrc quick kemap source and edit
-nnoremap <leader>ve :e $MYVIMRC<CR>
-nnoremap <leader>vs :source $MYVIMRC<CR>
-
-" open with current buffer workdir
-nnoremap <expr><leader>ew ":e ".expand('%:h')
 
 "============ netrw setting ==============
 
