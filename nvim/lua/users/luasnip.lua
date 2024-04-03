@@ -26,17 +26,17 @@ vim.keymap.set({ "i", "s" }, "<C-j>", function() ls.jump(1) end, { silent = true
 
 
 --- snippets
-local jsLogSnipet = s("log", {
+local jsLogSnippet = s("log", {
   t("console.log("), i(1, "message"), t(");")
 })
-local jsLetPrefixSnipet = postfix('.let', {
+local jsLetPrefixSnippet = postfix('.let', {
   t('let '),
   i(1, 'variable'),
   f(function(_, parent)
     return " = " .. parent.snippet.env.POSTFIX_MATCH .. ";"
   end, {}),
 })
-local jsConstPrefixSnipet = postfix('.const', {
+local jsConstPrefixSnippet = postfix('.const', {
   t('const '),
   i(1, 'variable'),
   f(function(_, parent)
@@ -45,27 +45,27 @@ local jsConstPrefixSnipet = postfix('.const', {
 })
 
 ls.add_snippets("typescript", {
-  jsLogSnipet,
-  jsLetPrefixSnipet,
-  jsConstPrefixSnipet,
+  jsLogSnippet,
+  jsLetPrefixSnippet,
+  jsConstPrefixSnippet,
 })
 
 ls.add_snippets("javascript", {
-  jsLogSnipet,
-  jsLetPrefixSnipet,
-  jsConstPrefixSnipet,
+  jsLogSnippet,
+  jsLetPrefixSnippet,
+  jsConstPrefixSnippet,
 })
 
 ls.add_snippets("javascriptreact", {
-  jsLogSnipet,
-  jsLetPrefixSnipet,
-  jsConstPrefixSnipet,
+  jsLogSnippet,
+  jsLetPrefixSnippet,
+  jsConstPrefixSnippet,
 })
 
 ls.add_snippets("typescriptreact", {
-  jsLogSnipet,
-  jsLetPrefixSnipet,
-  jsConstPrefixSnipet,
+  jsLogSnippet,
+  jsLetPrefixSnippet,
+  jsConstPrefixSnippet,
 })
 
 local formatString4GitMessage = [[{1}({2}): {3}
