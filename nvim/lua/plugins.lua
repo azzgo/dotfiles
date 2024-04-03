@@ -210,6 +210,7 @@ return require("lazy").setup({
     config = function()
       vim.cmd [[
       exe 'source' (g:vim_config_path . '/after/plugin/fzf-tasks.vim')
+      exe 'source' (g:vim_config_path . '/after/plugin/fugitive-run.vim')
       ]]
     end
   },
