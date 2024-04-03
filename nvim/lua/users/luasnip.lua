@@ -70,9 +70,9 @@ ls.add_snippets("typescriptreact", {
 
 local formatString4GitMessage = [[{1}({2}): {3}
 
-{4}]]
+]]
 ls.add_snippets('gitcommit', {
   s("msg", fmt(formatString4GitMessage, {
-      i(1, "feat"), i(2, "card_no"), i(3, "messages"), i(4, 'body')
-    }))
+    i(1, "feat"), i(2, "card_no"), i(3, "messages")
+  }))
 })
