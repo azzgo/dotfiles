@@ -106,7 +106,7 @@ return require("lazy").setup({
       vim.cmd.LeaderfInstallCExtension()
     end,
     cond = function()
-     return vim.fn.has('python3') == 1;
+      return vim.fn.has('python3') == 1;
     end,
     dependencies = { 'Yggdroot/LeaderF-marks' },
     config = function()
@@ -186,10 +186,32 @@ return require("lazy").setup({
     end,
   },
   -- vim-rec
-  { 'zaid/vim-rec',         init = function() vim.g.recutils_no_folding = 1 end },
+  { 'zaid/vim-rec',      init = function() vim.g.recutils_no_folding = 1 end },
   --- weapp
   { 'chemzqm/wxapp.vim' },
   --- marks enhance
-  { 'chentoast/marks.nvim', config = function() require('marks').setup() end },
+  {
+    'chentoast/marks.nvim',
+    event = 'VeryLazy',
+    config = function()
+      require('marks')
+          .setup()
+    end
+  },
+  -- tasks
+  {
+    'skywind3000/asynctasks.vim',
+    dependencies = { 'skywind3000/asyncrun.vim' },
+    event = 'VeryLazy',
+    init = function()
+      vim.g.asyncrun_open = 6
+      vim.g.asyncrun_rootmarks = { '.git', '.svn', '.root', '.project', 'package.json' }
+    end,
+    config = function()
+      vim.cmd [[
+      exe 'source' (g:vim_config_path . '/after/plugin/fzf-tasks.vim')
+      ]]
+    end
+  },
   -- ###### lua plugin end ##########
 })
