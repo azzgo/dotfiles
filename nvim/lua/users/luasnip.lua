@@ -44,6 +44,15 @@ local jsConstPrefixSnippet = postfix('.const', {
   end, {}),
 })
 
+local jsxReactSnippet = postfix('.rsx', {
+  t('function '),
+  f(function(_, parent)
+    return "" .. parent.snippet.env.POSTFIX_MATCH .. "() {"
+  end, {}),
+  t('return <></>;'),
+  t('}'),
+})
+
 ls.add_snippets("typescript", {
   jsLogSnippet,
   jsLetPrefixSnippet,
@@ -60,12 +69,14 @@ ls.add_snippets("javascriptreact", {
   jsLogSnippet,
   jsLetPrefixSnippet,
   jsConstPrefixSnippet,
+  jsxReactSnippet,
 })
 
 ls.add_snippets("typescriptreact", {
   jsLogSnippet,
   jsLetPrefixSnippet,
   jsConstPrefixSnippet,
+  jsxReactSnippet,
 })
 
 local formatString4GitMessage = [[{1}({2}): {3}
