@@ -1,4 +1,7 @@
 function! s:fzf_sink(what)
+  if a:what == 'last-task'
+		exec "AsyncTaskLast"
+  endif
 	let p1 = stridx(a:what, '<')
 	if p1 >= 0
 		let name = strpart(a:what, 0, p1)
@@ -16,6 +19,7 @@ function! s:fzf_task()
 		let name = row[0]
 		let source += [name . '  ' . row[1] . '  : ' . row[2]]
 	endfor
+  let source += ['last-task']
 	let opts = { 'source': source, 'sink': function('s:fzf_sink'),
 				\ 'options': '+m --nth 1 --inline-info --tac' }
 	if exists('g:fzf_layout')
