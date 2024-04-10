@@ -95,6 +95,15 @@ return require("lazy").setup({
 
   -- tabnine
   -- { 'codota/tabnine-nvim', build = "./dl_binaries.sh", config = function() require('users.tabnine') end },
+  {
+    'Exafunction/codeium.vim',
+    init = function()
+      vim.g.codeium_disable_bindings = 1
+    end,
+    config = function ()
+      vim.keymap.set('i', '<C-Space>', function () return vim.fn['codeium#Accept']() end, { expr = true, silent = true })
+    end
+  },
 
   -- syntax
   { "leafgarland/typescript-vim" },
