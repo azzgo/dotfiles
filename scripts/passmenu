@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
 
-if [ $1 == "otp" ]; then
+# if in wayland tool is tofi
+if [[ -n $WAYLAND_DISPLAY ]]; then
+  tool=tofi
+# if in x11 tool is rofi -dmenu
+elif [[ -n $XDG_SESSION_TYPE ]]; then
+  tool="rofi -dmenu"
+fi
+
+if [[ $1 == "otp" ]]; then
   pass_cmd=otp
   prompt=Otp
-elif [ $1 == "password" ]; then
+elif [[ $1 == "password" ]]; then
   pass_cmd=show
   prompt=Password
 else
@@ -25,7 +33,7 @@ password_files=( "$prefix"/**/*.gpg )
 password_files=( "${password_files[@]#"$prefix"/}" )
 password_files=( "${password_files[@]%.gpg}" )
 
-password=$(printf '%s\n' "${password_files[@]}" | tofi)
+password=$(printf '%s\n' "${password_files[@]}" | $tool)
 
 
 [[ -n $password ]] || exit
