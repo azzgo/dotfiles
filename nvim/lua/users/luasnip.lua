@@ -80,8 +80,8 @@ ls.add_snippets("typescriptreact", {
 })
 
 ls.add_snippets('gitcommit', {
-  s("msg", fmt("{scope}[{type}] {description}", {
-    scope = i(1, '[scope]'),
+  s("msg", fmt("[{scope}][{type}] {description}", {
+    scope = i(1, 'scope'),
     type = i(2, 'feat'),
     description = i(3),
   }))
