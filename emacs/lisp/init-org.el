@@ -110,10 +110,17 @@
 
 ;; default org capture
 (setq org-default-notes-file (concat org-directory "/notes.org"))
+
+(defun my/org-file-by-date ()
+  "Create an Org file with current time as name."
+  (find-file (concat org-directory (format-time-string "/meeting-minutes/%Y-%m-%d--%H-%M-%S.org"))))
+
 (setq org-capture-templates
       '(("t" "Todo" entry (file+headline "gtd.org" "Tasks")
          "* TODO %?\n  %i\n")
         ("c" "Capture" entry (file+headline "capture.org" "Short Idea")
-         "* %U\n%?")))
+         "* %U\n%?")
+	("m" "Meeting Minutes" plain (function my/org-file-by-date)
+	 "")))
 
 (provide 'init-org)
