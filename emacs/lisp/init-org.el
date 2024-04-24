@@ -121,6 +121,8 @@
         ("c" "Capture" entry (file+headline "capture.org" "Short Idea")
          "* %U\n%?")
 	("m" "Meeting Minutes" plain (function my/org-file-by-date)
-	 "")))
+	 "")
+	("q" "Quick Note" plain (file "quick-note.org") "")
+	))
 
 (provide 'init-org)
