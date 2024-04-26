@@ -16,6 +16,7 @@
     "typescriptreact": ["javascriptreact"]
   },
   "suggest.insertMode": "insert",
+  "Lua.diagnostics": { "globals": ["hs", "spoon"] },
   "languageserver": {
     "nix": {
       "command": "nil",
