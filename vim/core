@@ -66,6 +66,7 @@ nnoremap <leader>q :q<CR>
 xnoremap <leader>y "+y
 xnoremap <leader>p "+p
 nnoremap <leader>p "+p
+nnoremap <leader>y "+yiw
 
 " netrw
 nnoremap <leader>nn :e %:p:h<CR>
