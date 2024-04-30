@@ -29,6 +29,9 @@ vim.keymap.set({ "i", "s" }, "<C-j>", function() ls.jump(1) end, { silent = true
 local jsLogSnippet = s("log", {
   t("console.log("), i(1, "message"), t(");")
 })
+local jsLogDebugSnippet = s("logd", {
+  t("console.log(\"[DEBUG] \", "), i(1, "message"), t(");")
+})
 local jsLetPrefixSnippet = postfix('.let', {
   t('let '),
   i(1, 'variable'),
@@ -55,6 +58,7 @@ export default {1};
 
 ls.add_snippets("typescript", {
   jsLogSnippet,
+  jsLogDebugSnippet,
   jsLetPrefixSnippet,
   jsConstPrefixSnippet,
 })
