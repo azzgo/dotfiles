@@ -65,12 +65,14 @@ ls.add_snippets("typescript", {
 
 ls.add_snippets("javascript", {
   jsLogSnippet,
+  jsLogDebugSnippet,
   jsLetPrefixSnippet,
   jsConstPrefixSnippet,
 })
 
 ls.add_snippets("javascriptreact", {
   jsLogSnippet,
+  jsLogDebugSnippet,
   jsLetPrefixSnippet,
   jsConstPrefixSnippet,
   jsxReactSnippet,
@@ -78,6 +80,7 @@ ls.add_snippets("javascriptreact", {
 
 ls.add_snippets("typescriptreact", {
   jsLogSnippet,
+  jsLogDebugSnippet,
   jsLetPrefixSnippet,
   jsConstPrefixSnippet,
   jsxReactSnippet,
