@@ -60,8 +60,9 @@ set nowritebackup
 set noswapfile
 
 " quick save and quit
-nnoremap <leader>w :w<CR>
-nnoremap <leader>q :q<CR>
+nnoremap <A-w> :w<CR>
+nnoremap <A-q> :q<CR>
+nnoremap <leader>wq :wq<CR>
 " quick copy from primiary clipboard
 xnoremap <leader>y "+y
 xnoremap <leader>p "+p
