@@ -117,6 +117,10 @@ inoremap <A-k> <esc>:m .-2<cr>==gi
 vnoremap <A-j> :m '>+1<cr>gv
 vnoremap <A-k> :m '<-2<cr>gv
 
+"better intent
+vnoremap < <gv
+vnoremap > >gv
+
 " quick map for fold
 nnoremap <A-m> za
 nnoremap <A-M> zA
@@ -133,6 +137,9 @@ if executable("rg")
   set grepprg=rg\ --vimgrep\ --no-heading
   set grepformat=%f:%l:%c:%m,%f:%l:%m
 endif
+
+" spell correct
+iabbrev cosnt const
 
 function! SourceIfExists(file)
   if filereadable(expand(a:file))
