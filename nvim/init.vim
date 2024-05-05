@@ -41,3 +41,6 @@ au TextYankPost * silent! lua vim.highlight.on_yank {higroup="IncSearch", timeou
 
 "" local config for override
 call SourceIfExists("~/.config/nvim/local.vim")
+
+"" disable nvim intro
+set shortmess+=I
