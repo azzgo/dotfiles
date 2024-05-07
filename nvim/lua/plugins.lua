@@ -100,6 +100,9 @@ return require("lazy").setup({
     init = function()
       vim.g.codeium_disable_bindings = 1
     end,
+    cond = function()
+      return vim.env.TERMUX_VERSION == nil
+    end,
     config = function ()
       vim.keymap.set('i', '<C-Space>', function () return vim.fn['codeium#Accept']() end, { expr = true, silent = true })
     end
