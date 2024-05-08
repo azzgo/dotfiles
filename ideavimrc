@@ -13,12 +13,14 @@ set relativenumber
 set nowrap
 
 " quick save and quit
-nnoremap <leader>w :w<CR>
-nnoremap <leader>q :q<CR>
+nnoremap <A-w> :w<CR>
+nnoremap <A-q> :q<CR>
+nnoremap <leader>wq :wq<CR>
 " quick copy from primiary clipboard
 xnoremap <leader>y "+y
 xnoremap <leader>p "+p
 nnoremap <leader>p "+p
+nnoremap <leader>y "+yiw
 
 " map Q to q for ex mode is not usable for me
 map Q q
