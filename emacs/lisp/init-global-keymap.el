@@ -48,5 +48,6 @@
 (global-set-key (kbd "C-c s {") 'insert-curly)
 (global-set-key (kbd "C-c s (") 'insert-parentheses)
 (global-set-key (kbd "C-c C-.") 'insert-pure-date)
+(global-set-key (kbd "M-o") 'other-window)
 
 (provide 'init-global-keymap)
