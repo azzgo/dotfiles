@@ -26,6 +26,7 @@
   :stream t
   :key #'gptel-api-key
   :models '("openai/gpt-3.5-turbo"
+	    "openai/gpt-4o"
             "mistralai/mixtral-8x7b-instruct"
             "meta-llama/codellama-34b-instruct"
             "codellama/codellama-70b-instruct"
