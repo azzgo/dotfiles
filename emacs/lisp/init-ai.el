@@ -1,13 +1,13 @@
 (use-package gptel
 :config (progn
  (setq-default
-  gptel-model "gpt-3.5-turbo"
+  gptel-model "gpt-4o"
   gptel-backend (gptel-make-openai
     "opeai-sb"
     :host "api.openai-sb.com"
     :stream t
     :key #'gptel-api-key
-    :models '("gpt-3.5-turbo" "gpt-4")
+    :models '("gpt-3.5-turbo" "gpt-4" "gpt-4o")
   ))
 ))
 
