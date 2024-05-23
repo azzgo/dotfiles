@@ -103,14 +103,25 @@ return require("lazy").setup({
     cond = function()
       return vim.env.TERMUX_VERSION == nil
     end,
-    config = function ()
-      vim.keymap.set('i', '<C-Space>', function () return vim.fn['codeium#Accept']() end, { expr = true, silent = true })
+    config = function()
+      vim.keymap.set('i', '<C-Space>', function() return vim.fn['codeium#Accept']() end, { expr = true, silent = true })
     end
   },
 
   -- syntax
-  { "leafgarland/typescript-vim" },
-  { "pangloss/vim-javascript" },
+  -- { "leafgarland/typescript-vim" },
+  -- { "pangloss/vim-javascript" },
+  {
+    'nvim-treesitter/nvim-treesitter',
+    config = function()
+      require 'nvim-treesitter.configs'.setup {
+        highlight = { enable = true },
+        incremental_selection = { enable = false },
+        ensure_installed = { 'javascript', 'typescript' },
+        indent = { enable = false },
+      }
+    end
+  },
   -- fuzzy
   {
     "Yggdroot/LeaderF",
@@ -163,7 +174,7 @@ return require("lazy").setup({
   },
 
   --- tabby
-  { "nanozuki/tabby.nvim",  config = function() require('users.tabby') end },
+  { "nanozuki/tabby.nvim", config = function() require('users.tabby') end },
 
   -- undotree
   {
@@ -198,7 +209,7 @@ return require("lazy").setup({
     end,
   },
   -- vim-rec
-  { 'zaid/vim-rec',      init = function() vim.g.recutils_no_folding = 1 end },
+  { 'zaid/vim-rec',     init = function() vim.g.recutils_no_folding = 1 end },
   --- weapp
   { 'chemzqm/wxapp.vim' },
   --- marks enhance
