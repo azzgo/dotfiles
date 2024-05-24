@@ -149,9 +149,6 @@ return require("lazy").setup({
   },
   {
     'junegunn/fzf',
-    build = function()
-      vim.fn['fzf#install']()
-    end,
     init = function()
       vim.cmd [[
         function! _L_FZF_WRAPPER_RUN_(opts) abort
