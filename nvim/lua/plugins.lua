@@ -234,5 +234,32 @@ return require("lazy").setup({
       ]]
     end
   },
+  -- intent
+  {
+    'shellRaining/hlchunk.nvim',
+    event = { "UIEnter" },
+    config = function()
+      require("hlchunk").setup(
+        {
+          chunk = {
+            enable = true,
+            use_treesitter = true,
+          },
+
+          indent = {
+            enable = true,
+            use_treesitter = false,
+          },
+          line_num = {
+            enable = true,
+            use_treesitter = false,
+          },
+          blank = {
+            enable = true,
+          },
+        }
+      )
+    end
+  },
   -- ###### lua plugin end ##########
 })
