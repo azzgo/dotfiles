@@ -245,7 +245,6 @@ return require("lazy").setup({
             enable = true,
             use_treesitter = true,
           },
-
           indent = {
             enable = true,
             use_treesitter = false,
@@ -255,7 +254,7 @@ return require("lazy").setup({
             use_treesitter = false,
           },
           blank = {
-            enable = true,
+            enable = false,
           },
         }
       )
