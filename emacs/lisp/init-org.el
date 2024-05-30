@@ -62,6 +62,7 @@
   :config
   (progn
     (setq org-roam-directory (file-truename (concat org-directory "/org-roam")))
+    (setq org-roam-db-location (file-truename (concat org-directory "/org-roam/org-roam.db")))
     (org-roam-db-autosync-mode)
     (require 'org-roam-export)
   )
