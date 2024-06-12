@@ -13,13 +13,23 @@ vim.opt.rtp:prepend(lazypath)
 
 return require("lazy").setup({
   --- quick move
+  -- {
+  --   "easymotion/vim-easymotion",
+  --   config = function()
+  --     vim.cmd [[
+  --     exe 'source' (g:vim_config_path . '/after/plugin/easymotion.vim')
+  --   ]]
+  --   end
+  -- },
   {
-    "easymotion/vim-easymotion",
-    config = function()
-      vim.cmd [[
-      exe 'source' (g:vim_config_path . '/after/plugin/easymotion.vim')
-    ]]
-    end
+    "folke/flash.nvim",
+    event = "VeryLazy",
+    opts = {},
+    -- stylua: ignore
+    keys = {
+      { "s", mode = { "n", "x", "o" }, function() require("flash").jump() end, desc = "Flash" },
+      { "S", mode = { "n", "x", "o" }, function() require("flash").treesitter() end, desc = "Flash Treesitter" },
+    },
   },
   -- matchup
   "andymass/vim-matchup",
