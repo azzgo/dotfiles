@@ -116,6 +116,10 @@
   "Create an Org file with current time as name."
   (find-file (concat org-directory (format-time-string "/meeting-minutes/%Y-%m-%d--%H-%M-%S.org"))))
 
+(defun my/ai-chat-file-by-date ()
+  "Create an Org file with current time as name."
+  (find-file (concat org-directory (format-time-string "/../ai-chats/%Y-%m-%d--%H-%M-%S.md"))))
+
 (setq org-capture-templates
       '(("t" "Todo" entry (file+headline "gtd.org" "Tasks")
          "* TODO %?\n  %i\n")
@@ -124,6 +128,7 @@
 	("m" "Meeting Minutes" plain (function my/org-file-by-date)
 	 "")
 	("q" "Quick Note" plain (file "quick-note.org") "")
-	))
+        ("a" "AI Chat Note" plain (function my/ai-chat-file-by-date) "")
+       ))
 
 (provide 'init-org)
