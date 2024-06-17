@@ -33,6 +33,7 @@
             "google/palm-2-codechat-bison-32k"
             "google/gemini-pro"))
 
+(global-set-key (kbd "C-c g RET") 'gptel-send)
 
 
 (provide 'init-ai)
