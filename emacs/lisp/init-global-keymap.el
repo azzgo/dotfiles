@@ -42,11 +42,6 @@
   (interactive "*P")
   (insert-pair arg ?\{ ?\}))
 
-(global-set-key (kbd "C-c s '") 'insert-quotations)
-(global-set-key (kbd "C-c s \"") 'insert-quotes)
-(global-set-key (kbd "C-c s [") 'insert-bracket)
-(global-set-key (kbd "C-c s {") 'insert-curly)
-(global-set-key (kbd "C-c s (") 'insert-parentheses)
 (global-set-key (kbd "C-c C-.") 'insert-pure-date)
 (global-set-key (kbd "M-o") 'other-window)
 
