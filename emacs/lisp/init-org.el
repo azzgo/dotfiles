@@ -118,7 +118,7 @@
 
 (defun my/ai-chat-file-by-date ()
   "Create an Org file with current time as name."
-  (find-file (concat org-directory (format-time-string "/../ai-chats/%Y-%m-%d--%H-%M-%S.md"))))
+  (find-file (concat org-directory (format-time-string "/ai-chats/%Y-%m-%d--%H-%M-%S.md"))))
 
 (setq org-capture-templates
       '(("t" "Todo" entry (file+headline "gtd.org" "Tasks")
