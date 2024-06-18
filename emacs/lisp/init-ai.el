@@ -29,11 +29,21 @@
 	    "openai/gpt-4o"
             "mistralai/mixtral-8x7b-instruct"
             "meta-llama/codellama-34b-instruct"
+
             "codellama/codellama-70b-instruct"
             "google/palm-2-codechat-bison-32k"
             "google/gemini-pro"))
 
 (global-set-key (kbd "C-c g RET") 'gptel-send)
+
+
+(let ((prompt-directory (concat org-directory "/prompts")))
+  (dolist (file (directory-files prompt-directory t "^[^.]"))
+    (let ((key (intern (file-name-base file)))
+          (prompt (with-temp-buffer
+                    (insert-file-contents file)
+                    (buffer-string))))
+      (add-to-list 'gptel-directives (cons key prompt)))))
 
 
 (provide 'init-ai)
