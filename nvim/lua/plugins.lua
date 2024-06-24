@@ -96,6 +96,7 @@ return require("lazy").setup({
   {
     "neoclide/coc.nvim",
     branch = "release",
+    event = "VeryLazy",
     init = function()
       vim.cmd [[
         let g:coc_config_home=g:dot_config_path . '/coc'
