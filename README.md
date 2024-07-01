@@ -31,7 +31,7 @@ git clone https://github.com/azzgo/dotfiles
 
 # Neovim Setup
 mkdir -p ~/.config/nvim
-echo "source $PWD/dotfiles/vim/vimrc" >> ~/.config/nvim/init.vim
+echo "source $PWD/dotfiles/nvim/init.vim" >> ~/.config/nvim/init.vim
 nvim -c ":Lazy install"
 
 
