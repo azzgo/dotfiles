@@ -48,7 +48,12 @@ set nowrap
 set showcmd
 
 " always show statusline
-set laststatus=2
+if has('nvim')
+  set laststatus=3
+else 
+  set laststatus=2
+endif
+
 
 " disable vi mode
 set nocompatible
