@@ -13,7 +13,7 @@ let g:Lf_PreviewResult = {
 
 function! s:GREP_STRING()
   let s:search = input("Grep> ")
-  execute 'Leaderf rg --input "' . s:search . '"'
+  execute 'Leaderf rg --nameOnly --input "' . s:search . '"'
 endfunction
 
 function! s:FIND_FILES()
