@@ -16,9 +16,9 @@ bindkey -e
 bindkey '^x^e' edit-command-line
 
 # # LS COLOR
- export CLICOLOR=1
- export LS_COLORS='no=00;37:fi=00:di=00;33:ln=04;36:pi=40;33:so=01;35:bd=40;33;01:'
- zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+export CLICOLOR=1
+export LS_COLORS='no=00;37:fi=00:di=00;33:ln=04;36:pi=40;33:so=01;35:bd=40;33;01:'
+zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
 
 SHELL_ROOT=$(dirname $0)
 
