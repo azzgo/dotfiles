@@ -22,6 +22,10 @@ elif [[ -x  $(command -v vim) ]];then
   alias v='vim'
 fi
 
+if [[ -x $(command -v tmux) ]]; then
+  alias tt='tmux'
+fi
+
 if [[ -x  $(command -v vim) ]];then
   alias vi='vim'
 fi
