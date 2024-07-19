@@ -12,15 +12,6 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 return require("lazy").setup({
-  --- quick move
-  -- {
-  --   "easymotion/vim-easymotion",
-  --   config = function()
-  --     vim.cmd [[
-  --     exe 'source' (g:vim_config_path . '/after/plugin/easymotion.vim')
-  --   ]]
-  --   end
-  -- },
   {
     "folke/flash.nvim",
     event = "VeryLazy",
@@ -109,21 +100,6 @@ return require("lazy").setup({
     end
   },
   { 'antoinemadec/coc-fzf' },
-
-  -- tabnine
-  -- { 'codota/tabnine-nvim', build = "./dl_binaries.sh", config = function() require('users.tabnine') end },
-  -- {
-  --   'Exafunction/codeium.vim',
-  --   init = function()
-  --     vim.g.codeium_disable_bindings = 1
-  --   end,
-  --   cond = function()
-  --     return vim.env.TERMUX_VERSION == nil
-  --   end,
-  --   config = function()
-  --     vim.keymap.set('i', '<C-Space>', function() return vim.fn['codeium#Accept']() end, { expr = true, silent = true })
-  --   end
-  -- },
 
   -- syntax
   -- { "leafgarland/typescript-vim" },
@@ -275,6 +251,12 @@ return require("lazy").setup({
           },
         }
       )
+    end
+  },
+  {
+    'voldikss/vim-floaterm',
+    config = function ()
+      vim.keymap.set('n', '<A-t>', vim.cmd.FloatermToggle, {})
     end
   },
   -- ###### lua plugin end ##########
