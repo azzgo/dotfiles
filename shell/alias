@@ -14,6 +14,12 @@ alias grb="git rebase"
 alias grbc="git rebase --continue"
 alias grba="git rebase --abort"
 alias gprp='git pull --rebase && git push'
+
+function gcd() {
+  if [[ -x  $(command -v fzf) ]];then
+    cd $(git worktree list | fzf | awk '{print $1}')
+  fi
+}
 alias ll='ls -alF'
 
 if [[ -x $(command -v nvim) ]];then
