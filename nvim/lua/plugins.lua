@@ -24,8 +24,8 @@ return require("lazy").setup({
     },
     -- stylua: ignore
     keys = {
-      { "s", mode = { "n", "x" }, function() require("flash").jump() end, desc = "Flash" },
-      { "S", mode = { "n" }, function() require("flash").treesitter() end, desc = "Flash Treesitter" },
+      { "s", mode = { "n", "x" }, function() require("flash").jump() end,       desc = "Flash" },
+      { "S", mode = { "n" },      function() require("flash").treesitter() end, desc = "Flash Treesitter" },
     },
   },
   -- matchup
@@ -108,9 +108,9 @@ return require("lazy").setup({
     'nvim-treesitter/nvim-treesitter',
     config = function()
       require 'nvim-treesitter.configs'.setup {
-        highlight = { enable = true },
+        highlight = { enable = true, },
         incremental_selection = { enable = false },
-        ensure_installed = { 'javascript', 'typescript' },
+        ensure_installed = { 'c', 'lua', 'javascript', 'typescript', 'vim', 'vimdoc', 'query' },
         indent = { enable = false },
       }
     end
@@ -255,7 +255,7 @@ return require("lazy").setup({
   },
   {
     'voldikss/vim-floaterm',
-    config = function ()
+    config = function()
       vim.keymap.set('n', '<A-t>', vim.cmd.FloatermToggle, {})
     end
   },
