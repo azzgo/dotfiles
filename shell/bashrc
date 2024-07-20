@@ -7,13 +7,17 @@ export PATH=$PATH:$HOME/.local/bin
 
 source $SHELL_ROOT/alias
 
-function yac() {
-	tmp="$(mktemp -t "yazi-cwd.XXXXX")"
-	yazi --cwd-file="$tmp"
-	if cwd="$(cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
-		cd -- "$cwd"
-	fi
-	rm -f -- "$tmp"
+function lfc() {
+  if [[ -x $(command -v yazi) ]];then
+    tmp="$(mktemp -t "yazi-cwd.XXXXX")"
+    yazi --cwd-file="$tmp"
+    if cwd="$(cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+      cd -- "$cwd"
+    fi
+    rm -f -- "$tmp"
+  elif [[ -x  $(command -v lf) ]];then
+    cd "$(command lf -print-last-dir "$@")"
+  fi
 }
 
 # fzf config
