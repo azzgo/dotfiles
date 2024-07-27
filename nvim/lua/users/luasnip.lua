@@ -63,6 +63,11 @@ ls.add_snippets("typescript", {
   jsConstPrefixSnippet,
 })
 
+ls.add_snippets("vue", {
+  jsLogSnippet,
+  jsLogDebugSnippet,
+})
+
 ls.add_snippets("javascript", {
   jsLogSnippet,
   jsLogDebugSnippet,
