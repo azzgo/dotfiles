@@ -10,3 +10,7 @@ comment.setup({
     extro = false,
   }
 })
+
+local ft = require('Comment.ft')
+
+ft.set('vue', {'//%s', '/*%s*/'});
