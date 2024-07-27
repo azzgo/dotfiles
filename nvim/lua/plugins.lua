@@ -66,12 +66,21 @@ return require("lazy").setup({
       require('users.comment')
     end
   },
-  "kyazdani42/nvim-web-devicons",
+  { "nvim-tree/nvim-web-devicons", config = function ()
+   require'nvim-web-devicons'.setup {
+     override_by_extension = {
+       ['toml'] = {
+         icon = "",
+         color = "#81e043",
+         name = "Toml"
+       }
+     }
+   }
+  end},
 
   -- statusline
   {
     "nvim-lualine/lualine.nvim",
-    dependencies = { "kyazdani42/nvim-web-devicons" },
     config = function() require('users.lualine') end
   },
 
