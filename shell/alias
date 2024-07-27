@@ -43,3 +43,7 @@ fi
 if [[ -x $(command -v trash) ]];then
   alias rm="trash"
 fi
+
+if [[ -x $(command -v yazi) ]];then
+  alias lf="yazi"
+fi
