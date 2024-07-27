@@ -33,9 +33,7 @@ return require("lazy").setup({
 
   {
     "L3MON4D3/LuaSnip",
-    -- follow latest release.
     version = "v2.*", -- Replace <CurrentMajor> by the latest released major (first number of latest release)
-    -- install jsregexp (optional!).
     build = "make install_jsregexp",
     config = function()
       require('users.luasnip')
@@ -55,8 +53,8 @@ return require("lazy").setup({
   },
   -- theme
   { "catppuccin/nvim",      name = "catppuccin", lazy = true },
-  { "shaunsingh/nord.nvim", lazy = true },
-  { 'rose-pine/neovim',     name = 'rose-pine' },
+  -- { "shaunsingh/nord.nvim", lazy = true },
+  -- { 'rose-pine/neovim',     name = 'rose-pine' },
 
   -- ##########lua plugins start##############
 
