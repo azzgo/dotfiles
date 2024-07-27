@@ -75,6 +75,11 @@ return require("lazy").setup({
               icon = "",
               color = "#81e043",
               name = "Toml"
+            },
+            ['vue'] = {
+              icon = "﵂",
+              color = "#42B883",
+              name = "Vue"
             }
           }
         }
