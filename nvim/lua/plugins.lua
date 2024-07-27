@@ -130,9 +130,10 @@ return require("lazy").setup({
     -- fuzzy
     {
       "Yggdroot/LeaderF",
-      build = function()
-        vim.cmd.LeaderfInstallCExtension()
-      end,
+      -- conflic in cond, need do it manually now
+      -- build = function()
+      --   vim.cmd.LeaderfInstallCExtension()
+      -- end,
       cond = function()
         return vim.fn.has('python3') == 1;
       end,
