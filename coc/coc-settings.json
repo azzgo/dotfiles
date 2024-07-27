@@ -16,6 +16,8 @@
     "typescriptreact": ["javascriptreact"]
   },
   "suggest.insertMode": "insert",
+  "vetur.experimental.templateInterpolationService": false,
+  "vetur.ignoreProjectWarning": true,
   "Lua.diagnostics": { "globals": ["hs", "spoon"] },
   "languageserver": {
     "nix": {
