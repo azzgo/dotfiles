@@ -10,3 +10,5 @@ vim/sessions/
 vim/.netrwhist
 
 emacs/lisp/init-local.el
+
+.local/
