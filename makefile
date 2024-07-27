@@ -1,11 +1,15 @@
 pack:
-	tar --exclude='.github' --exclude='.git' --exclude='dotfiles.tar.gz' -czvf dotfiles.tar.gz ./
+	rm -rf temp_dotfiles
+	mkdir temp_dotfiles
+	rsync -av --exclude='nvim-linux64.tar.gz' --exclude='nvim-linux64' --exclude='temp_dotfiles' --exclude='.github' --exclude='.git' --exclude='dotfiles.tar.gz' . temp_dotfiles/
+	tar -czvf dotfiles.tar.gz -C temp_dotfiles .
 
 install-neovim:
 	# install neovim
 	mkdir -p ~/.config/nvim
 	echo "source $$PWD/nvim/init.vim" >> ~/.config/nvim/init.vim
 	nvim -c ":Lazy install" -c "qa"
+	nvim -c ":TSUpdateSync" -c "qa"
 
 install-vim:
 	ln -sf $$PWD/vim ~/.vim
