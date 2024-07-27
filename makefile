@@ -1,5 +1,5 @@
 pack:
-	tar --exclude='.git' --exclude='dotfiles.tar.gz' -czvf dotfiles.tar.gz ./
+	tar --exclude='.github' --exclude='.git' --exclude='dotfiles.tar.gz' -czvf dotfiles.tar.gz ./
 
 install-neovim:
 	# install neovim
