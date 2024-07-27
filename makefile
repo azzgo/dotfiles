@@ -5,12 +5,12 @@ install-neovim:
 	# install neovim
 	mkdir -p ~/.config/nvim
 	echo "source $$PWD/nvim/init.vim" >> ~/.config/nvim/init.vim
-	nvim -c ":Lazy install" +qa
+	nvim -c ":Lazy install" -c "qa"
 
 install-vim:
 	ln -sf $$PWD/vim ~/.vim
 	echo "source $$PWD/vim/vimrc" >> ~/.vimrc
-	vim -c ":PlugInstall" +qa
+	vim -c ":PlugInstall" -c "qa"
 
 install-ideavim:
 	ln -sf $$PWD/dotfils/ideavim ~/.ideavim
