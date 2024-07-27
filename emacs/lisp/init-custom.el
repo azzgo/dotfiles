@@ -26,6 +26,9 @@
 ;; follow link not ask
 (setq vc-follow-symlinks t)
 
+;; remove scratch messages
+(setq initial-scratch-message "")
+
 (setq custom-file (concat user-emacs-directory "custom.el"))
 
 (provide 'init-custom)
