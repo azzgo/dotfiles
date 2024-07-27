@@ -12,3 +12,4 @@ vim/.netrwhist
 emacs/lisp/init-local.el
 
 .local/
+*.tar.gz
