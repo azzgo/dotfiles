@@ -6,6 +6,8 @@ exe 'source' (g:vim_config_path . '/core')
 exe 'source' (g:vim_config_path . '/plugin.vim')
 "============ Some vim 9 feature ==============
 set ambiwidth=double
+set termguicolors
+colorscheme catppuccin_macchiato
 
 "" local config for override
 call SourceIfExists("~/.vim/local.vim")
