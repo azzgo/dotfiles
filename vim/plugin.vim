@@ -1,5 +1,5 @@
 
-call plug#begin()
+call plug#begin(g:dot_config_path .. '/.local/plugged')
 " quick move
 Plug 'easymotion/vim-easymotion'
 
@@ -16,7 +16,6 @@ Plug 'Yggdroot/LeaderF-marks'
 Plug 'linjiX/LeaderF-git'
 
 " theme
-Plug 'arcticicestudio/nord-vim'
 Plug 'itchyny/lightline.vim'
 
 " dirvish
