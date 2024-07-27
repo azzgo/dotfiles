@@ -11,6 +11,11 @@ let g:Lf_PreviewResult = {
         \ 'Gtags': 1
         \}
 
+let g:Lf_WildIgnore = {
+      \ 'dir': ['.svn','.git','.hg', 'node_modules'],
+      \ 'file': ['*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.py[co]', '*.DS_store']
+      \}
+
 function! s:GREP_STRING()
   let s:search = input("Grep> ")
   execute 'Leaderf rg --nameOnly --input "' . s:search . '"'
