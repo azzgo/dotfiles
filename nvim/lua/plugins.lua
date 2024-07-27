@@ -1,4 +1,4 @@
-local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+local lazypath = vim.g.dot_config_path .. "/.local/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
   vim.fn.system({
     "git",
@@ -12,259 +12,265 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 return require("lazy").setup({
-  {
-    "folke/flash.nvim",
-    event = "VeryLazy",
-    opts = {
-      modes = {
-        char = {
-          enabled = false
+  root = vim.g.dot_config_path .. "/.local/lazy",
+  spec = {
+    {
+      "folke/flash.nvim",
+      event = "VeryLazy",
+      opts = {
+        modes = {
+          char = {
+            enabled = false
+          }
         }
-      }
-    },
-    -- stylua: ignore
-    keys = {
-      { "s", mode = { "n", "x" }, function() require("flash").jump() end,       desc = "Flash" },
-      { "S", mode = { "n" },      function() require("flash").treesitter() end, desc = "Flash Treesitter" },
-    },
-  },
-  -- matchup
-  "andymass/vim-matchup",
-
-  {
-    "L3MON4D3/LuaSnip",
-    version = "v2.*", -- Replace <CurrentMajor> by the latest released major (first number of latest release)
-    build = "make install_jsregexp",
-    config = function()
-      require('users.luasnip')
-    end
-  },
-  --  origin vim plugin use 'tpope/vim-surround'
-  "tpope/vim-surround",
-  "tpope/vim-repeat",
-  -- git command support
-  {
-    "tpope/vim-fugitive",
-    config = function()
-      vim.cmd [[
-      exe 'source' (g:vim_config_path . '/after/plugin/fugitive.vim')
-    ]]
-    end
-  },
-  -- theme
-  { "catppuccin/nvim",      name = "catppuccin", lazy = true },
-  -- { "shaunsingh/nord.nvim", lazy = true },
-  -- { 'rose-pine/neovim',     name = 'rose-pine' },
-
-  -- ##########lua plugins start##############
-
-  {
-    "numToStr/Comment.nvim",
-    config = function()
-      require('users.comment')
-    end
-  },
-  { "nvim-tree/nvim-web-devicons", config = function ()
-   require'nvim-web-devicons'.setup {
-     override_by_extension = {
-       ['toml'] = {
-         icon = "",
-         color = "#81e043",
-         name = "Toml"
-       }
-     }
-   }
-  end},
-
-  -- statusline
-  {
-    "nvim-lualine/lualine.nvim",
-    config = function() require('users.lualine') end
-  },
-
-  {
-    'stevearc/oil.nvim',
-    opts = {},
-    config = function()
-      require("oil").setup()
-      vim.keymap.set('n', '<leader>nn', vim.cmd.Oil, {})
-    end
-  },
-  --  lsp config
-  {
-    "neoclide/coc.nvim",
-    branch = "release",
-    event = "VeryLazy",
-    init = function()
-      vim.cmd [[
-        let g:coc_config_home=g:dot_config_path . '/coc'
-      ]]
-    end,
-    config = function()
-      vim.cmd [[
-        exe 'source' (g:dot_config_path . '/coc/coc.vim')
-     ]]
-    end
-  },
-  { 'antoinemadec/coc-fzf' },
-
-  -- syntax
-  -- { "leafgarland/typescript-vim" },
-  -- { "pangloss/vim-javascript" },
-  {
-    'nvim-treesitter/nvim-treesitter',
-    config = function()
-      require 'nvim-treesitter.configs'.setup {
-        highlight = { enable = true, },
-        incremental_selection = { enable = false },
-        ensure_installed = { 'c', 'lua', 'javascript', 'typescript', 'vim', 'vimdoc', 'query' },
-        indent = { enable = false },
-      }
-    end
-  },
-  -- fuzzy
-  {
-    "Yggdroot/LeaderF",
-    build = function()
-      vim.cmd.LeaderfInstallCExtension()
-    end,
-    cond = function()
-      return vim.fn.has('python3') == 1;
-    end,
-    dependencies = { 'Yggdroot/LeaderF-marks' },
-    config = function()
-      vim.cmd [[
-        exe 'source' (g:vim_config_path . '/after/plugin/LeaderF.vim')
-      ]]
-    end
-  },
-  -- bqf
-  { "kevinhwang91/nvim-bqf" },
-  {
-    'kevinhwang91/nvim-ufo',
-    dependencies = { 'kevinhwang91/promise-async' },
-    config = function()
-      require('users.ufo')
-    end
-  },
-  {
-    'junegunn/fzf',
-    init = function()
-      vim.cmd [[
-        function! _L_FZF_WRAPPER_RUN_(opts) abort
-          call fzf#run(fzf#wrap(a:opts))
-        endfunction
-      ]]
-    end
-  },
-  {
-    "ThePrimeagen/harpoon",
-    branch = "harpoon2",
-    dependencies = { "nvim-lua/plenary.nvim" },
-    config = function() require('users.harpoon') end
-  },
-  -- git
-  {
-    "lewis6991/gitsigns.nvim",
-    dependencies = { "nvim-lua/plenary.nvim" },
-    config = function() require('users.gitsigns') end
-  },
-
-  --- tabby
-  { "nanozuki/tabby.nvim", config = function() require('users.tabby') end },
-
-  -- undotree
-  {
-    "mbbill/undotree",
-    config = function()
-      vim.keymap.set('n', '<leader>u', vim.cmd.UndotreeToggle, {})
-    end,
-    event = 'VeryLazy'
-  },
-
-  -- todo highlight
-  {
-    "folke/todo-comments.nvim",
-    ft = { "typescript", "javascript", "typescriptreact", "javascriptreact" },
-    config = function()
-      require('users.todo')
-    end
-  },
-  -- color highlight
-  { "lilydjwg/colorizer" },
-
-  -- zen mode
-  {
-    "folke/zen-mode.nvim",
-    opts = {
-      window = {
-        width = 1,
+      },
+      -- stylua: ignore
+      keys = {
+        { "s", mode = { "n", "x" }, function() require("flash").jump() end,       desc = "Flash" },
+        { "S", mode = { "n" },      function() require("flash").treesitter() end, desc = "Flash Treesitter" },
       },
     },
-    init = function()
-      vim.keymap.set('n', '<A-z>', vim.cmd.ZenMode, {})
-    end,
-  },
-  -- vim-rec
-  { 'zaid/vim-rec',     init = function() vim.g.recutils_no_folding = 1 end },
-  --- weapp
-  { 'chemzqm/wxapp.vim' },
-  --- marks enhance
-  {
-    'chentoast/marks.nvim',
-    event = 'VeryLazy',
-    config = function()
-      require('marks')
-          .setup()
-    end
-  },
-  -- tasks
-  {
-    'skywind3000/asynctasks.vim',
-    dependencies = { 'skywind3000/asyncrun.vim' },
-    event = 'VeryLazy',
-    init = function()
-      vim.g.asyncrun_open = 6
-      vim.g.asyncrun_rootmarks = { '.git', '.svn', '.root', '.project', 'package.json' }
-    end,
-    config = function()
-      vim.cmd [[
-      exe 'source' (g:vim_config_path . '/after/plugin/fzf-tasks.vim')
-      exe 'source' (g:vim_config_path . '/after/plugin/fugitive-run.vim')
+    -- matchup
+    "andymass/vim-matchup",
+
+    {
+      "L3MON4D3/LuaSnip",
+      version = "v2.*", -- Replace <CurrentMajor> by the latest released major (first number of latest release)
+      build = "make install_jsregexp",
+      config = function()
+        require('users.luasnip')
+      end
+    },
+    --  origin vim plugin use 'tpope/vim-surround'
+    "tpope/vim-surround",
+    "tpope/vim-repeat",
+    -- git command support
+    {
+      "tpope/vim-fugitive",
+      config = function()
+        vim.cmd [[
+        exe 'source' (g:vim_config_path . '/after/plugin/fugitive.vim')
       ]]
-    end
-  },
-  -- intent
-  {
-    'shellRaining/hlchunk.nvim',
-    event = { "UIEnter" },
-    config = function()
-      require("hlchunk").setup(
-        {
-          chunk = {
-            enable = true,
-            use_treesitter = true,
-          },
-          indent = {
-            enable = true,
-            use_treesitter = false,
-          },
-          line_num = {
-            enable = true,
-            use_treesitter = false,
-          },
-          blank = {
-            enable = false,
-          },
+      end
+    },
+    -- theme
+    { "catppuccin/nvim",     name = "catppuccin", lazy = true },
+    -- { "shaunsingh/nord.nvim", lazy = true },
+    -- { 'rose-pine/neovim',     name = 'rose-pine' },
+
+    -- ##########lua plugins start##############
+
+    {
+      "numToStr/Comment.nvim",
+      config = function()
+        require('users.comment')
+      end
+    },
+    {
+      "nvim-tree/nvim-web-devicons",
+      config = function()
+        require 'nvim-web-devicons'.setup {
+          override_by_extension = {
+            ['toml'] = {
+              icon = "",
+              color = "#81e043",
+              name = "Toml"
+            }
+          }
         }
-      )
-    end
+      end
+    },
+
+    -- statusline
+    {
+      "nvim-lualine/lualine.nvim",
+      config = function() require('users.lualine') end
+    },
+
+    {
+      'stevearc/oil.nvim',
+      opts = {},
+      config = function()
+        require("oil").setup()
+        vim.keymap.set('n', '<leader>nn', vim.cmd.Oil, {})
+      end
+    },
+    --  lsp config
+    {
+      "neoclide/coc.nvim",
+      branch = "release",
+      event = "VeryLazy",
+      init = function()
+        vim.cmd [[
+          let g:coc_config_home=g:dot_config_path . '/coc'
+        ]]
+      end,
+      config = function()
+        vim.cmd [[
+          exe 'source' (g:dot_config_path . '/coc/coc.vim')
+       ]]
+      end
+    },
+    { 'antoinemadec/coc-fzf' },
+
+    -- syntax
+    -- { "leafgarland/typescript-vim" },
+    -- { "pangloss/vim-javascript" },
+    {
+      'nvim-treesitter/nvim-treesitter',
+      config = function()
+        require 'nvim-treesitter.configs'.setup {
+          highlight = { enable = true, },
+          incremental_selection = { enable = false },
+          ensure_installed = { 'c', 'lua', 'javascript', 'typescript', 'vim', 'vimdoc', 'query' },
+          indent = { enable = false },
+        }
+      end
+    },
+    -- fuzzy
+    {
+      "Yggdroot/LeaderF",
+      build = function()
+        vim.cmd.LeaderfInstallCExtension()
+      end,
+      cond = function()
+        return vim.fn.has('python3') == 1;
+      end,
+      dependencies = { 'Yggdroot/LeaderF-marks' },
+      config = function()
+        vim.cmd [[
+          exe 'source' (g:vim_config_path . '/after/plugin/LeaderF.vim')
+        ]]
+      end
+    },
+    -- bqf
+    { "kevinhwang91/nvim-bqf" },
+    {
+      'kevinhwang91/nvim-ufo',
+      dependencies = { 'kevinhwang91/promise-async' },
+      config = function()
+        require('users.ufo')
+      end
+    },
+    {
+      'junegunn/fzf',
+      init = function()
+        vim.cmd [[
+          function! _L_FZF_WRAPPER_RUN_(opts) abort
+            call fzf#run(fzf#wrap(a:opts))
+          endfunction
+        ]]
+      end
+    },
+    {
+      "ThePrimeagen/harpoon",
+      branch = "harpoon2",
+      dependencies = { "nvim-lua/plenary.nvim" },
+      config = function() require('users.harpoon') end
+    },
+    -- git
+    {
+      "lewis6991/gitsigns.nvim",
+      dependencies = { "nvim-lua/plenary.nvim" },
+      config = function() require('users.gitsigns') end
+    },
+
+    --- tabby
+    { "nanozuki/tabby.nvim",  config = function() require('users.tabby') end },
+
+    -- undotree
+    {
+      "mbbill/undotree",
+      config = function()
+        vim.keymap.set('n', '<leader>u', vim.cmd.UndotreeToggle, {})
+      end,
+      event = 'VeryLazy'
+    },
+
+    -- todo highlight
+    {
+      "folke/todo-comments.nvim",
+      ft = { "typescript", "javascript", "typescriptreact", "javascriptreact" },
+      config = function()
+        require('users.todo')
+      end
+    },
+    -- color highlight
+    { "lilydjwg/colorizer" },
+
+    -- zen mode
+    {
+      "folke/zen-mode.nvim",
+      opts = {
+        window = {
+          width = 1,
+        },
+      },
+      init = function()
+        vim.keymap.set('n', '<A-z>', vim.cmd.ZenMode, {})
+      end,
+    },
+    -- vim-rec
+    { 'zaid/vim-rec',      init = function() vim.g.recutils_no_folding = 1 end },
+    --- weapp
+    { 'chemzqm/wxapp.vim' },
+    --- marks enhance
+    {
+      'chentoast/marks.nvim',
+      event = 'VeryLazy',
+      config = function()
+        require('marks')
+            .setup()
+      end
+    },
+    -- tasks
+    {
+      'skywind3000/asynctasks.vim',
+      dependencies = { 'skywind3000/asyncrun.vim' },
+      event = 'VeryLazy',
+      init = function()
+        vim.g.asyncrun_open = 6
+        vim.g.asyncrun_rootmarks = { '.git', '.svn', '.root', '.project', 'package.json' }
+      end,
+      config = function()
+        vim.cmd [[
+        exe 'source' (g:vim_config_path . '/after/plugin/fzf-tasks.vim')
+        exe 'source' (g:vim_config_path . '/after/plugin/fugitive-run.vim')
+        ]]
+      end
+    },
+    -- intent
+    {
+      'shellRaining/hlchunk.nvim',
+      event = { "UIEnter" },
+      config = function()
+        require("hlchunk").setup(
+          {
+            chunk = {
+              enable = true,
+              use_treesitter = true,
+            },
+            indent = {
+              enable = true,
+              use_treesitter = false,
+            },
+            line_num = {
+              enable = true,
+              use_treesitter = false,
+            },
+            blank = {
+              enable = false,
+            },
+          }
+        )
+      end
+    },
+    {
+      'voldikss/vim-floaterm',
+      config = function()
+        vim.keymap.set('n', '<A-t>', vim.cmd.FloatermToggle, {})
+      end
+    },
+    -- ###### lua plugin end ##########
   },
-  {
-    'voldikss/vim-floaterm',
-    config = function()
-      vim.keymap.set('n', '<A-t>', vim.cmd.FloatermToggle, {})
-    end
-  },
-  -- ###### lua plugin end ##########
 })
