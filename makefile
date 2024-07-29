@@ -8,8 +8,8 @@ install-neovim:
 	# install neovim
 	mkdir -p ~/.config/nvim
 	echo "source $$PWD/nvim/init.vim" >> ~/.config/nvim/init.vim
-	nvim -c ":Lazy install" -c "qa"
-	nvim -c ":TSUpdateSync" -c "qa"
+	nvim --headless -c 'Lazy install' -c 'qa'
+	nvim --headless -c 'TSUpdateSync' -c 'sleep 20' -c 'qa'
 
 install-vim:
 	ln -sf $$PWD/vim ~/.vim
