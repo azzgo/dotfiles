@@ -1,8 +1,8 @@
-pack:
+pack-linux64:
 	rm -rf temp_dotfiles
 	mkdir temp_dotfiles
 	rsync -av --exclude='nvim-linux64.tar.gz' --exclude='nvim-linux64' --exclude='temp_dotfiles' --exclude='.github' --exclude='.git' --exclude='dotfiles.tar.gz' . temp_dotfiles/
-	tar -czvf dotfiles.tar.gz -C temp_dotfiles .
+	tar -czvf dotfiles.linux64.tar.gz -C temp_dotfiles .
 
 install-neovim:
 	# install neovim

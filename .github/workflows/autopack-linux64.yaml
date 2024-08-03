@@ -27,10 +27,10 @@ jobs:
       - name: Install neovim plugin
         run: make install-neovim
       - name: Pack Dotfiles
-        run: make pack
+        run: make pack-linux64
       - name: Publish Release
         env:
            GH_TOKEN: ${{ github.token }}
            GH_REPO: ${{ github.repository }}
-        run: gh release create v${{ github.ref_name }} --draft=false ./dotfiles.tar.gz
+        run: gh release create v${{ github.ref_name }} --draft=false ./dotfiles.linux64.tar.gz
       - run: echo "🍏 This job's status is ${{ job.status }}."
