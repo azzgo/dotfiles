@@ -127,7 +127,7 @@ return require("lazy").setup({
         require 'nvim-treesitter.configs'.setup {
           highlight = { enable = true, },
           incremental_selection = { enable = false },
-          ensure_installed = { 'c', 'lua', 'javascript', 'typescript', 'vim', 'vimdoc', 'query' },
+          ensure_installed = { 'c', 'lua', 'javascript', 'typescript', 'vue', 'vim', 'vimdoc', 'query' },
           indent = { enable = false },
         }
       end
