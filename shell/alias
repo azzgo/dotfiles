@@ -17,7 +17,10 @@ alias gprp='git pull --rebase && git push'
 
 function gcd() {
   if [[ -x  $(command -v fzf) ]];then
-    cd $(git worktree list | fzf | awk '{print $1}')
+    folder=$(git worktree list | fzf)
+    if [[ -n $folder ]];then
+     cd $(echo $folder | awk '{print $1}')
+    fi
   fi
 }
 alias ll='ls -alF'
