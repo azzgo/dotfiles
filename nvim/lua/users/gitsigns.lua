@@ -5,7 +5,7 @@ if not ok then
 end
 
 gitsigns.setup({
-  current_line_blame = true,
+  current_line_blame = false,
   on_attach = function(bufnr)
     local function map(mode, l, r, opts)
       opts = opts or {}
@@ -23,6 +23,5 @@ gitsigns.setup({
     map('n', '<leader>hb', function() gitsigns.blame_line { full = true } end)
 
     map('n', '<leader>hd', gitsigns.diffthis)
-    map('n', '<leader>hD', function() gitsigns.diffthis('~') end)
   end
 })
