@@ -121,6 +121,9 @@ inoremap <A-j> <esc>:m .+1<cr>==gi
 inoremap <A-k> <esc>:m .-2<cr>==gi
 vnoremap <A-j> :m '>+1<cr>gv
 vnoremap <A-k> :m '<-2<cr>gv
+" switch between window
+nnoremap <A-o> <C-w><C-w>
+inoremap <A-o> <C-o><C-w><C-w>
 
 "better intent
 vnoremap < <gv
