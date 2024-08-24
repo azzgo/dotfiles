@@ -121,6 +121,7 @@ return require("lazy").setup({
     -- syntax
     -- { "leafgarland/typescript-vim" },
     -- { "pangloss/vim-javascript" },
+    { 'mracos/mermaid.vim' },
     {
       'nvim-treesitter/nvim-treesitter',
       config = function()
