@@ -10,7 +10,7 @@ function! coc#source#mermaid#complete(option, cb) abort
         \'classDiagram', 'classDiagram-v2', 'erDiagram', 'gantt', 'graph', 
         \'flowchart', 'pie', 'sequenceDiagram', 'stateDiagram', 'stateDiagram-v2', 'gitGraph',
         \'note', 'left of', 'right of', 'over', 'class', 'options', 'commit', 'branch', 'merge', 'reset', 'checkout',
-        \'participant','activate','deactivate',
+        \'participant','activate','deactivate', 'actor',
         \'journey', 'title', 'section',
         \'quadrantChart', 'x-axis', 'y-axis', 'quadrant-1', 'quadrant-2', 'quadrant-3', 'quadrant-4',
         \]
