@@ -56,6 +56,16 @@ function {1} () {{
 export default {1};
 ]], { i(1, "Component") }, { repeat_duplicates = true }))
 
+local jsxReactFunctionComponentSnippet = s('rfc', fmt([[
+const {1} = ({2}) => {{
+  return <>{3}</>;
+}}
+
+export default {1};
+]], { i(1, "Component"), i(2, "props"), i(3)} , { repeat_duplicates = true }))
+
+local nextUseClient = s('nuc', {t('"use client";')})
+
 ls.add_snippets("typescript", {
   jsLogSnippet,
   jsLogDebugSnippet,
@@ -81,6 +91,8 @@ ls.add_snippets("javascriptreact", {
   jsLetPrefixSnippet,
   jsConstPrefixSnippet,
   jsxReactSnippet,
+  jsxReactFunctionComponentSnippet,
+  nextUseClient,
 })
 
 ls.add_snippets("typescriptreact", {
@@ -89,6 +101,8 @@ ls.add_snippets("typescriptreact", {
   jsLetPrefixSnippet,
   jsConstPrefixSnippet,
   jsxReactSnippet,
+  jsxReactFunctionComponentSnippet,
+  nextUseClient,
 })
 
 ls.add_snippets('gitcommit', {
