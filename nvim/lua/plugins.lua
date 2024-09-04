@@ -31,7 +31,12 @@ return require("lazy").setup({
       },
     },
     -- matchup
-    "andymass/vim-matchup",
+    {
+      "andymass/vim-matchup",
+      init = function()
+        vim.g.matchup_matchparen_deferred = 1;
+      end
+    },
 
     {
       "L3MON4D3/LuaSnip",
