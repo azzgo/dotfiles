@@ -62,9 +62,9 @@ const {1} = ({2}) => {{
 }}
 
 export default {1};
-]], { i(1, "Component"), i(2, "props"), i(3)} , { repeat_duplicates = true }))
+]], { i(1, "Component"), i(2, "props"), i(3) }, { repeat_duplicates = true }))
 
-local nextUseClient = s('nuc', {t('"use client";')})
+local nextUseClient = s('nuc', { t('"use client";') })
 
 ls.add_snippets("typescript", {
   jsLogSnippet,
@@ -112,3 +112,52 @@ ls.add_snippets('gitcommit', {
     description = i(3),
   }))
 })
+--- markdown
+local function generate_table_header(cols)
+  local header = ""
+  local separator = ""
+
+  for j = 1, cols do
+    header = header .. "| H" .. j .. " "
+    separator = separator .. "| --- "
+  end
+
+  header = header .. "|"
+  separator = separator .. "|"
+
+  return header .. "\n" .. separator
+end
+
+-- Helper function to generate the table rows
+local function generate_table_rows(rows, cols)
+  local rows_text = ""
+  for _ = 1, rows do
+    local row = ""
+    for _ = 1, cols do
+      row = row .. "|   "
+    end
+
+    row = row .. "|"
+    rows_text = rows_text .. row .. "\n"
+  end
+
+  return rows_text
+end
+
+ls.add_snippets('markdown', {
+  s({ trig = "table(%d+)x(%d+)", regTrig = true }, {
+    f(function(_, snip)
+      local rows = tonumber(snip.captures[1])
+      local cols = tonumber(snip.captures[2])
+
+      if rows and cols then
+        local header = generate_table_header(cols)
+        local body = generate_table_rows(rows, cols)
+        return vim.split(header .. "\n" .. body, '\n', { trimempty= false })
+      else
+        return "Invalid number of rows or columns"
+      end
+    end)
+  })
+
+});
