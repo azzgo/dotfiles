@@ -49,6 +49,13 @@ return require("lazy").setup({
     --  origin vim plugin use 'tpope/vim-surround'
     "tpope/vim-surround",
     "tpope/vim-repeat",
+    {
+      'beloglazov/vim-textobj-quotes',
+      dependencies = { "kana/vim-textobj-user" },
+      config = function ()
+        vim.keymap.set('n', '<A-y>', 'yiq', { remap = true })
+      end
+    },
     -- git command support
     {
       "tpope/vim-fugitive",
