@@ -47,5 +47,3 @@ harpoon:extend({
 
 vim.keymap.set("n", "<A-a>", function() harpoon_fzf_action_popup() end)
 vim.keymap.set("n", "<C-e>", function() harpoon_fzf_popup(harpoon:list()) end)
-vim.keymap.set("n", "<A-p>", function() harpoon:list():prev() end)
-vim.keymap.set("n", "<A-n>", function() harpoon:list():next() end)
