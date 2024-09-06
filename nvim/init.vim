@@ -18,6 +18,28 @@ lua package.path = vim.g.neovim_config_path .. "/lua/?.lua;" .. package.path
 lua require('plugins')
 
 " ---------------------------
+"  big file
+" ---------------------------
+"  from jdhao config
+" ref: https://vi.stackexchange.com/a/169/15292
+function! s:handle_large_file() abort
+  let g:file_size_limit = 524288 " 0.5MB
+  let f = expand("<afile>")
+
+  if getfsize(f) > g:file_size_limit || getfsize(f) == -2
+    setlocal eventignore=all
+    " turning off relative number helps a lot
+    setlocal norelativenumber
+    setlocal noswapfile bufhidden=unload undolevels=-1
+  endif
+endfunction
+
+augroup LargeFile
+  autocmd!
+  autocmd BufReadPre * call s:handle_large_file()
+augroup END
+
+" ---------------------------
 "  插件相关配置
 " ---------------------------
 
