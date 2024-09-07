@@ -73,6 +73,7 @@ xnoremap <leader>y "+y
 xnoremap <leader>p "+p
 nnoremap <leader>p "+p
 nnoremap <leader>y "+yiw
+nnoremap <c-y> yiw
 
 " netrw
 nnoremap <leader>nn :e %:p:h<CR>
