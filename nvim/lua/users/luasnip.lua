@@ -55,11 +55,11 @@ local jsArrayFunction = s('af', fmt([[({1}) => {{
 
 local jsxReactFunctionComponentSnippet = s('rfc', fmt([[
 const {1} = ({2}) => {{
-  return <>{3}</>;
+  return <{3}>{4}</{3}>;
 }}
 
 export default {1};
-]], { i(1, "Component"), i(2, "props"), i(3) }, { repeat_duplicates = true }))
+]], { i(1, "Component"), i(2, "props"), i(3), i(4) }, { repeat_duplicates = true }))
 
 local tsInterface = s('i', fmt([[
 interface {1} {{
