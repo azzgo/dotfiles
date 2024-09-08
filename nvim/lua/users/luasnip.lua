@@ -48,13 +48,10 @@ local jsConstPrefixSnippet = postfix('.const', {
 })
 
 
-local jsxReactSnippet = s('.rsx', fmt([[
-function {1} () {{
-  return <></>;
+local jsArrayFunction = s('af', fmt([[({1}) => {{
+  {2}
 }}
-
-export default {1};
-]], { i(1, "Component") }, { repeat_duplicates = true }))
+]], { i(1), i(2) }, {}))
 
 local jsxReactFunctionComponentSnippet = s('rfc', fmt([[
 const {1} = ({2}) => {{
@@ -71,11 +68,13 @@ ls.add_snippets("typescript", {
   jsLogDebugSnippet,
   jsLetPrefixSnippet,
   jsConstPrefixSnippet,
+  jsArrayFunction,
 })
 
 ls.add_snippets("vue", {
   jsLogSnippet,
   jsLogDebugSnippet,
+  jsArrayFunction,
 })
 
 ls.add_snippets("javascript", {
@@ -83,6 +82,7 @@ ls.add_snippets("javascript", {
   jsLogDebugSnippet,
   jsLetPrefixSnippet,
   jsConstPrefixSnippet,
+  jsArrayFunction,
 })
 
 ls.add_snippets("javascriptreact", {
@@ -90,7 +90,7 @@ ls.add_snippets("javascriptreact", {
   jsLogDebugSnippet,
   jsLetPrefixSnippet,
   jsConstPrefixSnippet,
-  jsxReactSnippet,
+  jsArrayFunction,
   jsxReactFunctionComponentSnippet,
   nextUseClient,
 })
@@ -100,7 +100,7 @@ ls.add_snippets("typescriptreact", {
   jsLogDebugSnippet,
   jsLetPrefixSnippet,
   jsConstPrefixSnippet,
-  jsxReactSnippet,
+  jsArrayFunction,
   jsxReactFunctionComponentSnippet,
   nextUseClient,
 })
@@ -153,7 +153,7 @@ ls.add_snippets('markdown', {
       if rows and cols then
         local header = generate_table_header(cols)
         local body = generate_table_rows(rows, cols)
-        return vim.split(header .. "\n" .. body, '\n', { trimempty= false })
+        return vim.split(header .. "\n" .. body, '\n', { trimempty = false })
       else
         return "Invalid number of rows or columns"
       end
