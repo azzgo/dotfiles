@@ -71,6 +71,8 @@ return require("lazy").setup({
     -- { 'rose-pine/neovim',     name = 'rose-pine' },
 
     -- ##########lua plugins start##############
+    -- ai plugins
+    { 'github/copilot.vim' },
 
     {
       "numToStr/Comment.nvim",
@@ -232,7 +234,7 @@ return require("lazy").setup({
     -- vim-rec
     { 'zaid/vim-rec',      init = function() vim.g.recutils_no_folding = 1 end },
     --- weapp
-    { 'chemzqm/wxapp.vim' },
+    -- { 'chemzqm/wxapp.vim' },
     --- marks enhance
     {
       'chentoast/marks.nvim',
