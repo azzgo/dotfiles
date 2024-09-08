@@ -61,6 +61,12 @@ const {1} = ({2}) => {{
 export default {1};
 ]], { i(1, "Component"), i(2, "props"), i(3) }, { repeat_duplicates = true }))
 
+local tsInterface = s('i', fmt([[
+interface {1} {{
+  {2}
+}}
+]], {i(1, 'name'), i(2) }, {}))
+
 local nextUseClient = s('nuc', { t('"use client";') })
 
 ls.add_snippets("typescript", {
@@ -69,6 +75,7 @@ ls.add_snippets("typescript", {
   jsLetPrefixSnippet,
   jsConstPrefixSnippet,
   jsArrayFunction,
+  tsInterface,
 })
 
 ls.add_snippets("vue", {
@@ -103,6 +110,7 @@ ls.add_snippets("typescriptreact", {
   jsArrayFunction,
   jsxReactFunctionComponentSnippet,
   nextUseClient,
+  tsInterface,
 })
 
 ls.add_snippets('gitcommit', {
