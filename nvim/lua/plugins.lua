@@ -52,7 +52,7 @@ return require("lazy").setup({
     {
       'beloglazov/vim-textobj-quotes',
       dependencies = { "kana/vim-textobj-user" },
-      config = function ()
+      config = function()
         vim.keymap.set('n', '<A-y>', 'yiq', { remap = true })
       end
     },
@@ -72,7 +72,16 @@ return require("lazy").setup({
 
     -- ##########lua plugins start##############
     -- ai plugins
-    { 'github/copilot.vim' },
+    {
+      'github/copilot.vim',
+      init = function()
+        vim.keymap.set('i', '<C-space>', 'copilot#Accept("\\<CR>")', {
+          expr = true,
+          replace_keycodes = false
+        })
+        vim.g.copilot_no_tab_map = true
+      end
+    },
 
     {
       "numToStr/Comment.nvim",
