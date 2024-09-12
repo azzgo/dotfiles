@@ -301,6 +301,25 @@ return require("lazy").setup({
         vim.keymap.set('n', '<A-t>', vim.cmd.FloatermToggle, {})
       end
     },
+    {
+      "robitx/gp.nvim",
+      config = function()
+        require("gp").setup({
+          providers = {
+            copilot = {
+              endpoint = "https://api.githubcopilot.com/chat/completions",
+              secret = {
+                "bash",
+                "-c",
+                "cat ~/.config/github-copilot/hosts.json | sed -e 's/.*oauth_token...//;s/\".*//'",
+              },
+            },
+          },
+          default_command_agent = "copilot",
+          default_chat_agent = "copilot",
+        })
+      end,
+    }
     -- ###### lua plugin end ##########
   },
 })
