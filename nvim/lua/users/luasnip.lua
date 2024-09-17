@@ -32,6 +32,7 @@ local jsLogSnippet = s("log", {
 local jsLogDebugSnippet = s("logd", {
   t("console.log(\"[DEBUG] \", "), i(1, "message"), t(");")
 })
+
 local jsLetPrefixSnippet = postfix('.let', {
   t('let '),
   i(1, 'variable'),
@@ -69,6 +70,18 @@ interface {1} {{
 
 local nextUseClient = s('nuc', { t('"use client";') })
 
+local htmlTagCollection = {
+  s("div", { t("<div>"), i(1), t("</div>") }),
+  s("span", { t("<span>"), i(1), t("</span>") }),
+  s("h1", { t("<h1>"), i(1), t("</h1>") }),
+  s("h2", { t("<h2>"), i(1), t("</h2>") }),
+  s("h3", { t("<h3>"), i(1), t("</h3>") }),
+  s("h4", { t("<h4>"), i(1), t("</h4>") }),
+  s("h5", { t("<h5>"), i(1), t("</h5>") }),
+  s("h6", { t("<h6>"), i(1), t("</h6>") }),
+  s("img", { t('<img src="'), i(1), t('" alt="'), i(2), t('">') }),
+}
+
 ls.add_snippets("typescript", {
   jsLogSnippet,
   jsLogDebugSnippet,
@@ -81,6 +94,7 @@ ls.add_snippets("typescript", {
 ls.add_snippets("vue", {
   jsLogSnippet,
   jsLogDebugSnippet,
+  unpack(htmlTagCollection),
   jsArrayFunction,
 })
 
@@ -99,6 +113,7 @@ ls.add_snippets("javascriptreact", {
   jsConstPrefixSnippet,
   jsArrayFunction,
   jsxReactFunctionComponentSnippet,
+  unpack(htmlTagCollection),
   nextUseClient,
 })
 
@@ -109,8 +124,13 @@ ls.add_snippets("typescriptreact", {
   jsConstPrefixSnippet,
   jsArrayFunction,
   jsxReactFunctionComponentSnippet,
+  unpack(htmlTagCollection),
   nextUseClient,
   tsInterface,
+})
+
+ls.add_snippets("html", {
+  unpack(htmlTagCollection),
 })
 
 ls.add_snippets('gitcommit', {
