@@ -26,10 +26,18 @@ function! s:FIND_FILES()
   execute 'Leaderf file --input "' . s:search . '"'
 endfunction
 
+function! s:GREP_WORD()
+  let s:word = input("Grep Word> ")
+  execute 'Leaderf rg --regexMode --input "\<' . s:word . '\>"'
+endfunction
+
+
+
 nnoremap <leader>tr :Leaderf --recall<CR>
 nnoremap <leader>to :Leaderf mru<CR>
 nnoremap <leader>tq :Leaderf quickfix<CR>
 nnoremap <leader>/  :call <SID>GREP_STRING()<CR>
+nnoremap <leader>\  :call <SID>GREP_WORD()<CR>
 nnoremap <leader>f  :call <SID>FIND_FILES()<CR>
 nnoremap <leader>m  :Leaderf marks<CR>
 nnoremap <leader>gl :Leaderf git log --explorer --graph --left<CR>
