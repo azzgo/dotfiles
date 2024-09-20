@@ -119,8 +119,15 @@ return require("lazy").setup({
       'stevearc/oil.nvim',
       opts = {},
       config = function()
-        require("oil").setup()
-        vim.keymap.set('n', '<leader>nn', vim.cmd.Oil, {})
+        local oil = require("oil")
+        oil.setup({
+          float = {
+            padding = 10
+          }
+        })
+        vim.keymap.set('n', '<leader>nn', function ()
+          oil.open_float()
+        end , {})
       end
     },
     --  lsp config
