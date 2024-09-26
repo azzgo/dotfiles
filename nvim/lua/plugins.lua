@@ -326,7 +326,15 @@ return require("lazy").setup({
           default_chat_agent = "copilot",
         })
       end,
-    }
+    },
+{
+      "oysandvik94/curl.nvim",
+      cmd = { "CurlOpen" },
+      dependencies = {
+        "nvim-lua/plenary.nvim",
+      },
+      config = true,
+    },
     -- ###### lua plugin end ##########
   },
 })
