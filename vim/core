@@ -104,11 +104,16 @@ inoremap <silent> <A-p> <cmd>tabprevious<CR>
 inoremap <silent> <A-n> <cmd>tabnext<CR>
 
 " map alt + n -> tab n
-nnoremap <A-1> 1gt
-nnoremap <A-2> 2gt
-nnoremap <A-3> 3gt
-nnoremap <A-4> 4gt
-nnoremap <A-5> 5gt
+nnoremap <silent> <A-1> 1gt
+nnoremap <silent> <A-2> 2gt
+nnoremap <silent> <A-3> 3gt
+nnoremap <silent> <A-4> 4gt
+nnoremap <silent> <A-5> 5gt
+inoremap <silent> <A-1> <C-o>1gt
+inoremap <silent> <A-2> <C-o>2gt
+inoremap <silent> <A-3> <C-o>3gt
+inoremap <silent> <A-4> <C-o>4gt
+inoremap <silent> <A-5> <C-o>5gt
 
 " emacs  like kemap in insert mode
 inoremap <c-a> <home>
