@@ -66,7 +66,7 @@ local tsInterface = s('i', fmt([[
 interface {1} {{
   {2}
 }}
-]], {i(1, 'name'), i(2) }, {}))
+]], { i(1, 'name'), i(2) }, {}))
 
 local nextUseClient = s('nuc', { t('"use client";') })
 
@@ -79,8 +79,60 @@ local htmlTagCollection = {
   s("h4", { t("<h4>"), i(1), t("</h4>") }),
   s("h5", { t("<h5>"), i(1), t("</h5>") }),
   s("h6", { t("<h6>"), i(1), t("</h6>") }),
+  s('form', { t('<form>'), i(1), t('</form>') }),
+  s('input', { t('<input type="text" name="'), i(1), t('">') }),
+  s('textarea', { t('<textarea name="'), i(1), t('">'), i(2), t('</textarea>') }),
+  s('button', { t('<button>'), i(1), t('</button>') }),
   s("img", { t('<img src="'), i(1), t('" alt="'), i(2), t('">') }),
+  s('a', { t('<a href="'), i(1), t('">'), i(2), t('</a>') }),
+  s('p', { t('<p>'), i(1), t('</p>') }),
+  s('ul', { t('<ul>'), i(1), t('</ul>') }),
+  s('ol', { t('<ol>'), i(1), t('</ol>') }),
+  s('li', { t('<li>'), i(1), t('</li>') }),
+  s('table', { t('<table>'), i(1), t('</table>') }),
+  s('tr', { t('<tr>'), i(1), t('</tr>') }),
+  s('td', { t('<td>'), i(1), t('</td>') }),
+  s('th', { t('<th>'), i(1), t('</th>') }),
+  s('section', { t('<section>'), i(1), t('</section>') }),
+  s('article', { t('<article>'), i(1), t('</article>') }),
+  s('footer', { t('<footer>'), i(1), t('</footer>') }),
+  s('header', { t('<header>'), i(1), t('</header>') }),
+  s('main', { t('<main>'), i(1), t('</main>') }),
+  s('aside', { t('<aside>'), i(1), t('</aside>') }),
+  s('nav', { t('<nav>'), i(1), t('</nav>') }),
+  s('link', { t('<link rel="stylesheet" href="'), i(1), t('">') }),
+  s('style', { t('<style>'), i(1), t('</style>') }),
+  s('head', { t('<head>'), i(1), t('</head>') }),
+  s('body', { t('<body>'), i(1), t('</body>') }),
+  s('script', { t('<script>'), i(1), t('</script>') }),
+  s('html5', fmt([[<!DOCTYPE html>
+<html lang="{1}">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{2}</title>
+  </head>
+  <body>
+  {3}
+  </body>
+</html>]], { i(1), i(2), i(3) })),
 }
+
+local loremText = s('lorem',
+  { t('Lorem ipsum dolor sit amet, qui minim labore adipisicing minim sint cillum sint consectetur cupidatat.') })
+local date = s('date', { t(os.date('%Y-%m-%d')) })
+local time = s('time', { t(os.date('%H:%M:%S')) })
+local datetime = s('datetime', { t(os.date('%Y-%m-%d %H:%M:%S')) })
+local uuid = s('uuid', { t(vim.fn.system('uuidgen | tr -d "\n"')) })
+
+
+ls.add_snippets('all', {
+  loremText,
+  date,
+  time,
+  datetime,
+  uuid,
+});
 
 ls.add_snippets("typescript", {
   jsLogSnippet,
@@ -189,3 +241,6 @@ ls.add_snippets('markdown', {
   })
 
 });
+
+
+
