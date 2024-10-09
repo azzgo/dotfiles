@@ -126,8 +126,8 @@ return require("lazy").setup({
           }
         })
         vim.keymap.set('n', '<leader>nn', function ()
-          oil.open_float()
-        end , {})
+          oil.open()
+        end, {})
       end
     },
     --  lsp config
@@ -305,7 +305,9 @@ return require("lazy").setup({
     {
       'voldikss/vim-floaterm',
       config = function()
-        vim.keymap.set('n', '<A-t>', vim.cmd.FloatermToggle, {})
+        vim.keymap.set('n', '<A-t>', function ()
+          vim.cmd [[ FloatermNew --cwd=<buffer> ]]
+        end, {})
       end
     },
     {
