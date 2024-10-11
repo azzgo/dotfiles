@@ -125,7 +125,7 @@ return require("lazy").setup({
             padding = 10
           }
         })
-        vim.keymap.set('n', '<leader>nn', function ()
+        vim.keymap.set('n', '<leader>nn', function()
           oil.open()
         end, {})
       end
@@ -305,7 +305,7 @@ return require("lazy").setup({
     {
       'voldikss/vim-floaterm',
       config = function()
-        vim.keymap.set('n', '<A-t>', function ()
+        vim.keymap.set('n', '<A-t>', function()
           vim.cmd [[ FloatermNew --cwd=<buffer> ]]
         end, {})
       end
@@ -329,13 +329,21 @@ return require("lazy").setup({
         })
       end,
     },
-{
+    {
       "oysandvik94/curl.nvim",
       cmd = { "CurlOpen" },
       dependencies = {
         "nvim-lua/plenary.nvim",
       },
       config = true,
+    },
+    {
+      "folke/persistence.nvim",
+      opts = {
+      },
+      config = function()
+        require('users.sessions')
+      end
     },
     -- ###### lua plugin end ##########
   },
