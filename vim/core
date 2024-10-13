@@ -96,8 +96,6 @@ nnoremap <silent> ]l :lnext<CR>
 
 " tabs 
 nnoremap <silent> <leader>nt :tabnew<CR> 
-nnoremap <silent> [t :tabprevious<CR> 
-nnoremap <silent> ]t :tabnext<CR>
 nnoremap <silent> <A-p> <cmd>tabprevious<CR> 
 nnoremap <silent> <A-n> <cmd>tabnext<CR>
 inoremap <silent> <A-p> <cmd>tabprevious<CR> 

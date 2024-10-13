@@ -227,7 +227,7 @@ return require("lazy").setup({
     -- todo highlight
     {
       "folke/todo-comments.nvim",
-      ft = { "typescript", "javascript", "typescriptreact", "javascriptreact" },
+      ft = { "typescript", "javascript", "typescriptreact", "javascriptreact", 'lua' },
       config = function()
         require('users.todo')
       end

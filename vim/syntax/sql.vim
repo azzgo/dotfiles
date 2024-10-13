@@ -158,8 +158,6 @@ syn match sqlNumber         "-\=\<[0-9][0-9]*e[+-]\=[0-9]*\>"
 syn match sqlNumber         "-\=\<[0-9]*\.[0-9]*e[+-]\=[0-9]*\>"
 syn match sqlNumber         "\<0x[abcdef0-9]*\>"
 
-" Todo
-syn keyword sqlTodo         contained DEBUG FIXME NOTE TODO XXX
 
 " Comments
 syn region sqlComment       start="/\*"  end="\*/" contains=sqlTodo
