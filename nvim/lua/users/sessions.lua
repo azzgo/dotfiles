@@ -13,8 +13,8 @@ persistence.stop()
 
 local function session_popup()
   local menu = {
-    'load',
     'save',
+    'load',
     'select',
   }
   vim.fn['_L_FZF_WRAPPER_RUN_']({
