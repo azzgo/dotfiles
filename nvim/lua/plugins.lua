@@ -284,7 +284,7 @@ return require("lazy").setup({
         require("hlchunk").setup(
           {
             chunk = {
-              enable = true,
+              enable = false,
               use_treesitter = true,
             },
             indent = {
