@@ -345,17 +345,6 @@ return require("lazy").setup({
         require('users.sessions')
       end
     },
-    {
-      'hat0uma/csvview.nvim',
-      ft = { "csv" },
-      config = function()
-        require('csvview').setup({
-          view = {
-            display_mode = 'border',
-          }
-        })
-      end
-    },
     -- ###### lua plugin end ##########
   },
 })
