@@ -345,6 +345,12 @@ return require("lazy").setup({
         require('users.sessions')
       end
     },
+    {
+      'sindrets/diffview.nvim',
+      config = function ()
+        require('users.diffview')
+      end
+    },
     -- ###### lua plugin end ##########
   },
 })

@@ -40,9 +40,9 @@ nnoremap <leader>/  :call <SID>GREP_STRING()<CR>
 nnoremap <leader>\  :call <SID>GREP_WORD()<CR>
 nnoremap <leader>f  :call <SID>FIND_FILES()<CR>
 nnoremap <leader>m  :Leaderf marks<CR>
-nnoremap <leader>gl :Leaderf git log --explorer --graph --left<CR>
-nnoremap <leader>gf :Leaderf git log --current-file --left --find-copies-harder<CR>
-nnoremap <leader>gd :Leaderf git diff --explorer
+" nnoremap <leader>gl :Leaderf git log --explorer --graph --left<CR>
+" nnoremap <leader>gf :Leaderf git log --current-file --left --find-copies-harder<CR>
+" nnoremap <leader>gd :Leaderf git diff --explorer
 " nnoremap <leader>gb :Leaderf git blame --date relative<CR>
 
 nnoremap <silent> <leader>b :Leaderf buffer<cr>
