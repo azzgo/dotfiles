@@ -27,6 +27,18 @@ alias ll='ls -alF'
 
 if [[ -x $(command -v nvim) ]];then
   alias v='nvim'
+  function ngc() {
+    if [[ $# -gt 0 ]];then
+      COMMIT_ID=$1;
+      nvim -c 'DiffviewOpen '"$COMMIT_ID"'^!' 
+    fi
+  }
+  function ngd() {
+    if [[ $# -gt 0 ]];then
+      COMMIT_ID=$1;
+      nvim -c 'DiffviewOpen '"$COMMIT_ID"'^!' 
+    fi
+  }
 elif [[ -x  $(command -v vim) ]];then
   alias v='vim'
 fi
