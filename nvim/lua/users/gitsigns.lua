@@ -4,6 +4,45 @@ if not ok then
   return
 end
 
+local function hunks_popup_menu()
+  local menu = {
+    '[hunk] stage',
+    '[hunk] reset',
+    '[hunk] preview',
+    '[hunk] undo stage',
+    '[buffer] stage',
+    '[buffer] reset',
+    '[toggle] current line blame',
+    'blame line',
+    'diff this',
+  }
+  vim.fn['_L_FZF_WRAPPER_RUN_']({
+    source = menu,
+    options = { '--prompt', 'Gitsigns actions: ', '--layout=reverse-list', '--cycle' },
+    sink = function(action)
+      if action == '[hunk] stage' then
+        return gitsigns.stage_hunk()
+      elseif action == '[hunk] reset' then
+        return gitsigns.reset_hunk()
+      elseif action == '[hunk] preview' then
+        return gitsigns.preview_hunk()
+      elseif action == '[hunk] undo stage' then
+        return gitsigns.undo_stage_hunk()
+      elseif action == '[buffer] stage' then
+        return gitsigns.stage_buffer()
+      elseif action == '[buffer] reset' then
+        return gitsigns.reset_buffer()
+      elseif action == '[toggle] current line blame' then
+        return gitsigns.toggle_current_line_blame()
+      elseif action == 'blame line' then
+        return gitsigns.blame_line { full = true }
+      elseif action == 'diff this' then
+        return gitsigns.diffthis()
+      end
+    end
+  })
+end
+
 gitsigns.setup({
   current_line_blame = false,
   on_attach = function(bufnr)
@@ -16,12 +55,8 @@ gitsigns.setup({
     vim.keymap.set("n", "]h", ":Gitsigns next_hunk<CR>", { noremap = true, silent = true })
     vim.keymap.set("n", "[h", ":Gitsigns prev_hunk<CR>", { noremap = true, silent = true })
 
-    map({ "n", "v" }, "<leader>hs", ":Gitsigns stage_hunk<CR>")
-    map({ "n", "v" }, "<leader>hr", ":Gitsigns reset_hunk<CR>")
-    map('n', '<leader>hu', gitsigns.undo_stage_hunk)
-    map('n', '<leader>hp', gitsigns.preview_hunk)
-    map('n', '<leader>hb', function() gitsigns.blame_line { full = true } end)
-
-    map('n', '<leader>hd', gitsigns.diffthis)
+    map({ "n", "v" }, "<leader>h", function()
+      hunks_popup_menu()
+    end)
   end
 })

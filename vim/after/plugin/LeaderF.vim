@@ -33,13 +33,36 @@ endfunction
 
 
 
-nnoremap <leader>tr :Leaderf --recall<CR>
-nnoremap <leader>to :Leaderf mru<CR>
-nnoremap <leader>tq :Leaderf quickfix<CR>
+function! s:LEADERF_COMMANDS_ACTIONS(what)
+  if a:what == 'recall'
+    Leaderf --recall
+  elseif a:what == 'mru'
+    Leaderf mru
+  elseif a:what == 'marks'
+    Leaderf marks
+  elseif a:what == 'quickfix'
+    Leaderf quickfix
+  elseif a:what == 'git'
+    Leaderf git
+  endif
+endfunction
+
+function! s:LEADERF_COMMANDS()
+  let source = ['mru', 'recall', 'marks', 'quickfix', 'git']
+	let opts = { 'source': source, 'sink': function('s:LEADERF_COMMANDS_ACTIONS') }
+	if exists('g:fzf_layout')
+		for key in keys(g:fzf_layout)
+			let opts[key] = deepcopy(g:fzf_layout[key])
+		endfor
+	endif
+	call fzf#run(fzf#wrap(opts))
+endfunction
+
+nnoremap <leader>t :call <SID>LEADERF_COMMANDS()<CR>
+
 nnoremap <leader>/  :call <SID>GREP_STRING()<CR>
 nnoremap <leader>\  :call <SID>GREP_WORD()<CR>
 nnoremap <leader>f  :call <SID>FIND_FILES()<CR>
-nnoremap <leader>m  :Leaderf marks<CR>
 " nnoremap <leader>gl :Leaderf git log --explorer --graph --left<CR>
 " nnoremap <leader>gf :Leaderf git log --current-file --left --find-copies-harder<CR>
 " nnoremap <leader>gd :Leaderf git diff --explorer

@@ -12,7 +12,7 @@ function! s:fzf_sink(what)
 	endif
 endfunction
 
-function! s:fzf_task()
+function! s:fzf_async_task()
 	let rows = asynctasks#source(&columns * 48 / 100)
 	let source = []
 	for row in rows
@@ -31,5 +31,5 @@ function! s:fzf_task()
 endfunction
 
 
-nnoremap <A-e> :call <SID>fzf_task()<CR>
-nnoremap <f5> :AsyncTaskLast<CR>
+nnoremap <silent> <leader>a :call <SID>fzf_async_task()<CR>
+nnoremap <F5> :AsyncTaskLast<CR>

@@ -70,8 +70,6 @@ nnoremap <A-q> :q<CR>
 nnoremap <A-c> :tabclose<CR>
 " quick copy from primiary clipboard
 xnoremap <leader>y "+y
-xnoremap <leader>p "+p
-nnoremap <leader>p "+p
 nnoremap <leader>y "+yiw
 nnoremap <c-y> yiw
 

@@ -233,7 +233,7 @@ return require("lazy").setup({
       end
     },
     -- color highlight
-    { "lilydjwg/colorizer" },
+    { "lilydjwg/colorizer", init = function() vim.g.colorizer_nomap = 1 end },
 
     -- zen mode
     {
@@ -248,7 +248,7 @@ return require("lazy").setup({
       end,
     },
     -- vim-rec
-    { 'zaid/vim-rec',      init = function() vim.g.recutils_no_folding = 1 end },
+    { 'zaid/vim-rec',       init = function() vim.g.recutils_no_folding = 1 end },
     --- weapp
     -- { 'chemzqm/wxapp.vim' },
     --- marks enhance
@@ -347,7 +347,7 @@ return require("lazy").setup({
     },
     {
       'sindrets/diffview.nvim',
-      config = function ()
+      config = function()
         require('users.diffview')
       end
     },
