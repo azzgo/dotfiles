@@ -19,6 +19,7 @@ local function harpoon_fzf_action_popup()
   local menu = {
     'add',
     'remove',
+    'list',
     'clear',
   }
   vim.fn['_L_FZF_WRAPPER_RUN_']({
@@ -29,6 +30,8 @@ local function harpoon_fzf_action_popup()
         return harpoon:list():append()
       elseif action == 'remove' then
         return harpoon:list():remove()
+      elseif action == 'list' then
+        return harpoon_fzf_popup(harpoon:list())
       elseif action == 'clear' then
         return harpoon:list():clear()
       end
@@ -45,5 +48,5 @@ harpoon:extend({
   end
 })
 
-vim.keymap.set("n", "<A-a>", function() harpoon_fzf_action_popup() end)
+vim.keymap.set("n", "<leader>e", function() harpoon_fzf_action_popup() end)
 vim.keymap.set("n", "<C-e>", function() harpoon_fzf_popup(harpoon:list()) end)

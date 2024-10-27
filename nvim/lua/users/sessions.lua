@@ -32,4 +32,5 @@ local function session_popup()
   })
 end
 
-vim.keymap.set("n", "<C-p>", function() session_popup() end)
+vim.keymap.set("n", "<Leader>p", function() session_popup() end)
+vim.keymap.set("n", "<C-p>", function() persistence.load() end)
