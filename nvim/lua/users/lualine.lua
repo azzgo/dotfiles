@@ -12,9 +12,8 @@ end
 
 lualine.setup({
   sections = {
-    lualine_b = { 'g:coc_status' },
+    lualine_b = { 'branch' },
     lualine_c = { BufPath },
-    lualine_x = { 'tabnine' }
   },
   options = { theme = "auto", section_separators = "", component_separators = "" },
   extensions = { 'oil' },
