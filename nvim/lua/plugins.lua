@@ -293,7 +293,7 @@ return require("lazy").setup({
             },
             line_num = {
               enable = true,
-              use_treesitter = false,
+              use_treesitter = true,
             },
             blank = {
               enable = false,
