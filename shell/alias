@@ -35,8 +35,8 @@ if [[ -x $(command -v nvim) ]];then
   }
   function ngd() {
     if [[ $# -gt 0 ]];then
-      COMMIT_ID=$1;
-      nvim -c 'DiffviewOpen '"$COMMIT_ID"'^!' 
+      REVISION=$1;
+      nvim -c 'DiffviewOpen '"$REVISION"
     fi
   }
 elif [[ -x  $(command -v vim) ]];then
