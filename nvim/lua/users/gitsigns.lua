@@ -16,31 +16,33 @@ local function hunks_popup_menu()
     'blame line',
     'diff this',
   }
-  vim.fn['_L_FZF_WRAPPER_RUN_']({
-    source = menu,
-    options = { '--prompt', 'Gitsigns actions: ', '--layout=reverse-list', '--cycle' },
-    sink = function(action)
-      if action == '[hunk] stage' then
-        return gitsigns.stage_hunk()
-      elseif action == '[hunk] reset' then
-        return gitsigns.reset_hunk()
-      elseif action == '[hunk] preview' then
-        return gitsigns.preview_hunk()
-      elseif action == '[hunk] undo stage' then
-        return gitsigns.undo_stage_hunk()
-      elseif action == '[buffer] stage' then
-        return gitsigns.stage_buffer()
-      elseif action == '[buffer] reset' then
-        return gitsigns.reset_buffer()
-      elseif action == '[toggle] current line blame' then
-        return gitsigns.toggle_current_line_blame()
-      elseif action == 'blame line' then
-        return gitsigns.blame_line { full = true }
-      elseif action == 'diff this' then
-        return gitsigns.diffthis()
-      end
+
+  vim.ui.select(menu, {
+    prompt = 'Gitsigns actions: ',
+    format_item = function(item)
+      return item
+    end,
+  }, function(action)
+    if action == '[hunk] stage' then
+      gitsigns.stage_hunk()
+    elseif action == '[hunk] reset' then
+      gitsigns.reset_hunk()
+    elseif action == '[hunk] preview' then
+      gitsigns.preview_hunk()
+    elseif action == '[hunk] undo stage' then
+      gitsigns.undo_stage_hunk()
+    elseif action == '[buffer] stage' then
+      gitsigns.stage_buffer()
+    elseif action == '[buffer] reset' then
+      gitsigns.reset_buffer()
+    elseif action == '[toggle] current line blame' then
+      gitsigns.toggle_current_line_blame()
+    elseif action == 'blame line' then
+      gitsigns.blame_line { full = true }
+    elseif action == 'diff this' then
+      gitsigns.diffthis()
     end
-  })
+  end)
 end
 
 gitsigns.setup({

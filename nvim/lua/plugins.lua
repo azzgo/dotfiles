@@ -351,6 +351,13 @@ return require("lazy").setup({
         require('users.diffview')
       end
     },
+    {
+      'stevearc/dressing.nvim',
+      event = 'VeryLazy',
+      config = function ()
+        require('users.dressing')
+      end,
+    }
     -- ###### lua plugin end ##########
   },
 })
