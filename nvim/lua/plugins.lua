@@ -180,8 +180,6 @@ return require("lazy").setup({
         ]]
       end
     },
-    -- bqf
-    { "kevinhwang91/nvim-bqf" },
     {
       'kevinhwang91/nvim-ufo',
       dependencies = { 'kevinhwang91/promise-async' },
