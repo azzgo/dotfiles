@@ -13,11 +13,18 @@ dressing.setup({
     backend = { 'builtin', 'fzf' },
     builtin = {
       relative = 'cursor',
+      border = 'single',
+      min_width = { 1, 0.1 },
+      min_height = { 1, 0.1 },
       mappings = {
         ["<Esc>"] = "Close",
         ["<C-c>"] = "Close",
         ["<CR>"] = "Confirm",
       },
+      override =  function (config)
+        config.title_pos = 'left'
+        return config
+      end
     }
   },
 })
