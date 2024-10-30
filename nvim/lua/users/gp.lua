@@ -52,7 +52,7 @@ vim.keymap.set("n", "<leader>i", function()
 end
 )
 
-vim.keymap.set({ "x", "i" }, "<leader>i", function()
+vim.keymap.set({ "x" }, "<leader>i", function()
   if vim.api.nvim_get_mode().mode == "i" then
     vim.cmd("stopinsert")
   end
