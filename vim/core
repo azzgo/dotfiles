@@ -3,6 +3,9 @@
 " Core config for Vim/Neovim
 " ==========================
 
+" disable cursor blinking
+set guicursor+=a:blinkon0
+
 " setting leader key
 let mapleader=" "
 let g:mapleader=" "
