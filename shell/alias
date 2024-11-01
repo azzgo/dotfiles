@@ -14,6 +14,7 @@ alias grb="git rebase"
 alias grbc="git rebase --continue"
 alias grba="git rebase --abort"
 alias gprp='git pull --rebase && git push'
+alias gscf='g diff-tree --no-commit-id --name-only -r'
 
 function gcd() {
   if [[ -x  $(command -v fzf) ]];then
