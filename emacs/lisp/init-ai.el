@@ -1,4 +1,5 @@
 (use-package gptel
+:init (setq gptel-default-mode 'org-mode)
 :config (progn
  (setq-default
   gptel-model "gpt-4o"
