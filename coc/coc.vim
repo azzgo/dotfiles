@@ -24,7 +24,7 @@ nnoremap <silent> [d <Plug>(coc-diagnostic-prev)
 nnoremap <silent> ]d <Plug>(coc-diagnostic-next)
 nnoremap <silent> <c-k> <Plug>(coc-diagnostic-info)
 nnoremap <silent> <A-d> :call CocAction('diagnosticToggleBuffer')<CR>
-nnoremap <silent> <leader>d :CocDiagnostics<CR>
+nnoremap <silent> <leader>d :<c-u>CocFzfList diagnostics<cr>
 
 
 " format
@@ -39,8 +39,23 @@ nmap <silent> gi <Plug>(coc-implementation)
 nmap <silent> gr <Plug>(coc-references)
 nmap <silent> gK :<c-u>CocDiagnostics<cr>
 
-" outline
-nmap <silent><leader>o :<c-u>CocOutline<cr>
+" outline toggle function
+function! s:CocOutlineToggle() 
+  if !exists('g:coc_status') || g:coc_status == ''
+    return
+  endif
+  " if Document symbol provider not found return
+  if !CocAction('hasProvider', 'documentSymbol')
+    return
+  endif
+  let winid = coc#window#find('cocViewId', 'OUTLINE')
+  if winid == -1
+    call CocActionAsync('showOutline')
+  else
+    call coc#window#close(winid)
+  endif
+endfunction
+nmap <silent><leader>o :<c-u>call <SID>CocOutlineToggle()<cr>
 
 " coc list
 nmap <silent><leader>cr :<c-u>CocFzfListResume<cr>
