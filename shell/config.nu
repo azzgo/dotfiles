@@ -2,9 +2,9 @@ $env.config = {
   show_banner: false,
 }
 
-if (which nvim) != nil {
+if (which nvim | length) != 0 {
   $env.config.buffer_editor = "nvim"
-} else if (which vim) != nil {
+} else if (which vim | length) != 0 {
   $env.config.buffer_editor = "vim"
 }
 
@@ -27,15 +27,27 @@ def gprp [] { git pull --rebase; git push }
 
 def v [...x] {
   if (which nvim | length) != 0 {
-    nvim ($x | str join)
+    if ($x | length) == 0 {
+      nvim
+    } else {
+      nvim ($x | str join)
+    }
   } else if (which vim | length) != 0 {
-    vim ($x | str join)
+    if ($x |length) == 0 {
+      vim
+    } else {
+      vim ($x | str join)
+    }
   }
 }
 
 def vi [...x] {
   # if nvim if v is nvim; else if vim v is vim
   if (which vim | length) != 0 {
-    vim ($x | str join)
+    if ($x | length) == 0 {
+      vim
+    } else {
+      vim ($x | str join)
+    }
   } 
 }
