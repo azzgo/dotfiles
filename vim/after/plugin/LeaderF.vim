@@ -40,6 +40,8 @@ function! s:LEADERF_COMMANDS_ACTIONS(what)
     Leaderf mru
   elseif a:what == 'marks'
     Leaderf marks
+  elseif a:what == 'window'
+    Leaderf window
   elseif a:what == 'quickfix'
     Leaderf quickfix
   elseif a:what == 'git'
@@ -48,7 +50,7 @@ function! s:LEADERF_COMMANDS_ACTIONS(what)
 endfunction
 
 function! s:LEADERF_COMMANDS()
-  let source = ['mru', 'recall', 'marks', 'quickfix', 'git']
+  let source = ['mru', 'recall', 'marks', 'window', 'quickfix', 'git']
 	let opts = { 'source': source, 'sink': function('s:LEADERF_COMMANDS_ACTIONS') }
 	if exists('g:fzf_layout')
 		for key in keys(g:fzf_layout)
@@ -58,7 +60,7 @@ function! s:LEADERF_COMMANDS()
 	call fzf#run(fzf#wrap(opts))
 endfunction
 
-nnoremap <leader>t :call <SID>LEADERF_COMMANDS()<CR>
+nnoremap <leader>l :call <SID>LEADERF_COMMANDS()<CR>
 
 nnoremap <leader>/  :call <SID>GREP_STRING()<CR>
 nnoremap <leader>\  :call <SID>GREP_WORD()<CR>

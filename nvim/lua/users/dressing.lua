@@ -19,6 +19,7 @@ dressing.setup({
       mappings = {
         ["<Esc>"] = "Close",
         ["<C-c>"] = "Close",
+        ["q"] = "Close",
         ["<CR>"] = "Confirm",
       },
       override =  function (config)
