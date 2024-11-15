@@ -44,13 +44,13 @@ function! s:LEADERF_COMMANDS_ACTIONS(what)
     Leaderf window
   elseif a:what == 'quickfix'
     Leaderf quickfix
-  elseif a:what == 'git'
-    Leaderf git
+  elseif a:what == 'grep word'
+    call <SID>GREP_WORD()
   endif
 endfunction
 
 function! s:LEADERF_COMMANDS()
-  let source = ['mru', 'recall', 'marks', 'window', 'quickfix', 'git']
+  let source = ['mru', 'recall', 'marks', 'window', 'quickfix', 'grep word']
 	let opts = { 'source': source, 'sink': function('s:LEADERF_COMMANDS_ACTIONS') }
 	if exists('g:fzf_layout')
 		for key in keys(g:fzf_layout)
@@ -63,7 +63,6 @@ endfunction
 nnoremap <leader>l :call <SID>LEADERF_COMMANDS()<CR>
 
 nnoremap <leader>/  :call <SID>GREP_STRING()<CR>
-nnoremap <leader>\  :call <SID>GREP_WORD()<CR>
 nnoremap <leader>f  :call <SID>FIND_FILES()<CR>
 
 nnoremap <silent> <leader>b :Leaderf buffer<cr>
