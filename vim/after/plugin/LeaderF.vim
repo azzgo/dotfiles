@@ -26,8 +26,9 @@ function! s:FIND_FILES()
   execute 'Leaderf file --input "' . s:search . '"'
 endfunction
 
-function! s:GREP_WORD()
-  let s:word = input("Grep Word> ")
+function! s:GREP_CURSOR_WORD()
+  " the word under the cursor
+  let s:word = expand('<cword>')
   execute 'Leaderf rg --regexMode --input "\<' . s:word . '\>"'
 endfunction
 
@@ -44,13 +45,13 @@ function! s:LEADERF_COMMANDS_ACTIONS(what)
     Leaderf window
   elseif a:what == 'quickfix'
     Leaderf quickfix
-  elseif a:what == 'grep word'
-    call <SID>GREP_WORD()
+  elseif a:what == 'grep current word'
+    call <SID>GREP_CURSOR_WORD()
   endif
 endfunction
 
 function! s:LEADERF_COMMANDS()
-  let source = ['mru', 'recall', 'marks', 'window', 'quickfix', 'grep word']
+  let source = ['mru', 'recall', 'marks', 'window', 'quickfix', 'grep current word']
 	let opts = { 'source': source, 'sink': function('s:LEADERF_COMMANDS_ACTIONS') }
 	if exists('g:fzf_layout')
 		for key in keys(g:fzf_layout)
