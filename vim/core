@@ -70,7 +70,6 @@ set noswapfile
 " quick save and quit
 nnoremap <A-w> :w<CR>
 nnoremap <A-q> :q<CR>
-" <alt> + <f4> is <f52> in my keyboard
 nnoremap <A-Q> :tabclose<CR>
 " quick copy from primiary clipboard
 xnoremap <leader>y "+y
@@ -145,9 +144,6 @@ vnoremap > >gv
 " quick map for fold
 nnoremap <A-m> za
 nnoremap <A-M> zA
-" mkview & loadview
-nnoremap <f9> :mkview<CR>
-nnoremap <f10> :loadview<CR>
 
 "============ netrw setting ==============
 

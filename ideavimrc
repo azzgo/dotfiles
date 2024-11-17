@@ -3,7 +3,7 @@ let mapleader=" "
 let g:mapleader=" "
 
 set updatetime=300
-set timeoutlen=800
+set timeoutlen=300
 
 " line numbers
 set number
@@ -18,17 +18,20 @@ nnoremap <A-q> :q<CR>
 nnoremap <leader>wq :wq<CR>
 " quick copy from primiary clipboard
 xnoremap <leader>y "+y
-xnoremap <leader>p "+p
-nnoremap <leader>p "+p
 nnoremap <leader>y "+yiw
+nnoremap <c-y> yiw
+inoremap <A-c> <C-o>yiw
+inoremap <A-v> <C-r>"
 
 " map Q to q for ex mode is not usable for me
 map Q q
 
 " tabs 
 nnoremap <silent> <leader>nt :tabnew<CR> 
-nnoremap <silent> [t :tabprevious<CR> 
-nnoremap <silent> ]t :tabnext<CR>
+nnoremap <silent> <A-p> <cmd>tabprevious<CR> 
+nnoremap <silent> <A-n> <cmd>tabnext<CR>
+inoremap <silent> <A-p> <cmd>tabprevious<CR> 
+inoremap <silent> <A-n> <cmd>tabnext<CR>
 
 " map alt + n -> tab n
 nnoremap <A-1> 1gt
@@ -36,12 +39,18 @@ nnoremap <A-2> 2gt
 nnoremap <A-3> 3gt
 nnoremap <A-4> 4gt
 nnoremap <A-5> 5gt
+inoremap <silent> <A-1> <C-o>1gt
+inoremap <silent> <A-2> <C-o>2gt
+inoremap <silent> <A-3> <C-o>3gt
+inoremap <silent> <A-4> <C-o>4gt
+inoremap <silent> <A-5> <C-o>5gt
 
 " emacs  like kemap in insert mode
 inoremap <c-a> <home>
 inoremap <c-e> <end>
 inoremap <c-f> <right>
 inoremap <c-b> <left>
+inoremap <c-k> <c-o>D
 cnoremap <c-a> <home>
 cnoremap <c-b> <left>
 cnoremap <c-e> <end>
@@ -52,6 +61,9 @@ inoremap <A-j> <esc>:m .+1<cr>==gi
 inoremap <A-k> <esc>:m .-2<cr>==gi
 vnoremap <A-j> :m '>+1<cr>gv
 vnoremap <A-k> :m '<-2<cr>gv
+" switch between window
+nnoremap <A-o> <C-w><C-w>
+inoremap <A-o> <C-o><C-w><C-w>
 
 "better intent
 vnoremap < <gv
@@ -102,9 +114,6 @@ vnoremap > >gv
 
 " outline
 :map <leader>o <Action>(ActivateStructureToolWindow)
-
-"only editor
-:map <A-o> <Action>(HideAllWindows)
 
 " dignostic 
 :map <C-k> <Action>(ShowErrorDescription)
