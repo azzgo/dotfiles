@@ -5,10 +5,9 @@ let g:dot_config_path = expand('<sfile>:h:h')
 " source basic file of vim config
 exe 'source' (g:vim_config_path . '/core')
 
-
 set inccommand=split
 
-" unmap netrw for prepare nvim tree
+" unmap netrw
 unmap <leader>nn
 let g:loaded_netrw = 1
 let g:loaded_netrwPlugin = 1
