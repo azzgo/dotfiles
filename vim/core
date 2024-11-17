@@ -71,7 +71,7 @@ set noswapfile
 nnoremap <A-w> :w<CR>
 nnoremap <A-q> :q<CR>
 " <alt> + <f4> is <f52> in my keyboard
-nnoremap <f52> :tabclose<CR>
+nnoremap <A-Q> :tabclose<CR>
 " quick copy from primiary clipboard
 xnoremap <leader>y "+y
 nnoremap <leader>y "+yiw
