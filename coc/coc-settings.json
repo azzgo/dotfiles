@@ -35,7 +35,19 @@
           "diagnostics": { "ignored": ["uri_literal"] }
         }
       }
+    },
+    "svelte": {
+      "command": "svelteserver",
+      "args": ["--stdio"],
+      "filetypes": ["svelte"],
+      "rootPatterns": ["svelte.config.js", "svelte.config.cjs"],
+      "initializationOptions": {
+        "configuration": {
+          "svelte": {
+            "plugin": {}
+          }
+        }
+      }
     }
-  },
-  "svelte.enable-ts-plugin": true
+  }
 }
