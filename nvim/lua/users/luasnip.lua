@@ -26,21 +26,21 @@ vim.keymap.set({ "i", "s" }, "<C-j>", function() ls.jump(1) end, { silent = true
 
 
 --- snippets
-local jsLogSnippet = s("log", {
+local jsLogSnippet = s({ trig = "log", name = 'console.log()' }, {
   t("console.log("), i(1, "message"), t(");")
 })
-local jsLogDebugSnippet = s("logd", {
+local jsLogDebugSnippet = s({ trig = "logd", name = 'log debug' }, {
   t("console.log(\"[DEBUG] \", "), i(1, "message"), t(");")
 })
 
-local jsLetPrefixSnippet = postfix('.let', {
+local jsLetPrefixSnippet = postfix({ trig = '.let', name = 'let variable' }, {
   t('let '),
   i(1, 'variable'),
   f(function(_, parent)
     return " = " .. parent.snippet.env.POSTFIX_MATCH .. ";"
   end, {}),
 })
-local jsConstPrefixSnippet = postfix('.const', {
+local jsConstPrefixSnippet = postfix({ trig = '.const', name = 'const variable' }, {
   t('const '),
   i(1, 'variable'),
   f(function(_, parent)
@@ -49,12 +49,12 @@ local jsConstPrefixSnippet = postfix('.const', {
 })
 
 
-local jsArrayFunction = s('af', fmt([[({1}) => {{
+local jsArrayFunction = s({ trig = 'af', name = 'arrow functoin' }, fmt([[({1}) => {{
   {2}
 }}
 ]], { i(1), i(2) }, {}))
 
-local jsxReactFunctionComponentSnippet = s('rfc', fmt([[
+local jsxReactFunctionComponentSnippet = s({ trig = 'rfc', name = 'react function component' }, fmt([[
 const {1} = ({2}) => {{
   return <{3}>{4}</{3}>;
 }}
@@ -62,13 +62,13 @@ const {1} = ({2}) => {{
 export default {1};
 ]], { i(1, "Component"), i(2, "props"), i(3), i(4) }, { repeat_duplicates = true }))
 
-local tsInterface = s('i', fmt([[
+local tsInterface = s({ trig = 'i', name = 'interface'}, fmt([[
 interface {1} {{
   {2}
 }}
 ]], { i(1, 'name'), i(2) }, {}))
 
-local nextUseClient = s('nuc', { t('"use client";') })
+local nextUseClient = s({ trig = 'nuc', name = 'use client in nextjs' }, { t('"use client";') })
 
 local htmlTagCollection = {
   s("div", { t("<div>"), i(1), t("</div>") }),
@@ -118,7 +118,7 @@ local htmlTagCollection = {
 </html>]], { i(1), i(2), i(3) })),
 }
 
-local loremText = s('lorem',
+local loremText = s({ trig = 'lorem', name = 'lorem ipsum' },
   { t('Lorem ipsum dolor sit amet, qui minim labore adipisicing minim sint cillum sint consectetur cupidatat.') })
 local date = s('date', { t(os.date('%Y-%m-%d')) })
 local time = s('time', { t(os.date('%H:%M:%S')) })
@@ -241,6 +241,3 @@ ls.add_snippets('markdown', {
   })
 
 });
-
-
-

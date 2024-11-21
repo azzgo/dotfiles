@@ -11,26 +11,4 @@ persistence.setup({
 
 persistence.stop()
 
-local function session_popup()
-  local menu = {
-    'save',
-    'load',
-    'select',
-  }
-  vim.fn['_L_FZF_WRAPPER_RUN_']({
-    source = menu,
-    options = { '--prompt', 'sessions menu: ', '--layout=reverse-list', '--cycle' },
-    sink = function(action)
-      if action == 'load' then
-        persistence.load({ last = true })
-      elseif action == 'select' then
-        persistence.select()
-      elseif action == 'save' then
-        persistence.save()
-      end
-    end
-  })
-end
-
-vim.keymap.set("n", "<Leader>p", function() session_popup() end)
-vim.keymap.set("n", "<C-p>", function() persistence.load() end)
+vim.keymap.set("n", "<M-r>", function() persistence.load() end)
