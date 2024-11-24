@@ -1,3 +1,6 @@
+let g:Lf_WindowPosition = 'popup'
+let g:Lf_PopupAutoAdjustHeight = 0
+
 let g:Lf_PreviewResult = {
         \ 'File': 0,
         \ 'Buffer': 0,
