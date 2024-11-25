@@ -1,4 +1,5 @@
 {
+  "suggest.autoTrigger": "trigger",
   "coc.preferences.currentFunctionSymbolAutoUpdate": true,
   "eslint.format.enable": false,
   "outline.autoWidth": false,
