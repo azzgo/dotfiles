@@ -75,7 +75,7 @@ return require("lazy").setup({
     {
       'github/copilot.vim',
       init = function()
-        vim.keymap.set('i', '<C-space>', 'copilot#Accept("\\<CR>")', {
+        vim.keymap.set('i', '<M-space>', 'copilot#Accept("\\<CR>")', {
           expr = true,
           replace_keycodes = false
         })
