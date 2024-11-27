@@ -11,7 +11,7 @@ let mapleader=" "
 let g:mapleader=" "
 
 set updatetime=300
-set timeoutlen=300
+set timeoutlen=500
 
 " syntax highlight
 syntax on
@@ -70,6 +70,7 @@ set noswapfile
 " quick save and quit
 nnoremap <A-w> :w<CR>
 nnoremap <A-q> :q<CR>
+nnoremap <leader>Q :qa!<CR>
 nnoremap <A-Q> :tabclose<CR>
 " quick copy from primiary clipboard
 xnoremap <leader>y "+y
