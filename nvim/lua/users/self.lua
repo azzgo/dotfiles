@@ -2,7 +2,6 @@ local persistence_ok, persistence = pcall(require, "persistence")
 local luasnip_ok, ls = pcall(require, "luasnip")
 local todo_ok = pcall(require, "todo-comments")
 
-
 local function buffer_delete_others()
   local filter = function(b)
     return b ~= vim.api.nvim_get_current_buf()
@@ -29,39 +28,62 @@ local function list_snipets()
   })
 end
 
+local MENU_ENUM = {
+  SAVE_SESSION = 'save session',
+  LOAD_SESSION = 'load session',
+  SELECT_SESSION = 'select session',
+  LUASNIP = 'luasnip',
+  TODO_LIST = 'todo list',
+  BUFFER_DELETE_OTHERS = 'buffer delete others',
+  COPY_BUFFER_RELATIVE_PATH = 'copy buffer relative path',
+  COPY_BUFFER_ABSOLUTE_PATH = 'copy buffer absolute path',
+  TOGGLE_HLINTENT = 'toggle hl chunk plugin',
+}
+
 local function self_use_case_popup()
   local menu = {}
   if persistence_ok == true then
-    table.insert(menu, 'save session')
-    table.insert(menu, 'load session')
-    table.insert(menu, 'select session')
+    table.insert(menu, MENU_ENUM.SAVE_SESSION)
+    table.insert(menu, MENU_ENUM.LOAD_SESSION)
+    table.insert(menu, MENU_ENUM.SELECT_SESSION)
   end
   if luasnip_ok == true then
-    table.insert(menu, 'luasnip')
+    table.insert(menu, MENU_ENUM.LUASNIP)
   end
 
   if todo_ok == true then
-    table.insert(menu, 'todo list')
+    table.insert(menu, MENU_ENUM.TODO_LIST)
   end
 
-  table.insert(menu, 'buffer delete others')
+  table.insert(menu, MENU_ENUM.BUFFER_DELETE_OTHERS)
+  table.insert(menu, MENU_ENUM.COPY_BUFFER_RELATIVE_PATH)
+  table.insert(menu, MENU_ENUM.COPY_BUFFER_ABSOLUTE_PATH)
 
   vim.fn['_L_FZF_WRAPPER_RUN_']({
     source = menu,
     options = { '--prompt', 'sessions menu: ', '--layout=reverse-list', '--cycle' },
     sink = function(action)
-      if action == 'load session' then
+      if action == MENU_ENUM.LOAD_SESSION then
         persistence.load({ last = true })
-      elseif action == 'select session' then
+      elseif action == MENU_ENUM.SAVE_SESSION then
         persistence.select()
-      elseif action == 'save session' then
+      elseif action == MENU_ENUM.SELECT_SESSION then
         persistence.save()
-      elseif action == 'buffer delete others' then
+      elseif action == MENU_ENUM.BUFFER_DELETE_OTHERS then
         buffer_delete_others()
-      elseif action == 'luasnip' then
+      elseif action == MENU_ENUM.LUASNIP then
         list_snipets();
-      elseif action == 'todo list' then
+      elseif action == MENU_ENUM.TODO_LIST then
         vim.cmd.TodoQuickFix();
+      elseif action == MENU_ENUM.COPY_BUFFER_RELATIVE_PATH then
+        local bufPath = vim.fn.expand('%f')
+        local relativePath = vim.fn.fnamemodify(bufPath, ':.')
+        vim.fn.setreg('+', relativePath)
+        vim.fn.setreg('*', relativePath)
+      elseif action == MENU_ENUM.COPY_BUFFER_ABSOLUTE_PATH then
+        local bufPath = vim.fn.expand('%f')
+        vim.fn.setreg('+', bufPath)
+        vim.fn.setreg('*', bufPath)
       end
     end
   })
