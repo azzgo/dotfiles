@@ -4,32 +4,6 @@ local todo_ok = pcall(require, "todo-comments")
 local curl_ok, curl = pcall(require, 'curl');
 local utils = require('users.utils')
 
-local function buffer_delete_others()
-  local filter = function(b)
-    return b ~= vim.api.nvim_get_current_buf()
-  end
-  for _, b in ipairs(vim.tbl_filter(filter, vim.api.nvim_list_bufs())) do
-    if vim.bo[b].buflisted then
-      vim.api.nvim_buf_delete(b, { force = true })
-    end
-  end
-end
-
-local function list_snipets()
-  -- list all snippets
-  local snippets = {}
-  for _, snippet in ipairs(ls.get_snippets(vim.bo.filetype)) do
-    table.insert(snippets, '[' .. snippet.name .. '] trigger by: ' .. snippet.trigger)
-  end
-  vim.fn['_L_FZF_WRAPPER_RUN_']({
-    source = snippets,
-    options = { '--prompt', 'luasnip: ', '--layout=reverse-list', '--cycle' },
-    sink = function(action)
-      print(action)
-    end
-  })
-end
-
 local MENU_ENUM = {
   SAVE_SESSION = 'save session',
   LOAD_SESSION = 'load session',
@@ -81,9 +55,9 @@ local function self_use_case_popup()
       elseif action == MENU_ENUM.SELECT_SESSION then
         persistence.save()
       elseif action == MENU_ENUM.BUFFER_DELETE_OTHERS then
-        buffer_delete_others()
+        utils.buffer_delete_others()
       elseif action == MENU_ENUM.LUASNIP then
-        list_snipets();
+        utils.list_snipets();
       elseif action == MENU_ENUM.TODO_LIST then
         vim.cmd.TodoQuickFix();
       elseif action == MENU_ENUM.COPY_BUFFER_RELATIVE_PATH then
