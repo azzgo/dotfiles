@@ -2,6 +2,7 @@ local persistence_ok, persistence = pcall(require, "persistence")
 local luasnip_ok, ls = pcall(require, "luasnip")
 local todo_ok = pcall(require, "todo-comments")
 local curl_ok, curl = pcall(require, 'curl');
+local utils = require('users.utils')
 
 local function buffer_delete_others()
   local filter = function(b)
@@ -41,6 +42,7 @@ local MENU_ENUM = {
   CURL_OPEN_GLOBAL = 'curl open global',
   CURL_OPEN_COLLECTION = 'curl open collection',
   CURL_PICK_COLLECTION = 'curl pick collection',
+  JQ_FILTER_BUFFER = 'jq filter buffer',
 }
 
 local function self_use_case_popup()
@@ -66,6 +68,7 @@ local function self_use_case_popup()
   table.insert(menu, MENU_ENUM.BUFFER_DELETE_OTHERS)
   table.insert(menu, MENU_ENUM.COPY_BUFFER_RELATIVE_PATH)
   table.insert(menu, MENU_ENUM.COPY_BUFFER_ABSOLUTE_PATH)
+  table.insert(menu, MENU_ENUM.JQ_FILTER_BUFFER)
 
   vim.fn['_L_FZF_WRAPPER_RUN_']({
     source = menu,
@@ -98,6 +101,8 @@ local function self_use_case_popup()
         curl.open_curl_tab();
       elseif action == MENU_ENUM.CURL_PICK_COLLECTION then
         curl.pick_scoped_collection();
+      elseif action == MENU_ENUM.JQ_FILTER_BUFFER then
+        utils.jq_filter_buffer()
       end
     end
   })
