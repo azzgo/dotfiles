@@ -1,6 +1,7 @@
 local persistence_ok, persistence = pcall(require, "persistence")
 local luasnip_ok, ls = pcall(require, "luasnip")
 local todo_ok = pcall(require, "todo-comments")
+local curl_ok, curl = pcall(require, 'curl');
 
 local function buffer_delete_others()
   local filter = function(b)
@@ -37,7 +38,9 @@ local MENU_ENUM = {
   BUFFER_DELETE_OTHERS = 'buffer delete others',
   COPY_BUFFER_RELATIVE_PATH = 'copy buffer relative path',
   COPY_BUFFER_ABSOLUTE_PATH = 'copy buffer absolute path',
-  TOGGLE_HLINTENT = 'toggle hl chunk plugin',
+  CURL_OPEN_GLOBAL = 'curl open global',
+  CURL_OPEN_COLLECTION = 'curl open collection',
+  CURL_PICK_COLLECTION = 'curl pick collection',
 }
 
 local function self_use_case_popup()
@@ -53,6 +56,11 @@ local function self_use_case_popup()
 
   if todo_ok == true then
     table.insert(menu, MENU_ENUM.TODO_LIST)
+  end
+  if curl_ok == true then
+    table.insert(menu, MENU_ENUM.CURL_OPEN_GLOBAL)
+    table.insert(menu, MENU_ENUM.CURL_OPEN_COLLECTION)
+    table.insert(menu, MENU_ENUM.CURL_PICK_COLLECTION)
   end
 
   table.insert(menu, MENU_ENUM.BUFFER_DELETE_OTHERS)
@@ -84,6 +92,12 @@ local function self_use_case_popup()
         local bufPath = vim.fn.expand('%f')
         vim.fn.setreg('+', bufPath)
         vim.fn.setreg('*', bufPath)
+      elseif action == MENU_ENUM.CURL_OPEN_GLOBAL then
+        curl.open_global_tab()
+      elseif action == MENU_ENUM.CURL_OPEN_COLLECTION then
+        curl.open_curl_tab();
+      elseif action == MENU_ENUM.CURL_PICK_COLLECTION then
+        curl.pick_scoped_collection();
       end
     end
   })
