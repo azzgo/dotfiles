@@ -1,13 +1,5 @@
 local M = {}
 
-function M.executable(name)
-  if vim.fn.executable(name) > 0 then
-    return true
-  end
-
-  return false
-end
-
 local function read_buffer_content()
   local bufnr = vim.api.nvim_get_current_buf()
   local content = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
@@ -44,8 +36,42 @@ local function process_with_jq()
   show_result_in_new_buffer(result)
 end
 
+function M.executable(name)
+  if vim.fn.executable(name) > 0 then
+    return true
+  end
+
+  return false
+end
+
 function M.jq_filter_buffer()
   process_with_jq()
+end
+
+function M.buffer_delete_others()
+  local filter = function(b)
+    return b ~= vim.api.nvim_get_current_buf()
+  end
+  for _, b in ipairs(vim.tbl_filter(filter, vim.api.nvim_list_bufs())) do
+    if vim.bo[b].buflisted then
+      vim.api.nvim_buf_delete(b, { force = true })
+    end
+  end
+end
+
+function M.list_snipets()
+  -- list all snippets
+  local snippets = {}
+  for _, snippet in ipairs(ls.get_snippets(vim.bo.filetype)) do
+    table.insert(snippets, '[' .. snippet.name .. '] trigger by: ' .. snippet.trigger)
+  end
+  vim.fn['_L_FZF_WRAPPER_RUN_']({
+    source = snippets,
+    options = { '--prompt', 'luasnip: ', '--layout=reverse-list', '--cycle' },
+    sink = function(action)
+      print(action)
+    end
+  })
 end
 
 return M
