@@ -57,7 +57,7 @@ local function self_use_case_popup()
       elseif action == MENU_ENUM.BUFFER_DELETE_OTHERS then
         utils.buffer_delete_others()
       elseif action == MENU_ENUM.LUASNIP then
-        utils.list_snipets();
+        utils.list_snippets();
       elseif action == MENU_ENUM.TODO_LIST then
         vim.cmd.TodoQuickFix();
       elseif action == MENU_ENUM.COPY_BUFFER_RELATIVE_PATH then
