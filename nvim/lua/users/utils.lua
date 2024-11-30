@@ -1,3 +1,4 @@
+local luasnip_ok, ls = pcall(require, "luasnip")
 local M = {}
 
 local function read_buffer_content()
@@ -13,6 +14,9 @@ end
 
 local function run_jq(content, filter)
   local handle = io.popen("echo '" .. content:gsub("'", "'\\''") .. "' | jq '" .. filter .. "'")
+  if handle == nil then
+    return "jq failed"
+  end
   local result = handle:read("*a")
   handle:close()
   return result
@@ -22,12 +26,10 @@ local function show_result_in_popup(result)
   local buf = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_option(buf, 'filetype', 'json')
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(result, "\n"))
-  
   local width = math.floor(vim.o.columns * 0.8)
   local height = math.floor(vim.o.lines * 0.8)
   local row = math.floor((vim.o.lines - height) / 2)
   local col = math.floor((vim.o.columns - width) / 2)
-  
   local opts = {
     style = 'minimal',
     relative = 'editor',
@@ -37,7 +39,6 @@ local function show_result_in_popup(result)
     col = col,
     border = 'single'
   }
-  
   vim.api.nvim_open_win(buf, true, opts)
 end
 
@@ -76,6 +77,10 @@ function M.buffer_delete_others()
 end
 
 function M.list_snippets()
+  if luasnip_ok == false then
+    print("luasnip is not installed")
+    return
+  end
   -- list all snippets
   local snippets = {}
   for _, snippet in ipairs(ls.get_snippets(vim.bo.filetype)) do
