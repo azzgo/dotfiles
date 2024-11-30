@@ -1,5 +1,5 @@
 local persistence_ok, persistence = pcall(require, "persistence")
-local luasnip_ok, ls = pcall(require, "luasnip")
+local luasnip_ok = pcall(require, "luasnip")
 local todo_ok = pcall(require, "todo-comments")
 local curl_ok, curl = pcall(require, 'curl');
 local utils = require('users.utils')
