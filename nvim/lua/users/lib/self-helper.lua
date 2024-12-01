@@ -77,14 +77,17 @@ function M.list_snippets()
   end
   -- list all snippets
   local snippets = {}
+  local snippetMap = {}
   for _, snippet in ipairs(ls.get_snippets(vim.bo.filetype)) do
-    table.insert(snippets, '[' .. snippet.name .. '] trigger by: ' .. snippet.trigger)
+    local action = '[' .. snippet.name .. '] trigger by: ' .. snippet.trigger
+    table.insert(snippets, action)
+    snippetMap[action] = snippet
   end
   vim.fn['_L_FZF_WRAPPER_RUN_']({
     source = snippets,
     options = { '--prompt', 'luasnip: ', '--layout=reverse-list', '--cycle' },
     sink = function(action)
-      print(action)
+      ls.snip_expand(snippetMap[action])
     end
   })
 end
