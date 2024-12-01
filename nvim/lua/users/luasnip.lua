@@ -3,7 +3,7 @@ local ok, ls = pcall(require, "luasnip")
 if not ok then
   return
 end
-
+local utils = require('users.utils')
 local s = ls.snippet
 local t = ls.text_node
 local i = ls.insert_node
@@ -48,7 +48,7 @@ const {1} = ({2}) => {{
 export default {1};
 ]], { i(1, "Component"), i(2, "props"), i(3), i(4) }, { repeat_duplicates = true }))
 
-local tsInterface = s({ trig = 'i', name = 'interface'}, fmt([[
+local tsInterface = s({ trig = 'i', name = 'interface' }, fmt([[
 interface {1} {{
   {2}
 }}
@@ -128,39 +128,42 @@ local javascriptCommonSnippets = {
   jsArrayFunction,
 }
 
-ls.add_snippets("typescript", {
-  unpack(javascriptCommonSnippets),
-  tsInterface,
-})
+ls.add_snippets("typescript", utils.merge_list(
+  javascriptCommonSnippets, {
+    tsInterface,
+  }))
 
-ls.add_snippets("javascript", {
-  unpack(javascriptCommonSnippets),
-  jsArrayFunction,
-})
+ls.add_snippets("javascript",
+  javascriptCommonSnippets
+)
 
-ls.add_snippets("javascriptreact", {
-  unpack(javascriptCommonSnippets),
-  unpack(htmlTagCollection),
-  jsxReactFunctionComponentSnippet,
-  nextUseClient,
-})
+ls.add_snippets("javascriptreact",
+  utils.merge_list(
+    javascriptCommonSnippets,
+    htmlTagCollection,
+    {
+      jsxReactFunctionComponentSnippet,
+      nextUseClient,
+    })
+)
 
-ls.add_snippets("typescriptreact", {
-  unpack(javascriptCommonSnippets),
-  unpack(htmlTagCollection),
-  jsxReactFunctionComponentSnippet,
-  nextUseClient,
-  tsInterface,
-})
+ls.add_snippets("typescriptreact", utils.merge_list(
+  javascriptCommonSnippets,
+  htmlTagCollection,
+  {
+    jsxReactFunctionComponentSnippet,
+    nextUseClient,
+    tsInterface,
+  }))
 
-ls.add_snippets("vue", {
-  unpack(javascriptCommonSnippets),
-  unpack(htmlTagCollection),
-})
+ls.add_snippets("vue", utils.merge_list(
+  javascriptCommonSnippets,
+  htmlTagCollection
+))
 
-ls.add_snippets("html", {
-  unpack(htmlTagCollection),
-})
+ls.add_snippets("html",
+  htmlTagCollection
+)
 
 ls.add_snippets('gitcommit', {
   s("msg", fmt("[{scope}][{type}] {description}", {
