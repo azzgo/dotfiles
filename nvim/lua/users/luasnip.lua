@@ -3,7 +3,7 @@ local ok, ls = pcall(require, "luasnip")
 if not ok then
   return
 end
-local utils = require('users.utils')
+local utils = require('users.lib.utils')
 local s = ls.snippet
 local t = ls.text_node
 local i = ls.insert_node
