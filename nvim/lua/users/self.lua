@@ -2,7 +2,7 @@ local persistence_ok, persistence = pcall(require, "persistence")
 local luasnip_ok = pcall(require, "luasnip")
 local todo_ok = pcall(require, "todo-comments")
 local curl_ok, curl = pcall(require, 'curl');
-local utils = require('users.utils')
+local helper = require('users.self-helper')
 
 local MENU_ENUM = {
   SAVE_SESSION = 'save session',
@@ -55,9 +55,9 @@ local function self_use_case_popup()
       elseif action == MENU_ENUM.SELECT_SESSION then
         persistence.save()
       elseif action == MENU_ENUM.BUFFER_DELETE_OTHERS then
-        utils.buffer_delete_others()
+        helper.buffer_delete_others()
       elseif action == MENU_ENUM.LUASNIP then
-        utils.list_snippets();
+        helper.list_snippets();
       elseif action == MENU_ENUM.TODO_LIST then
         vim.cmd.TodoQuickFix();
       elseif action == MENU_ENUM.COPY_BUFFER_RELATIVE_PATH then
@@ -76,7 +76,7 @@ local function self_use_case_popup()
       elseif action == MENU_ENUM.CURL_PICK_COLLECTION then
         curl.pick_scoped_collection();
       elseif action == MENU_ENUM.JQ_FILTER_BUFFER then
-        utils.jq_filter_buffer()
+        helper.jq_filter_buffer()
       end
     end
   })
