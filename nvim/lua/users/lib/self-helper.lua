@@ -1,5 +1,5 @@
 local luasnip_ok, ls = pcall(require, "luasnip")
-local utils = require('users.utils')
+local utils = require('users.lib.utils')
 local M = {}
 
 local function read_buffer_content()

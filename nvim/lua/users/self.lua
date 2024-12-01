@@ -2,7 +2,7 @@ local persistence_ok, persistence = pcall(require, "persistence")
 local luasnip_ok = pcall(require, "luasnip")
 local todo_ok = pcall(require, "todo-comments")
 local curl_ok, curl = pcall(require, 'curl');
-local helper = require('users.self-helper')
+local helper = require('users.lib.self-helper')
 
 local MENU_ENUM = {
   SAVE_SESSION = 'save session',
