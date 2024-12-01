@@ -7,18 +7,8 @@ end
 local s = ls.snippet
 local t = ls.text_node
 local i = ls.insert_node
--- local sn = ls.snippet_node
--- local isn = ls.indent_snippet_node
 local f = ls.function_node
--- local c = ls.choice_node
--- local d = ls.dynamic_node
--- local r = ls.restore_node
--- local events = require "luasnip.util.events"
--- local ai = require "luasnip.nodes.absolute_indexer"
 local fmt = require("luasnip.extras.fmt").fmt
--- local l = extras.l
--- local m = extras.m
-local postfix = require "luasnip.extras.postfix".postfix
 
 -- keymap
 vim.keymap.set({ "i" }, "<C-s>", function() ls.expand() end, { silent = true })
@@ -33,21 +23,17 @@ local jsLogDebugSnippet = s({ trig = "logd", name = 'log debug' }, {
   t("console.log(\"[DEBUG] \", "), i(1, "message"), t(");")
 })
 
-local jsLetPrefixSnippet = postfix({ trig = '.let', name = 'let variable' }, {
-  t('let '),
-  i(1, 'variable'),
-  f(function(_, parent)
-    return " = " .. parent.snippet.env.POSTFIX_MATCH .. ";"
-  end, {}),
-})
-local jsConstPrefixSnippet = postfix({ trig = '.const', name = 'const variable' }, {
-  t('const '),
-  i(1, 'variable'),
-  f(function(_, parent)
-    return " = " .. parent.snippet.env.POSTFIX_MATCH .. ";"
-  end, {}),
-})
+local jsExportFunction = s({ trig = 'ef', name = 'export function' }, fmt([[
+export function {1}({2}) {{
+  {3}
+}}
+]], { i(1, 'name'), i(2, 'params'), i(3) }, {}))
 
+local jsFunction = s({ trig = 'f', name = 'function' }, fmt([[
+function {1}({2}) {{
+  {3}
+}}
+]], { i(1, 'name'), i(2, 'params'), i(3) }, {}))
 
 local jsArrayFunction = s({ trig = 'af', name = 'arrow functoin' }, fmt([[({1}) => {{
   {2}
@@ -134,51 +120,42 @@ ls.add_snippets('all', {
   uuid,
 });
 
-ls.add_snippets("typescript", {
+local javascriptCommonSnippets = {
   jsLogSnippet,
   jsLogDebugSnippet,
-  jsLetPrefixSnippet,
-  jsConstPrefixSnippet,
+  jsExportFunction,
+  jsFunction,
   jsArrayFunction,
+}
+
+ls.add_snippets("typescript", {
+  unpack(javascriptCommonSnippets),
   tsInterface,
 })
 
-ls.add_snippets("vue", {
-  jsLogSnippet,
-  jsLogDebugSnippet,
-  unpack(htmlTagCollection),
-  jsArrayFunction,
-})
-
 ls.add_snippets("javascript", {
-  jsLogSnippet,
-  jsLogDebugSnippet,
-  jsLetPrefixSnippet,
-  jsConstPrefixSnippet,
+  unpack(javascriptCommonSnippets),
   jsArrayFunction,
 })
 
 ls.add_snippets("javascriptreact", {
-  jsLogSnippet,
-  jsLogDebugSnippet,
-  jsLetPrefixSnippet,
-  jsConstPrefixSnippet,
-  jsArrayFunction,
-  jsxReactFunctionComponentSnippet,
+  unpack(javascriptCommonSnippets),
   unpack(htmlTagCollection),
+  jsxReactFunctionComponentSnippet,
   nextUseClient,
 })
 
 ls.add_snippets("typescriptreact", {
-  jsLogSnippet,
-  jsLogDebugSnippet,
-  jsLetPrefixSnippet,
-  jsConstPrefixSnippet,
-  jsArrayFunction,
-  jsxReactFunctionComponentSnippet,
+  unpack(javascriptCommonSnippets),
   unpack(htmlTagCollection),
+  jsxReactFunctionComponentSnippet,
   nextUseClient,
   tsInterface,
+})
+
+ls.add_snippets("vue", {
+  unpack(javascriptCommonSnippets),
+  unpack(htmlTagCollection),
 })
 
 ls.add_snippets("html", {
