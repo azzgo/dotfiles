@@ -50,9 +50,9 @@ local function self_use_case_popup()
     sink = function(action)
       if action == MENU_ENUM.LOAD_SESSION then
         persistence.load({ last = true })
-      elseif action == MENU_ENUM.SAVE_SESSION then
-        persistence.select()
       elseif action == MENU_ENUM.SELECT_SESSION then
+        persistence.select()
+      elseif action == MENU_ENUM.SAVE_SESSION then
         persistence.save()
       elseif action == MENU_ENUM.BUFFER_DELETE_OTHERS then
         helper.buffer_delete_others()
