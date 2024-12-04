@@ -17,6 +17,7 @@ local MENU_ENUM = {
   CURL_OPEN_COLLECTION = 'curl open collection',
   CURL_PICK_COLLECTION = 'curl pick collection',
   JQ_FILTER_BUFFER = 'jq filter buffer',
+  TOGGLE_COLORIZER = 'toggle colorizer',
 }
 
 local function self_use_case_popup()
@@ -43,6 +44,9 @@ local function self_use_case_popup()
   table.insert(menu, MENU_ENUM.COPY_BUFFER_RELATIVE_PATH)
   table.insert(menu, MENU_ENUM.COPY_BUFFER_ABSOLUTE_PATH)
   table.insert(menu, MENU_ENUM.JQ_FILTER_BUFFER)
+  if vim.g.loaded_colorizer == 1 then
+    table.insert(menu, MENU_ENUM.TOGGLE_COLORIZER)
+  end
 
   vim.fn['_L_FZF_WRAPPER_RUN_']({
     source = menu,
@@ -77,6 +81,8 @@ local function self_use_case_popup()
         curl.pick_scoped_collection();
       elseif action == MENU_ENUM.JQ_FILTER_BUFFER then
         helper.jq_filter_buffer()
+      elseif action == MENU_ENUM.TOGGLE_COLORIZER then
+        vim.fn['colorizer#ColorToggle']()
       end
     end
   })
