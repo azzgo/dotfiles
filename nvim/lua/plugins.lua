@@ -211,7 +211,7 @@ return require("lazy").setup({
     },
 
     --- tabby
-    { "nanozuki/tabby.nvim",  config = function() require('users.tabby') end },
+    { "nanozuki/tabby.nvim", config = function() require('users.tabby') end },
 
     -- undotree
     {
@@ -231,7 +231,15 @@ return require("lazy").setup({
       end
     },
     -- color highlight
-    { "lilydjwg/colorizer", init = function() vim.g.colorizer_nomap = 1 end },
+    {
+      "lilydjwg/colorizer",
+      event = 'VeryLazy',
+      init = function()
+        vim.g.colorizer_startup = 0
+        vim.g.colorizer_nomap = 1
+        vim.g.colorizer_maxlines = 1000
+      end
+    },
 
     -- zen mode
     {
@@ -246,7 +254,7 @@ return require("lazy").setup({
       end,
     },
     -- vim-rec
-    { 'zaid/vim-rec',       init = function() vim.g.recutils_no_folding = 1 end },
+    { 'zaid/vim-rec',        init = function() vim.g.recutils_no_folding = 1 end },
     --- weapp
     -- { 'chemzqm/wxapp.vim' },
     --- marks enhance
@@ -339,7 +347,7 @@ return require("lazy").setup({
     {
       'stevearc/dressing.nvim',
       event = 'VeryLazy',
-      config = function ()
+      config = function()
         require('users.dressing')
       end,
     }
