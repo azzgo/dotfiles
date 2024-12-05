@@ -221,3 +221,5 @@ ls.add_snippets('markdown', {
   })
 
 });
+
+require('users.lib.coc-luasnip-adapter');
