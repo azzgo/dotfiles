@@ -11,4 +11,3 @@ persistence.setup({
 
 persistence.stop()
 
-vim.keymap.set("n", "<M-r>", function() persistence.load() end)
