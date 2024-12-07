@@ -7,17 +7,8 @@ export PATH=$PATH:$HOME/.local/bin
 
 source $SHELL_ROOT/alias
 
-function lfc() {
-  if [[ -x $(command -v yazi) ]];then
-    tmp="$(mktemp -t "yazi-cwd.XXXXX")"
-    yazi --cwd-file="$tmp"
-    if cwd="$(cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
-      cd -- "$cwd"
-    fi
-    rm -f -- "$tmp"
-  elif [[ -x  $(command -v lf) ]];then
-    cd "$(command lf -print-last-dir "$@")"
-  fi
+function lfc () {
+  cd "$(command lf -print-last-dir "$@")"
 }
 
 # fzf config
