@@ -1,7 +1,8 @@
 cmd open ${{
-    case $(file --mime-type -Lb $f) in
+    case $(file --mime-type -Lb "$f") in
         text/*) vi $fx;;
-        image/*) imv $fx;;
-        *) for f in $fx; do xdg-open $f > /dev/null 2> /dev/null & done;;
+        image/*) for f in "$fx"; do imv "$f"> /dev/null 2> /dev/null & done;;
+        video/*) for f in "$fx"; do mpv "$f" > /dev/null 2> /dev/null & done;;
+        *) for f in $fx; do xdg-open "$f" > /dev/null 2> /dev/null & done;;
     esac
 }}
