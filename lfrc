@@ -1,3 +1,5 @@
+map D delete
+
 cmd open ${{
     case $(file --mime-type -Lb "$f") in
         text/*) vi $fx;;
