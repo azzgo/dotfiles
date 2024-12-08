@@ -15,6 +15,15 @@ alias grbc="git rebase --continue"
 alias grba="git rebase --abort"
 alias gprp='git pull --rebase && git push'
 alias gscf='g diff-tree --no-commit-id --name-only -r'
+# quick navigation
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+
+alias lsa='ls -lah'
+alias l='ls -lah'
+alias ll='ls -alFh'
+alias la='ls -lAh'
 
 function gcd() {
   if [[ -x  $(command -v fzf) ]];then
@@ -24,7 +33,6 @@ function gcd() {
     fi
   fi
 }
-alias ll='ls -alF'
 
 if [[ -x $(command -v nvim) ]];then
   alias v='nvim'
