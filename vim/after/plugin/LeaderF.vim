@@ -28,6 +28,7 @@ endfunction
 
 function! s:FIND_FILES()
   let s:search = input("File> ")
+  let s:search = trim(s:search)
   execute 'Leaderf file --input "' . s:search . '"'
 endfunction
 
