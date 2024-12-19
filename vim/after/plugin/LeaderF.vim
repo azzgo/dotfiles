@@ -21,8 +21,12 @@ let g:Lf_WildIgnore = {
       \ 'file': ['*.sw?','~$*','*.bak','*.exe','*.o','*.so','*.py[co]', '*.DS_store']
       \}
 
-function! s:GREP_STRING()
-  let s:search = input("Grep> ")
+function! s:GREP_STRING(str)
+  if a:str == v:null
+    let s:search = input("Grep> ")
+  else
+    let s:search = trim(escape(substitute(a:str, '\n', ' ', 'g'), '"'), '"')
+  endif
   execute 'Leaderf rg --nameOnly --input "' . s:search . '"'
 endfunction
 
@@ -45,12 +49,14 @@ function! s:LEADERF_COMMANDS_ACTIONS(what)
   elseif a:what == 'quickfix'
     Leaderf quickfix
   elseif a:what == 'cword'
-    Leaderf rg --regexMode --cword
+    Leaderf rg --cword
+  elseif a:what == 'syank'
+    execute <SID>GREP_STRING(@")
   endif
 endfunction
 
 function! s:LEADERF_COMMANDS()
-  let source = ['mru', 'recall', 'marks', 'window', 'quickfix', 'cword']
+  let source = ['mru', 'recall', 'marks', 'window', 'quickfix', 'cword', 'syank']
 	let opts = { 'source': source, 'sink': function('s:LEADERF_COMMANDS_ACTIONS') }
 	if exists('g:fzf_layout')
 		for key in keys(g:fzf_layout)
@@ -62,7 +68,7 @@ endfunction
 
 nnoremap <leader>l :call <SID>LEADERF_COMMANDS()<CR>
 
-nnoremap <leader>/  :call <SID>GREP_STRING()<CR>
+nnoremap <leader>/  :call <SID>GREP_STRING(v:null)<CR>
 nnoremap <leader>f  :call <SID>FIND_FILES()<CR>
 nnoremap <leader>c  :Leaderf command<CR>
 
