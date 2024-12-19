@@ -23,4 +23,22 @@ function M.merge_list(...)
   return result
 end
 
+function M.copy_to_clipboard(text)
+  vim.fn.setreg('+', text)
+  vim.fn.setreg('*', text)
+  vim.fn.setreg('"', text)
+end
+
+function M.convertKababCaseToCamelCase(str)
+  return str:gsub("-(%a)", string.upper):gsub("^%l", string.upper)
+end
+
+function M.convertCamelCaseToKababCase(str)
+  return str:gsub("%u", "-%1"):gsub("^-", ""):lower()
+end
+
+function M.get_current_line()
+  return vim.fn.getline('.')
+end
+
 return M

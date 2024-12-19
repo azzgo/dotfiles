@@ -3,6 +3,7 @@ local luasnip_ok = pcall(require, "luasnip")
 local todo_ok = pcall(require, "todo-comments")
 local curl_ok, curl = pcall(require, 'curl');
 local helper = require('users.lib.self-helper')
+local utils = require('users.lib.utils')
 
 local MENU_ENUM = {
   SAVE_SESSION = 'save session',
@@ -17,6 +18,8 @@ local MENU_ENUM = {
   CURL_OPEN_COLLECTION = 'curl open collection',
   CURL_PICK_COLLECTION = 'curl pick collection',
   JQ_FILTER_BUFFER = 'jq filter buffer',
+  KABAB_TO_CAMEL = 'yank kabab-case to CamelCase',
+  CAMEL_TO_KABAB = 'yank CamelCase to kabab-case',
   TOGGLE_COLORIZER = 'toggle colorizer',
 }
 
@@ -44,6 +47,8 @@ local function self_use_case_popup()
   table.insert(menu, MENU_ENUM.COPY_BUFFER_RELATIVE_PATH)
   table.insert(menu, MENU_ENUM.COPY_BUFFER_ABSOLUTE_PATH)
   table.insert(menu, MENU_ENUM.JQ_FILTER_BUFFER)
+  table.insert(menu, MENU_ENUM.KABAB_TO_CAMEL)
+  table.insert(menu, MENU_ENUM.CAMEL_TO_KABAB)
   if vim.g.loaded_colorizer == 1 then
     table.insert(menu, MENU_ENUM.TOGGLE_COLORIZER)
   end
@@ -58,8 +63,10 @@ local function self_use_case_popup()
         persistence.select()
       elseif action == MENU_ENUM.SAVE_SESSION then
         persistence.save()
+        vim.notify('Session saved')
       elseif action == MENU_ENUM.BUFFER_DELETE_OTHERS then
         helper.buffer_delete_others()
+        vim.notify('Other buffers deleted')
       elseif action == MENU_ENUM.LUASNIP then
         helper.list_snippets();
       elseif action == MENU_ENUM.TODO_LIST then
@@ -67,12 +74,10 @@ local function self_use_case_popup()
       elseif action == MENU_ENUM.COPY_BUFFER_RELATIVE_PATH then
         local bufPath = vim.fn.expand('%f')
         local relativePath = vim.fn.fnamemodify(bufPath, ':.')
-        vim.fn.setreg('+', relativePath)
-        vim.fn.setreg('*', relativePath)
+        utils.copy_to_clipboard(relativePath)
       elseif action == MENU_ENUM.COPY_BUFFER_ABSOLUTE_PATH then
         local bufPath = vim.fn.expand('%f')
-        vim.fn.setreg('+', bufPath)
-        vim.fn.setreg('*', bufPath)
+        utils.copy_to_clipboard(bufPath)
       elseif action == MENU_ENUM.CURL_OPEN_GLOBAL then
         curl.open_global_tab()
       elseif action == MENU_ENUM.CURL_OPEN_COLLECTION then
@@ -83,6 +88,14 @@ local function self_use_case_popup()
         helper.jq_filter_buffer()
       elseif action == MENU_ENUM.TOGGLE_COLORIZER then
         vim.fn['colorizer#ColorToggle']()
+      elseif action == MENU_ENUM.KABAB_TO_CAMEL then
+        local camelCase = utils.convertKababCaseToCamelCase(vim.fn.getreg('"'))
+        utils.copy_to_clipboard(camelCase)
+        vim.notify('Copied to clipboard: ' .. camelCase)
+      elseif action == MENU_ENUM.CAMEL_TO_KABAB then
+        local kababCase = utils.convertCamelCaseToKababCase(vim.fn.getreg('"'))
+        utils.copy_to_clipboard(kababCase)
+        vim.notify('Copied to clipboard: ' .. kababCase)
       end
     end
   })
