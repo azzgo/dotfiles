@@ -27,7 +27,7 @@ local function harpoon_fzf_action_popup()
     options = { '--prompt', 'harpoon actions: ', '--layout=reverse-list', '--cycle' },
     sink = function(action)
       if action == 'add' then
-        return harpoon:list():append()
+        return harpoon:list():add()
       elseif action == 'remove' then
         return harpoon:list():remove()
       elseif action == 'list' then
