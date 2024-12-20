@@ -98,4 +98,24 @@ function M.list_snippets()
   })
 end
 
+function M.list_marks()
+  local marks = vim.fn.getmarklist()
+  local items = {}
+  for _, mark in ipairs(marks) do
+    local line = mark['pos'][2]
+    local col = mark['pos'][3]
+    local file = mark.file
+    table.insert(items, string.format("%s %s:%s %s", mark.mark , line, col, utils.path_shorten(file, 80)))
+  end
+
+  vim.fn['_L_FZF_WRAPPER_RUN_']({
+    source = items,
+    options = { '--prompt', 'marks: ', '--layout=reverse-list', '--cycle' },
+    sink = function(selected)
+      local name = selected:sub(2, 2)
+      vim.cmd("normal! `" .. name)
+    end
+  })
+end
+
 return M
