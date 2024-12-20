@@ -41,4 +41,8 @@ function M.get_current_line()
   return vim.fn.getline('.')
 end
 
+function M.path_shorten(path, max_length)
+  return string.len(path) > max_length and vim.fn.pathshorten(path) or path
+end
+
 return M
