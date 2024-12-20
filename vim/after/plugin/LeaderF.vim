@@ -42,8 +42,6 @@ function! s:LEADERF_COMMANDS_ACTIONS(what)
     Leaderf --recall
   elseif a:what == 'mru'
     Leaderf mru
-  elseif a:what == 'marks'
-    Leaderf marks
   elseif a:what == 'window'
     Leaderf window
   elseif a:what == 'quickfix'
@@ -56,7 +54,7 @@ function! s:LEADERF_COMMANDS_ACTIONS(what)
 endfunction
 
 function! s:LEADERF_COMMANDS()
-  let source = ['mru', 'recall', 'marks', 'window', 'quickfix', 'cword', 'syank']
+  let source = ['mru', 'recall', 'window', 'quickfix', 'cword', 'syank']
 	let opts = { 'source': source, 'sink': function('s:LEADERF_COMMANDS_ACTIONS') }
 	if exists('g:fzf_layout')
 		for key in keys(g:fzf_layout)
