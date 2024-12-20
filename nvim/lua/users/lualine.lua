@@ -1,4 +1,5 @@
 local ok, lualine = pcall(require, "lualine")
+local utils       = require("users.lib.utils")
 
 if not ok then
   return
@@ -7,7 +8,7 @@ end
 function BufPath()
   local bufPath = vim.fn.expand('%f')
   local relativePath = vim.fn.fnamemodify(bufPath, ':.')
-  return string.len(relativePath) > 100 and vim.fn.pathshorten(relativePath) or relativePath
+  return utils.path_shorten(relativePath, 100)
 end
 
 lualine.setup({

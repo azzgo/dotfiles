@@ -10,7 +10,7 @@ local MENU_ENUM = {
   LOAD_SESSION = 'load session',
   SELECT_SESSION = 'select session',
   LUASNIP = 'luasnip',
-  TODO_LIST = 'todo list',
+  LIST_TODOS = 'list todos',
   BUFFER_DELETE_OTHERS = 'buffer delete others',
   COPY_BUFFER_RELATIVE_PATH = 'copy buffer relative path',
   COPY_BUFFER_ABSOLUTE_PATH = 'copy buffer absolute path',
@@ -21,6 +21,7 @@ local MENU_ENUM = {
   KABAB_TO_CAMEL = 'yank kabab-case to CamelCase',
   CAMEL_TO_KABAB = 'yank CamelCase to kabab-case',
   TOGGLE_COLORIZER = 'toggle colorizer',
+  LIST_MARKS = 'list marks',
 }
 
 local function self_use_case_popup()
@@ -35,7 +36,7 @@ local function self_use_case_popup()
   end
 
   if todo_ok == true then
-    table.insert(menu, MENU_ENUM.TODO_LIST)
+    table.insert(menu, MENU_ENUM.LIST_TODOS)
   end
   if curl_ok == true then
     table.insert(menu, MENU_ENUM.CURL_OPEN_GLOBAL)
@@ -49,6 +50,7 @@ local function self_use_case_popup()
   table.insert(menu, MENU_ENUM.JQ_FILTER_BUFFER)
   table.insert(menu, MENU_ENUM.KABAB_TO_CAMEL)
   table.insert(menu, MENU_ENUM.CAMEL_TO_KABAB)
+  table.insert(menu, MENU_ENUM.LIST_MARKS)
   if vim.g.loaded_colorizer == 1 then
     table.insert(menu, MENU_ENUM.TOGGLE_COLORIZER)
   end
@@ -69,7 +71,7 @@ local function self_use_case_popup()
         vim.notify('Other buffers deleted')
       elseif action == MENU_ENUM.LUASNIP then
         helper.list_snippets();
-      elseif action == MENU_ENUM.TODO_LIST then
+      elseif action == MENU_ENUM.LIST_TODOS then
         vim.cmd.TodoQuickFix();
       elseif action == MENU_ENUM.COPY_BUFFER_RELATIVE_PATH then
         local bufPath = vim.fn.expand('%f')
@@ -96,6 +98,8 @@ local function self_use_case_popup()
         local kababCase = utils.convertCamelCaseToKababCase(vim.fn.getreg('"'))
         utils.copy_to_clipboard(kababCase)
         vim.notify('Copied to clipboard: ' .. kababCase)
+      elseif action == MENU_ENUM.LIST_MARKS then
+        helper.list_marks()
       end
     end
   })
