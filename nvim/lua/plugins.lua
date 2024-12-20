@@ -173,7 +173,6 @@ return require("lazy").setup({
       cond = function()
         return vim.fn.has('python3') == 1;
       end,
-      dependencies = { 'Yggdroot/LeaderF-marks' },
       config = function()
         vim.cmd [[
           exe 'source' (g:vim_config_path . '/after/plugin/LeaderF.vim')
