@@ -105,17 +105,17 @@ function M.list_marks()
     local line = mark['pos'][2]
     local col = mark['pos'][3]
     local file = mark.file
-    table.insert(items, string.format("%s %s:%s %s", mark.mark , line, col, utils.path_shorten(file, 80)))
+    local text = vim.fn.readfile(file)[line - 1]
+    table.insert(items, {
+      filename = file,
+      lnum = line,
+      col = col,
+      text = string.format("%s | %s", mark.mark, vim.trim(text))
+    })
   end
 
-  vim.fn['_L_FZF_WRAPPER_RUN_']({
-    source = items,
-    options = { '--prompt', 'marks: ', '--layout=reverse-list', '--cycle' },
-    sink = function(selected)
-      local name = selected:sub(2, 2)
-      vim.cmd("normal! `" .. name)
-    end
-  })
+  vim.fn.setqflist(items, 'r')
+  vim.cmd("copen")
 end
 
 return M
