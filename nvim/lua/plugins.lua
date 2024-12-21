@@ -15,6 +15,14 @@ return require("lazy").setup({
   root = vim.g.dot_config_path .. "/.local/lazy",
   spec = {
     {
+      'folke/snacks.nvim',
+      priority = 1000,
+      lazy = false,
+      config = function()
+        require('users.snacks')
+      end
+    },
+    {
       "folke/flash.nvim",
       event = "VeryLazy",
       opts = {
@@ -240,18 +248,6 @@ return require("lazy").setup({
       end
     },
 
-    -- zen mode
-    {
-      "folke/zen-mode.nvim",
-      opts = {
-        window = {
-          width = 1,
-        },
-      },
-      init = function()
-        vim.keymap.set('n', '<A-z>', vim.cmd.ZenMode, {})
-      end,
-    },
     -- vim-rec
     { 'zaid/vim-rec',        init = function() vim.g.recutils_no_folding = 1 end },
     --- weapp
@@ -279,32 +275,6 @@ return require("lazy").setup({
         exe 'source' (g:vim_config_path . '/after/plugin/fzf-tasks.vim')
         exe 'source' (g:vim_config_path . '/after/plugin/fugitive-run.vim')
         ]]
-      end
-    },
-    -- intent
-    {
-      'shellRaining/hlchunk.nvim',
-      event = { "UIEnter" },
-      config = function()
-        require("hlchunk").setup(
-          {
-            chunk = {
-              enable = false,
-              use_treesitter = true,
-            },
-            indent = {
-              enable = true,
-              use_treesitter = false,
-            },
-            line_num = {
-              enable = true,
-              use_treesitter = true,
-            },
-            blank = {
-              enable = false,
-            },
-          }
-        )
       end
     },
     {
@@ -349,7 +319,7 @@ return require("lazy").setup({
       config = function()
         require('users.dressing')
       end,
-    }
+    },
     -- ###### lua plugin end ##########
   },
 })
