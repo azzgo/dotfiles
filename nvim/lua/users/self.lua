@@ -90,14 +90,19 @@ local function self_use_case_popup()
         helper.jq_filter_buffer()
       elseif action == MENU_ENUM.TOGGLE_COLORIZER then
         vim.fn['colorizer#ColorToggle']()
+        if vim.fn.exists('#Colorizer') == 1 then
+          Snacks.notify('Colorizer enabled', { title = 'Colorizer' })
+        else
+          Snacks.notify.warn('Colorizer disabled', { title = 'Colorizer' })
+        end
       elseif action == MENU_ENUM.KABAB_TO_CAMEL then
         local camelCase = utils.convertKababCaseToCamelCase(vim.fn.getreg('"'))
         utils.copy_to_clipboard(camelCase)
-        vim.notify('Copied to clipboard: ' .. camelCase)
+        Snacks.notify('Copied to clipboard: ' .. camelCase, { title = 'kabab to camel' })
       elseif action == MENU_ENUM.CAMEL_TO_KABAB then
         local kababCase = utils.convertCamelCaseToKababCase(vim.fn.getreg('"'))
         utils.copy_to_clipboard(kababCase)
-        vim.notify('Copied to clipboard: ' .. kababCase)
+        Snacks.notify('Copied to clipboard: ' .. kababCase, { title = 'camel to kabab' })
       elseif action == MENU_ENUM.LIST_MARKS then
         helper.list_marks()
       end
