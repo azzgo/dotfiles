@@ -41,10 +41,14 @@ end
 
 harpoon:extend({
   ADD = function(cx)
-    print("[harpoon] file added, location of", cx.item.value)
+    Snacks.notify("file added, location of " .. cx.item.value, {
+      title = "harpoon",
+    })
   end,
   REMOVE = function(cx)
-    print("[harpoon] file removed, location of", cx.item.value)
+    Snacks.notify.warn("file removed, location of " .. cx.item.value, {
+      title = "harpoon",
+    })
   end
 })
 
