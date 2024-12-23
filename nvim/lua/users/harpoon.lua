@@ -42,7 +42,7 @@ end
 harpoon:extend({
   ADD = function(cx)
     local fileName = vim.fn.fnamemodify(cx.item.value, ':t')
-    Snacks.notify.warn(string.format("[file] %s added", fileName), {
+    Snacks.notify.info(string.format("[file] %s added", fileName), {
       title = "harpoon",
     })
   end,

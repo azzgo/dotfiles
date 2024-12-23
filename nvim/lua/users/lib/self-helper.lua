@@ -98,16 +98,29 @@ function M.list_snippets()
   })
 end
 
+
 function M.list_marks()
+  local buffer_marks = vim.fn.getmarklist(0)
   local marks = vim.fn.getmarklist()
   local items = {}
-  for _, mark in ipairs(marks) do
+
+  --- @param mark table
+  --- @param is_buffer boolean
+  function append_mark(mark, is_buffer)
+    if string.match(mark.mark, '[a-zA-Z]') == nil then
+      return
+    end
     local line = mark['pos'][2]
     local col = mark['pos'][3]
-    local file = mark.file
+    local file 
     local text = ""
+    if is_buffer then
+      file = vim.fn.bufname(0)
+    else
+      file = mark.file
+    end
     if vim.fn.filereadable(file) == 1 then
-      text = vim.fn.readfile(file)[line - 1] or ""
+      text = vim.fn.readfile(file)[line] or ""
     end
     table.insert(items, {
       filename = file,
@@ -115,6 +128,13 @@ function M.list_marks()
       col = col,
       text = string.format("%s | %s", mark.mark, vim.trim(text))
     })
+  end
+
+  for _, mark in ipairs(buffer_marks) do
+    append_mark(mark, true)
+  end
+  for _, mark in ipairs(marks) do
+    append_mark(mark, false)
   end
 
   vim.fn.setqflist(items, 'r')
