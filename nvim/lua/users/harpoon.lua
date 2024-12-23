@@ -41,12 +41,14 @@ end
 
 harpoon:extend({
   ADD = function(cx)
-    Snacks.notify("file added, location of " .. cx.item.value, {
+    local fileName = vim.fn.fnamemodify(cx.item.value, ':t')
+    Snacks.notify.warn(string.format("[file] %s added", fileName), {
       title = "harpoon",
     })
   end,
   REMOVE = function(cx)
-    Snacks.notify.warn("file removed, location of " .. cx.item.value, {
+    local fileName = vim.fn.fnamemodify(cx.item.value, ':t')
+    Snacks.notify.warn(string.format("[file] %s removed", fileName), {
       title = "harpoon",
     })
   end
