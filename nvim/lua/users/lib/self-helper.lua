@@ -105,7 +105,10 @@ function M.list_marks()
     local line = mark['pos'][2]
     local col = mark['pos'][3]
     local file = mark.file
-    local text = vim.fn.readfile(file)[line - 1]
+    local text = ""
+    if vim.fn.filereadable(file) == 1 then
+      text = vim.fn.readfile(file)[line - 1] or ""
+    end
     table.insert(items, {
       filename = file,
       lnum = line,
