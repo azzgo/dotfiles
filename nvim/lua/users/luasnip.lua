@@ -40,6 +40,18 @@ local jsArrayFunction = s({ trig = 'af', name = 'arrow functoin' }, fmt([[({1}) 
 }}
 ]], { i(1), i(2) }, {}))
 
+local vitest = s({ trig = 'vitest', name = 'vite test' }, fmt([[import {{ beforeEach, describe, expect, test, vi }} from "vitest";
+
+describe("{1}", () => {{
+  beforeEach(() => {{
+  }});
+
+  test("{2}", () => {{
+    expect(true).toBe(true);
+  }});
+}});
+]], { i(1, 'name'), i(2, 'description') }, {}))
+
 local jsxReactFunctionComponentSnippet = s({ trig = 'rfc', name = 'react function component' }, fmt([[
 const {1} = ({2}) => {{
   return <{3}>{4}</{3}>;
@@ -126,6 +138,7 @@ local javascriptCommonSnippets = {
   jsExportFunction,
   jsFunction,
   jsArrayFunction,
+  vitest,
 }
 
 ls.add_snippets("typescript", utils.merge_list(
