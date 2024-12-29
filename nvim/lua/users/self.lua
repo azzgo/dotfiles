@@ -5,7 +5,10 @@ local curl_ok, curl = pcall(require, 'curl');
 local helper = require('users.lib.self-helper')
 local utils = require('users.lib.utils')
 
+local last_run = nil
+
 local MENU_ENUM = {
+  LAST_RUN = 'last run',
   SAVE_SESSION = 'save session',
   LOAD_SESSION = 'load session',
   SELECT_SESSION = 'select session',
@@ -26,6 +29,7 @@ local MENU_ENUM = {
 
 local function self_use_case_popup()
   local menu = {}
+  table.insert(menu, MENU_ENUM.LAST_RUN)
   if persistence_ok == true then
     table.insert(menu, MENU_ENUM.SAVE_SESSION)
     table.insert(menu, MENU_ENUM.LOAD_SESSION)
@@ -59,6 +63,16 @@ local function self_use_case_popup()
     source = menu,
     options = { '--prompt', 'sessions menu: ', '--layout=reverse-list', '--cycle' },
     sink = function(action)
+      if action == MENU_ENUM.LAST_RUN then
+        if last_run ~= nil then
+          action = last_run
+        else
+          Snacks.notify.warn('No last run found')
+          return
+        end
+      else
+        last_run = action
+      end
       if action == MENU_ENUM.LOAD_SESSION then
         persistence.load({ last = true })
       elseif action == MENU_ENUM.SELECT_SESSION then
