@@ -5,15 +5,18 @@ download() {
 }
 
 clipboard() {
- grim -g "$(slurp)" - | wl-copy 
+ grim -g "$(slurp)" - | wl-copy
 }
 
+screen() {
+ grim - | wl-copy
+}
 
 case $1 in
-  clipboard|download)
+  clipboard|download|screen)
    $1 $@;;
   usage)
-   $0 $(echo -e "clipboard\ndownload" | tofi);;
+   $0 $(echo -e "clipboard\ndownload\nscreen" | tofi);;
  * )
    exit 0;;
 esac
