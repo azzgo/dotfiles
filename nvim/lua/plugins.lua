@@ -129,6 +129,7 @@ return require("lazy").setup({
       config = function()
         local oil = require("oil")
         oil.setup({
+          columns = {},
           float = {
             padding = 10
           }
