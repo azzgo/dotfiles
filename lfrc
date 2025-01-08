@@ -1,4 +1,5 @@
 map D delete
+map <c-l> reload
 
 cmd open ${{
     case $(file --mime-type -Lb "$f") in
