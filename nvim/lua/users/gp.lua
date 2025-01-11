@@ -15,6 +15,7 @@ gp.setup({
       },
     },
   },
+  chat_dir = (os.getenv('MY_KT_BASE_DIR') or os.getenv('HOME')) .. '/ai-chats',
   default_command_agent = "copilot",
   default_chat_agent = "copilot",
 })

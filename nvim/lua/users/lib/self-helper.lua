@@ -106,13 +106,13 @@ function M.list_marks()
 
   --- @param mark table
   --- @param is_buffer boolean
-  function append_mark(mark, is_buffer)
+  local function append_mark(mark, is_buffer)
     if string.match(mark.mark, '[a-zA-Z]') == nil then
       return
     end
     local line = mark['pos'][2]
     local col = mark['pos'][3]
-    local file 
+    local file
     local text = ""
     if is_buffer then
       file = vim.fn.bufname(0)

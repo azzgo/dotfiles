@@ -25,6 +25,7 @@ local MENU_ENUM = {
   CAMEL_TO_KABAB = 'yank CamelCase to kabab-case',
   TOGGLE_COLORIZER = 'toggle colorizer',
   LIST_MARKS = 'list marks',
+  CHAT_FINDER = 'chat finder',
 }
 
 local function self_use_case_popup()
@@ -55,6 +56,7 @@ local function self_use_case_popup()
   table.insert(menu, MENU_ENUM.KABAB_TO_CAMEL)
   table.insert(menu, MENU_ENUM.CAMEL_TO_KABAB)
   table.insert(menu, MENU_ENUM.LIST_MARKS)
+  table.insert(menu, MENU_ENUM.CHAT_FINDER)
   if vim.g.loaded_colorizer == 1 then
     table.insert(menu, MENU_ENUM.TOGGLE_COLORIZER)
   end
@@ -119,6 +121,9 @@ local function self_use_case_popup()
         Snacks.notify('Copied to clipboard: ' .. kababCase, { title = 'camel to kabab' })
       elseif action == MENU_ENUM.LIST_MARKS then
         helper.list_marks()
+      elseif action == MENU_ENUM.CHAT_FINDER then
+        vim.cmd.GpChatFinder()
+        vim.fn.feedkeys('i')
       end
     end
   })
