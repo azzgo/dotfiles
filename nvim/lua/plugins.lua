@@ -58,10 +58,9 @@ return require("lazy").setup({
     "tpope/vim-surround",
     "tpope/vim-repeat",
     {
-      'beloglazov/vim-textobj-quotes',
-      dependencies = { "kana/vim-textobj-user" },
+      'echasnovski/mini.ai',
       config = function()
-        vim.keymap.set('n', '<A-y>', 'yiq', { remap = true })
+        require('users.mini')
       end
     },
     -- git command support
