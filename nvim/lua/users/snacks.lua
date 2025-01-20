@@ -5,6 +5,7 @@ if not ok then
 end
 
 local dashboard_sections = {
+  { section = "header" },
   { title = "Sessions" },
   {
     section = "projects",
@@ -60,6 +61,13 @@ snacks.setup({
         { icon = "󰒲 ", key = "L", desc = "Lazy", action = ":Lazy", enabled = package.loaded.lazy ~= nil },
         { icon = " ", key = "q", desc = "Quit", action = ":qa" },
       },
+      header = [[
+███████╗███████╗███╗   ██╗     ██████╗ ███╗   ██╗    ██╗     ██╗███████╗███████╗
+╚══███╔╝██╔════╝████╗  ██║    ██╔═══██╗████╗  ██║    ██║     ██║██╔════╝██╔════╝
+  ███╔╝ █████╗  ██╔██╗ ██║    ██║   ██║██╔██╗ ██║    ██║     ██║█████╗  █████╗  
+ ███╔╝  ██╔══╝  ██║╚██╗██║    ██║   ██║██║╚██╗██║    ██║     ██║██╔══╝  ██╔══╝  
+███████╗███████╗██║ ╚████║    ╚██████╔╝██║ ╚████║    ███████╗██║██║     ███████╗
+╚══════╝╚══════╝╚═╝  ╚═══╝     ╚═════╝ ╚═╝  ╚═══╝    ╚══════╝╚═╝╚═╝     ╚══════╝]],
     },
     -- item field formatters
     sections = dashboard_sections,
