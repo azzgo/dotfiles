@@ -47,7 +47,7 @@ if har_ok then
   table.insert(dashboard_sections, { padding = { 0, 0 } })
 end
 
-table.insert(dashboard_sections, { section = "keys", padding = 1 })
+table.insert(dashboard_sections, { section = "keys", gap = 1, padding = 1 })
 table.insert(dashboard_sections, { section = "startup" })
 
 snacks.setup({
@@ -58,7 +58,8 @@ snacks.setup({
       ---@type fun(cmd:string, opts:table)|nil
       pick = nil,
       keys = {
-        { icon = "󰒲 ", key = "L", desc = "Lazy", action = ":Lazy", enabled = package.loaded.lazy ~= nil },
+        { icon = " ", key = "e", desc = "New File", action = ":ene | startinsert" },
+        { icon = "󰒲 ", key = "l", desc = "Lazy", action = ":Lazy", enabled = package.loaded.lazy ~= nil },
         { icon = " ", key = "q", desc = "Quit", action = ":qa" },
       },
       header = [[
