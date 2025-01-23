@@ -63,7 +63,7 @@ local function self_use_case_popup()
 
   vim.fn['_L_FZF_WRAPPER_RUN_']({
     source = menu,
-    options = { '--prompt', 'sessions menu: ', '--layout=reverse-list', '--cycle' },
+    options = { '--prompt', 'quick action: ', '--layout=reverse-list', '--cycle' },
     sink = function(action)
       if action == MENU_ENUM.LAST_RUN then
         if last_run ~= nil then
@@ -129,4 +129,6 @@ local function self_use_case_popup()
   })
 end
 
-vim.keymap.set("n", "<Leader>p", function() self_use_case_popup() end)
+vim.keymap.set("n", "<Leader>.", function() self_use_case_popup() end)
+vim.keymap.set("n", "<A-.>", function() self_use_case_popup() end)
+vim.keymap.set("i", "<A-.>", function() self_use_case_popup() end)
