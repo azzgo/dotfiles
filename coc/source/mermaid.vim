@@ -1,7 +1,7 @@
 function! coc#source#mermaid#init() abort
   return {
-        \ 'shortcut': 'marmaid',
-        \ 'filetypes': ['marmaid'],
+        \ 'shortcut': 'mermaid',
+        \ 'filetypes': ['mermaid'],
     \}
 endfunction
 
