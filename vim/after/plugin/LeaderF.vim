@@ -7,13 +7,13 @@ let g:Lf_PreviewResult = {
         \ 'File': 0,
         \ 'Buffer': 0,
         \ 'Mru': 0,
-        \ 'Tag': 1,
+        \ 'Tag': 0,
         \ 'BufTag': 0,
         \ 'Function': 1,
         \ 'Line': 1,
         \ 'Colorscheme': 1,
-        \ 'Rg': 1,
-        \ 'Gtags': 1
+        \ 'Rg': 0,
+        \ 'Gtags': 0
         \}
 
 let g:Lf_WildIgnore = {
