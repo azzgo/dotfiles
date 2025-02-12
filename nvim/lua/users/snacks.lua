@@ -75,6 +75,7 @@ snacks.setup({
   },
   indent = { enabled = true },
   input = { enabled = false },
+  picker = { enabled = true, ui_select = true },
   notifier = {
     enabled = true,
     timeout = 3000,
