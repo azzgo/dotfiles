@@ -26,6 +26,7 @@ local MENU_ENUM = {
   TOGGLE_COLORIZER = 'toggle colorizer',
   LIST_MARKS = 'list marks',
   CHAT_FINDER = 'chat finder',
+  EXPLORER = 'explorer',
 }
 
 local function self_use_case_popup()
@@ -57,6 +58,7 @@ local function self_use_case_popup()
   table.insert(menu, MENU_ENUM.CAMEL_TO_KABAB)
   table.insert(menu, MENU_ENUM.LIST_MARKS)
   table.insert(menu, MENU_ENUM.CHAT_FINDER)
+  table.insert(menu, MENU_ENUM.EXPLORER)
   if vim.g.loaded_colorizer == 1 then
     table.insert(menu, MENU_ENUM.TOGGLE_COLORIZER)
   end
@@ -124,6 +126,8 @@ local function self_use_case_popup()
       elseif action == MENU_ENUM.CHAT_FINDER then
         vim.cmd.GpChatFinder()
         vim.fn.feedkeys('i')
+      elseif action == MENU_ENUM.EXPLORER then
+        Snacks.explorer()
       end
     end
   })
