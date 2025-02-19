@@ -92,3 +92,5 @@ end, { desc = "Zen mode" })
 vim.keymap.set("n", "<A-f>", function()
   Snacks.zen.zoom()
 end, { desc = "Dim focus" })
+
+vim.keymap.set("n", "<A-c>", function() Snacks.picker.commands() end, { desc = "List Commands" })
