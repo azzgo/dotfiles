@@ -90,7 +90,7 @@ local function self_use_case_popup()
       elseif action == MENU_ENUM.LUASNIP then
         helper.list_snippets();
       elseif action == MENU_ENUM.LIST_TODOS then
-        vim.cmd.TodoQuickFix();
+        Snacks.picker.todo_comments()
       elseif action == MENU_ENUM.COPY_BUFFER_RELATIVE_PATH then
         local bufPath = vim.fn.expand('%f')
         local relativePath = vim.fn.fnamemodify(bufPath, ':.')
@@ -122,7 +122,7 @@ local function self_use_case_popup()
         utils.copy_to_clipboard(kababCase)
         Snacks.notify('Copied to clipboard: ' .. kababCase, { title = 'camel to kabab' })
       elseif action == MENU_ENUM.LIST_MARKS then
-        helper.list_marks()
+        Snacks.picker.marks()
       elseif action == MENU_ENUM.CHAT_FINDER then
         vim.cmd.GpChatFinder()
         vim.fn.feedkeys('i')

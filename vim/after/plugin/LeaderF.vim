@@ -68,7 +68,6 @@ nnoremap <leader>l :call <SID>LEADERF_COMMANDS()<CR>
 
 nnoremap <leader>/  :call <SID>GREP_STRING(v:null)<CR>
 nnoremap <leader>f  :call <SID>FIND_FILES()<CR>
-nnoremap <leader>c  :Leaderf command<CR>
 
 nnoremap <silent> <leader>b :Leaderf buffer<cr>
 
