@@ -25,6 +25,8 @@ local MENU_ENUM = {
   CAMEL_TO_KABAB = 'yank CamelCase to kabab-case',
   TOGGLE_COLORIZER = 'toggle colorizer',
   LIST_MARKS = 'list marks',
+  LIST_ICONS = 'list icons',
+  PROJECTS = 'projects',
   CHAT_FINDER = 'chat finder',
   EXPLORER = 'explorer',
 }
@@ -59,6 +61,8 @@ local function self_use_case_popup()
   table.insert(menu, MENU_ENUM.LIST_MARKS)
   table.insert(menu, MENU_ENUM.CHAT_FINDER)
   table.insert(menu, MENU_ENUM.EXPLORER)
+  table.insert(menu, MENU_ENUM.LIST_ICONS)
+  table.insert(menu, MENU_ENUM.PROJECTS)
   if vim.g.loaded_colorizer == 1 then
     table.insert(menu, MENU_ENUM.TOGGLE_COLORIZER)
   end
@@ -128,6 +132,10 @@ local function self_use_case_popup()
         vim.fn.feedkeys('i')
       elseif action == MENU_ENUM.EXPLORER then
         Snacks.explorer()
+      elseif action == MENU_ENUM.LIST_ICONS then
+        Snacks.picker.icons()
+      elseif action == MENU_ENUM.PROJECTS then
+        Snacks.picker.projects()
       end
     end
   })
