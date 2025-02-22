@@ -1,0 +1,3 @@
+vim/autoload/plug.vim
+vim/syntax/javascript.vim
+vim/syntax/sql.vim
