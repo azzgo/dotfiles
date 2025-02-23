@@ -4,6 +4,7 @@ local todo_ok = pcall(require, "todo-comments")
 local curl_ok, curl = pcall(require, 'curl');
 local helper = require('users.lib.self-helper')
 local utils = require('users.lib.utils')
+local flash_ok, flash = pcall(require, 'flash')
 
 local last_run = nil
 
@@ -29,6 +30,8 @@ local MENU_ENUM = {
   PROJECTS = 'projects',
   CHAT_FINDER = 'chat finder',
   EXPLORER = 'explorer',
+  FLASH_TREESITTER = 'flash treesitter',
+  FLASH_JUMP_CWORD = 'flash jump cword',
 }
 
 local function self_use_case_popup()
@@ -50,6 +53,10 @@ local function self_use_case_popup()
     table.insert(menu, MENU_ENUM.CURL_OPEN_GLOBAL)
     table.insert(menu, MENU_ENUM.CURL_OPEN_COLLECTION)
     table.insert(menu, MENU_ENUM.CURL_PICK_COLLECTION)
+  end
+  if flash_ok == true then
+    table.insert(menu, MENU_ENUM.FLASH_TREESITTER)
+    table.insert(menu, MENU_ENUM.FLASH_JUMP_CWORD)
   end
 
   table.insert(menu, MENU_ENUM.BUFFER_DELETE_OTHERS)
@@ -136,6 +143,12 @@ local function self_use_case_popup()
         Snacks.picker.icons()
       elseif action == MENU_ENUM.PROJECTS then
         Snacks.picker.projects()
+      elseif action == MENU_ENUM.FLASH_TREESITTER then
+        flash.treesitter()
+      elseif action == MENU_ENUM.FLASH_JUMP_CWORD then
+        flash.jump({
+          pattern = vim.fn.expand("<cword>"),
+        })
       end
     end
   })
