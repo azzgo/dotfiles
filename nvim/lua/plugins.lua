@@ -25,17 +25,18 @@ return require("lazy").setup({
     {
       "folke/flash.nvim",
       event = "VeryLazy",
-      opts = {
-        modes = {
+      opts = { modes = {
           char = {
             enabled = false
+          },
+          search = {
+            enabled = true
           }
         }
       },
       -- stylua: ignore
       keys = {
         { "s", mode = { "n", "x" }, function() require("flash").jump() end,       desc = "Flash" },
-        { "S", mode = { "n" },      function() require("flash").treesitter() end, desc = "Flash Treesitter" },
       },
     },
     -- matchup
