@@ -18,6 +18,7 @@ local MENU_ENUM = {
   BUFFER_DELETE_OTHERS = 'buffer delete others',
   COPY_BUFFER_RELATIVE_PATH = 'copy buffer relative path',
   COPY_BUFFER_ABSOLUTE_PATH = 'copy buffer absolute path',
+  COPY_BUFFER_FILE_NAME = 'copy buffer file name',
   CURL_OPEN_GLOBAL = 'curl open global',
   CURL_OPEN_COLLECTION = 'curl open collection',
   CURL_PICK_COLLECTION = 'curl pick collection',
@@ -62,6 +63,7 @@ local function self_use_case_popup()
   table.insert(menu, MENU_ENUM.BUFFER_DELETE_OTHERS)
   table.insert(menu, MENU_ENUM.COPY_BUFFER_RELATIVE_PATH)
   table.insert(menu, MENU_ENUM.COPY_BUFFER_ABSOLUTE_PATH)
+  table.insert(menu, MENU_ENUM.COPY_BUFFER_FILE_NAME)
   table.insert(menu, MENU_ENUM.JQ_FILTER_BUFFER)
   table.insert(menu, MENU_ENUM.KABAB_TO_CAMEL)
   table.insert(menu, MENU_ENUM.CAMEL_TO_KABAB)
@@ -106,6 +108,10 @@ local function self_use_case_popup()
         local bufPath = vim.fn.expand('%f')
         local relativePath = vim.fn.fnamemodify(bufPath, ':.')
         utils.copy_to_clipboard(relativePath)
+      elseif action == MENU_ENUM.COPY_BUFFER_FILE_NAME then
+        local bufPath = vim.fn.expand('%f')
+        local fileName = vim.fn.fnamemodify(bufPath, ':t')
+        utils.copy_to_clipboard(fileName)
       elseif action == MENU_ENUM.COPY_BUFFER_ABSOLUTE_PATH then
         local bufPath = vim.fn.expand('%f')
         utils.copy_to_clipboard(bufPath)
