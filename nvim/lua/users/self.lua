@@ -40,9 +40,11 @@ local function self_use_case_popup()
   local menu = {}
   table.insert(menu, MENU_ENUM.LAST_RUN)
   if persistence_ok == true then
-    table.insert(menu, MENU_ENUM.SAVE_SESSION)
-    table.insert(menu, MENU_ENUM.LOAD_SESSION)
-    table.insert(menu, MENU_ENUM.SELECT_SESSION)
+    vim.list_extend(menu, {
+      MENU_ENUM.SAVE_SESSION,
+      MENU_ENUM.LOAD_SESSION,
+      MENU_ENUM.SELECT_SESSION,
+    })
   end
   if luasnip_ok == true then
     table.insert(menu, MENU_ENUM.LUASNIP)
@@ -52,28 +54,34 @@ local function self_use_case_popup()
     table.insert(menu, MENU_ENUM.LIST_TODOS)
   end
   if curl_ok == true then
-    table.insert(menu, MENU_ENUM.CURL_OPEN_GLOBAL)
-    table.insert(menu, MENU_ENUM.CURL_OPEN_COLLECTION)
-    table.insert(menu, MENU_ENUM.CURL_PICK_COLLECTION)
+    vim.list_extend(menu, {
+      MENU_ENUM.CURL_OPEN_GLOBAL,
+      MENU_ENUM.CURL_OPEN_COLLECTION,
+      MENU_ENUM.CURL_PICK_COLLECTION,
+    })
   end
   if flash_ok == true then
-    table.insert(menu, MENU_ENUM.FLASH_TREESITTER)
-    table.insert(menu, MENU_ENUM.FLASH_JUMP_CWORD)
+    vim.list_extend(menu, {
+      MENU_ENUM.FLASH_TREESITTER,
+      MENU_ENUM.FLASH_JUMP_CWORD,
+    })
   end
 
-  table.insert(menu, MENU_ENUM.BUFFER_DELETE_OTHERS)
-  table.insert(menu, MENU_ENUM.COPY_BUFFER_RELATIVE_PATH)
-  table.insert(menu, MENU_ENUM.COPY_BUFFER_ABSOLUTE_PATH)
-  table.insert(menu, MENU_ENUM.COPY_BUFFER_FILE_NAME)
-  table.insert(menu, MENU_ENUM.JQ_FILTER_BUFFER)
-  table.insert(menu, MENU_ENUM.KABAB_TO_CAMEL)
-  table.insert(menu, MENU_ENUM.CAMEL_TO_KABAB)
-  table.insert(menu, MENU_ENUM.LIST_MARKS)
-  table.insert(menu, MENU_ENUM.CHAT_FINDER)
-  table.insert(menu, MENU_ENUM.EXPLORER)
-  table.insert(menu, MENU_ENUM.LIST_ICONS)
-  table.insert(menu, MENU_ENUM.PROJECTS)
-  table.insert(menu, MENU_ENUM.OPEN_QUICKFIX)
+  vim.list_extend(menu, {
+    MENU_ENUM.BUFFER_DELETE_OTHERS,
+    MENU_ENUM.COPY_BUFFER_RELATIVE_PATH,
+    MENU_ENUM.COPY_BUFFER_ABSOLUTE_PATH,
+    MENU_ENUM.COPY_BUFFER_FILE_NAME,
+    MENU_ENUM.JQ_FILTER_BUFFER,
+    MENU_ENUM.KABAB_TO_CAMEL,
+    MENU_ENUM.CAMEL_TO_KABAB,
+    MENU_ENUM.LIST_MARKS,
+    MENU_ENUM.CHAT_FINDER,
+    MENU_ENUM.EXPLORER,
+    MENU_ENUM.LIST_ICONS,
+    MENU_ENUM.PROJECTS,
+    MENU_ENUM.OPEN_QUICKFIX
+  })
   if vim.g.loaded_colorizer == 1 then
     table.insert(menu, MENU_ENUM.TOGGLE_COLORIZER)
   end
