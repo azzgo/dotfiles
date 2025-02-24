@@ -33,6 +33,7 @@ local MENU_ENUM = {
   EXPLORER = 'explorer',
   FLASH_TREESITTER = 'flash treesitter',
   FLASH_JUMP_CWORD = 'flash jump cword',
+  OPEN_QUICKFIX = 'open quickfix',
 }
 
 local function self_use_case_popup()
@@ -72,6 +73,7 @@ local function self_use_case_popup()
   table.insert(menu, MENU_ENUM.EXPLORER)
   table.insert(menu, MENU_ENUM.LIST_ICONS)
   table.insert(menu, MENU_ENUM.PROJECTS)
+  table.insert(menu, MENU_ENUM.OPEN_QUICKFIX)
   if vim.g.loaded_colorizer == 1 then
     table.insert(menu, MENU_ENUM.TOGGLE_COLORIZER)
   end
@@ -155,6 +157,8 @@ local function self_use_case_popup()
         flash.jump({
           pattern = vim.fn.expand("<cword>"),
         })
+      elseif action == MENU_ENUM.OPEN_QUICKFIX then
+        vim.cmd.copen()
       end
     end
   })

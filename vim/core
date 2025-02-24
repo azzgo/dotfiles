@@ -96,6 +96,8 @@ nnoremap <silent> [B :bfirst<CR>
 nnoremap <silent> ]B :blast<CR> 
 nnoremap <silent> [q :cprevious<CR> 
 nnoremap <silent> ]q :cnext<CR> 
+nnoremap <silent> [Q :colder<CR> 
+nnoremap <silent> ]Q :cnewer<CR> 
 nnoremap <silent> [l :lprevious<CR> 
 nnoremap <silent> ]l :lnext<CR> 
 

@@ -16,6 +16,8 @@ let g:loaded_netrwPlugin = 1
 lua package.path = vim.g.neovim_config_path .. "/lua/?.lua;" .. package.path
 lua require('plugins')
 lua require('users.self')
+" add cfilter
+packadd cfilter
 
 " ---------------------------
 "  big file
