@@ -195,6 +195,14 @@ return require("lazy").setup({
         require('users.ufo')
       end
     },
+    {'kevinhwang91/nvim-bqf', 
+      opts = {
+        preview = {
+          auto_preview = false
+        }
+      },
+      dependencies = { 'junegunn/fzf' }
+    },
     {
       'junegunn/fzf',
       init = function()
