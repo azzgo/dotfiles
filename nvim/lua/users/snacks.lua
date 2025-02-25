@@ -76,7 +76,7 @@ snacks.setup({
   bigfile = { enabled = false },
   dashboard = dashboard_config,
   indent = { enabled = true },
-  input = { enabled = true },
+  input = { enabled = false },
   picker = {
     enabled = true,
     ui_select = true,
