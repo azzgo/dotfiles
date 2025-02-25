@@ -40,6 +40,28 @@ local function find_files()
   end)
 end
 
+local function grep_quickfix()
+  local qfList = {}
+  for _, l in ipairs(loclist and vim.fn.getloclist(0) or vim.fn.getqflist()) do
+    local fname = l.filename or vim.api.nvim_buf_get_name(l.bufnr)
+    if fname and #fname > 0 then
+      rfname = vim.fn.fnamemodify(fname, ':.')
+      table.insert(qfList, '-g ' .. rfname)
+    end
+    qfList = vim.fn.uniq(qfList)
+  end
+  if #qfList == 0 then
+    Snacks.notify('No quickfix list found')
+    return
+  end
+  vim.ui.input({ prompt = "Grep> " }, function(input)
+    if input then
+      search = input
+      vim.cmd('Leaderf rg --nameOnly --input "' .. search .. '" ' .. table.concat(qfList, ' '))
+    end
+  end)
+end
+
 local function leaderf_commands_actions(what)
   if what == "recall" then
     vim.cmd('Leaderf --recall')
@@ -47,15 +69,17 @@ local function leaderf_commands_actions(what)
     vim.cmd('Leaderf mru')
   elseif what == "window" then
     vim.cmd('Leaderf window')
-  elseif what == "quickfix" then
-    vim.cmd('Leaderf quickfix')
   elseif what == "cword" then
     vim.cmd('Leaderf rg --cword')
+  elseif what == "grep buffer" then
+    vim.cmd('Leaderf rg --all-buffers')
+  elseif what == "grep quickfix" then
+    grep_quickfix()
   end
 end
 
 local function leaderf_commands()
-  local source = { 'mru', 'recall', 'window', 'quickfix', 'cword' }
+  local source = { 'mru', 'recall', 'window', 'cword', 'grep buffer', 'grep quickfix' }
   local opts = { source = source, sink = leaderf_commands_actions }
 
   vim.fn['_L_FZF_WRAPPER_RUN_'](opts)
