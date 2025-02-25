@@ -54,12 +54,13 @@ local function grep_quickfix()
     Snacks.notify('No quickfix list found')
     return
   end
-  vim.ui.input({ prompt = "Grep> " }, function(input)
+  Snacks.input({ prompt = "Grep> " }, function(input)
     if input then
       search = input
       vim.cmd('Leaderf rg --nameOnly --input "' .. search .. '" ' .. table.concat(qfList, ' '))
     end
   end)
+  vim.fn.feedkeys("i")
 end
 
 local function leaderf_commands_actions(what)
