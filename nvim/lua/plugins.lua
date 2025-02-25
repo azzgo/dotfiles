@@ -183,9 +183,7 @@ return require("lazy").setup({
         return vim.fn.has('python3') == 1;
       end,
       config = function()
-        vim.cmd [[
-          exe 'source' (g:vim_config_path . '/after/plugin/LeaderF.vim')
-        ]]
+        require('users.leaderf')
       end
     },
     {
