@@ -30,6 +30,28 @@ local dashboard_sections = {
   },
 }
 
+local dashboard_config = {
+    preset = {
+      -- Defaults to a picker that supports `fzf-lua`, `telescope.nvim` and `mini.pick`
+      ---@type fun(cmd:string, opts:table)|nil
+      pick = nil,
+      keys = {
+        { icon = " ", key = "e", desc = "New File", action = ":ene | startinsert" },
+        { icon = "󰒲 ", key = "l", desc = "Lazy", action = ":Lazy", enabled = package.loaded.lazy ~= nil },
+        { icon = " ", key = "q", desc = "Quit", action = ":qa" },
+      },
+      header = [[
+███████╗███████╗███╗   ██╗     ██████╗ ███╗   ██╗    ██╗     ██╗███████╗███████╗
+╚══███╔╝██╔════╝████╗  ██║    ██╔═══██╗████╗  ██║    ██║     ██║██╔════╝██╔════╝
+  ███╔╝ █████╗  ██╔██╗ ██║    ██║   ██║██╔██╗ ██║    ██║     ██║█████╗  █████╗
+ ███╔╝  ██╔══╝  ██║╚██╗██║    ██║   ██║██║╚██╗██║    ██║     ██║██╔══╝  ██╔══╝
+███████╗███████╗██║ ╚████║    ╚██████╔╝██║ ╚████║    ███████╗██║██║     ███████╗
+╚══════╝╚══════╝╚═╝  ╚═══╝     ╚═════╝ ╚═╝  ╚═══╝    ╚══════╝╚═╝╚═╝     ╚══════╝]],
+    },
+    -- item field formatters
+    sections = dashboard_sections,
+  }
+
 if har_ok then
   table.insert(dashboard_sections, {
     title = "Harpoon",
@@ -52,29 +74,9 @@ table.insert(dashboard_sections, { section = "startup" })
 
 snacks.setup({
   bigfile = { enabled = false },
-  dashboard = {
-    preset = {
-      -- Defaults to a picker that supports `fzf-lua`, `telescope.nvim` and `mini.pick`
-      ---@type fun(cmd:string, opts:table)|nil
-      pick = nil,
-      keys = {
-        { icon = " ", key = "e", desc = "New File", action = ":ene | startinsert" },
-        { icon = "󰒲 ", key = "l", desc = "Lazy", action = ":Lazy", enabled = package.loaded.lazy ~= nil },
-        { icon = " ", key = "q", desc = "Quit", action = ":qa" },
-      },
-      header = [[
-███████╗███████╗███╗   ██╗     ██████╗ ███╗   ██╗    ██╗     ██╗███████╗███████╗
-╚══███╔╝██╔════╝████╗  ██║    ██╔═══██╗████╗  ██║    ██║     ██║██╔════╝██╔════╝
-  ███╔╝ █████╗  ██╔██╗ ██║    ██║   ██║██╔██╗ ██║    ██║     ██║█████╗  █████╗
- ███╔╝  ██╔══╝  ██║╚██╗██║    ██║   ██║██║╚██╗██║    ██║     ██║██╔══╝  ██╔══╝
-███████╗███████╗██║ ╚████║    ╚██████╔╝██║ ╚████║    ███████╗██║██║     ███████╗
-╚══════╝╚══════╝╚═╝  ╚═══╝     ╚═════╝ ╚═╝  ╚═══╝    ╚══════╝╚═╝╚═╝     ╚══════╝]],
-    },
-    -- item field formatters
-    sections = dashboard_sections,
-  },
+  dashboard = dashboard_config,
   indent = { enabled = true },
-  input = { enabled = false },
+  input = { enabled = true },
   picker = {
     enabled = true,
     ui_select = true,

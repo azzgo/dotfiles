@@ -8,9 +8,6 @@ Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-commentary'
 Plug 'mhinz/vim-signify'
 
-" LeaderF
-Plug 'Yggdroot/LeaderF', { 'do': ':LeaderfInstallCExtension' }
-
 " theme
 Plug 'itchyny/lightline.vim'
 
