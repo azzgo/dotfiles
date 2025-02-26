@@ -102,6 +102,7 @@ local function self_use_case_popup()
         persistence.load({ last = true })
       elseif action == MENU_ENUM.SELECT_SESSION then
         persistence.select()
+        vim.fn.feedkeys('i')
       elseif action == MENU_ENUM.SAVE_SESSION then
         persistence.save()
         vim.notify('Session saved')
@@ -146,6 +147,7 @@ local function self_use_case_popup()
         Snacks.notify('Copied to clipboard: ' .. kababCase, { title = 'camel to kabab' })
       elseif action == MENU_ENUM.LIST_MARKS then
         Snacks.picker.marks()
+        vim.fn.feedkeys('i')
       elseif action == MENU_ENUM.CHAT_FINDER then
         vim.cmd.GpChatFinder()
         vim.fn.feedkeys('i')
@@ -153,6 +155,7 @@ local function self_use_case_popup()
         Snacks.explorer()
       elseif action == MENU_ENUM.LIST_ICONS then
         Snacks.picker.icons()
+        vim.fn.feedkeys('i')
       elseif action == MENU_ENUM.PROJECTS then
         Snacks.picker.projects()
         vim.fn.feedkeys('i')
