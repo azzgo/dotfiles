@@ -22,7 +22,6 @@ local MENU_ENUM = {
   CURL_OPEN_GLOBAL = 'curl open global',
   CURL_OPEN_COLLECTION = 'curl open collection',
   CURL_PICK_COLLECTION = 'curl pick collection',
-  JQ_FILTER_BUFFER = 'jq filter buffer',
   KABAB_TO_CAMEL = 'yank kabab-case to CamelCase',
   CAMEL_TO_KABAB = 'yank CamelCase to kabab-case',
   TOGGLE_COLORIZER = 'toggle colorizer',
@@ -72,7 +71,6 @@ local function self_use_case_popup()
     MENU_ENUM.COPY_BUFFER_RELATIVE_PATH,
     MENU_ENUM.COPY_BUFFER_ABSOLUTE_PATH,
     MENU_ENUM.COPY_BUFFER_FILE_NAME,
-    MENU_ENUM.JQ_FILTER_BUFFER,
     MENU_ENUM.KABAB_TO_CAMEL,
     MENU_ENUM.CAMEL_TO_KABAB,
     MENU_ENUM.LIST_MARKS,
@@ -131,8 +129,6 @@ local function self_use_case_popup()
         curl.open_curl_tab();
       elseif action == MENU_ENUM.CURL_PICK_COLLECTION then
         curl.pick_scoped_collection();
-      elseif action == MENU_ENUM.JQ_FILTER_BUFFER then
-        helper.jq_filter_buffer()
       elseif action == MENU_ENUM.TOGGLE_COLORIZER then
         vim.fn['colorizer#ColorToggle']()
         if vim.fn.exists('#Colorizer') == 1 then
@@ -159,6 +155,7 @@ local function self_use_case_popup()
         Snacks.picker.icons()
       elseif action == MENU_ENUM.PROJECTS then
         Snacks.picker.projects()
+        vim.fn.feedkeys('i')
       elseif action == MENU_ENUM.FLASH_TREESITTER then
         flash.treesitter()
       elseif action == MENU_ENUM.FLASH_JUMP_CWORD then
