@@ -54,13 +54,12 @@ local function grep_quickfix()
     Snacks.notify('No quickfix list found')
     return
   end
-  Snacks.input({ prompt = "Grep> " }, function(input)
+  vim.ui.input({ prompt = "Grep> " }, function(input)
     if input then
       search = input
       vim.cmd('Leaderf rg --nameOnly --input "' .. search .. '" ' .. table.concat(qfList, ' '))
     end
   end)
-  vim.fn.feedkeys("i")
 end
 
 local function leaderf_commands_actions(what)
@@ -81,9 +80,9 @@ end
 
 local function leaderf_commands()
   local source = { 'mru', 'recall', 'window', 'cword', 'grep buffer', 'grep quickfix' }
-  local opts = { source = source, sink = leaderf_commands_actions }
-
-  vim.fn['_L_FZF_WRAPPER_RUN_'](opts)
+  vim.ui.select(source, { prompt = "Leaderf Commands" }, function(selected)
+    leaderf_commands_actions(selected)
+  end)
 end
 
 -- Key Mappings

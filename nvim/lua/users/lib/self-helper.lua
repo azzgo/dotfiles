@@ -32,14 +32,12 @@ function M.list_snippets()
     table.insert(snippets, action)
     snippetMap[action] = snippet
   end
-  vim.fn['_L_FZF_WRAPPER_RUN_']({
-    source = snippets,
-    options = { '--prompt', 'luasnip: ', '--layout=reverse-list', '--cycle' },
-    sink = function(action)
-      ls.snip_expand(snippetMap[action])
-    end
-  })
+  vim.ui.select(snippets, {
+    prompt = 'luasnip',
+  }, function(action)
+    ls.snip_expand(snippetMap[action])
+  end
+  )
 end
-
 
 return M
