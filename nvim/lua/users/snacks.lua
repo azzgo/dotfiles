@@ -126,4 +126,8 @@ vim.keymap.set("n", "<A-f>", function()
   Snacks.zen.zoom()
 end, { desc = "Dim focus" })
 
+vim.keymap.set("n", "<leader>ne", function()
+  Snacks.picker.explorer()
+end, { desc = "Open Explorer" })
+
 vim.keymap.set("n", "<A-c>", function() Snacks.picker.commands() end, { desc = "List Commands" })
