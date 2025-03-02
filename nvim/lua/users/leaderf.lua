@@ -89,4 +89,3 @@ end
 vim.keymap.set('n', '<leader>l', leaderf_commands, { silent = true, noremap = true })
 vim.keymap.set('n', '<leader>/', function() grep_string() end, { silent = true, noremap = true })
 vim.keymap.set('n', '<leader>f', find_files, { silent = true, noremap = true })
-vim.keymap.set('n', '<leader>b', ':Leaderf buffer<CR>', { silent = true, noremap = true })
