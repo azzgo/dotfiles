@@ -130,4 +130,22 @@ vim.keymap.set("n", "<leader>ne", function()
   Snacks.picker.explorer()
 end, { desc = "Open Explorer" })
 
-vim.keymap.set("n", "<A-c>", function() Snacks.picker.commands() end, { desc = "List Commands" })
+vim.keymap.set("n", "<leader>r", function()
+  Snacks.picker.registers()
+end, { desc = "Open Registers" })
+
+vim.keymap.set("n", "<leader>k", function()
+  Snacks.picker.keymaps()
+end, { desc = "List Keymaps" })
+
+vim.keymap.set("n", "<leader>b", function()
+  Snacks.picker.buffers()
+end, { desc = "List Buffers" })
+
+vim.keymap.set("n", "<leader>m", function()
+  Snacks.picker.marks()
+end, { desc = "List Marks" })
+
+vim.keymap.set("n", "<leader>:", function()
+  Snacks.picker.commands()
+end, { desc = "Commands" })
