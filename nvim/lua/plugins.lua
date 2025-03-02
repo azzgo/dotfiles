@@ -25,7 +25,8 @@ return require("lazy").setup({
     {
       "folke/flash.nvim",
       event = "VeryLazy",
-      opts = { modes = {
+      opts = {
+        modes = {
           char = {
             enabled = false
           },
@@ -36,7 +37,7 @@ return require("lazy").setup({
       },
       -- stylua: ignore
       keys = {
-        { "s", mode = { "n", "x" }, function() require("flash").jump() end,       desc = "Flash" },
+        { "s", mode = { "n", "x" }, function() require("flash").jump() end, desc = "Flash" },
       },
     },
     -- matchup
@@ -193,7 +194,8 @@ return require("lazy").setup({
         require('users.ufo')
       end
     },
-    {'kevinhwang91/nvim-bqf', 
+    {
+      'kevinhwang91/nvim-bqf',
       opts = {
         preview = {
           auto_preview = false
@@ -293,10 +295,38 @@ return require("lazy").setup({
       end
     },
     {
-      "robitx/gp.nvim",
-      config = function()
-        require('users.gp')
-      end,
+      "olimorris/codecompanion.nvim",
+      config = true,
+      event = "VeryLazy",
+      dependencies = {
+        "nvim-lua/plenary.nvim",
+        "nvim-treesitter/nvim-treesitter",
+      },
+      opts = {
+        opts = {
+          language = 'Chinese',
+        },
+        strategies = {
+          chat = {
+            adapter = 'copilot',
+            keymaps = {
+              close = {
+                modes = { n = "<A-q>", i = "<A-q>" },
+              },
+              completion = {
+                modes = { i = "<C-space>" },
+              },
+              
+            },
+          },
+          inline = {
+            adapter = 'copilot',
+          },
+        }
+      },
+      keys = {
+        { "<leader>i", mode = { "n" }, "<cmd>CodeCompanionActions<cr>", desc = "Code Companion Actions" },
+      }
     },
     {
       "oysandvik94/curl.nvim",
