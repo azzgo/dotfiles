@@ -28,7 +28,6 @@ local MENU_ENUM = {
   LIST_MARKS = 'list marks',
   LIST_ICONS = 'list icons',
   PROJECTS = 'projects',
-  CHAT_FINDER = 'chat finder',
   EXPLORER = 'explorer',
   FLASH_TREESITTER = 'flash treesitter',
   FLASH_JUMP_CWORD = 'flash jump cword',
@@ -74,7 +73,6 @@ local function self_use_case_popup()
     MENU_ENUM.KABAB_TO_CAMEL,
     MENU_ENUM.CAMEL_TO_KABAB,
     MENU_ENUM.LIST_MARKS,
-    MENU_ENUM.CHAT_FINDER,
     MENU_ENUM.EXPLORER,
     MENU_ENUM.LIST_ICONS,
     MENU_ENUM.PROJECTS,
@@ -143,8 +141,6 @@ local function self_use_case_popup()
       Snacks.notify('Copied to clipboard: ' .. kababCase, { title = 'camel to kabab' })
     elseif action == MENU_ENUM.LIST_MARKS then
       Snacks.picker.marks()
-    elseif action == MENU_ENUM.CHAT_FINDER then
-      vim.cmd.GpChatFinder()
     elseif action == MENU_ENUM.EXPLORER then
       Snacks.explorer()
     elseif action == MENU_ENUM.LIST_ICONS then
