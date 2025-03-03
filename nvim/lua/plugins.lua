@@ -325,7 +325,7 @@ return require("lazy").setup({
         }
       },
       keys = {
-        { "<leader>i", mode = { "n" }, "<cmd>CodeCompanionActions<cr>", desc = "Code Companion Actions" },
+        { "<leader>i", mode = { "n", "x" }, "<cmd>CodeCompanionActions<cr>", desc = "Code Companion Actions" },
       }
     },
     {
