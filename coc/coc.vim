@@ -43,23 +43,7 @@ nmap <silent> gi <Plug>(coc-implementation)
 nmap <silent> gr <Plug>(coc-references)
 nmap <silent> gK :<c-u>CocDiagnostics<cr>
 
-" outline toggle function
-function! s:CocOutlineToggle() 
-  if !exists('g:coc_status') || g:coc_status == ''
-    return
-  endif
-  " if Document symbol provider not found return
-  if !CocAction('hasProvider', 'documentSymbol')
-    return
-  endif
-  let winid = coc#window#find('cocViewId', 'OUTLINE')
-  if winid == -1
-    call CocActionAsync('showOutline')
-  else
-    call coc#window#close(winid)
-  endif
-endfunction
-nmap <silent><leader>o :<c-u>call <SID>CocOutlineToggle()<cr>
+nmap <silent><leader>o :<c-u>CocFzfList outline<cr>
 
 " coc list
 nmap <silent><leader>cr :<c-u>CocFzfListResume<cr>
