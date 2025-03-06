@@ -1,7 +1,6 @@
 local persistence_ok, persistence = pcall(require, "persistence")
 local luasnip_ok = pcall(require, "luasnip")
 local todo_ok = pcall(require, "todo-comments")
-local curl_ok, curl = pcall(require, 'curl');
 local helper = require('users.lib.self-helper')
 local utils = require('users.lib.utils')
 local flash_ok, flash = pcall(require, 'flash')
@@ -19,19 +18,16 @@ local MENU_ENUM = {
   COPY_BUFFER_RELATIVE_PATH = 'copy buffer relative path',
   COPY_BUFFER_ABSOLUTE_PATH = 'copy buffer absolute path',
   COPY_BUFFER_FILE_NAME = 'copy buffer file name',
-  CURL_OPEN_GLOBAL = 'curl open global',
-  CURL_OPEN_COLLECTION = 'curl open collection',
-  CURL_PICK_COLLECTION = 'curl pick collection',
   KABAB_TO_CAMEL = 'yank kabab-case to CamelCase',
   CAMEL_TO_KABAB = 'yank CamelCase to kabab-case',
   TOGGLE_COLORIZER = 'toggle colorizer',
   LIST_MARKS = 'list marks',
-  LIST_ICONS = 'list icons',
   PROJECTS = 'projects',
   EXPLORER = 'explorer',
   FLASH_TREESITTER = 'flash treesitter',
   FLASH_JUMP_CWORD = 'flash jump cword',
   OPEN_QUICKFIX = 'open quickfix',
+  SNACKS_PICKER = 'snacks picker',
 }
 
 local function self_use_case_popup()
@@ -51,18 +47,15 @@ local function self_use_case_popup()
   if todo_ok == true then
     table.insert(menu, MENU_ENUM.LIST_TODOS)
   end
-  if curl_ok == true then
-    vim.list_extend(menu, {
-      MENU_ENUM.CURL_OPEN_GLOBAL,
-      MENU_ENUM.CURL_OPEN_COLLECTION,
-      MENU_ENUM.CURL_PICK_COLLECTION,
-    })
-  end
   if flash_ok == true then
     vim.list_extend(menu, {
       MENU_ENUM.FLASH_TREESITTER,
       MENU_ENUM.FLASH_JUMP_CWORD,
     })
+  end
+
+  if vim.g.loaded_colorizer == 1 then
+    table.insert(menu, MENU_ENUM.TOGGLE_COLORIZER)
   end
 
   vim.list_extend(menu, {
@@ -76,11 +69,9 @@ local function self_use_case_popup()
     MENU_ENUM.EXPLORER,
     MENU_ENUM.LIST_ICONS,
     MENU_ENUM.PROJECTS,
-    MENU_ENUM.OPEN_QUICKFIX
+    MENU_ENUM.OPEN_QUICKFIX,
+    MENU_ENUM.SNACKS_PICKER,
   })
-  if vim.g.loaded_colorizer == 1 then
-    table.insert(menu, MENU_ENUM.TOGGLE_COLORIZER)
-  end
 
   vim.ui.select(menu, { prompt = 'quick actions: ' }, function(action)
     if action == MENU_ENUM.LAST_RUN then
@@ -118,12 +109,6 @@ local function self_use_case_popup()
     elseif action == MENU_ENUM.COPY_BUFFER_ABSOLUTE_PATH then
       local bufPath = vim.fn.expand('%f')
       utils.copy_to_clipboard(bufPath)
-    elseif action == MENU_ENUM.CURL_OPEN_GLOBAL then
-      curl.open_global_tab()
-    elseif action == MENU_ENUM.CURL_OPEN_COLLECTION then
-      curl.open_curl_tab();
-    elseif action == MENU_ENUM.CURL_PICK_COLLECTION then
-      curl.pick_scoped_collection();
     elseif action == MENU_ENUM.TOGGLE_COLORIZER then
       vim.fn['colorizer#ColorToggle']()
       if vim.fn.exists('#Colorizer') == 1 then
@@ -143,8 +128,6 @@ local function self_use_case_popup()
       Snacks.picker.marks()
     elseif action == MENU_ENUM.EXPLORER then
       Snacks.explorer()
-    elseif action == MENU_ENUM.LIST_ICONS then
-      Snacks.picker.icons()
     elseif action == MENU_ENUM.PROJECTS then
       Snacks.picker.projects()
     elseif action == MENU_ENUM.FLASH_TREESITTER then
@@ -155,6 +138,8 @@ local function self_use_case_popup()
       })
     elseif action == MENU_ENUM.OPEN_QUICKFIX then
       vim.cmd.copen()
+    elseif action == MENU_ENUM.SNACKS_PICKER then
+      Snacks.picker()
     end
   end
   )
