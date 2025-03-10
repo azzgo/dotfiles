@@ -146,6 +146,10 @@ vim.keymap.set("n", "<leader>m", function()
   Snacks.picker.marks()
 end, { desc = "List Marks" })
 
+vim.keymap.set("n", "<leader>r", function()
+  Snacks.picker.recent()
+end, { desc = "recent files" })
+
 vim.keymap.set("n", "<leader>:", function()
   Snacks.picker.commands()
 end, { desc = "Commands" })
