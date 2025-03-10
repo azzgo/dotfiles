@@ -26,7 +26,7 @@ local function grep_string()
   vim.ui.input({ prompt = "Grep> " }, function(input)
     if input then
       search = input
-      vim.cmd('Leaderf rg --nameOnly --input "' .. search .. '"')
+      vim.cmd('Leaderf rg --nameOnly -F "' .. search .. '"')
     end
   end)
 end
