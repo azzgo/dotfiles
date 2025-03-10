@@ -2,6 +2,7 @@ vim.g.Lf_WindowPosition = 'popup'
 vim.g.Lf_PopupAutoAdjustHeight = 0
 vim.g.Lf_PopupWidth = 0.45
 vim.g.Lf_PopupHeight = 0.6
+vim.g.Lf_MruEnable = 0
 
 vim.g.Lf_PreviewResult = {
   File = 0,
@@ -65,8 +66,6 @@ end
 local function leaderf_commands_actions(what)
   if what == "recall" then
     vim.cmd('Leaderf --recall')
-  elseif what == "mru" then
-    vim.cmd('Leaderf mru')
   elseif what == "window" then
     vim.cmd('Leaderf window')
   elseif what == "cword" then
@@ -79,7 +78,7 @@ local function leaderf_commands_actions(what)
 end
 
 local function leaderf_commands()
-  local source = { 'mru', 'recall', 'window', 'cword', 'grep buffer', 'grep quickfix' }
+  local source = { 'recall', 'window', 'cword', 'grep buffer', 'grep quickfix' }
   vim.ui.select(source, { prompt = "Leaderf Commands" }, function(selected)
     leaderf_commands_actions(selected)
   end)

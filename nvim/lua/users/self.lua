@@ -145,7 +145,6 @@ local function self_use_case_popup()
   )
 end
 
-vim.keymap.set("n", "<Leader>.", function() self_use_case_popup() end)
 vim.keymap.set("n", "<A-.>", function() self_use_case_popup() end)
 vim.keymap.set("i", "<A-.>", function() self_use_case_popup() end)
 
