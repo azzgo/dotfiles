@@ -22,6 +22,11 @@ vim.g.Lf_WildIgnore = {
   file = { '*.sw?', '~$*', '*.bak', '*.exe', '*.o', '*.so', '*.py[co]', '*.DS_store' }
 }
 
+vim.g.Lf_CommandMap = {
+  ['<C-K>'] = {'<C-P>', '<C-K>'},
+  ['<C-J>'] = {'<C-N>', '<C-J>'}
+}
+
 -- Helper Functions
 local function grep_string()
   vim.ui.input({ prompt = "Grep> " }, function(input)
@@ -70,6 +75,8 @@ local function leaderf_commands_actions(what)
     vim.cmd('Leaderf window')
   elseif what == "cword" then
     vim.cmd('Leaderf rg --cword')
+  elseif what == "lines" then
+    vim.cmd('Leaderf line --all')
   elseif what == "grep buffer" then
     vim.cmd('Leaderf rg --all-buffers')
   elseif what == "grep quickfix" then
@@ -78,13 +85,13 @@ local function leaderf_commands_actions(what)
 end
 
 local function leaderf_commands()
-  local source = { 'recall', 'window', 'cword', 'grep buffer', 'grep quickfix' }
+  local source = { 'recall', 'window', 'lines', 'cword', 'grep buffer', 'grep quickfix' }
   vim.ui.select(source, { prompt = "Leaderf Commands" }, function(selected)
     leaderf_commands_actions(selected)
   end)
 end
 
 -- Key Mappings
-vim.keymap.set('n', '<leader>l', leaderf_commands, { silent = true, noremap = true })
+vim.keymap.set('n', '<A-l>', leaderf_commands, { silent = true, noremap = true })
 vim.keymap.set('n', '<leader>/', function() grep_string() end, { silent = true, noremap = true })
 vim.keymap.set('n', '<leader>f', find_files, { silent = true, noremap = true })
