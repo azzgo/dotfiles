@@ -31,5 +31,5 @@ function! s:fzf_async_task()
 endfunction
 
 
-nnoremap <silent> <leader>a :call <SID>fzf_async_task()<CR>
+nnoremap <silent> <A-a> :call <SID>fzf_async_task()<CR>
 nnoremap <F5> :AsyncTaskLast<CR>
