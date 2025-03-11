@@ -43,7 +43,17 @@ nmap <silent> gi <Plug>(coc-implementation)
 nmap <silent> gr <Plug>(coc-references)
 nmap <silent> gK :<c-u>CocDiagnostics<cr>
 
-nmap <silent><leader>o :<c-u>CocFzfList outline<cr>
+nmap <silent><leader>s :<c-u>CocFzfList outline<cr>
+nnoremap <silent><nowait> <leader>o  :call ToggleOutline()<CR>
+function! ToggleOutline() abort
+  let winid = coc#window#find('cocViewId', 'OUTLINE')
+  if winid == -1
+    call CocActionAsync('showOutline', 1)
+  else
+    call coc#window#close(winid)
+  endif
+endfunction
+
 
 " coc list
 nmap <silent><leader>cr :<c-u>CocFzfListResume<cr>
