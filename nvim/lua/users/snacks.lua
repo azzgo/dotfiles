@@ -106,6 +106,10 @@ vim.keymap.set("n", "<A-f>", function()
   Snacks.zen.zoom()
 end, { desc = "Dim focus" })
 
+vim.keymap.set("n", "<A-s>", function()
+  Snacks.scratch()
+end, { desc = "Dim focus" })
+
 vim.keymap.set("n", "<leader>ne", function()
   Snacks.picker.explorer()
 end, { desc = "Open Explorer" })
