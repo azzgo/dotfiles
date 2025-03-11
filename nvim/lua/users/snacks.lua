@@ -6,28 +6,6 @@ end
 
 local dashboard_sections = {
   { section = "header" },
-  { title = "Sessions" },
-  {
-    section = "projects",
-    padding = 1,
-    action = function(dir)
-      -- modified default implementation to load session first then use oil
-      -- https://github.com/folke/snacks.nvim/blob/f65a2c82f3fea24bc3c7450c5612e2f5976cabd5/lua/snacks/dashboard.lua#L875
-      local session_loaded = false
-      vim.api.nvim_create_autocmd("SessionLoadPost", { once = true, callback = function() session_loaded = true end })
-      vim.defer_fn(function() if not session_loaded then vim.cmd.Oil() end end, 100)
-      -- load sessoin first then use oil
-      vim.fn.chdir(dir)
-      local session = Snacks.dashboard.sections.session()
-      if session then
-        vim.cmd(session.action:sub(2))
-      else
-        vim.cmd.Oil()
-      end
-
-      vim.cmd.Oil()
-    end
-  },
 }
 
 local dashboard_config = {
@@ -53,18 +31,20 @@ local dashboard_config = {
   }
 
 if har_ok then
-  table.insert(dashboard_sections, {
-    title = "Harpoon",
-  })
   local harpoon_files = harpoon:list()
-  for _, item in ipairs(harpoon_files.items) do
+  if #harpoon_files.items > 0 then
     table.insert(dashboard_sections, {
-      file = vim.fn.fnamemodify(item.value, ":t"),
-      action = function()
-        vim.cmd("e " .. item.value)
-      end,
-      autokey = true,
+      title = "Harpoon",
     })
+    for _, item in ipairs(harpoon_files.items) do
+      table.insert(dashboard_sections, {
+        file = vim.fn.fnamemodify(item.value, ":t"),
+        action = function()
+          vim.cmd("e " .. item.value)
+        end,
+        autokey = true,
+      })
+    end
   end
   table.insert(dashboard_sections, { padding = { 0, 0 } })
 end
