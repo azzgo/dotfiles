@@ -8,20 +8,85 @@ local s = ls.snippet
 local t = ls.text_node
 local i = ls.insert_node
 local f = ls.function_node
+local c = ls.choice_node
 local fmt = require("luasnip.extras.fmt").fmt
+local fmta = require("luasnip.extras.fmt").fmta
 
 -- keymap
 vim.keymap.set({ "i" }, "<C-s>", function() ls.expand() end, { silent = true })
 vim.keymap.set({ "i", "s" }, "<C-j>", function() ls.jump(1) end, { silent = true })
+vim.keymap.set({ "i", "s" }, "<C-e>", function()
+  if ls.choice_active() then
+    ls.change_choice(1)
+  end
+end, { silent = true })
+
+local todo_snippet_nodes = function(aliases, opts)
+  local aliases_nodes = vim.tbl_map(function(alias)
+    return i(nil, alias)
+  end, aliases)
+  local comment_node = fmta('<> <>: <><><>', {
+    f(function()
+      return utils.get_cstring(opts.ctype)[1]
+    end),
+    c(1, aliases_nodes),                      -- [name-of-comment]
+    i(2),                                     -- {comment-text}
+    f(function()
+      return utils.get_cstring(opts.ctype)[2] -- get <comment-string[2]>
+    end),
+    i(0),
+  })
+  return comment_node
+end
+
+---@param context table merged with the generated context table `trig` must be specified
+---@param aliases string[]|string of aliases for the todo comment (ex.: {FIX, ISSUE, FIXIT, BUG})
+---@param opts table merged with the snippet opts table
+---
+local todo_snippet = function(context, aliases, opts)
+  opts = opts or {}
+  aliases = type(aliases) == 'string' and { aliases } or
+      aliases -- if we do not have aliases, be smart about the function parameters
+  context = context or {}
+  if not context.trig then
+    return error("context doesn't include a `trig` key which is mandatory", 2) -- all we need from the context is the trigger
+  end
+  opts.ctype = opts.ctype or
+      1                                                   -- comment type can be passed in the `opts` table, but if it is not, we have to ensure, it is defined
+  if type(aliases) == 'string' then
+    aliases = { aliases }                                 -- if the aliases are a string, we have to convert it to a table
+  end
+  local alias_string = table.concat(aliases, '|')         -- `choice_node` documentation
+  context.name = context.name or
+      (alias_string .. ' comment')                        -- generate the `name` of the snippet if not defined
+  context.dscr = context.dscr or
+      (alias_string .. ' comment with a signature-mark')  -- generate the `dscr` if not defined
+  context.docstring = context.docstring or
+      (' {1:' .. alias_string .. '}: {3} <{2:mark}>{0} ') -- generate the `docstring` if not defined
+  local comment_node = todo_snippet_nodes(aliases, opts)  -- nodes from the previously defined function for their generation
+  return s(context, comment_node, opts)                   -- the final todo-snippet constructed from our parameters
+end
 
 
 --- snippets
 local jsLogSnippet = s({ trig = "log", name = 'console.log()' }, {
   t("console.log("), i(1, "message"), t(");")
 })
+local jsCountSnippet = s({ trig = "count", name = 'console.log()' }, {
+  t("console.count("), i(1, "message"), t(");")
+})
+local jsTableSnippet = s({ trig = "table", name = 'console.log()' }, {
+  t("console.table(["), i(1, "message"), t("]);")
+})
 local jsLogDebugSnippet = s({ trig = "logd", name = 'log debug' }, {
   t("console.log(\"[DEBUG] \", "), i(1, "message"), t(");")
 })
+
+local jsExportArrowFunction = s({ trig = 'eaf', name = 'export function' }, fmt([[
+export const = {1}({2}) => {{
+  {3}
+}}
+]], { i(1, 'name'), i(2, 'params'), i(3) }, {}))
 
 local jsExportFunction = s({ trig = 'ef', name = 'export function' }, fmt([[
 export function {1}({2}) {{
@@ -40,7 +105,8 @@ local jsArrayFunction = s({ trig = 'af', name = 'arrow functoin' }, fmt([[({1}) 
 }}
 ]], { i(1), i(2) }, {}))
 
-local vitest = s({ trig = 'vitest', name = 'vite test' }, fmt([[import {{ beforeEach, describe, expect, test, vi }} from "vitest";
+local vitest = s({ trig = 'vitest', name = 'vite test' },
+  fmt([[import {{ beforeEach, describe, expect, test, vi }} from "vitest";
 
 describe("{1}", () => {{
   beforeEach(() => {{
@@ -130,12 +196,19 @@ ls.add_snippets('all', {
   time,
   datetime,
   uuid,
+  todo_snippet({ trig = 'todo' }, { 'TODO', 'DOING', 'DONE' }, { ctype = 1 }),
+  todo_snippet({ trig = 'note' }, { 'NOTE', 'INFO' }, { ctype = 1 }),
+  todo_snippet({ trig = 'warn' }, { 'WARN', 'WARNING' }, { ctype = 1 }),
+  todo_snippet({ trig = 'fix' }, { 'FIX', 'BUG', 'FIXME', 'FIXIT', 'ISSUE' }, { ctype = 1 }),
 });
 
 local javascriptCommonSnippets = {
   jsLogSnippet,
+  jsCountSnippet,
+  jsTableSnippet,
   jsLogDebugSnippet,
   jsExportFunction,
+  jsExportArrowFunction,
   jsFunction,
   jsArrayFunction,
   vitest,
