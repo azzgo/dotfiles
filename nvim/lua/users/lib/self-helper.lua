@@ -35,6 +35,9 @@ function M.list_snippets()
   vim.ui.select(snippets, {
     prompt = 'luasnip',
   }, function(action)
+    if snippetMap[action] == nil then
+      return
+    end
     ls.snip_expand(snippetMap[action])
   end
   )
