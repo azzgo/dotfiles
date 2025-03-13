@@ -15,9 +15,11 @@ local fmta = require("luasnip.extras.fmt").fmta
 -- keymap
 vim.keymap.set({ "i" }, "<C-s>", function() ls.expand() end, { silent = true })
 vim.keymap.set({ "i", "s" }, "<C-j>", function() ls.jump(1) end, { silent = true })
-vim.keymap.set({ "i", "s" }, "<C-e>", function()
+vim.keymap.set({ "i", "s" }, "<A-e>", function()
   if ls.choice_active() then
-    ls.change_choice(1)
+    require("luasnip.extras.select_choice")()
+    -- NOTE: this is a workaround to make navigation work on snacks.pick.select on the first time
+    vim.cmd[[ call feedkeys("\<Backspace>") ]]
   end
 end, { silent = true })
 
