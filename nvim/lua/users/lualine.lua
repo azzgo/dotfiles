@@ -5,6 +5,8 @@ if not ok then
   return
 end
 
+local codecompompanion = require('users.lib.lualine-codecompanion')
+
 function BufPath()
   local bufPath = vim.fn.expand('%f')
   local relativePath = vim.fn.fnamemodify(bufPath, ':.')
@@ -15,6 +17,7 @@ lualine.setup({
   sections = {
     lualine_b = { 'branch' },
     lualine_c = { BufPath },
+    lualine_x = { codecompompanion, 'encoding', 'fileformat', 'filetype'},
   },
   options = { theme = "auto", section_separators = "", component_separators = "" },
   extensions = { 'oil' },
