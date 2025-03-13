@@ -30,9 +30,6 @@ return require("lazy").setup({
           char = {
             enabled = false
           },
-          search = {
-            enabled = true
-          }
         }
       },
       -- stylua: ignore
@@ -316,7 +313,7 @@ return require("lazy").setup({
               completion = {
                 modes = { i = "<C-space>" },
               },
-              
+
             },
           },
           inline = {
