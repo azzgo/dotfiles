@@ -72,9 +72,8 @@ return require("lazy").setup({
       end
     },
     -- theme
-    { "catppuccin/nvim",     name = "catppuccin", lazy = true },
-    -- { "shaunsingh/nord.nvim", lazy = true },
-    -- { 'rose-pine/neovim',     name = 'rose-pine' },
+    { "catppuccin/nvim",              name = "catppuccin", lazy = true },
+    { 'rose-pine/neovim',             name = 'rose-pine',  lazy = true },
 
     -- ##########lua plugins start##############
     -- ai plugins
