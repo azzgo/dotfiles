@@ -88,7 +88,7 @@ local MENU = {
     Snacks.picker.projects()
   end,
   [MENU_LABEL_ENUM.OPEN_LOCATION] = function()
-    Snacks.picker.locations()
+    Snacks.picker.location()
   end,
   [MENU_LABEL_ENUM.SNACKS_PICKER] = function()
     Snacks.picker()
@@ -159,11 +159,13 @@ local function self_use_case_popup()
     if action == nil then
       return
     end
-    if action == MENU_LABEL_ENUM.LAST_RUN and last_run ~= nil then
-      action = last_run
-    else
-      Snacks.notify.warn('Last Action not found')
-      return
+    if action == MENU_LABEL_ENUM.LAST_RUN then
+      if last_run ~= nil then
+        action = last_run
+      else
+        Snacks.notify.warn('Last Action not found')
+        return
+      end
     end
 
     if MENU[action] then
