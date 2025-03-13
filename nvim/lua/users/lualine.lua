@@ -17,7 +17,7 @@ lualine.setup({
   sections = {
     lualine_b = { 'branch' },
     lualine_c = { BufPath },
-    lualine_x = { codecompompanion, 'encoding', 'fileformat', 'filetype'},
+    lualine_x = { codecompompanion, 'searchcount', 'encoding', 'fileformat', 'filetype'},
   },
   options = { theme = "auto", section_separators = "", component_separators = "" },
   extensions = { 'oil' },
