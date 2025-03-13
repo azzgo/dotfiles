@@ -88,7 +88,7 @@ local MENU = {
     Snacks.picker.projects()
   end,
   [MENU_LABEL_ENUM.OPEN_LOCATION] = function()
-    Snacks.picker.location()
+    Snacks.picker.loclist()
   end,
   [MENU_LABEL_ENUM.SNACKS_PICKER] = function()
     Snacks.picker()
