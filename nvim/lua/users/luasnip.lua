@@ -5,6 +5,8 @@ if not ok then
 end
 local utils = require('users.lib.utils')
 local s = ls.snippet
+local sn = ls.snippet_node
+local d = ls.dynamic_node
 local t = ls.text_node
 local i = ls.insert_node
 local f = ls.function_node
@@ -19,7 +21,7 @@ vim.keymap.set({ "i", "s" }, "<A-e>", function()
   if ls.choice_active() then
     require("luasnip.extras.select_choice")()
     -- NOTE: this is a workaround to make navigation work on snacks.pick.select on the first time
-    vim.cmd[[ call feedkeys("\<Backspace>") ]]
+    vim.cmd [[ call feedkeys("\<Backspace>") ]]
   end
 end, { silent = true })
 
@@ -263,50 +265,37 @@ ls.add_snippets('gitcommit', {
     description = i(3),
   }))
 })
+
 --- markdown
 local function generate_table_header(cols)
-  local header = ""
-  local separator = ""
+  local header = {}
+  local separatorLine = ""
 
   for j = 1, cols do
-    header = header .. "| H" .. j .. " "
-    separator = separator .. "| --- "
+    table.insert(header, t("| "))
+    table.insert(header, i(j, "Header " .. j .. " "))
+    separatorLine = separatorLine .. "| --- "
   end
 
-  header = header .. "|"
-  separator = separator .. "|"
+  table.insert(header, t({ "|", "" }))
+  separatorLine = separatorLine .. "|"
 
-  return header .. "\n" .. separator
+  table.insert(header, t(separatorLine))
+  return header
 end
 
--- Helper function to generate the table rows
-local function generate_table_rows(rows, cols)
-  local rows_text = ""
-  for _ = 1, rows do
-    local row = ""
-    for _ = 1, cols do
-      row = row .. "|   "
-    end
-
-    row = row .. "|"
-    rows_text = rows_text .. row .. "\n"
-  end
-
-  return rows_text
-end
 
 ls.add_snippets('markdown', {
-  s({ trig = "table(%d+)x(%d+)", regTrig = true }, {
-    f(function(_, snip)
-      local rows = tonumber(snip.captures[1])
-      local cols = tonumber(snip.captures[2])
+  s({ trig = "table(%d+)", regTrig = true, desc = 'Generate table with columns' }, {
+    d(1, function(_, snip)
+      local cols = tonumber(snip.captures[1])
 
-      if rows and cols then
-        local header = generate_table_header(cols)
-        local body = generate_table_rows(rows, cols)
-        return vim.split(header .. "\n" .. body, '\n', { trimempty = false })
+      if cols and cols > 0 then
+        local headers = generate_table_header(cols)
+        return sn(nil, headers)
       else
-        return "Invalid number of rows or columns"
+        vim.notify("Invalid number of columns")
+        return sn(nil, { t(snip.trigger) })
       end
     end)
   })
