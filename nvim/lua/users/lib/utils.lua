@@ -29,12 +29,30 @@ function M.copy_to_clipboard(text)
   vim.fn.setreg('"', text)
 end
 
-function M.convertKababCaseToCamelCase(str)
-  return str:gsub("-(%a)", string.upper):gsub("^%l", string.upper)
+function M.get_selected_text()
+  local start_pos = vim.fn.getpos("'<")
+  local end_pos = vim.fn.getpos("'>")
+  local lines = vim.fn.getline(start_pos[2], end_pos[2])
+
+  return lines, function(text)
+    M.copy_to_clipboard(text)
+    vim.fn.setline(start_pos[2], text)
+  end
 end
 
-function M.convertCamelCaseToKababCase(str)
-  return str:gsub("%u", "-%1"):gsub("^-", ""):lower()
+function M.to_camel_case(str)
+  str = vim.trim(str)
+  return str:gsub("-(%a)", string.upper):gsub("_(%a)", string.upper):gsub("^%l", string.upper)
+end
+
+function M.to_kabab_case(str)
+  str = vim.trim(str)
+  return str:gsub("%u", "-%1"):gsub("^-", ""):gsub("_", "-"):lower()
+end
+
+function M.to_snack_case(str)
+  str = vim.trim(str)
+  return str:gsub("%u", "_%1"):gsub("^_", ""):gsub("-", "_"):lower()
 end
 
 function M.get_current_line()

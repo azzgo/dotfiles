@@ -137,3 +137,7 @@ end, { desc = "recent files" })
 vim.keymap.set("n", "<leader>:", function()
   Snacks.picker.commands()
 end, { desc = "Commands" })
+
+vim.keymap.set({"n", "i", "v" }, "<A-x>", function()
+  Snacks.picker.commands()
+end, { desc = "Commands" })
