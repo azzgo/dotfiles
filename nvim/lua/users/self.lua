@@ -18,10 +18,10 @@ local MENU_LABEL_ENUM = {
   COPY_BUFFER_RELATIVE_PATH = 'copy buffer relative path',
   COPY_BUFFER_ABSOLUTE_PATH = 'copy buffer absolute path',
   COPY_BUFFER_FILE_NAME = 'copy buffer file name',
-  KABAB_TO_CAMEL = 'yank kabab-case to CamelCase',
-  CAMEL_TO_KABAB = 'yank CamelCase to kabab-case',
+  TO_CAMEL = 'To CamelCase',
+  TO_KABAB = 'To kabab-case',
+  TO_SNACK = 'To snack_case',
   TOGGLE_COLORIZER = 'toggle colorizer',
-  LIST_MARKS = 'list marks',
   PROJECTS = 'projects',
   EXPLORER = 'explorer',
   FLASH_TREESITTER = 'flash treesitter',
@@ -74,15 +74,20 @@ local MENU = {
     local bufPath = vim.fn.expand('%f')
     utils.copy_to_clipboard(bufPath)
   end,
-  [MENU_LABEL_ENUM.KABAB_TO_CAMEL] = function()
-    local camelCase = utils.convertKababCaseToCamelCase(vim.fn.getreg('"'))
-    utils.copy_to_clipboard(camelCase)
-    Snacks.notify('Copied to clipboard: ' .. camelCase, { title = 'kabab to camel' })
+  [MENU_LABEL_ENUM.TO_CAMEL] = function()
+    local lines, set_text = utils.get_selected_text()
+    local camel_case = utils.to_camel_case(table.concat(lines, '\n'))
+    set_text(camel_case)
   end,
-  [MENU_LABEL_ENUM.CAMEL_TO_KABAB] = function()
-    local kababCase = utils.convertCamelCaseToKababCase(vim.fn.getreg('"'))
-    utils.copy_to_clipboard(kababCase)
-    Snacks.notify('Copied to clipboard: ' .. kababCase, { title = 'camel to kabab' })
+  [MENU_LABEL_ENUM.TO_KABAB] = function()
+    local lines, set_text = utils.get_selected_text()
+    local kabab_case = utils.to_kabab_case(table.concat(lines, '\n'))
+    set_text(kabab_case)
+  end,
+  [MENU_LABEL_ENUM.TO_SNACK] = function()
+    local lines, set_text = utils.get_selected_text()
+    local snack_case = utils.to_snack_case(table.concat(lines, '\n'))
+    set_text(snack_case)
   end,
   [MENU_LABEL_ENUM.PROJECTS] = function()
     Snacks.picker.projects()
@@ -103,9 +108,6 @@ local MENU = {
   end,
   [MENU_LABEL_ENUM.OPEN_QUICKFIX] = function()
     vim.cmd.copen()
-  end,
-  [MENU_LABEL_ENUM.LIST_MARKS] = function()
-    Snacks.picker.marks()
   end,
   [MENU_LABEL_ENUM.EXPLORER] = function()
     Snacks.explorer()
@@ -146,9 +148,6 @@ local function self_use_case_popup()
     MENU_LABEL_ENUM.COPY_BUFFER_RELATIVE_PATH,
     MENU_LABEL_ENUM.COPY_BUFFER_ABSOLUTE_PATH,
     MENU_LABEL_ENUM.COPY_BUFFER_FILE_NAME,
-    MENU_LABEL_ENUM.KABAB_TO_CAMEL,
-    MENU_LABEL_ENUM.CAMEL_TO_KABAB,
-    MENU_LABEL_ENUM.LIST_MARKS,
     MENU_LABEL_ENUM.EXPLORER,
     MENU_LABEL_ENUM.PROJECTS,
     MENU_LABEL_ENUM.OPEN_QUICKFIX,
@@ -176,8 +175,27 @@ local function self_use_case_popup()
   )
 end
 
+local function name_style_convert()
+  local menu = {
+    MENU_LABEL_ENUM.TO_CAMEL,
+    MENU_LABEL_ENUM.TO_KABAB,
+    MENU_LABEL_ENUM.TO_SNACK,
+  }
+  vim.ui.select(menu, { prompt = 'convert style: ' }, function(action)
+    if action == nil then
+      return
+    end
+    vim.cmd('normal! gv"')
+
+    if MENU[action] then
+      MENU[action]()
+    end
+  end)
+end
+
 vim.keymap.set("n", "<A-.>", function() self_use_case_popup() end)
 vim.keymap.set("i", "<A-.>", function() self_use_case_popup() end)
+vim.keymap.set({"n", "v"}, "<A-u>", function() name_style_convert() end)
 
 -- add font size increase and decrease to neovide
 if vim.g.neovide then
