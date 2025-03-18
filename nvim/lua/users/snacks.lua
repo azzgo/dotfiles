@@ -53,7 +53,11 @@ table.insert(dashboard_sections, { section = "keys", gap = 1, padding = 1 })
 table.insert(dashboard_sections, { section = "startup" })
 
 snacks.setup({
-  bigfile = { enabled = false },
+  bigfile = {
+    enabled = true,
+    notify = true,
+    size = 0.5 * 1024 * 1024,
+  },
   dashboard = dashboard_config,
   indent = { enabled = true },
   input = { enabled = false },
