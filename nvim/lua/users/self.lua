@@ -193,9 +193,27 @@ local function name_style_convert()
   end)
 end
 
+local function git_resolve_conflicts()
+  local menu = {
+    'use left',
+    'use right',
+  }
+  vim.ui.select(menu, { prompt = 'git resolve conflicts: ' }, function(action)
+    if action == nil then
+      return
+    end
+    if action == 'use left' then
+      vim.cmd('diffget //2 | diffupdate')
+    elseif action == 'use right' then
+      vim.cmd('diffget //3 | diffupdate')
+    end
+  end)
+end
+
 vim.keymap.set("n", "<A-.>", function() self_use_case_popup() end)
 vim.keymap.set("i", "<A-.>", function() self_use_case_popup() end)
 vim.keymap.set({"n", "v"}, "<A-u>", function() name_style_convert() end)
+vim.keymap.set({"n", "v"}, "<A-g>", function() git_resolve_conflicts() end)
 
 -- add font size increase and decrease to neovide
 if vim.g.neovide then
