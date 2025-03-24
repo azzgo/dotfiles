@@ -145,3 +145,12 @@ end, { desc = "Commands" })
 vim.keymap.set({"n", "i", "v" }, "<A-x>", function()
   Snacks.picker.commands()
 end, { desc = "Commands" })
+
+if vim.fn.has('python3') ~= 1 then
+  vim.keymap.set('n', '<leader>/', function() 
+    Snacks.picker.grep()
+  end, { silent = true, noremap = true })
+  vim.keymap.set('n', '<leader>f', function()
+    Snacks.picker.files()
+  end, { silent = true, noremap = true })
+end
