@@ -213,7 +213,11 @@ end
 vim.keymap.set("n", "<A-.>", function() self_use_case_popup() end)
 vim.keymap.set("i", "<A-.>", function() self_use_case_popup() end)
 vim.keymap.set({"n", "v"}, "<A-u>", function() name_style_convert() end)
-vim.keymap.set({"n", "v"}, "<A-g>", function() git_resolve_conflicts() end)
+vim.keymap.set({"n", "v"}, "<A-g>", function()
+  if vim.wo.diff then
+    git_resolve_conflicts() 
+  end
+end)
 
 -- add font size increase and decrease to neovide
 if vim.g.neovide then
