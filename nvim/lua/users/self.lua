@@ -226,4 +226,7 @@ if vim.g.neovide then
   vim.keymap.set({ "i" }, "<C-S-V>", function()
     vim.cmd("normal! \"+p")
   end, { silent = true })
+  vim.keymap.set({ "c" }, "<C-S-V>", function()
+    vim.fn.feedkeys("+")
+  end, { silent = true })
 end
