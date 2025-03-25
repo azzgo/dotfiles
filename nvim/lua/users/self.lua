@@ -197,6 +197,8 @@ local function git_resolve_conflicts()
   local menu = {
     'use left',
     'use right',
+    'diffget',
+    'diffput',
   }
   vim.ui.select(menu, { prompt = 'git resolve conflicts: ' }, function(action)
     if action == nil then
@@ -206,6 +208,10 @@ local function git_resolve_conflicts()
       vim.cmd('diffget //2 | diffupdate')
     elseif action == 'use right' then
       vim.cmd('diffget //3 | diffupdate')
+    elseif action == 'diffget' then
+      vim.cmd('diffget | diffupdate')
+    elseif action == 'diffput' then
+      vim.cmd('diffput | diffupdate')
     end
   end)
 end
