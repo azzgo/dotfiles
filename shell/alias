@@ -9,7 +9,6 @@ alias gup='git pull --rebase'
 alias gp='git push'
 alias gpn='git push --no-verify'
 alias gst='git status'
-alias gco='git checkout'
 alias grb="git rebase"
 alias grbc="git rebase --continue"
 alias grba="git rebase --abort"
@@ -30,6 +29,19 @@ function gcd() {
     folder=$(git worktree list | fzf)
     if [[ -n $folder ]];then
      cd $(echo $folder | awk '{print $1}')
+    fi
+  fi
+}
+
+function gco() {
+  if [[ $# -gt 0 ]];then
+    git checkout "$@"
+  elif [[ -x  $(command -v fzf) ]];then
+    local_branches=$(git branch --format='%(refname:short)')
+    remote_branches=$(git branch -r --format='%(refname:lstrip=3)'| grep -v 'HEAD$')
+    branches=$(echo -e "${local_branches}\n${remote_branches}" | sort | uniq | awk '{ print length, $0 }' | sort -n | cut -d' ' -f2-)
+    if [[ -n $branches ]];then
+      git checkout $(echo $branches | fzf --reverse)
     fi
   fi
 }
