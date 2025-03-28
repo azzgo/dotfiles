@@ -23,7 +23,6 @@ local MENU_LABEL_ENUM = {
   TO_SNACK = 'To snack_case',
   TOGGLE_COLORIZER = 'toggle colorizer',
   PROJECTS = 'projects',
-  EXPLORER = 'explorer',
   FLASH_TREESITTER = 'flash treesitter',
   FLASH_JUMP_CWORD = 'flash jump cword',
   OPEN_QUICKFIX = 'open quickfix',
@@ -109,11 +108,7 @@ local MENU = {
   [MENU_LABEL_ENUM.OPEN_QUICKFIX] = function()
     vim.cmd.copen()
   end,
-  [MENU_LABEL_ENUM.EXPLORER] = function()
-    Snacks.explorer()
-  end,
 }
-
 
 local function self_use_case_popup()
   local menu = {}

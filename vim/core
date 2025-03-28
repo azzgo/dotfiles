@@ -97,6 +97,8 @@ nnoremap <silent> [Q :colder<CR>
 nnoremap <silent> ]Q :cnewer<CR> 
 nnoremap <silent> [l :lprevious<CR> 
 nnoremap <silent> ]l :lnext<CR> 
+nnoremap <silent> [L :lolder<CR> 
+nnoremap <silent> ]L :lnewer<CR> 
 
 " tabs 
 nnoremap <silent> <leader>nt :tabnew<CR> 
