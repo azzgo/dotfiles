@@ -14,6 +14,7 @@ let g:loaded_netrwPlugin = 1
 
 " import plugins config
 lua package.path = vim.g.neovim_config_path .. "/lua/?.lua;" .. package.path
+lua require('normalize')
 lua require('plugins')
 lua require('users.self')
 " add cfilter
