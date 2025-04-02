@@ -14,10 +14,10 @@ local MENU_LABEL_ENUM = {
   SELECT_SESSION = 'select session',
   LUASNIP = 'luasnip',
   LIST_TODOS = 'list todos',
-  BUFFER_DELETE_OTHERS = 'buffer delete others',
-  COPY_BUFFER_RELATIVE_PATH = 'copy buffer relative path',
-  COPY_BUFFER_ABSOLUTE_PATH = 'copy buffer absolute path',
-  COPY_BUFFER_FILE_NAME = 'copy buffer file name',
+  BUFFER_DELETE_OTHERS = 'delete other buffers',
+  COPY_BUFFER_RELATIVE_PATH = 'yank relative path',
+  COPY_BUFFER_ABSOLUTE_PATH = 'yank absolute path',
+  COPY_BUFFER_FILE_NAME = 'yank filename',
   TO_CAMEL = 'To CamelCase',
   TO_KABAB = 'To kabab-case',
   TO_SNACK = 'To snack_case',
@@ -111,8 +111,17 @@ local MENU = {
 }
 
 local function self_use_case_popup()
-  local menu = {}
-  table.insert(menu, MENU_LABEL_ENUM.LAST_RUN)
+  local menu = {
+    MENU_LABEL_ENUM.LAST_RUN,
+    MENU_LABEL_ENUM.COPY_BUFFER_FILE_NAME,
+    MENU_LABEL_ENUM.COPY_BUFFER_RELATIVE_PATH,
+    MENU_LABEL_ENUM.COPY_BUFFER_ABSOLUTE_PATH,
+    MENU_LABEL_ENUM.PROJECTS,
+    MENU_LABEL_ENUM.OPEN_QUICKFIX,
+    MENU_LABEL_ENUM.OPEN_LOCATION,
+    MENU_LABEL_ENUM.SNACKS_PICKER,
+    MENU_LABEL_ENUM.BUFFER_DELETE_OTHERS,
+  }
   if persistence_ok == true then
     vim.list_extend(menu, {
       MENU_LABEL_ENUM.SAVE_SESSION,
@@ -138,17 +147,6 @@ local function self_use_case_popup()
     table.insert(menu, MENU_LABEL_ENUM.TOGGLE_COLORIZER)
   end
 
-  vim.list_extend(menu, {
-    MENU_LABEL_ENUM.BUFFER_DELETE_OTHERS,
-    MENU_LABEL_ENUM.COPY_BUFFER_RELATIVE_PATH,
-    MENU_LABEL_ENUM.COPY_BUFFER_ABSOLUTE_PATH,
-    MENU_LABEL_ENUM.COPY_BUFFER_FILE_NAME,
-    MENU_LABEL_ENUM.EXPLORER,
-    MENU_LABEL_ENUM.PROJECTS,
-    MENU_LABEL_ENUM.OPEN_QUICKFIX,
-    MENU_LABEL_ENUM.OPEN_LOCATION,
-    MENU_LABEL_ENUM.SNACKS_PICKER,
-  })
   vim.ui.select(menu, { prompt = 'quick actions: ' }, function(action)
     if action == nil then
       return
@@ -216,7 +214,7 @@ vim.keymap.set("i", "<A-.>", function() self_use_case_popup() end)
 vim.keymap.set({"n", "v"}, "<A-u>", function() name_style_convert() end)
 vim.keymap.set({"n", "v"}, "<A-g>", function()
   if vim.wo.diff then
-    git_resolve_conflicts() 
+    git_resolve_conflicts()
   end
 end)
 
