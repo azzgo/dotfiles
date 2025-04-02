@@ -87,6 +87,62 @@ return require("lazy").setup({
         vim.g.copilot_no_tab_map = true
       end
     },
+    {
+      "olimorris/codecompanion.nvim",
+      config = true,
+      event = "VeryLazy",
+      dependencies = {
+        "nvim-lua/plenary.nvim",
+        "nvim-treesitter/nvim-treesitter",
+      },
+      opts = {
+        opts = {
+          language = 'Chinese',
+        },
+        strategies = {
+          chat = {
+            adapter = 'copilot',
+            keymaps = {
+              close = {
+                modes = { n = "<A-q>", i = "<A-q>" },
+              },
+              completion = {
+                modes = { i = "<C-space>" },
+              },
+
+            },
+            tools = {
+               ["mcp"] = {
+                    -- calling it in a function would prevent mcphub from being loaded before it's needed
+                    callback = function() return require("mcphub.extensions.codecompanion") end,
+                    description = "Call tools and resources from the MCP Servers",
+                    opts = {
+                        requires_approval = true,
+                    }
+                }
+            },
+          },
+          inline = {
+            adapter = 'copilot',
+          },
+        }
+      },
+      keys = {
+        { "<leader>i", mode = { "n", "x" }, "<cmd>CodeCompanionActions<cr>", desc = "Code Companion Actions" },
+      }
+    },
+    {
+      "ravitemer/mcphub.nvim",
+      dependencies = {
+        "nvim-lua/plenary.nvim",  -- Required for Job and HTTP requests
+      },
+      -- comment the following line to ensure hub will be ready at the earliest
+      cmd = "MCPHub",  -- lazy load by default
+      build = "npm install -g mcp-hub@latest",  -- Installs required mcp-hub npm module
+      config = function()
+        require("users.mcphub")
+      end,
+    },
 
     {
       "numToStr/Comment.nvim",
@@ -289,40 +345,6 @@ return require("lazy").setup({
           vim.cmd [[ FloatermNew --cwd=<buffer> ]]
         end, {})
       end
-    },
-    {
-      "olimorris/codecompanion.nvim",
-      config = true,
-      event = "VeryLazy",
-      dependencies = {
-        "nvim-lua/plenary.nvim",
-        "nvim-treesitter/nvim-treesitter",
-      },
-      opts = {
-        opts = {
-          language = 'Chinese',
-        },
-        strategies = {
-          chat = {
-            adapter = 'copilot',
-            keymaps = {
-              close = {
-                modes = { n = "<A-q>", i = "<A-q>" },
-              },
-              completion = {
-                modes = { i = "<C-space>" },
-              },
-
-            },
-          },
-          inline = {
-            adapter = 'copilot',
-          },
-        }
-      },
-      keys = {
-        { "<leader>i", mode = { "n", "x" }, "<cmd>CodeCompanionActions<cr>", desc = "Code Companion Actions" },
-      }
     },
     {
       "oysandvik94/curl.nvim",

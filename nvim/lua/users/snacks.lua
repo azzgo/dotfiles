@@ -16,6 +16,7 @@ local dashboard_config = {
       keys = {
         { icon = " ", key = "e", desc = "New File", action = ":ene | startinsert" },
         { icon = "󰒲 ", key = "l", desc = "Lazy", action = ":Lazy", enabled = package.loaded.lazy ~= nil },
+        { icon = "", key = "h", desc = "Mcphub", action = ":MCPHub" },
         { icon = " ", key = "q", desc = "Quit", action = ":qa" },
       },
       header = [[
