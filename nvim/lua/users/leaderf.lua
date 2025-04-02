@@ -31,7 +31,7 @@ vim.g.Lf_CommandMap = {
 local function grep_string()
   vim.ui.input({ prompt = "Grep> " }, function(input)
     if input then
-      search = input
+      local search = input
       vim.cmd('Leaderf rg --nameOnly -F "' .. search .. '"')
     end
   end)
@@ -48,10 +48,10 @@ end
 
 local function grep_quickfix()
   local qfList = {}
-  for _, l in ipairs(loclist and vim.fn.getloclist(0) or vim.fn.getqflist()) do
+  for _, l in ipairs(vim.fn.getloclist(0) or vim.fn.getqflist()) do
     local fname = l.filename or vim.api.nvim_buf_get_name(l.bufnr)
     if fname and #fname > 0 then
-      rfname = vim.fn.fnamemodify(fname, ':.')
+      local rfname = vim.fn.fnamemodify(fname, ':.')
       table.insert(qfList, '-g ' .. rfname)
     end
     qfList = vim.fn.uniq(qfList)
@@ -62,7 +62,7 @@ local function grep_quickfix()
   end
   vim.ui.input({ prompt = "Grep> " }, function(input)
     if input then
-      search = input
+      local search = input
       vim.cmd('Leaderf rg --nameOnly --input "' .. search .. '" ' .. table.concat(qfList, ' '))
     end
   end)
