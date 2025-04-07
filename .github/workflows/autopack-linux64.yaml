@@ -20,9 +20,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y curl tar rsync gcc
           curl -LO https://github.com/neovim/neovim/releases/download/stable/nvim-linux-x86_64.tar.gz
-          tar -xzf nvim-linux64.tar.gz
+          tar -xzf nvim-linux-x86_64.tar.gz
           mkdir -p $HOME/.local/bin
-          ln -sf $PWD/nvim-linux64/bin/nvim $HOME/.local/bin/nvim
+          ln -sf $PWD/nvim-linux-x86_64/bin/nvim $HOME/.local/bin/nvim
           export PATH="$HOME/.local/bin:$PATH"
       - name: Install neovim plugin
         run: make install-neovim
