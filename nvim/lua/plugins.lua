@@ -342,7 +342,7 @@ return require("lazy").setup({
       'voldikss/vim-floaterm',
       config = function()
         vim.keymap.set('n', '<A-t>', function()
-          vim.cmd [[ FloatermNew --cwd=<buffer> ]]
+          vim.cmd.FloatermNew()
         end, {})
       end
     },
