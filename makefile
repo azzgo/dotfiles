@@ -1,7 +1,7 @@
 pack-linux64:
 	rm -rf temp_dotfiles
 	mkdir temp_dotfiles
-	rsync -av --exclude='nvim-linux64.tar.gz' --exclude='nvim-linux64' --exclude='temp_dotfiles' --exclude='.github' --exclude='.git' --exclude='dotfiles.tar.gz' . temp_dotfiles/
+	rsync -av --exclude='nvim-linux-x86_64.tar.gz' --exclude='nvim-linux-x86_64' --exclude='temp_dotfiles' --exclude='.github' --exclude='.git' --exclude='dotfiles.tar.gz' . temp_dotfiles/
 	tar -czvf dotfiles.linux64.tar.gz -C temp_dotfiles .
 
 install-neovim:
@@ -11,8 +11,8 @@ install-neovim:
 	nvim --headless -c 'Lazy install' -c 'qa'
 	nvim --headless -c 'TSUpdateSync' -c 'sleep 20' -c 'qa'
 
-install-vim:
 	ln -sf $$PWD/vim ~/.vim
+install-vim:
 	echo "source $$PWD/vim/vimrc" >> ~/.vimrc
 	vim -c ":PlugInstall" -c "qa"
 
