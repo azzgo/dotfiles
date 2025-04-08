@@ -72,8 +72,8 @@ return require("lazy").setup({
       end
     },
     -- theme
-    { "catppuccin/nvim",              name = "catppuccin", lazy = true },
-    { 'rose-pine/neovim',             name = 'rose-pine',  lazy = true },
+    { "catppuccin/nvim",  name = "catppuccin", lazy = true },
+    { 'rose-pine/neovim', name = 'rose-pine',  lazy = true },
 
     -- ##########lua plugins start##############
     -- ai plugins
@@ -112,14 +112,14 @@ return require("lazy").setup({
 
             },
             tools = {
-               ["mcp"] = {
-                    -- calling it in a function would prevent mcphub from being loaded before it's needed
-                    callback = function() return require("mcphub.extensions.codecompanion") end,
-                    description = "Call tools and resources from the MCP Servers",
-                    opts = {
-                        requires_approval = true,
-                    }
+              ["mcp"] = {
+                -- calling it in a function would prevent mcphub from being loaded before it's needed
+                callback = function() return require("mcphub.extensions.codecompanion") end,
+                description = "Call tools and resources from the MCP Servers",
+                opts = {
+                  requires_approval = true,
                 }
+              }
             },
           },
           inline = {
@@ -134,11 +134,11 @@ return require("lazy").setup({
     {
       "ravitemer/mcphub.nvim",
       dependencies = {
-        "nvim-lua/plenary.nvim",  -- Required for Job and HTTP requests
+        "nvim-lua/plenary.nvim", -- Required for Job and HTTP requests
       },
       -- comment the following line to ensure hub will be ready at the earliest
-      cmd = "MCPHub",  -- lazy load by default
-      build = "npm install -g mcp-hub@latest",  -- Installs required mcp-hub npm module
+      cmd = "MCPHub",                          -- lazy load by default
+      build = "npm install -g mcp-hub@latest", -- Installs required mcp-hub npm module
       config = function()
         require("users.mcphub")
       end,
@@ -341,9 +341,7 @@ return require("lazy").setup({
     {
       'voldikss/vim-floaterm',
       config = function()
-        vim.keymap.set('n', '<A-t>', function()
-          vim.cmd.FloatermNew()
-        end, {})
+        require('users.term')
       end
     },
     {
