@@ -40,6 +40,18 @@
         }
       }
     },
+    "tailwindcss": {
+      "command": "tailwindcss-language-server",
+      "args": ["--stdio"],
+      "filetypes": ["html", "javascript", "javascriptreact", "typescript", "typescriptreact", "vue", "svelte"],
+      "initializationOptions": {
+        "userPreferences": {
+          "css": true,
+          "scss": true,
+          "less": true
+        }
+      }
+    },
     "svelte": {
       "command": "svelteserver",
       "args": ["--stdio"],
