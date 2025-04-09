@@ -97,7 +97,7 @@ return require("lazy").setup({
       },
       opts = {
         opts = {
-          language = 'Chinese',
+          language = 'English',
         },
         strategies = {
           chat = {
@@ -124,6 +124,12 @@ return require("lazy").setup({
           },
           inline = {
             adapter = 'copilot',
+          },
+        },
+        display = {
+          diff = {
+             enabled = true,
+             layout = "vertical"
           },
         }
       },
