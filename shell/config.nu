@@ -51,3 +51,7 @@ def vi [...x] {
     }
   } 
 }
+
+def --env --wrapped lfc [...args: string] { 
+  cd (lf -print-last-dir ...$args)
+}
