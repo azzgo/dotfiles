@@ -102,6 +102,12 @@ snacks.setup({
   scroll = { enabled = false },
   statuscolumn = { enabled = false },
   words = { enabled = false },
+  styles = {
+    scratch = {
+      width = 0,
+      height = 0.9,
+    }
+  },
 })
 
 vim.keymap.set("n", "<A-z>", function()
