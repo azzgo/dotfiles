@@ -47,19 +47,26 @@ local function find_files()
 end
 
 local function grep_quickfix()
-  local qfList = {}
-  for _, l in ipairs(vim.fn.getloclist(0) or vim.fn.getqflist()) do
-    local fname = l.filename or vim.api.nvim_buf_get_name(l.bufnr)
-    if fname and #fname > 0 then
-      local rfname = vim.fn.fnamemodify(fname, ':.')
-      table.insert(qfList, '-g ' .. rfname)
-    end
-    qfList = vim.fn.uniq(qfList)
+local qfList = {}
+-- Get the location list or fallback to the quickfix list
+local loclist = vim.fn.getloclist(0)
+local qflist = vim.fn.getqflist()
+local list = (#loclist > 0) and loclist or qflist
+
+for _, l in ipairs(list) do
+  local fname = l.filename or vim.api.nvim_buf_get_name(l.bufnr)
+  if fname and #fname > 0 then
+    local rfname = vim.fn.fnamemodify(fname, ':.')
+    table.insert(qfList, '-g ' .. rfname)
   end
-  if #qfList == 0 then
-    Snacks.notify('No quickfix list found')
-    return
-  end
+end
+
+qfList = vim.fn.uniq(qfList)
+
+if #qfList == 0 then
+  Snacks.notify('No quickfix list found')
+  return
+end
   vim.ui.input({ prompt = "Grep> " }, function(input)
     if input then
       local search = input
