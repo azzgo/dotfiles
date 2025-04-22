@@ -3,22 +3,25 @@ local commands = {
   buffer = 'buffer',
 }
 
-
 vim.keymap.set('n', '<A-t>', function()
-  vim.ui.select(
-    vim.tbl_keys(commands),
-    {
-      prompt = 'FloatTerm in:',
-      format_item = function(item)
-        return commands[item]
-      end,
-    },
-    function(choice)
-      if choice == 'root' then
-        vim.cmd('FloatermNew')
-      elseif choice == 'buffer' then
-        vim.cmd('FloatermNew --cwd=<buffer>')
+  local buffer_path = vim.fn.expand('%:p')
+  local has_valid_path = buffer_path ~= '' and vim.loop.fs_stat(buffer_path) ~= nil
+
+  if has_valid_path then
+    vim.ui.select(
+      { commands.root, commands.buffer },
+      {
+        prompt = 'FloatTerm in:',
+      },
+      function(choice)
+        if choice == commands.root then
+          vim.cmd('FloatermNew')
+        elseif choice == commands.buffer then
+          vim.cmd('FloatermNew --cwd=<buffer>')
+        end
       end
-    end
-  )
+    )
+  else
+    vim.cmd('FloatermNew')
+  end
 end, {})
