@@ -1,13 +1,11 @@
+local utils = require('users.lib.utils')
 local commands = {
   root = 'root',
   buffer = 'buffer',
 }
 
 vim.keymap.set('n', '<A-t>', function()
-  local buffer_path = vim.fn.expand('%:p')
-  local has_valid_path = buffer_path ~= '' and vim.loop.fs_stat(buffer_path) ~= nil
-
-  if has_valid_path then
+  if utils.check_buffer_is_a_file() then
     vim.ui.select(
       { commands.root, commands.buffer },
       {
