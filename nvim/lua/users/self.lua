@@ -211,8 +211,8 @@ end
 
 vim.keymap.set("n", "<A-.>", function() self_use_case_popup() end)
 vim.keymap.set("i", "<A-.>", function() self_use_case_popup() end)
-vim.keymap.set({"n", "v"}, "<A-u>", function() name_style_convert() end)
-vim.keymap.set({"n", "v"}, "<A-g>", function()
+vim.keymap.set({ "n", "v" }, "<A-u>", function() name_style_convert() end)
+vim.keymap.set({ "n", "v" }, "<A-g>", function()
   if vim.wo.diff then
     git_resolve_conflicts()
   end
@@ -224,7 +224,8 @@ if vim.g.neovide then
     { silent = true })
   vim.keymap.set({ "n", "v" }, "<C-->", ":lua vim.g.neovide_scale_factor = vim.g.neovide_scale_factor - 0.1<CR>",
     { silent = true })
-  vim.keymap.set({ "n", "v" }, "<C-0>", ":lua vim.g.neovide_scale_factor = 1<CR>", { silent = true })
+  vim.keymap.set({ "n", "v" }, "<C-0>", ":lua vim.g.neovide_scale_factor = 1<CR>",
+    { silent = true })
 
   vim.keymap.set({ "i" }, "<C-S-V>", function()
     vim.cmd("normal! \"+p")
@@ -233,3 +234,75 @@ if vim.g.neovide then
     vim.fn.feedkeys("+")
   end, { silent = true })
 end
+
+
+local function run_command_on_range()
+  -- Get the range of lines
+  local start_line, end_line
+  if vim.fn.mode() == "v" or vim.fn.mode() == "V" then
+    start_line = vim.fn.line("'<") - 1
+    end_line = vim.fn.line("'>")
+  else
+    start_line = 0
+    end_line = vim.fn.line("$")
+  end
+
+  -- Get the lines in the range
+  local lines = vim.api.nvim_buf_get_lines(0, start_line, end_line, false)
+  local input_text = table.concat(lines, "\n")
+
+  -- Prompt the user for a command
+  Snacks.input({ prompt = "Enter command" }, function(command)
+    if command == nil then
+      Snacks.notify.warn("No command entered", { title = "Run Command" })
+      return
+    end
+
+    -- Run the command using jobstart
+    local output = {}
+    local job_id = vim.fn.jobstart(command, {
+      stdout_buffered = true,
+      stderr_buffered = true,
+      on_stdout = function(_, data)
+        if data then
+          vim.list_extend(output, data)
+        end
+      end,
+      on_stderr = function(_, data)
+        if data then
+          vim.list_extend(output, data)
+        end
+      end,
+      on_exit = function(job_id, code)
+        if code ~= 0 then
+          Snacks.notify.error(string.format("[%s](%d) exited with code %d", command, job_id, code),
+            { title = "Run Command" })
+          return
+        end
+
+        -- Show the output in a new window
+        local win = Snacks.win({
+          width = 0.6,
+          height = 0.6,
+          border = 'rounded',
+          wo = {
+            spell = false,
+            wrap = false,
+            signcolumn = "yes",
+            statuscolumn = " ",
+            conceallevel = 3,
+          },
+          on_buf = function(win)
+            local buf = win.buf
+            vim.api.nvim_buf_set_lines(buf, 0, -1, false, output)
+          end,
+        })
+        win:set_title("Command Output", 'center')
+      end,
+    })
+    vim.fn.chansend(job_id, input_text)
+    vim.fn.chanclose(job_id, "stdin")
+  end)
+end
+
+vim.keymap.set({ "n", "v" }, "<A-r>", run_command_on_range, { silent = true })
