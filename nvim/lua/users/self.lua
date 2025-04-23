@@ -240,8 +240,9 @@ local function run_command_on_range()
   -- Get the range of lines
   local start_line, end_line
   if vim.fn.mode() == "v" or vim.fn.mode() == "V" then
-    start_line = vim.fn.line("'<") - 1
-    end_line = vim.fn.line("'>")
+    vim.cmd([[execute "normal! \<ESC>"]])
+    start_line = vim.fn.getpos("'<")[2] - 1
+    end_line = vim.fn.getpos("'>")[2]
   else
     start_line = 0
     end_line = vim.fn.line("$")
@@ -300,8 +301,12 @@ local function run_command_on_range()
         win:set_title("Command Output", 'center')
       end,
     })
-    vim.fn.chansend(job_id, input_text)
-    vim.fn.chanclose(job_id, "stdin")
+
+    -- Delay sending input to ensure the job is ready
+    vim.defer_fn(function()
+      vim.fn.chansend(job_id, input_text)
+      vim.fn.chanclose(job_id, "stdin")
+    end, 10) -- Delay by 10ms
   end)
 end
 
