@@ -253,9 +253,8 @@ local function run_command_on_range()
   local input_text = table.concat(lines, "\n")
 
   -- Prompt the user for a command
-  Snacks.input({ prompt = "Enter command" }, function(command)
+  Snacks.input({ prompt = "Shell Command" }, function(command)
     if command == nil then
-      Snacks.notify.warn("No command entered", { title = "Run Command" })
       return
     end
 
@@ -277,7 +276,7 @@ local function run_command_on_range()
       on_exit = function(job_id, code)
         if code ~= 0 then
           Snacks.notify.error(string.format("[%s](%d) exited with code %d", command, job_id, code),
-            { title = "Run Command" })
+            { title = "Shell Command" })
           return
         end
 
