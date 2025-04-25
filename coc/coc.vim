@@ -108,3 +108,8 @@ command! -nargs=0 Format :call CocActionAsync('format')
 
 let g:coc_global_extensions = ['coc-prettier', 'coc-tsserver', 'coc-json', 'coc-eslint']
 
+" https://github.com/neoclide/coc.nvim/issues/1025#issuecomment-766184176
+augroup disableCocInDiff
+  autocmd!
+  autocmd DiffUpdated * let b:coc_enabled=0
+augroup END
