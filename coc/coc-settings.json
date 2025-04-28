@@ -1,4 +1,6 @@
 {
+  "coc.preferences.enableMessageDialog": true,
+  "coc.preferences.messageLevel": "error",
   "suggest.autoTrigger": "trigger",
   "coc.preferences.currentFunctionSymbolAutoUpdate": true,
   "eslint.format.enable": false,

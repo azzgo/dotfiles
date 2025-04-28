@@ -14,3 +14,17 @@ vim.keymap.set('n', '<leader>gc', function()
     end
   end)
 end, {})
+
+
+require("diffview").setup({
+  hooks = {
+    view_enter = function(view)
+      vim.cmd.CocDisable()
+    end,
+    view_leave = function(view)
+      vim.schedule(function()
+        vim.cmd.CocEnable()
+      end)
+    end,
+  },
+})
