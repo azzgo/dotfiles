@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-# if in wayland tool is tofi
+# if in wayland tool is fuzzel
 if [[ -n $WAYLAND_DISPLAY ]]; then
-  tool=tofi
+  tool="fuzzel --dmenu"
 # if in x11 tool is rofi -dmenu
 elif [[ -n $XDG_SESSION_TYPE ]]; then
   tool="rofi -dmenu"

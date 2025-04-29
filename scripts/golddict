@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+word=$(echo "" | fuzzel --dmenu --prompt="lookup: " --lines 0)
+
+if [[ -n $word ]]; then
+    # check goldendict is daemonized, if not start first
+    if ! pgrep -x "goldendict" > /dev/null; then
+        goldendict &
+        sleep 1
+    fi
+    goldendict "$word"
+else
+    exit 0
+fi
