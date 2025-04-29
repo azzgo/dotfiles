@@ -16,7 +16,7 @@ case $1 in
   clipboard|download|screen)
    $1 $@;;
   usage)
-   $0 $(echo -e "clipboard\ndownload\nscreen" | tofi);;
+   $0 $(echo -e "clipboard\ndownload\nscreen" | fuzzel --dmenu);;
  * )
    exit 0;;
 esac
