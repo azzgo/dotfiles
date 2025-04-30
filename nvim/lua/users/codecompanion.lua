@@ -1,4 +1,5 @@
 local ok, codecompanion = pcall(require, "codecompanion")
+local utils = require("users.lib.utils")
 
 if not ok then
   return
@@ -19,7 +20,7 @@ codecompanion.setup({
           modes = { i = "<C-space>" },
         },
         stop = {
-          modes = { i = "<C-c>", n = "<C-c>" },
+          modes = { n = "<C-c>" },
         },
         yank_code = {
           modes = { n = "<C-y>" },
@@ -44,6 +45,50 @@ codecompanion.setup({
     diff = {
       enabled = true,
       layout = "vertical"
+    },
+  },
+  extensions = {
+    history = {
+      enabled = true,
+      opts = {
+        history_dir = vim.fn.stdpath("data") .. "/codecompanion/",
+      },
+      callback = {
+        setup = function(opts)
+          local chat_keymaps = require("codecompanion.config").strategies.chat.keymaps
+          local dir = opts.history_dir
+          utils.make_sure_dir(dir)
+
+          chat_keymaps.save_chat = {
+            modes = {
+              n = opts.keymap or "<A-w>",
+            },
+            description = "Save Chat",
+            callback = function(chat)
+              local buf = chat.bufnr
+              if utils.check_buffer_is_a_file(buf) then
+                vim.api.nvim_buf_call(buf, function()
+                  vim.cmd("write")
+                end)
+              else
+                -- generate a random filename based on date and time
+                local filename = os.date("%Y-%m-%d_%H-%M-%S") .. ".md"
+                local default_filepath = dir .. filename
+                Snacks.input({ prompt = "Save Location: ", default = default_filepath, icon = '' }, function(input)
+                  if input == nil then
+                    return
+                  end
+                  vim.api.nvim_buf_set_option(buf, "buftype", '')
+                  vim.api.nvim_buf_set_name(buf, input)
+                  vim.api.nvim_buf_call(buf, function()
+                    vim.cmd("write " .. input)
+                  end)
+                end)
+              end
+            end
+          }
+        end,
+      }
     },
   }
 })
