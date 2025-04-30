@@ -84,11 +84,19 @@ function M.get_cstring(ctype)
 end
 
 
-function M.check_buffer_is_a_file()
-  local bufnr = vim.api.nvim_get_current_buf()
+function M.check_buffer_is_a_file(bufnr)
+  if not bufnr then
+    bufnr = vim.api.nvim_get_current_buf()
+  end
   local bufname = vim.api.nvim_buf_get_name(bufnr)
   local is_file = vim.fn.filereadable(bufname) == 1
   return is_file
+end
+
+function M.make_sure_dir(dir)
+  if vim.fn.isdirectory(dir) == 0 then
+    vim.fn.mkdir(dir, "p")
+  end
 end
 
 return M
