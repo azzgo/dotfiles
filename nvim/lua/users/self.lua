@@ -178,8 +178,10 @@ local function name_style_convert()
     if action == nil then
       return
     end
-    vim.cmd('normal! gv"')
 
+    if vim.fn.mode() == "v" or vim.fn.mode() == "V" then
+      vim.cmd([[execute "normal! \<ESC>"]])
+    end
     if MENU[action] then
       MENU[action]()
     end
