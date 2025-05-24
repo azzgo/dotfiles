@@ -41,6 +41,8 @@ local function find_files()
   vim.ui.input({ prompt = "File> " }, function(input)
     if input then
       local search = vim.fn.trim(input)
+      -- remove special characters from the search string, such as @ usually as alias in web projects
+      search = search:gsub('^@/', '')
       vim.cmd('Leaderf file --input "' .. search .. '"')
     end
   end)
