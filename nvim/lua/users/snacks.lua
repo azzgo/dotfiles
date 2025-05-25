@@ -1,5 +1,5 @@
 local ok, snacks = pcall(require, "snacks")
-local har_ok, harpoon = pcall(require, "harpoon")
+local helper = require('users.lib.self-helper')
 if not ok then
   return
 end
@@ -31,21 +31,19 @@ local dashboard_config = {
     sections = dashboard_sections,
   }
 
-if har_ok then
-  local harpoon_files = harpoon:list()
-  if #harpoon_files.items > 0 then
+local harpoon_files = helper.assemble_harsoon_files()
+if #harpoon_files > 0 then
+  table.insert(dashboard_sections, {
+    title = "Harpoon",
+  })
+  for _, item in ipairs(harpoon_files) do
     table.insert(dashboard_sections, {
-      title = "Harpoon",
+      file = vim.fn.fnamemodify(item.file, ":t"),
+      action = function()
+        vim.cmd("e " .. item.file)
+      end,
+      autokey = true,
     })
-    for _, item in ipairs(harpoon_files.items) do
-      table.insert(dashboard_sections, {
-        file = vim.fn.fnamemodify(item.value, ":t"),
-        action = function()
-          vim.cmd("e " .. item.value)
-        end,
-        autokey = true,
-      })
-    end
   end
   table.insert(dashboard_sections, { padding = { 0, 0 } })
 end
