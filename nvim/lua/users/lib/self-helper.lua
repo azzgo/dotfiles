@@ -1,5 +1,4 @@
 local luasnip_ok, ls = pcall(require, "luasnip")
-local utils = require('users.lib.utils')
 local M = {}
 
 function M.buffer_delete_others()
@@ -41,6 +40,27 @@ function M.list_snippets()
     ls.snip_expand(snippetMap[action])
   end
   )
+end
+
+function M.assemble_harsoon_files()
+  local harpoon_ok, harpoon = pcall(require, "harpoon")
+  if not harpoon_ok then
+    return {}
+  end
+  local harpoon_files = harpoon:list()
+  local source = {}
+  local length = harpoon_files._length;
+  for i = 1, length do
+    local item = harpoon_files.items[i]
+    if item ~= nil then
+      table.insert(source, {
+        pos = { item.context.row, item.context.col },
+        file = item.value,
+        text = item.value,
+      })
+    end
+  end
+  return source
 end
 
 return M
