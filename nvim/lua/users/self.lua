@@ -5,29 +5,25 @@ local helper = require('users.lib.self-helper')
 local utils = require('users.lib.utils')
 local flash_ok, flash = pcall(require, 'flash')
 
-local last_run = nil
-
 local MENU_LABEL_ENUM = {
-  LAST_RUN = 'last run',
-  SAVE_SESSION = 'save session',
-  LOAD_SESSION = 'load session',
-  SELECT_SESSION = 'select session',
-  LUASNIP = 'luasnip',
-  LIST_TODOS = 'list todos',
-  BUFFER_DELETE_OTHERS = 'delete other buffers',
-  COPY_BUFFER_RELATIVE_PATH = 'yank relative path',
-  COPY_BUFFER_ABSOLUTE_PATH = 'yank absolute path',
-  COPY_BUFFER_FILE_NAME = 'yank filename',
+  SAVE_SESSION = '[Session] - save',
+  LOAD_SESSION = '[Session] - load',
+  SELECT_SESSION = '[Session] - select',
+  LUASNIP = '[Luasnip] - snippets',
+  LIST_TODOS = '[Todos] - lists',
+  BUFFER_DELETE_OTHERS = '[Buffer] - delete others',
+  COPY_BUFFER_RELATIVE_PATH = '[Yank] - RelativePath',
+  COPY_BUFFER_ABSOLUTE_PATH = '[Yank] - AbsolutePath',
+  COPY_BUFFER_FILE_NAME = '[Yank] - Filename',
   TO_CAMEL = 'To CamelCase',
   TO_KABAB = 'To kabab-case',
   TO_SNACK = 'To snack_case',
-  TOGGLE_COLORIZER = 'toggle colorizer',
-  PROJECTS = 'projects',
-  FLASH_TREESITTER = 'flash treesitter',
-  FLASH_JUMP_CWORD = 'flash jump cword',
-  OPEN_QUICKFIX = 'open quickfix',
-  OPEN_LOCATION = 'open location',
-  SNACKS_PICKER = 'snacks picker',
+  TOGGLE_COLORIZER = '[Colorizer] - toggle',
+  FLASH_TREESITTER = '[Flash] - treesitter',
+  FLASH_JUMP_CWORD = '[Flash] - jump cword',
+  OPEN_QUICKFIX = '[Quickfix] - list',
+  OPEN_LOCATION = '[Location] - list',
+  SNACKS_PICKER = '[Snacks] - picker',
 }
 
 local MENU = {
@@ -88,9 +84,6 @@ local MENU = {
     local snack_case = utils.to_snack_case(table.concat(lines, '\n'))
     set_text(snack_case)
   end,
-  [MENU_LABEL_ENUM.PROJECTS] = function()
-    Snacks.picker.projects()
-  end,
   [MENU_LABEL_ENUM.OPEN_LOCATION] = function()
     Snacks.picker.loclist()
   end,
@@ -112,11 +105,9 @@ local MENU = {
 
 local function self_use_case_popup()
   local menu = {
-    MENU_LABEL_ENUM.LAST_RUN,
     MENU_LABEL_ENUM.COPY_BUFFER_FILE_NAME,
     MENU_LABEL_ENUM.COPY_BUFFER_RELATIVE_PATH,
     MENU_LABEL_ENUM.COPY_BUFFER_ABSOLUTE_PATH,
-    MENU_LABEL_ENUM.PROJECTS,
     MENU_LABEL_ENUM.OPEN_QUICKFIX,
     MENU_LABEL_ENUM.OPEN_LOCATION,
     MENU_LABEL_ENUM.SNACKS_PICKER,
@@ -147,22 +138,13 @@ local function self_use_case_popup()
     table.insert(menu, MENU_LABEL_ENUM.TOGGLE_COLORIZER)
   end
 
-  vim.ui.select(menu, { prompt = 'quick actions: ' }, function(action)
+  vim.ui.select(menu, { prompt = 'Quick Actions: ' }, function(action)
     if action == nil then
       return
-    end
-    if action == MENU_LABEL_ENUM.LAST_RUN then
-      if last_run ~= nil then
-        action = last_run
-      else
-        Snacks.notify.warn('Last Action not found')
-        return
-      end
     end
 
     if MENU[action] then
       MENU[action]()
-      last_run = action
     end
   end
   )
@@ -174,7 +156,7 @@ local function name_style_convert()
     MENU_LABEL_ENUM.TO_KABAB,
     MENU_LABEL_ENUM.TO_SNACK,
   }
-  vim.ui.select(menu, { prompt = 'convert style: ' }, function(action)
+  vim.ui.select(menu, { prompt = 'Convert Style: ' }, function(action)
     if action == nil then
       return
     end
