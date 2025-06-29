@@ -70,18 +70,18 @@ local MENU = {
     utils.copy_to_clipboard(bufPath)
   end,
   [MENU_LABEL_ENUM.TO_CAMEL] = function()
-    local lines, set_text = utils.get_selected_text()
-    local camel_case = utils.to_camel_case(table.concat(lines, '\n'))
+    local text, set_text = utils.get_selected_text()
+    local camel_case = utils.to_camel_case(text)
     set_text(camel_case)
   end,
   [MENU_LABEL_ENUM.TO_KABAB] = function()
-    local lines, set_text = utils.get_selected_text()
-    local kabab_case = utils.to_kabab_case(table.concat(lines, '\n'))
+    local text, set_text = utils.get_selected_text()
+    local kabab_case = utils.to_kabab_case(text)
     set_text(kabab_case)
   end,
   [MENU_LABEL_ENUM.TO_SNACK] = function()
-    local lines, set_text = utils.get_selected_text()
-    local snack_case = utils.to_snack_case(table.concat(lines, '\n'))
+    local text, set_text = utils.get_selected_text()
+    local snack_case = utils.to_snack_case(text)
     set_text(snack_case)
   end,
   [MENU_LABEL_ENUM.OPEN_LOCATION] = function()

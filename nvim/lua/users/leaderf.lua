@@ -1,3 +1,5 @@
+local utils = require('users.lib.utils')
+
 vim.g.Lf_WindowPosition = 'popup'
 vim.g.Lf_PopupAutoAdjustHeight = 0
 vim.g.Lf_PopupWidth = 0.45
@@ -27,26 +29,47 @@ vim.g.Lf_CommandMap = {
   ['<C-J>'] = {'<C-N>', '<C-J>'}
 }
 
--- Helper Functions
-local function grep_string()
-  vim.ui.input({ prompt = "Grep> " }, function(input)
-    if input then
-      local search = input
-      vim.cmd('Leaderf rg --nameOnly -F "' .. search .. '"')
-    end
-  end)
+-- Update grep_string to accept optional search
+local function grep_string(search)
+  if not search then
+    vim.ui.input({ prompt = "Grep> " }, function(input)
+      if input then
+        vim.cmd('Leaderf rg --nameOnly -F "' .. input .. '"')
+      end
+    end)
+  else
+    vim.cmd('Leaderf rg --nameOnly -F "' .. search .. '"')
+  end
 end
 
-local function find_files()
-  vim.ui.input({ prompt = "File> " }, function(input)
-    if input then
-      local search = vim.fn.trim(input)
-      -- remove special characters from the search string, such as @ usually as alias in web projects
-      search = search:gsub('^@[%w%-_]*/', '')
-      vim.cmd('Leaderf file --input "' .. search .. '"')
-    end
-  end)
+-- Update find_files to accept optional search
+local function find_files(search)
+  local function do_search(s)
+    s = vim.fn.trim(s)
+    s = s:gsub('^@[%w%-_]*/', '')
+    vim.cmd('Leaderf file --input "' .. s .. '"')
+  end
+  if not search then
+    vim.ui.input({ prompt = "File> " }, function(input)
+      if input then do_search(input) end
+    end)
+  else
+    do_search(search)
+  end
 end
+
+vim.keymap.set('n', '<leader>/', function() grep_string() end, { silent = true, noremap = true })
+vim.keymap.set('v', '<leader>/', function()
+  local text, _ = utils.get_selected_text(true)
+  grep_string(text)
+end, { silent = true, noremap = true })
+
+vim.keymap.set('n', '<leader>f', find_files, { silent = true, noremap = true })
+vim.keymap.set('v', '<leader>f', function()
+  local text, _ = utils.get_selected_text(true)
+  find_files(text)
+end, { silent = true, noremap = true })
+
 
 local function grep_quickfix()
 local qfList = {}
