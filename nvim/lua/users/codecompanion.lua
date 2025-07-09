@@ -46,6 +46,13 @@ codecompanion.setup({
       enabled = true,
       layout = "vertical"
     },
+    chat = {
+      window = {
+        layout = 'float',
+        height = 0.8,
+        width = 0.9,
+      },
+    },
   },
   extensions = {
     history = {
