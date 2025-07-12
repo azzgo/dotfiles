@@ -69,7 +69,7 @@ set noswapfile
 
 " quick save and quit
 nnoremap <A-w> :w<CR>
-nnoremap <A-q> :q<CR>
+nnoremap <A-q> <C-w>c
 nnoremap <leader>Q :qa!<CR>
 nnoremap <A-Q> :tabclose<CR>
 " quick copy from primiary clipboard
