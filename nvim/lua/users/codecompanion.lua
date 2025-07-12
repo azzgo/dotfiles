@@ -42,6 +42,9 @@ codecompanion.setup({
     },
   },
   display = {
+    action_palette = {
+      provider = "default",
+    },
     diff = {
       enabled = true,
       layout = "vertical"
