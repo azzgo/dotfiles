@@ -14,7 +14,7 @@ codecompanion.setup({
       adapter = 'copilot',
       keymaps = {
         close = {
-          modes = { n = "<A-q>", i = "<A-q>" },
+          modes = { n = "<leader>q" },
         },
         completion = {
           modes = { i = "<C-space>" },
@@ -24,6 +24,13 @@ codecompanion.setup({
         },
         yank_code = {
           modes = { n = "<C-y>" },
+        },
+      },
+      variables = {
+        ["buffer"] = {
+          opts = {
+            default_params = 'pin', -- or 'watch'
+          },
         },
       },
       tools = {
