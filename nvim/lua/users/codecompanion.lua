@@ -58,9 +58,10 @@ codecompanion.setup({
     },
     chat = {
       window = {
-        layout = 'float',
-        height = 0.8,
-        width = 0.9,
+        layout = 'horizontal',
+        position = "bottom",
+        height = 0.4,
+        width = 1,
       },
     },
   },
