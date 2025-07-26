@@ -14,7 +14,7 @@ codecompanion.setup({
       adapter = 'copilot',
       keymaps = {
         close = {
-          modes = { n = "<leader>q" },
+          modes = { n = "g<A-q>", i = '<nop>' },
         },
         completion = {
           modes = { i = "<C-space>" },
@@ -79,7 +79,7 @@ codecompanion.setup({
 
           chat_keymaps.save_chat = {
             modes = {
-              n = opts.keymap or "<A-w>",
+              n = opts.keymap or "g<A-w>",
             },
             description = "Save Chat",
             callback = function(chat)
