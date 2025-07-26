@@ -82,9 +82,25 @@ local jsCountSnippet = s({ trig = "count", name = 'console.log()' }, {
 local jsTableSnippet = s({ trig = "table", name = 'console.log()' }, {
   t("console.table(["), i(1, "message"), t("]);")
 })
-local jsLogDebugSnippet = s({ trig = "logd", name = 'log debug' }, {
-  t("console.log(\"[DEBUG] \", "), i(1, "message"), t(");")
-})
+local jsLogDebugSnippet = s({ trig = "logd", name = 'log debug' }, fmt(
+  'console.log("🚀 file:{1}-line:{2} ", {3});',
+  {
+    f(function()
+      local fname = vim.fn.expand('%:t')
+      if fname == "" then
+        return "untitled"
+      end
+      local maxlen = 20
+      if #fname > maxlen then
+        return fname:sub(1, maxlen) .. "..."
+      else
+        return fname
+      end
+    end),
+    f(function() return tostring(vim.fn.line('.')) end), -- line number
+    i(1, "message"),
+  }
+))
 
 local jsExportArrowFunction = s({ trig = 'eaf', name = 'export function' }, fmt([[
 export const = {1}({2}) => {{
