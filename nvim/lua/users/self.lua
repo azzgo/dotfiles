@@ -24,6 +24,7 @@ local MENU_LABEL_ENUM = {
   OPEN_QUICKFIX = '[Quickfix] - list',
   OPEN_LOCATION = '[Location] - list',
   SNACKS_PICKER = '[Snacks] - picker',
+  QUIT_ALL = '[Quit] - force quit all',
 }
 
 local MENU = {
@@ -101,6 +102,9 @@ local MENU = {
   [MENU_LABEL_ENUM.OPEN_QUICKFIX] = function()
     vim.cmd.copen()
   end,
+  [MENU_LABEL_ENUM.QUIT_ALL] = function()
+    vim.cmd.quitall({ bang = true })
+  end,
 }
 
 local function self_use_case_popup()
@@ -112,6 +116,7 @@ local function self_use_case_popup()
     MENU_LABEL_ENUM.OPEN_LOCATION,
     MENU_LABEL_ENUM.SNACKS_PICKER,
     MENU_LABEL_ENUM.BUFFER_DELETE_OTHERS,
+    MENU_LABEL_ENUM.QUIT_ALL,
   }
   if persistence_ok == true then
     vim.list_extend(menu, {
