@@ -73,16 +73,7 @@ end
 
 
 --- snippets
-local jsLogSnippet = s({ trig = "log", name = 'console.log()' }, {
-  t("console.log("), i(1, "message"), t(");")
-})
-local jsCountSnippet = s({ trig = "count", name = 'console.log()' }, {
-  t("console.count("), i(1, "message"), t(");")
-})
-local jsTableSnippet = s({ trig = "table", name = 'console.log()' }, {
-  t("console.table(["), i(1, "message"), t("]);")
-})
-local jsLogDebugSnippet = s({ trig = "logd", name = 'log debug' }, fmt(
+local jsLogDebugSnippet = s({ trig = "logd", name = 'log for debug' }, fmt(
   'console.log("🚀 file:{1}-line:{2} ", {3});',
   {
     f(function()
