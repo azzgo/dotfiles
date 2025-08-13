@@ -7,7 +7,22 @@ end
 
 codecompanion.setup({
   opts = {
-    language = 'English',
+    language = 'Chinese',
+  },
+  adapters = {
+    local_llm = function()
+      return require("codecompanion.adapters").extend("openai_compatible", {
+        env = {
+          url = "http://127.0.0.1:11434", -- optional: default value is ollama url http://127.0.0.1:11434
+          models_endpoint = "/v1/models", -- optional: attaches to the end of the URL to form the endpoint to retrieve models
+        },
+        schema = {
+          model = {
+            default = "gpt-oss:20b",  -- define llm model to be used
+          },
+        },
+      })
+    end,
   },
   strategies = {
     chat = {
