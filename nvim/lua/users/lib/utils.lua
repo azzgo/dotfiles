@@ -112,4 +112,17 @@ function M.make_sure_dir(dir)
   end
 end
 
+function M.get_buffer_shortened_path(max_length)
+  local fname = vim.fn.expand('%:t')
+  if fname == "" then
+    return "untitled"
+  end
+  local maxlen = max_length or 20
+  if #fname > maxlen then
+    return fname:sub(1, maxlen) .. "..."
+  else
+    return fname
+  end
+end
+
 return M

@@ -77,16 +77,7 @@ local jsLogDebugSnippet = s({ trig = "logd", name = 'log for debug' }, fmt(
   'console.log("🚀 file:{1}-line:{2} ", {3});',
   {
     f(function()
-      local fname = vim.fn.expand('%:t')
-      if fname == "" then
-        return "untitled"
-      end
-      local maxlen = 20
-      if #fname > maxlen then
-        return fname:sub(1, maxlen) .. "..."
-      else
-        return fname
-      end
+      return utils.get_buffer_shortened_path(20)
     end),
     f(function() return tostring(vim.fn.line('.')) end), -- line number
     i(1, "message"),
@@ -199,6 +190,15 @@ local date = s('date', { t(os.date('%Y-%m-%d')) })
 local time = s('time', { t(os.date('%H:%M:%S')) })
 local datetime = s('datetime', { t(os.date('%Y-%m-%d %H:%M:%S')) })
 local uuid = s('uuid', { t(vim.fn.system('uuidgen | tr -d "\n"')) })
+local code_location = s({ trig = 'code_loc', name = 'code location' }, fmt(
+  '🚀 file:{1}-line:{2}',
+  {
+    f(function()
+      return utils.get_buffer_shortened_path(20)
+    end),
+    f(function() return tostring(vim.fn.line('.')) end), -- line number
+  }
+))
 
 
 ls.add_snippets('all', {
@@ -206,6 +206,7 @@ ls.add_snippets('all', {
   date,
   time,
   datetime,
+  code_location,
   uuid,
   todo_snippet({ trig = 'todo' }, { 'TODO', 'DOING', 'DONE' }, { ctype = 1 }),
   todo_snippet({ trig = 'note' }, { 'NOTE', 'INFO' }, { ctype = 1 }),
