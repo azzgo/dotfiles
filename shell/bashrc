@@ -11,13 +11,6 @@ function lfc () {
   cd "$(command lf -print-last-dir "$@")"
 }
 
-function y() {
-	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
-	yazi "$@" --cwd-file="$tmp"
-	IFS= read -r -d '' cwd < "$tmp"
-	[ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
-	rm -f -- "$tmp"
-}
 
 # fzf config
 export FZF_DEFAULT_COMMAND='fd --type f --color=never'
