@@ -24,6 +24,9 @@ alias l='ls -lah'
 alias ll='ls -alFh'
 alias la='ls -lAh'
 
+# Safety first
+alias rm="rm -i"
+
 function gcd() {
   if [[ -x  $(command -v fzf) ]];then
     folder=$(git worktree list | fzf)
@@ -76,7 +79,13 @@ if [[ -x $(command -v proxychains) ]];then
   alias pc="proxychains -q"
 fi
 
-if [[ -x $(command -v trash) ]];then
-  alias rm="trash"
+# yazi alias
+if [[ -x $(command -v yazi) ]];then
+  function y() {
+    local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+    yazi "$@" --cwd-file="$tmp"
+    IFS= read -r -d '' cwd < "$tmp"
+    [ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
+    rm -f -- "$tmp"
+  }
 fi
-
