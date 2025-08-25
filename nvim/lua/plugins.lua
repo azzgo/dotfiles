@@ -80,7 +80,8 @@ return require("lazy").setup({
     {
       'github/copilot.vim',
       init = function()
-        vim.keymap.set('i', '<M-space>', 'copilot#Accept("\\<CR>")', {
+        -- y for yes
+        vim.keymap.set('i', '<M-y>', 'copilot#Accept("\\<CR>")', {
           expr = true,
           replace_keycodes = false
         })
