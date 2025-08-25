@@ -89,3 +89,10 @@ if [[ -x $(command -v yazi) ]];then
     rm -f -- "$tmp"
   }
 fi
+
+# lf alias
+if [[ -x $(command -v lf) ]];then
+  function lfc () {
+    cd "$(command lf -print-last-dir "$@")"
+  }
+fi
