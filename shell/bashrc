@@ -7,11 +7,6 @@ export PATH=$PATH:$HOME/.local/bin
 
 source $SHELL_ROOT/alias
 
-function lfc () {
-  cd "$(command lf -print-last-dir "$@")"
-}
-
-
 # fzf config
 export FZF_DEFAULT_COMMAND='fd --type f --color=never'
 export FZF_DEFAULT_OPTS='--no-height --cycle --reverse'
