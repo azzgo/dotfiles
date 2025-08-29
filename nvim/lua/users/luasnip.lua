@@ -115,10 +115,10 @@ describe("{1}", () => {{
   }});
 
   test("{2}", () => {{
-    expect(true).toBe(true);
+    {3}
   }});
 }});
-]], { i(1, 'name'), i(2, 'description') }, {}))
+]], { i(1, 'name'), i(2, 'description'), i(3, '') }, {}))
 
 local jsxReactFunctionComponentSnippet = s({ trig = 'rfc', name = 'react function component' }, fmt([[
 const {1} = ({2}) => {{
