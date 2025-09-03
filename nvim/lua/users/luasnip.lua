@@ -187,6 +187,7 @@ local htmlTagCollection = {
 local loremText = s({ trig = 'lorem', name = 'lorem ipsum' },
   { t('Lorem ipsum dolor sit amet, qui minim labore adipisicing minim sint cillum sint consectetur cupidatat.') })
 local date = s('date', { t(os.date('%Y-%m-%d')) })
+local tbi = s('tbi', { t('to be implement') })
 local time = s('time', { t(os.date('%H:%M:%S')) })
 local datetime = s('datetime', { t(os.date('%Y-%m-%d %H:%M:%S')) })
 local uuid = s('uuid', { t(vim.fn.system('uuidgen | tr -d "\n"')) })
@@ -204,6 +205,7 @@ local code_location = s({ trig = 'code_loc', name = 'code location' }, fmt(
 ls.add_snippets('all', {
   loremText,
   date,
+  tbi,
   time,
   datetime,
   code_location,
