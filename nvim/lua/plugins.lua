@@ -199,17 +199,25 @@ return require("lazy").setup({
       end
     },
     -- fuzzy
+    -- {
+    --   "Yggdroot/LeaderF",
+    --   -- conflic in cond, need do it manually now
+    --   -- build = function()
+    --   --   vim.cmd.LeaderfInstallCExtension()
+    --   -- end,
+    --   cond = function()
+    --     return vim.fn.has('python3') == 1;
+    --   end,
+    --   config = function()
+    --     require('users.leaderf')
+    --   end
+    -- },
     {
-      "Yggdroot/LeaderF",
-      -- conflic in cond, need do it manually now
-      -- build = function()
-      --   vim.cmd.LeaderfInstallCExtension()
-      -- end,
-      cond = function()
-        return vim.fn.has('python3') == 1;
-      end,
+      "ibhagwan/fzf-lua",
+      dependencies = { "nvim-tree/nvim-web-devicons" },
+      opts = {},
       config = function()
-        require('users.leaderf')
+        require('users.fzflua')
       end
     },
     {
