@@ -15,6 +15,25 @@ return require("lazy").setup({
   root = vim.g.dot_config_path .. "/.local/lazy",
   spec = {
     {
+      's1n7ax/nvim-window-picker',
+      name = 'window-picker',
+      event = 'VeryLazy',
+      version = '2.*',
+      keys = {
+        {
+          "<c-w><c-w>",
+          mode = { "n" },
+          function()
+            require('window-picker').pick_window()
+          end
+        },
+      },
+      opts = {
+        hint = 'floating-big-letter',
+        filter_rules = { autoselect_one = false, include_current_win = true },
+      }
+    },
+    {
       'folke/snacks.nvim',
       priority = 1000,
       lazy = false,
