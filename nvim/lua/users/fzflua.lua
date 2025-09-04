@@ -39,13 +39,17 @@ local function leaderf_commands_actions(what)
     fzfLua.blines({ previewer = false })
   elseif what == "cword" then
     fzfLua.grep_cword()
-  elseif what == 'grep_quickfix' then
+  elseif what == 'grep quickfix' then
     fzfLua.grep_quickfix()
+  elseif what == 'git branches' then
+    fzfLua.git_branches()
+  elseif what == 'git tags' then
+    fzfLua.git_tags()
   end
 end
 
 local function leaderf_commands()
-  local source = { 'resume', 'lines', 'grep buffer', 'grep_quickfix' }
+  local source = { 'resume', 'lines', 'grep buffer', 'grep quickfix', 'git branches', 'git tags' }
   vim.ui.select(source, { prompt = "Fzflua Commands" }, function(selected)
     leaderf_commands_actions(selected)
   end)
