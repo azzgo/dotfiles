@@ -56,6 +56,7 @@ gitsigns.setup({
 
     vim.keymap.set("n", "]h", ":Gitsigns next_hunk<CR>", { noremap = true, silent = true })
     vim.keymap.set("n", "[h", ":Gitsigns prev_hunk<CR>", { noremap = true, silent = true })
+    vim.keymap.set("n", "<leader>gb", ":Gitsigns blame<CR>", { noremap = true, silent = true })
 
     map({ "n", "v" }, "<leader>h", function()
       hunks_popup_menu()
