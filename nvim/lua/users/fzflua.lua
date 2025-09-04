@@ -63,3 +63,6 @@ vim.keymap.set('n', '<leader>/', function() grep_string() end, { silent = true, 
 vim.keymap.set('v', '<leader>/', function()
   fzfLua.grep_visual()
 end, { silent = true, noremap = true })
+vim.keymap.set('n', '<leader>gs', function()
+  fzfLua.git_status({ previewer = false })
+end, { silent = true, noremap = true })
