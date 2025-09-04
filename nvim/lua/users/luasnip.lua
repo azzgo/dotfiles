@@ -108,12 +108,9 @@ local jsArrayFunction = s({ trig = 'af', name = 'arrow functoin' }, fmt([[({1}) 
 ]], { i(1), i(2) }, {}))
 
 local vitest = s({ trig = 'vitest', name = 'vite test' },
-  fmt([[import {{ beforeEach, describe, expect, test, vi }} from "vitest";
+  fmt([[import {{ describe, expect, test }} from "vitest";
 
 describe("{1}", () => {{
-  beforeEach(() => {{
-  }});
-
   test("{2}", () => {{
     {3}
   }});
