@@ -117,6 +117,11 @@ describe("{1}", () => {{
 }});
 ]], { i(1, 'name'), i(2, 'description'), i(3, '') }, {}))
 
+local testcase = s({ trig = 'test', name = 'vite test' },
+  fmt([[test("{1}", () => {{
+    {2}
+}});]], { i(1, 'description'), i(2, '') }, {}))
+
 local jsxReactFunctionComponentSnippet = s({ trig = 'rfc', name = 'react function component' }, fmt([[
 const {1} = ({2}) => {{
   return <{3}>{4}</{3}>;
@@ -227,6 +232,7 @@ local javascriptCommonSnippets = {
   jsFunction,
   jsArrayFunction,
   vitest,
+  testcase,
 }
 
 ls.add_snippets("typescript", utils.merge_list(
