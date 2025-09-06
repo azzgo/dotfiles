@@ -9,6 +9,27 @@ codecompanion.setup({
   opts = {
     language = 'Chinese',
   },
+  prompt_library = {
+    ['refine_test'] = {
+      strategy = "chat",
+      description = "Refine testcase in buffer",
+      opts = {
+        is_slash_cmd = true,
+        short_name = "refine_test",
+        auto_submit = true,
+      },
+      prompts = {
+        {
+          role = "system",
+          content = "You are an Tdd expert, write test first and let the implemention to user",
+        },
+        {
+          role = "user",
+          content = "@{files} refine the test case in #{buffer}"
+        }
+      },
+    },
+  },
   adapters = {
     http= {
       local_llm = function()
