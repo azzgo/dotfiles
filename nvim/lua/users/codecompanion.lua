@@ -10,10 +10,12 @@ codecompanion.setup({
     language = 'Chinese',
   },
   prompt_library = {
-    ['refine_test'] = {
+    ['Refine Test'] = {
       strategy = "chat",
       description = "Refine testcase in buffer",
       opts = {
+        index = 50,
+        is_default = false,
         is_slash_cmd = true,
         short_name = "refine_test",
         auto_submit = true,
@@ -21,11 +23,11 @@ codecompanion.setup({
       prompts = {
         {
           role = "system",
-          content = "You are an Tdd expert, write test first and let the implemention to user",
+          content = "You are an expert of Tdd, write test first and let the implemention to user",
         },
         {
           role = "user",
-          content = "@{files} refine the test case in #{buffer}"
+          content = "@{files} refine the test case in #{buffer}. You should edit file and show the diff to me."
         }
       },
     },
