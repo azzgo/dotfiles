@@ -24,13 +24,14 @@ return require("lazy").setup({
           "<c-w><c-w>",
           mode = { "n" },
           function()
-            require('window-picker').pick_window()
+            local picked_window_id = require('window-picker').pick_window()
+            vim.api.nvim_set_current_win(picked_window_id)
           end
         },
       },
       opts = {
         hint = 'floating-big-letter',
-        filter_rules = { autoselect_one = false, include_current_win = true },
+        filter_rules = { autoselect_one = true, include_current_win = true },
       }
     },
     {
