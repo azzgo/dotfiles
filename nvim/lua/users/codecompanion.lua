@@ -27,7 +27,7 @@ codecompanion.setup({
         },
         {
           role = "user",
-          content = "@{files} refine the test case in #{buffer}. You should edit file and show the diff to me."
+          content = "@{files} refine the test case in #{buffer}. If the test fixture desctiption is not suitable, change it. You should edit file and show the diff to me."
         }
       },
     },
