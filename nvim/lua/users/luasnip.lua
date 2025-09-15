@@ -84,11 +84,20 @@ local jsLogDebugSnippet = s({ trig = "logd", name = 'log for debug' }, fmt(
   }
 ))
 
-local jsExportArrowFunction = s({ trig = 'eaf', name = 'export function' }, fmt([[
-export const = {1}({2}) => {{
+local jsExportArrowFunction = s({ trig = 'eaf', name = 'export function' }, fmt([[export const = {1} = ({2}) => {{
   {3}
 }}
 ]], { i(1, 'name'), i(2, 'params'), i(3) }, {}))
+
+local jsFor = s({ trig = 'for', name = 'for loop' }, fmt([[for (let i = {1}; i < {2}; i++) {{
+  {3}
+}}
+]], { i(1, '0'), i(2, 'size'), i(3) }, {}))
+
+local jsForOf = s({ trig = 'forof', name = 'for of loop' }, fmt([[for (const {1} of {2}) {{
+  {3}
+}}
+]], { i(1, 'item'), i(2, 'list'), i(3) }, {}))
 
 local jsExportFunction = s({ trig = 'ef', name = 'export function' }, fmt([[
 export function {1}({2}) {{
@@ -223,12 +232,11 @@ ls.add_snippets('all', {
 });
 
 local javascriptCommonSnippets = {
-  jsLogSnippet,
-  jsCountSnippet,
-  jsTableSnippet,
   jsLogDebugSnippet,
   jsExportFunction,
   jsExportArrowFunction,
+  jsFor,
+  jsForOf,
   jsFunction,
   jsArrayFunction,
   vitest,
