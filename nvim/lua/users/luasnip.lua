@@ -89,10 +89,11 @@ local jsExportArrowFunction = s({ trig = 'eaf', name = 'export function' }, fmt(
 }}
 ]], { i(1, 'name'), i(2, 'params'), i(3) }, {}))
 
-local jsFor = s({ trig = 'for', name = 'for loop' }, fmt([[for (let i = {1}; i < {2}; i++) {{
-  {3}
+local jsFor = s({ trig = 'for', name = 'for loop' },
+  fmt([[for (let {variable} = {initial}; {variable} < {size}; {variable}++) {{
+  {}
 }}
-]], { i(1, '0'), i(2, 'size'), i(3) }, {}))
+]], { variable = i(1, 'i'), initial = i(2, '0'), size = i(3, 'size'), i(4) }, { repeat_duplicates = true }))
 
 local jsForOf = s({ trig = 'forof', name = 'for of loop' }, fmt([[for (const {1} of {2}) {{
   {3}
