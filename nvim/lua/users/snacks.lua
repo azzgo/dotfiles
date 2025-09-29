@@ -14,7 +14,7 @@ local dashboard_config = {
       ---@type fun(cmd:string, opts:table)|nil
       pick = nil,
       keys = {
-        { icon = "", key = "e", desc = "New File", action = ":ene | startinsert" },
+        { icon = "", key = "e", desc = "New File", action = ":ene" },
         { icon = "", key = "r", desc = "Load Session", action = function() require("persistence").load() end },
         { icon = "󰒲 ", key = "l", desc = "Lazy", action = ":Lazy", enabled = package.loaded.lazy ~= nil },
         { icon = "", key = "h", desc = "Mcphub", action = ":MCPHub" },
