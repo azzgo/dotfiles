@@ -47,6 +47,19 @@ codecompanion.setup({
           },
         })
       end,
+      openrouter = function ()
+        return require("codecompanion.adapters").extend('openai_compatible', {
+          env = {
+            url = "https://openrouter.ai/api",
+            api_key = "cmd:pass show ai/openrouter | tail -n1 | tr -d '\n'",
+          },
+          schema = {
+            model = {
+              default = "qwen/qwen3-coder-30b-a3b-instruct",
+            },
+          },
+        })
+      end
     }
   },
   strategies = {
