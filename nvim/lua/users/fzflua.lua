@@ -70,3 +70,7 @@ end, { silent = true, noremap = true })
 vim.keymap.set('n', '<leader>gs', function()
   fzfLua.git_status({ previewer = false })
 end, { silent = true, noremap = true })
+
+vim.keymap.set('n', '<leader><leader>', function()
+  fzfLua.builtin();
+end, { silent = true, noremap = true })
