@@ -73,6 +73,13 @@ end
 
 
 --- snippets
+local jsConsole = s({ trig = "con", name = 'console.' }, fmt(
+  'console.{1}({2})',
+  {
+    i(1, "log"),
+    i(2, "params"),
+  }
+))
 local jsLogDebugSnippet = s({ trig = "logd", name = 'log for debug' }, fmt(
   'console.log("🚀 file:{1}-line:{2} ", {3});',
   {
@@ -234,6 +241,7 @@ ls.add_snippets('all', {
 
 local javascriptCommonSnippets = {
   jsLogDebugSnippet,
+  jsConsole,
   jsExportFunction,
   jsExportArrowFunction,
   jsFor,
