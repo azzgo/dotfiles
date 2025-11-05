@@ -45,7 +45,15 @@
     "tailwindcss": {
       "command": "tailwindcss-language-server",
       "args": ["--stdio"],
-      "filetypes": ["html", "javascript", "javascriptreact", "typescript", "typescriptreact", "vue", "svelte"],
+      "filetypes": [
+        "html",
+        "javascript",
+        "javascriptreact",
+        "typescript",
+        "typescriptreact",
+        "vue",
+        "svelte"
+      ],
       "initializationOptions": {
         "userPreferences": {
           "css": true,
@@ -66,6 +74,42 @@
           }
         }
       }
+    },
+    "ruby-lsp": {
+      "command": "ruby-lsp",
+      "enable": false,
+      "initializationOptions": {
+        "enabledFeatures": {
+          "codeActions": true,
+          "codeLens": true,
+          "completion": true,
+          "definition": true,
+          "diagnostics": true,
+          "documentHighlights": true,
+          "documentLink": true,
+          "documentSymbols": true,
+          "foldingRanges": true,
+          "formatting": true,
+          "hover": true,
+          "inlayHint": true,
+          "onTypeFormatting": true,
+          "selectionRanges": true,
+          "semanticHighlighting": true,
+          "signatureHelp": true,
+          "typeHierarchy": true,
+          "workspaceSymbol": true
+        }
+      },
+      "filetypes": ["ruby"],
+      "featuresConfiguration": {
+        "inlayHint": {
+          "implicitHashValue": true,
+          "implicitRescue": true
+        }
+      },
+      "formatter": "auto",
+      "linters": [],
+      "experimentalFeaturesEnabled": false
     }
   }
 }
