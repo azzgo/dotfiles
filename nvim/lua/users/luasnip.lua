@@ -297,6 +297,20 @@ ls.add_snippets('gitcommit', {
   }))
 })
 
+--- ruby
+ls.add_snippets('ruby', {
+  s({ trig = "logd", name = 'log for debug' }, fmt(
+    'Rails.logger.info "🚀 file:{1}-line:{2} #{{{3}}}"',
+    {
+      f(function()
+        return utils.get_buffer_shortened_path(20)
+      end),
+      f(function() return tostring(vim.fn.line('.')) end), -- line number
+      i(1, "message"),
+    }
+  ))
+})
+
 --- markdown
 local function generate_table_header(cols)
   local header = {}
