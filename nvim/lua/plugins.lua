@@ -54,7 +54,8 @@ return require("lazy").setup({
       },
       -- stylua: ignore
       keys = {
-        { "s", mode = { "n", "x" }, function() require("flash").jump() end, desc = "Flash" },
+        { "<C-s>", mode = { "n", "x" }, function() require("flash").jump() end, desc = "Flash" },
+        { "s",     mode = { "n", "x" }, function() require("flash").jump() end, desc = "Flash" },
       },
     },
     -- matchup

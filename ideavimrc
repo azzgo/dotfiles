@@ -139,6 +139,5 @@ Plug 'vim-easymotion'
 :map <leader>nn :NERDTreeToggle<CR>
 :map <leader>nf ::NERDTreeFind<CR>
 
-nmap s <Plug>(easymotion-sn)
-nmap S <Plug>(easymotion-s)
+nmap <C-s> <Plug>(easymotion-sn)
 
