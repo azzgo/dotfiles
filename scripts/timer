@@ -1,0 +1,134 @@
+#!/bin/bash
+
+# Timer script for workflow menu
+# Handles starting, stopping, and displaying timer status
+
+TIMER_PID_FILE="/tmp/workflow_timer.pid"
+TIMER_START_FILE="/tmp/workflow_timer.start"
+TIMER_DURATION_FILE="/tmp/workflow_timer.duration"
+
+# Get appropriate dmenu tool
+if [[ -n $WAYLAND_DISPLAY ]]; then
+    tool="fuzzel --dmenu"
+elif [[ -n $XDG_SESSION_TYPE ]]; then
+    tool="rofi -dmenu"
+fi
+
+function get_remaining_time() {
+    if [[ -f $TIMER_PID_FILE ]] && [[ -f $TIMER_START_FILE ]] && [[ -f $TIMER_DURATION_FILE ]]; then
+        local pid=$(cat $TIMER_PID_FILE)
+        if kill -0 $pid 2>/dev/null; then
+            local start_time=$(cat $TIMER_START_FILE)
+            local duration_min=$(cat $TIMER_DURATION_FILE)
+            local current_time=$(date +%s)
+            local elapsed=$((current_time - start_time))
+            local duration_sec=$((duration_min * 60))
+            local remaining=$((duration_sec - elapsed))
+            
+            if [[ $remaining -gt 0 ]]; then
+                local remaining_min=$((remaining / 60))
+                local remaining_sec=$((remaining % 60))
+                echo "$(printf "%02d:%02d" $remaining_min $remaining_sec)"
+                return 0
+            fi
+        fi
+    fi
+    echo ""
+    return 1
+}
+
+function stop_timer() {
+    if [[ -f $TIMER_PID_FILE ]]; then
+        local pid=$(cat $TIMER_PID_FILE)
+        if kill -0 $pid 2>/dev/null; then
+            kill $pid
+            rm -f $TIMER_PID_FILE $TIMER_START_FILE $TIMER_DURATION_FILE
+            notify-send "Timer" "Timer stopped" -t 3000
+            return 0
+        fi
+    fi
+    rm -f $TIMER_PID_FILE $TIMER_START_FILE $TIMER_DURATION_FILE
+    return 1
+}
+
+function start_timer() {
+    local minutes=$1
+    
+    # Stop any existing timer
+    stop_timer >/dev/null 2>&1
+    
+    # Start new timer
+    local start_time=$(date +%s)
+    echo $$ > $TIMER_PID_FILE
+    echo $start_time > $TIMER_START_FILE
+    echo $minutes > $TIMER_DURATION_FILE
+    
+    # Run timer in background
+    (
+        sleep $((minutes * 60))
+        if [[ -f $TIMER_PID_FILE ]] && [[ $(cat $TIMER_PID_FILE) == $$ ]]; then
+            notify-send "Timer" "${minutes}分钟的计时器已完成" -t 5000
+            rm -f $TIMER_PID_FILE $TIMER_START_FILE $TIMER_DURATION_FILE
+        fi
+    ) &
+    
+    echo $! > $TIMER_PID_FILE
+    notify-send "Timer" "Started ${minutes} minute timer" -t 3000
+}
+
+function show_menu() {
+    local menu=()
+    
+    # Check if timer is running - use a more reliable check
+    if [[ -f $TIMER_PID_FILE ]] && kill -0 $(cat $TIMER_PID_FILE) 2>/dev/null; then
+        # Timer is running, show stop option first
+        local remaining_time=$(get_remaining_time)
+        if [[ -n $remaining_time ]]; then
+            menu+=("⏹ Stop timer ($remaining_time remaining)")
+        fi
+    fi
+    
+    # Add timer options
+    menu+=("5 minutes")
+    menu+=("10 minutes")
+    menu+=("15 minutes")
+    menu+=("30 minutes")
+    menu+=("45 minutes")
+    menu+=("60 minutes")
+    
+    # Show menu and get selection
+    local selection=$(printf "%s\n" "${menu[@]}" | $tool)
+    
+    if [[ -n $selection ]]; then
+        if [[ $selection == *"Stop timer"* ]]; then
+            stop_timer
+        elif [[ $selection =~ ([0-9]+) ]]; then
+            local minutes=${BASH_REMATCH[1]}
+            start_timer $minutes
+        fi
+    fi
+}
+
+function main() {
+    case "${1:-menu}" in
+        "status")
+            get_remaining_time
+            ;;
+        "stop")
+            stop_timer
+            ;;
+        "start")
+            if [[ -n $2 ]] && [[ $2 =~ ^[0-9]+$ ]]; then
+                start_timer $2
+            else
+                echo "Usage: $0 start <minutes>"
+                exit 1
+            fi
+            ;;
+        *)
+            show_menu
+            ;;
+    esac
+}
+
+main "$@"

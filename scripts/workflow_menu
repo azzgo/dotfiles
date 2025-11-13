@@ -20,6 +20,7 @@ function main() {
     "grim"
     "password"
     "otp"
+    "timer"
   )
   $HANDLER $(printf "%s\n" "${menu[@]}" | $tool)
 }
