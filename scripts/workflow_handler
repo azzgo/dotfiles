@@ -32,6 +32,9 @@ function main() {
       "grim")
         $SHELL_ROOT/grim usage
         ;;
+      "timer")
+        $SHELL_ROOT/timer
+        ;;
       "exit") ;;
     esac
   fi
