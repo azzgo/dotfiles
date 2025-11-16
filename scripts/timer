@@ -6,18 +6,182 @@
 TIMER_PID_FILE="/tmp/workflow_timer.pid"
 TIMER_START_FILE="/tmp/workflow_timer.start"
 TIMER_DURATION_FILE="/tmp/workflow_timer.duration"
+TIMER_ENV_FILE="/tmp/workflow_timer.env"
 
-# Get appropriate dmenu tool
-if [[ -n $WAYLAND_DISPLAY ]]; then
-    tool="fuzzel --dmenu"
-elif [[ -n $XDG_SESSION_TYPE ]]; then
-    tool="rofi -dmenu"
+# Configuration - can be overridden by ~/.config/timer/config
+ENABLE_SOUND_NOTIFICATION=true
+ENABLE_SCREEN_FLASH=true
+ENABLE_COMPLETION_LOG=true
+COMPLETION_LOG_FILE="$HOME/.local/share/timer.log"
+
+# Load user configuration if it exists
+if [[ -f "$HOME/.config/timer/config" ]]; then
+    source "$HOME/.config/timer/config"
 fi
+
+# Only initialize dmenu tool if not being sourced by daemon
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    # Get appropriate dmenu tool
+    if [[ -n $WAYLAND_DISPLAY ]]; then
+        tool="fuzzel --dmenu"
+    elif [[ -n $XDG_SESSION_TYPE ]]; then
+        tool="rofi -dmenu"
+    fi
+fi
+
+function save_environment() {
+    # Save essential environment variables for notifications
+    cat > "$TIMER_ENV_FILE" << EOF
+export DISPLAY="$DISPLAY"
+export WAYLAND_DISPLAY="$WAYLAND_DISPLAY"
+export XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR"
+export XDG_SESSION_TYPE="$XDG_SESSION_TYPE"
+export DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS"
+export HOME="$HOME"
+export USER="$USER"
+export PATH="$PATH"
+export ENABLE_SOUND_NOTIFICATION="$ENABLE_SOUND_NOTIFICATION"
+export ENABLE_SCREEN_FLASH="$ENABLE_SCREEN_FLASH"
+export ENABLE_COMPLETION_LOG="$ENABLE_COMPLETION_LOG"
+export COMPLETION_LOG_FILE="$COMPLETION_LOG_FILE"
+EOF
+}
+
+function load_environment() {
+    if [[ -f "$TIMER_ENV_FILE" ]]; then
+        source "$TIMER_ENV_FILE"
+    fi
+}
+
+function send_completion_notification() {
+    local minutes=$1
+    
+    # Load environment for notifications
+    load_environment
+    
+    # Send desktop notification with urgency
+    notify-send "⏰ Timer Complete" "${minutes}分钟的计时器已完成！" \
+        -u critical \
+        -t 10000 \
+        -a "Timer" \
+        -i dialog-information 2>/dev/null
+    
+    # Play sound if enabled
+    if [[ "$ENABLE_SOUND_NOTIFICATION" == "true" ]]; then
+        if command -v paplay &> /dev/null && [[ -f /usr/share/sounds/freedesktop/stereo/complete.oga ]]; then
+            paplay /usr/share/sounds/freedesktop/stereo/complete.oga 2>/dev/null &
+        elif command -v aplay &> /dev/null && [[ -f /usr/share/sounds/alsa/Front_Left.wav ]]; then
+            aplay /usr/share/sounds/alsa/Front_Left.wav 2>/dev/null &
+        elif command -v speaker-test &> /dev/null; then
+            # Fallback: brief beep using speaker-test
+            timeout 1s speaker-test -t sine -f 1000 -l 1 2>/dev/null &
+        fi
+    fi
+    
+    # Flash screen if enabled (only in X11 for safety)
+    if [[ "$ENABLE_SCREEN_FLASH" == "true" ]] && command -v xrandr &> /dev/null && [[ -n "$DISPLAY" ]]; then
+        (
+            local output=$(xrandr | grep " connected" | cut -f1 -d" " | head -1 2>/dev/null)
+            if [[ -n "$output" ]]; then
+                local current_brightness=$(xrandr --verbose 2>/dev/null | grep -i brightness | head -1 | cut -f2 -d' ')
+                xrandr --output "$output" --brightness 0.3 2>/dev/null
+                sleep 0.2
+                xrandr --output "$output" --brightness "${current_brightness:-1.0}" 2>/dev/null
+            fi
+        ) &
+    fi
+    
+    # Log completion if enabled
+    if [[ "$ENABLE_COMPLETION_LOG" == "true" ]]; then
+        mkdir -p "$(dirname "$COMPLETION_LOG_FILE")" 2>/dev/null
+        echo "$(date '+%Y-%m-%d %H:%M:%S'): Timer completed (${minutes} minutes)" >> "$COMPLETION_LOG_FILE" 2>/dev/null
+    fi
+}
+
+function create_timer_daemon() {
+    local minutes=$1
+    local start_time=$2
+    
+    # Create a completely independent daemon script that doesn't source the main script
+    cat > "/tmp/timer_daemon_$$.sh" << EOF
+#!/bin/bash
+
+# Timer daemon - runs independently
+minutes=$minutes
+start_time=$start_time
+duration=\$((minutes * 60))
+
+# Wait for the timer duration
+sleep \$duration
+
+# Check if this timer is still the active one
+if [[ -f "$TIMER_PID_FILE" ]] && [[ "\$(cat "$TIMER_PID_FILE" 2>/dev/null)" == "\$$" ]]; then
+    # Load environment for notifications
+    if [[ -f "$TIMER_ENV_FILE" ]]; then
+        source "$TIMER_ENV_FILE"
+    fi
+    
+    # Send completion notification directly (inline implementation)
+    notify-send "⏰ Timer Complete" "\${minutes}分钟的计时器已完成！" \\
+        -u critical \\
+        -t 10000 \\
+        -a "Timer" \\
+        -i dialog-information 2>/dev/null
+    
+    # Play sound if enabled
+    if [[ "\$ENABLE_SOUND_NOTIFICATION" == "true" ]]; then
+        if command -v paplay &> /dev/null && [[ -f /usr/share/sounds/freedesktop/stereo/complete.oga ]]; then
+            paplay /usr/share/sounds/freedesktop/stereo/complete.oga 2>/dev/null &
+        elif command -v aplay &> /dev/null && [[ -f /usr/share/sounds/alsa/Front_Left.wav ]]; then
+            aplay /usr/share/sounds/alsa/Front_Left.wav 2>/dev/null &
+        elif command -v speaker-test &> /dev/null; then
+            timeout 1s speaker-test -t sine -f 1000 -l 1 2>/dev/null &
+        fi
+    fi
+    
+    # Flash screen if enabled (only in X11 for safety)
+    if [[ "\$ENABLE_SCREEN_FLASH" == "true" ]] && command -v xrandr &> /dev/null && [[ -n "\$DISPLAY" ]]; then
+        (
+            local output=\$(xrandr | grep " connected" | cut -f1 -d" " | head -1 2>/dev/null)
+            if [[ -n "\$output" ]]; then
+                local current_brightness=\$(xrandr --verbose 2>/dev/null | grep -i brightness | head -1 | cut -f2 -d' ')
+                xrandr --output "\$output" --brightness 0.3 2>/dev/null
+                sleep 0.2
+                xrandr --output "\$output" --brightness "\${current_brightness:-1.0}" 2>/dev/null
+            fi
+        ) &
+    fi
+    
+    # Log completion if enabled
+    if [[ "\$ENABLE_COMPLETION_LOG" == "true" ]]; then
+        mkdir -p "\$(dirname "\$COMPLETION_LOG_FILE")" 2>/dev/null
+        echo "\$(date '+%Y-%m-%d %H:%M:%S'): Timer completed (\${minutes} minutes)" >> "\$COMPLETION_LOG_FILE" 2>/dev/null
+    fi
+    
+    # Clean up timer files
+    rm -f "$TIMER_PID_FILE" "$TIMER_START_FILE" "$TIMER_DURATION_FILE" "$TIMER_ENV_FILE"
+fi
+
+# Clean up daemon script
+rm -f "/tmp/timer_daemon_\$\$.sh"
+EOF
+    
+    chmod +x "/tmp/timer_daemon_$$.sh"
+    
+    # Start daemon completely detached from parent
+    nohup "/tmp/timer_daemon_$$.sh" </dev/null >/dev/null 2>&1 &
+    local daemon_pid=$!
+    
+    # Disown the process to make it completely independent
+    disown $daemon_pid
+    
+    echo $daemon_pid
+}
 
 function get_remaining_time() {
     if [[ -f $TIMER_PID_FILE ]] && [[ -f $TIMER_START_FILE ]] && [[ -f $TIMER_DURATION_FILE ]]; then
-        local pid=$(cat $TIMER_PID_FILE)
-        if kill -0 $pid 2>/dev/null; then
+        local pid=$(cat $TIMER_PID_FILE 2>/dev/null)
+        if [[ -n "$pid" ]] && kill -0 $pid 2>/dev/null; then
             local start_time=$(cat $TIMER_START_FILE)
             local duration_min=$(cat $TIMER_DURATION_FILE)
             local current_time=$(date +%s)
@@ -39,15 +203,18 @@ function get_remaining_time() {
 
 function stop_timer() {
     if [[ -f $TIMER_PID_FILE ]]; then
-        local pid=$(cat $TIMER_PID_FILE)
-        if kill -0 $pid 2>/dev/null; then
-            kill $pid
-            rm -f $TIMER_PID_FILE $TIMER_START_FILE $TIMER_DURATION_FILE
-            notify-send "Timer" "Timer stopped" -t 3000
+        local pid=$(cat $TIMER_PID_FILE 2>/dev/null)
+        if [[ -n "$pid" ]] && kill -0 $pid 2>/dev/null; then
+            kill $pid 2>/dev/null
+            rm -f $TIMER_PID_FILE $TIMER_START_FILE $TIMER_DURATION_FILE $TIMER_ENV_FILE
+            notify-send "⏹ Timer Stopped" "Timer stopped manually" \
+                -t 3000 \
+                -a "Timer" \
+                -i dialog-warning 2>/dev/null
             return 0
         fi
     fi
-    rm -f $TIMER_PID_FILE $TIMER_START_FILE $TIMER_DURATION_FILE
+    rm -f $TIMER_PID_FILE $TIMER_START_FILE $TIMER_DURATION_FILE $TIMER_ENV_FILE
     return 1
 }
 
@@ -57,30 +224,29 @@ function start_timer() {
     # Stop any existing timer
     stop_timer >/dev/null 2>&1
     
+    # Save current environment
+    save_environment
+    
     # Start new timer
     local start_time=$(date +%s)
-    echo $$ > $TIMER_PID_FILE
     echo $start_time > $TIMER_START_FILE
     echo $minutes > $TIMER_DURATION_FILE
     
-    # Run timer in background
-    (
-        sleep $((minutes * 60))
-        if [[ -f $TIMER_PID_FILE ]] && [[ $(cat $TIMER_PID_FILE) == $$ ]]; then
-            notify-send "Timer" "${minutes}分钟的计时器已完成" -t 5000
-            rm -f $TIMER_PID_FILE $TIMER_START_FILE $TIMER_DURATION_FILE
-        fi
-    ) &
+    # Create and start the timer daemon
+    local daemon_pid=$(create_timer_daemon $minutes $start_time)
+    echo $daemon_pid > $TIMER_PID_FILE
     
-    echo $! > $TIMER_PID_FILE
-    notify-send "Timer" "Started ${minutes} minute timer" -t 3000
+    notify-send "⏱ Timer Started" "Started ${minutes} minute timer" \
+        -t 3000 \
+        -a "Timer" \
+        -i dialog-information 2>/dev/null
 }
 
 function show_menu() {
     local menu=()
     
     # Check if timer is running - use a more reliable check
-    if [[ -f $TIMER_PID_FILE ]] && kill -0 $(cat $TIMER_PID_FILE) 2>/dev/null; then
+    if [[ -f $TIMER_PID_FILE ]] && kill -0 $(cat $TIMER_PID_FILE 2>/dev/null) 2>/dev/null; then
         # Timer is running, show stop option first
         local remaining_time=$(get_remaining_time)
         if [[ -n $remaining_time ]]; then
@@ -89,6 +255,7 @@ function show_menu() {
     fi
     
     # Add timer options
+    menu+=("1 minutes")
     menu+=("5 minutes")
     menu+=("10 minutes")
     menu+=("15 minutes")
@@ -125,10 +292,17 @@ function main() {
                 exit 1
             fi
             ;;
+        "test-notification")
+            # Test the completion notification
+            send_completion_notification 5
+            ;;
         *)
             show_menu
             ;;
     esac
 }
 
-main "$@"
+# Only call main if script is executed directly (not sourced)
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi

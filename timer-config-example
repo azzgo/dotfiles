@@ -1,0 +1,14 @@
+# Timer Configuration Example
+# Copy this file to ~/.config/timer/config to customize timer behavior
+
+# Enable/disable sound notifications (true/false)
+ENABLE_SOUND_NOTIFICATION=true
+
+# Enable/disable screen flash when timer completes (true/false)
+ENABLE_SCREEN_FLASH=true
+
+# Enable/disable logging timer completions (true/false)
+ENABLE_COMPLETION_LOG=true
+
+# Path to the completion log file
+COMPLETION_LOG_FILE="$HOME/.local/share/timer.log"
