@@ -294,7 +294,14 @@ ls.add_snippets('gitcommit', {
     scope = i(1, 'scope'),
     type = i(2, 'feat'),
     description = i(3),
-  }))
+  })),
+  s("scard", fmt("[{story_card_id}][{card_type}][{names}] {type}: {description}", {
+    story_card_id = i(1, 'US-00000'),
+    card_type = i(2, 'biz'),
+    names = i(3, 'yourname & pair'),
+    type = i(4, 'feat'),
+    description = i(5, 'description'),
+  })),
 })
 
 --- ruby
