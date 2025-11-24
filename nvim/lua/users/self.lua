@@ -67,7 +67,7 @@ local MENU = {
     utils.copy_to_clipboard(fileName)
   end,
   [MENU_LABEL_ENUM.COPY_BUFFER_ABSOLUTE_PATH] = function()
-    local bufPath = vim.fn.expand('%f')
+    local bufPath = vim.fn.expand('%:p')
     utils.copy_to_clipboard(bufPath)
   end,
   [MENU_LABEL_ENUM.TO_CAMEL] = function()
