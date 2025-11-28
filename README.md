@@ -27,25 +27,25 @@ Feel free to pick the part you need.
 ```sh
 # Clone the Repo first
 git clone https://github.com/azzgo/dotfiles
-cd dotfils
+cd dotfiles
 
 
 # Neovim Setup
-make install-neovim
+just install-neovim
 
 
 # Vim Setup 
-make install-vim
+just install-vim
 
 # IdeaVim 
-make install-ideavim
+just install-ideavim
 
 # Emacs
-make install-emacs
+just install-emacs
 
-# Wezterm
-make install-wezterm
+# Terminals (Alacritty, Kitty, Ghostty)
+just install-terminals
 
 # Shells
-make install-shell
+just install-shell
 
