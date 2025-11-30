@@ -1,0 +1,170 @@
+[
+  // ==========================================
+  // Zed 键位配置 - 基于你的 vim/nvim 配置转换
+  // ==========================================
+[
+  {
+    "context": "Editor && VimControl && !VimWaiting && !menu",
+    "bindings": {
+      // 快速保存和退出 (来自 core 配置: Alt+w, Alt+q)
+      "alt-w": "workspace::Save",
+      "alt-q": "pane::CloseActiveItem",
+      "space shift-q": "zed::Quit",
+
+      // Tab 操作 (来自 core 配置: Alt+p/n, Alt+1-5)
+      "alt-p": "pane::ActivatePreviousItem",
+      "alt-n": "pane::ActivateNextItem",
+      "space n t": "workspace::NewFile",
+
+      // 移动行上下 (来自 core 配置: Alt+j/k)
+      "alt-j": "editor::MoveLineDown",
+      "alt-k": "editor::MoveLineUp",
+
+      // 窗口切换 (来自 core 配置: Alt+o)
+      "alt-o": "workspace::ActivateNextPane",
+
+      // 折叠 (来自 core 配置: Alt+m)
+      "alt-m": "editor::Fold",
+      "alt-shift-m": "editor::UnfoldLines",
+
+      // 文件浏览 (来自 core 配置: <leader>nn)
+      "space n n": "project_panel::ToggleFocus",
+
+      // QuickFix 和 Location 导航 (来自 core 配置)
+      "[ d": "editor::GoToPreviousDiagnostic",
+      "] d": "editor::GoToDiagnostic",
+
+      // 搜索单词出现次数 (来自 core 配置: <leader>*)
+      "space *": "editor::SelectNext",
+
+      // 文件查找 (来自 fzflua 配置: <leader>f)
+      "space f": "file_finder::Toggle",
+
+      // 全局搜索 (来自 fzflua 配置: <leader>/)
+      "space /": "project_search::ToggleFocus",
+
+      // Git 状态 (来自 fzflua 配置: <leader>gs)
+      "space g b": "git::Blame",
+
+      // Command palette (来自 fzflua 配置: <leader><leader>)
+      "space space": "command_palette::Toggle",
+
+      // Harpoon-like 文件标记 (来自 harpoon 配置: <leader>e, Ctrl+e)
+      "space e": "tab_switcher::Toggle",
+      "ctrl-e": "tab_switcher::Toggle",
+
+      // 快捷操作菜单 (来自 self.lua 配置: Alt+.)
+      "alt-.": "command_palette::Toggle",
+
+      // 变量名转换 (来自 self.lua 配置: Alt+u)
+      "alt-u": "editor::ToggleCodeActions",
+
+      // Shell 命令 (来自 self.lua 配置: Alt+r)
+      "alt-r": "terminal_panel::ToggleFocus",
+
+      // FZF 命令 (来自 fzflua 配置: Alt+l)
+      "alt-l": "command_palette::Toggle"
+    }
+  },
+
+  // ====== Insert 模式特殊绑定 ======
+  {
+    "context": "Editor && vim_mode == insert",
+    "bindings": {
+      // Emacs-like 快捷键 (来自 core 配置)
+      "ctrl-a": "editor::MoveToBeginningOfLine",
+      "ctrl-e": "editor::MoveToEndOfLine",
+      "ctrl-f": "editor::MoveRight",
+      "ctrl-b": "editor::MoveLeft",
+      "ctrl-k": "editor::DeleteToEndOfLine",
+
+      // 快速复制粘贴 (来自 core 配置: Alt+c, Alt+v)
+      "alt-c": "editor::Copy",
+      "alt-v": "editor::Paste",
+
+      // Tab 切换在插入模式 (来自 core 配置)
+      "alt-p": "pane::ActivatePreviousItem",
+      "alt-n": "pane::ActivateNextItem",
+
+      // 移动行 (来自 core 配置)
+      "alt-j": "editor::MoveLineDown",
+      "alt-k": "editor::MoveLineUp",
+
+      // 窗口切换 (来自 core 配置)
+      "alt-o": "workspace::ActivateNextPane",
+
+      // 快捷操作菜单 (来自 self.lua 配置)
+      "alt-.": "command_palette::Toggle"
+    }
+  },
+
+  // ====== Visual 模式绑定 ======
+  {
+    "context": "Editor && vim_mode == visual",
+    "bindings": {
+      // 更好的缩进 (来自 core 配置)
+      "<": "editor::Outdent",
+      ">": "editor::Indent",
+
+      // 移动选中行 (来自 core 配置)
+      "alt-j": "editor::MoveLineDown",
+      "alt-k": "editor::MoveLineUp",
+
+      // 文件搜索选中内容 (来自 fzflua 配置)
+      "space f": "file_finder::Toggle",
+      "space /": "workspace::NewSearch",
+
+      // 变量名转换 (来自 self.lua 配置)
+      "alt-u": "editor::ToggleCodeActions",
+
+      // Git 冲突解决 (来自 self.lua 配置)
+      "alt-g": "editor::ToggleCodeActions",
+
+      // Shell 命令 (来自 self.lua 配置)
+      "alt-r": "terminal_panel::ToggleFocus"
+    }
+  },
+
+  // ====== 命令行模式绑定 ======
+  {
+    "context": "Editor && vim_mode == command_line",
+    "bindings": {
+      // Emacs-like 移动 (来自 core 配置)
+      "ctrl-a": "editor::MoveToBeginningOfLine",
+      "ctrl-b": "editor::MoveLeft",
+      "ctrl-e": "editor::MoveToEndOfLine"
+    }
+  },
+
+  // ====== Git 相关 ======
+  {
+    "context": "Editor && vim_mode == normal",
+    "bindings": {
+      // Git hunks 导航和操作 (来自 gitsigns 配置)
+      "space h p": "editor::ToggleSelectedDiffHunks",
+      "space h r": "git::Restore",
+      "] h": "editor::GoToNextChange",
+      "[ h": "editor::GoToPreviousChange"
+    }
+  },
+
+  // ====== 项目面板 ======
+  {
+    "context": "ProjectPanel",
+    "bindings": {
+      "space n n": "project_panel::ToggleFocus"
+    }
+  },
+
+  // ====== 全局快捷键 ======
+  {
+    "context": "Workspace",
+    "bindings": {
+      // 字体大小调整 (来自 neovide 配置)
+      "ctrl-=": "zed::IncreaseBufferFontSize",
+      "ctrl--": "zed::DecreaseBufferFontSize",
+      "ctrl-0": "zed::ResetBufferFontSize"
+    }
+  }
+]
+
