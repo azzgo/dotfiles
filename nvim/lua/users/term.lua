@@ -1,4 +1,5 @@
 local utils = require('users.lib.utils')
+local terms = require("toggleterm.terminal")
 
 -- Setup toggleterm
 require("toggleterm").setup({
@@ -62,7 +63,12 @@ end
 
 -- Main terminal selection menu
 local function show_terminal_menu()
+  local terminals = terms.get_all(true)
   local choices = {}
+
+  if #terminals ~= 0 then
+    table.insert(choices, commands.list)
+  end
 
   -- Always show root option
   table.insert(choices, commands.root)
@@ -71,7 +77,6 @@ local function show_terminal_menu()
   if utils.check_buffer_is_a_file() then
     table.insert(choices, commands.buffer)
   end
-  table.insert(choices, commands.list)
 
   vim.ui.select(choices, {
     prompt = 'Terminal Options:',
