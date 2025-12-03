@@ -1,25 +1,147 @@
 local utils = require('users.lib.utils')
+
+-- Setup toggleterm
+require("toggleterm").setup({
+  size = 20,
+  open_mapping = nil, -- We'll handle this ourselves
+  hide_numbers = true,
+  shade_filetypes = {},
+  shade_terminals = true,
+  shading_factor = 2,
+  start_in_insert = true,
+  insert_mappings = true,
+  persist_size = true,
+  direction = 'float',
+  close_on_exit = true,
+  shell = vim.o.shell,
+  float_opts = {
+    border = 'curved',
+    winblend = 0,
+    highlights = {
+      border = "Normal",
+      background = "Normal",
+    }
+  }
+})
+
+local term_counter = 0;
+-- Helper function to create new terminal
+local function create_terminal(cwd)
+  local Terminal = require('toggleterm.terminal').Terminal
+  term_counter = (term_counter + 1) % 99
+
+  local term = Terminal:new({
+    count = term_counter,
+    direction = 'float',
+    dir = cwd,
+    display_name = "Terminal " .. term_counter .. (cwd and " (" .. vim.fn.fnamemodify(cwd, ":t") .. ")" or ""),
+  })
+
+  return term
+end
+
+-- Helper function to get current buffer directory
+local function get_buffer_cwd()
+  if utils.check_buffer_is_a_file() then
+    return vim.fn.expand('%:p:h')
+  end
+  return nil
+end
+
+-- Commands definition
 local commands = {
-  root = 'root',
-  buffer = 'buffer',
+  root = 'Open in Root Directory',
+  buffer = 'Open in Buffer Directory',
+  list = 'List Existing Terminals'
 }
 
-vim.keymap.set('n', '<A-t>', function()
+-- Function to show existing terminals
+local function show_terminal_list()
+  vim.cmd('TermSelect')
+end
+
+-- Main terminal selection menu
+local function show_terminal_menu()
+  local choices = {}
+
+  -- Always show root option
+  table.insert(choices, commands.root)
+
+  -- Show buffer option only if we're in a file buffer
   if utils.check_buffer_is_a_file() then
-    vim.ui.select(
-      { commands.root, commands.buffer },
-      {
-        prompt = 'FloatTerm in:',
-      },
-      function(choice)
-        if choice == commands.root then
-          vim.cmd('FloatermNew')
-        elseif choice == commands.buffer then
-          vim.cmd('FloatermNew --cwd=<buffer>')
-        end
-      end
-    )
-  else
-    vim.cmd('FloatermNew')
+    table.insert(choices, commands.buffer)
   end
-end, {})
+  table.insert(choices, commands.list)
+
+  vim.ui.select(choices, {
+    prompt = 'Terminal Options:',
+  }, function(choice)
+    if choice == commands.root then
+      local term = create_terminal(vim.fn.getcwd())
+      term:toggle()
+    elseif choice == commands.buffer then
+      local buffer_cwd = get_buffer_cwd()
+      local term = create_terminal(buffer_cwd)
+      term:toggle()
+    elseif choice == commands.list then
+      show_terminal_list()
+    end
+  end)
+end
+
+
+-- Function to rename current terminal with better UX
+local function rename_current_terminal()
+  local current_term_id = require('toggleterm.terminal').get_focused_id()
+  if not current_term_id then
+    vim.notify("No active terminal to rename", vim.log.levels.WARN)
+    return
+  end
+
+  -- Find the current terminal in our list
+  local current_term = nil
+  for _, term in ipairs(terminals) do
+    if term.id == current_term_id then
+      current_term = term
+      break
+    end
+  end
+
+  if not current_term then
+    vim.notify("Terminal not found in managed list", vim.log.levels.WARN)
+    return
+  end
+
+  -- Step 1: Close the terminal
+  current_term:toggle()
+
+  -- Step 2: Show snacks input for rename
+  local current_name = current_term.display_name or ("Terminal " .. current_term.count)
+
+  require("snacks").input({
+    prompt = "Rename terminal:",
+    value = current_name,
+  }, function(new_name)
+    if new_name and new_name:match("^%s*(.-)%s*$") ~= "" then
+      -- Step 3a: User confirmed - apply new name and restore terminal
+      new_name = new_name:match("^%s*(.-)%s*$") -- trim whitespace
+      vim.cmd(current_term.count .. "ToggleTermSetName " .. vim.fn.shellescape(new_name))
+      current_term:toggle()                     -- restore terminal
+      vim.notify("Terminal renamed to: " .. new_name, vim.log.levels.INFO)
+    else
+      -- Step 3b: User cancelled or empty input - just restore terminal
+      current_term:toggle()
+    end
+  end)
+end
+
+-- Key mappings
+vim.keymap.set('n', '<A-t>', show_terminal_menu, { desc = 'Open terminal menu' })
+
+-- Terminal mode key mappings
+vim.keymap.set('t', '<A-q>', function()
+  vim.cmd('ToggleTermToggleAll')
+end, { desc = 'Hide current terminal' })
+
+-- Terminal rename key mapping with better UX
+vim.keymap.set('t', '<F2>', rename_current_terminal, { desc = 'Rename current terminal' })

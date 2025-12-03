@@ -341,7 +341,7 @@ return require("lazy").setup({
       end
     },
     {
-      'voldikss/vim-floaterm',
+      'akinsho/toggleterm.nvim',
       config = function()
         require('users.term')
       end
