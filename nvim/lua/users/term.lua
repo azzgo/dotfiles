@@ -53,13 +53,23 @@ end
 local commands = {
   root = 'Open in Root Directory',
   buffer = 'Open in Buffer Directory',
-  list = 'List Existing Terminals'
+  list = 'List Existing Terminals',
+  quitall = 'Exit all Terminals'
 }
 
 -- Function to show existing terminals
 local function show_terminal_list()
   vim.cmd('TermSelect')
 end
+
+-- Quit all existing terminals
+local function quitAll(terminals)
+  for i in pairs(terminals) do
+    terminals[i]:shutdown();
+  end
+  vim.notify("All terminial removed.", vim.log.levels.INFO)
+end
+
 
 -- Main terminal selection menu
 local function show_terminal_menu()
@@ -78,6 +88,8 @@ local function show_terminal_menu()
     table.insert(choices, commands.buffer)
   end
 
+  table.insert(choices, commands.quitall);
+
   vim.ui.select(choices, {
     prompt = 'Terminal Options:',
   }, function(choice)
@@ -90,6 +102,8 @@ local function show_terminal_menu()
       term:toggle()
     elseif choice == commands.list then
       show_terminal_list()
+    elseif choice == commands.quitall then
+      quitAll(terminals)
     end
   end)
 end
