@@ -63,6 +63,11 @@ return require("lazy").setup({
       "andymass/vim-matchup",
       init = function()
         vim.g.matchup_matchparen_deferred = 1;
+      end,
+      config = function ()
+        vim.cmd([[
+          highlight MatchWord guifg=#f5a97f guibg=#6c6f85 gui=bold
+        ]])
       end
     },
 
@@ -93,7 +98,13 @@ return require("lazy").setup({
       end
     },
     -- theme
-    { "catppuccin/nvim",  name = "catppuccin", lazy = true },
+    { 
+      "catppuccin/nvim",
+      name = "catppuccin",
+      opts = {
+      },
+      lazy = true,
+    },
     { 'rose-pine/neovim', name = 'rose-pine',  lazy = true },
 
     -- ##########lua plugins start##############
