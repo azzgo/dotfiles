@@ -2,6 +2,7 @@
   "coc.preferences.enableMessageDialog": true,
   "coc.preferences.messageLevel": "error",
   "suggest.autoTrigger": "trigger",
+  "sumneko-lua.checkUpdate": false,
   "coc.preferences.currentFunctionSymbolAutoUpdate": true,
   "eslint.format.enable": false,
   "outline.autoWidth": false,
