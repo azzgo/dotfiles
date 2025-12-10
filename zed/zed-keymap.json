@@ -1,8 +1,4 @@
 [
-  // ==========================================
-  // Zed 键位配置 - 基于你的 vim/nvim 配置转换
-  // ==========================================
-[
   {
     "context": "Editor && VimControl && !VimWaiting && !menu",
     "bindings": {
@@ -23,10 +19,6 @@
       // 窗口切换 (来自 core 配置: Alt+o)
       "alt-o": "workspace::ActivateNextPane",
 
-      // 折叠 (来自 core 配置: Alt+m)
-      "alt-m": "editor::Fold",
-      "alt-shift-m": "editor::UnfoldLines",
-
       // 文件浏览 (来自 core 配置: <leader>nn)
       "space n n": "project_panel::ToggleFocus",
 
@@ -46,6 +38,9 @@
       // Git 状态 (来自 fzflua 配置: <leader>gs)
       "space g b": "git::Blame",
 
+      // 打开 git 面板
+      "space g g": "git_panel::ToggleFocus",
+
       // Command palette (来自 fzflua 配置: <leader><leader>)
       "space space": "command_palette::Toggle",
 
@@ -63,7 +58,10 @@
       "alt-r": "terminal_panel::ToggleFocus",
 
       // FZF 命令 (来自 fzflua 配置: Alt+l)
-      "alt-l": "command_palette::Toggle"
+      "alt-l": "command_palette::Toggle",
+
+      // 打开 terminal
+      "alt-t": "terminal_panel::ToggleFocus"
     }
   },
 
@@ -118,10 +116,7 @@
       "alt-u": "editor::ToggleCodeActions",
 
       // Git 冲突解决 (来自 self.lua 配置)
-      "alt-g": "editor::ToggleCodeActions",
-
-      // Shell 命令 (来自 self.lua 配置)
-      "alt-r": "terminal_panel::ToggleFocus"
+      "alt-g": "editor::ToggleCodeActions"
     }
   },
 
