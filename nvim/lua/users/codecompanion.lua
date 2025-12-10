@@ -31,6 +31,50 @@ codecompanion.setup({
         }
       },
     },
+    ['Auto Commit'] = {
+      strategy = "workflow",
+      description = "Generate a commit message and commit directly",
+      opts = {
+        index = 51,
+        is_default = false,
+        is_slash_cmd = true,
+        short_name = "auto_commit",
+      },
+      prompts = {
+        {
+          {
+            role = "system",
+            content = "You are an expert at following the Conventional Commit specification. You will generate a commit message and then execute the git commit command directly.",
+          },
+          {
+            role = "user", 
+            content = function()
+              local diff = vim.system({ "git", "diff", "--no-ext-diff", "--staged" }, { text = true }):wait()
+              if diff.stdout == "" then
+                return "No staged changes found. Please stage your changes first with `git add` and then try again."
+              end
+              return string.format(
+                [[Based on the following git diff of staged changes, generate a commit message following the Conventional Commit specification and then use the cmd_runner tool to execute `git commit -m "your_generated_message"`:
+
+```diff
+%s
+```
+
+Please:
+1. Generate an appropriate commit message following conventional commit format (e.g., "feat:", "fix:", "docs:", etc.)
+2. Use the @{cmd_runner} tool to execute the git commit command with your generated message
+3. Do both steps in the same response]],
+                diff.stdout
+              )
+            end,
+            opts = {
+              contains_code = true,
+              auto_submit = true,
+            },
+          },
+        },
+      },
+    },
   },
   adapters = {
     http= {
