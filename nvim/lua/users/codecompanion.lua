@@ -64,6 +64,7 @@ Please:
 1. Generate an appropriate commit message following conventional commit format (e.g., "feat:", "fix:", "docs:", etc.)
 2. Use the @{cmd_runner} tool to execute the git commit command with your generated message
 2.1 If message is multiline, separate each line to multiple `-m "{line}"`
+2.2 Limit the subject line to 50 characters
 3. Do both steps in the same response]],
                 diff.stdout
               )
