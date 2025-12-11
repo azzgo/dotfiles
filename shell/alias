@@ -83,6 +83,10 @@ if [[ -x $(command -v proxychains) ]];then
   alias pc="proxychains -q"
 fi
 
+if [[ -x $(command -v lazygit) ]];then
+  alias lg="lazygit"
+fi
+
 # yazi alias
 if [[ -x $(command -v yazi) ]];then
   function y() {
