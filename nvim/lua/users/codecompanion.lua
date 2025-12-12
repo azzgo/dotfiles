@@ -150,6 +150,9 @@ Please:
   display = {
     action_palette = {
       provider = "default",
+      opts = {
+        show_default_prompt_library = false,
+      },
     },
     diff = {
       enabled = true,
