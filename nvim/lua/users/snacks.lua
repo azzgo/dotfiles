@@ -120,7 +120,7 @@ vim.keymap.set("n", "<A-s>", function()
   Snacks.scratch()
 end, { desc = "Dim focus" })
 
-vim.keymap.set("n", "<leader>ne", function()
+vim.keymap.set("n", "<A-e>", function()
   Snacks.picker.explorer()
 end, { desc = "Open Explorer" })
 
