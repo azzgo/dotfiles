@@ -21,6 +21,7 @@ local MENU_LABEL_ENUM = {
     TOGGLE_COLORIZER = '[Colorizer] - toggle',
     FLASH_TREESITTER = '[Flash] - treesitter',
     FLASH_JUMP_CWORD = '[Flash] - jump cword',
+    TOGGLE_WRAP = '[View] - toggle wrap',
     OPEN_QUICKFIX = '[Quickfix] - list',
     OPEN_LOCATION = '[Location] - list',
     SNACKS_PICKER = '[Snacks] - picker',
@@ -51,6 +52,15 @@ local MENU = {
             Snacks.notify('Colorizer enabled', { title = 'Colorizer' })
         else
             Snacks.notify.warn('Colorizer disabled', { title = 'Colorizer' })
+        end
+    end,
+
+    [MENU_LABEL_ENUM.TOGGLE_WRAP] = function()
+        vim.wo.wrap = not vim.wo.wrap
+        if vim.wo.wrap then
+            vim.notify('Wrap enabled', vim.log.levels.INFO, { title = 'Wrap' })
+        else
+            vim.notify('Wrap disabled', vim.log.levels.INFO, { title = 'Wrap' })
         end
     end,
     [MENU_LABEL_ENUM.LUASNIP] = function()
@@ -117,6 +127,7 @@ local function self_use_case_popup()
         MENU_LABEL_ENUM.OPEN_LOCATION,
         MENU_LABEL_ENUM.SNACKS_PICKER,
         MENU_LABEL_ENUM.BUFFER_DELETE_OTHERS,
+        MENU_LABEL_ENUM.TOGGLE_WRAP,
     }
     if persistence_ok == true then
         vim.list_extend(menu, {
