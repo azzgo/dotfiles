@@ -158,7 +158,7 @@ end
 vim.keymap.set('n', '<A-t>', show_terminal_menu, { desc = 'Open terminal menu' })
 
 -- Terminal mode key mappings
-vim.keymap.set('t', '<A-q>', function()
+vim.keymap.set('t', '<f12>', function()
   vim.cmd('ToggleTermToggleAll')
 end, { desc = 'Hide current terminal' })
 
