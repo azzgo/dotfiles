@@ -24,7 +24,7 @@ local function find_files(search)
   if not search then
     vim.ui.input({ prompt = "File> " }, function(input)
       if input then
-        fzfLua.files({ query = input, previewer = false})
+        fzfLua.files({ query = input, previewer = false })
       end
     end)
   else
@@ -32,7 +32,7 @@ local function find_files(search)
   end
 end
 
-local function leaderf_commands_actions(what)
+local function fzf_commands_actions(what)
   if what == "resume" then
     fzfLua.resume()
   elseif what == "lines" then
@@ -48,15 +48,15 @@ local function leaderf_commands_actions(what)
   end
 end
 
-local function leaderf_commands()
+local function fzf_commands()
   local source = { 'resume', 'lines', 'grep buffer', 'grep quickfix', 'git branches', 'git tags' }
   vim.ui.select(source, { prompt = "Fzflua Commands" }, function(selected)
-    leaderf_commands_actions(selected)
+    fzf_commands_actions(selected)
   end)
 end
 
 -- Key Mappings
-vim.keymap.set('n', '<A-l>', leaderf_commands, { silent = true, noremap = true })
+vim.keymap.set('n', '<A-l>', fzf_commands, { silent = true, noremap = true })
 vim.keymap.set('n', '<leader>f', find_files, { silent = true, noremap = true })
 vim.keymap.set('v', '<leader>f', function()
   local text, _ = utils.get_selected_text(true)
