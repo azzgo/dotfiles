@@ -12,6 +12,7 @@ local MENU_LABEL_ENUM = {
     LUASNIP = '[Luasnip] - snippets',
     LIST_TODOS = '[Todos] - lists',
     BUFFER_DELETE_OTHERS = '[Buffer] - delete others',
+    RELOAD_BUFFER_FORCE = '[Buffer] - force reload from disk',
     COPY_BUFFER_RELATIVE_PATH = '[Yank] - RelativePath',
     COPY_BUFFER_ABSOLUTE_PATH = '[Yank] - AbsolutePath',
     COPY_BUFFER_FILE_NAME = '[Yank] - Filename',
@@ -45,6 +46,10 @@ local MENU = {
     [MENU_LABEL_ENUM.BUFFER_DELETE_OTHERS] = function()
         helper.buffer_delete_others()
         vim.notify('Other buffers deleted')
+    end,
+    [MENU_LABEL_ENUM.RELOAD_BUFFER_FORCE] = function()
+        vim.cmd('edit!')
+        vim.notify('Buffer force reloaded from disk', vim.log.levels.WARN, { title = 'Buffer' })
     end,
     [MENU_LABEL_ENUM.TOGGLE_COLORIZER] = function()
         vim.fn['colorizer#ColorToggle']()
@@ -127,6 +132,7 @@ local function self_use_case_popup()
         MENU_LABEL_ENUM.OPEN_LOCATION,
         MENU_LABEL_ENUM.SNACKS_PICKER,
         MENU_LABEL_ENUM.BUFFER_DELETE_OTHERS,
+        MENU_LABEL_ENUM.RELOAD_BUFFER_FORCE,
         MENU_LABEL_ENUM.TOGGLE_WRAP,
     }
     if persistence_ok == true then
