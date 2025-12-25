@@ -210,6 +210,11 @@ local tbi = s('tbi', { t('to be implement') })
 local time = s('time', { t(os.date('%H:%M:%S')) })
 local datetime = s('datetime', { t(os.date('%Y-%m-%d %H:%M:%S')) })
 local uuid = s('uuid', { t(vim.fn.system('uuidgen | tr -d "\n"')) })
+local isofn = s('isofn', f(function()
+  local ts = os.date('%Y-%m-%d_%H-%M-%S')
+  local rand = tostring(math.random(10000, 99999))
+  return ts .. '_' .. rand
+end))
 local code_location = s({ trig = 'code_loc', name = 'code location' }, fmt(
   '🚀 file:{1}-line:{2}',
   {
@@ -229,6 +234,7 @@ ls.add_snippets('all', {
   datetime,
   code_location,
   uuid,
+    isofn,
   todo_snippet({ trig = 'todo' }, { 'TODO', 'DOING', 'DONE' }, { ctype = 1 }),
   todo_snippet({ trig = 'note' }, { 'NOTE', 'INFO' }, { ctype = 1 }),
   todo_snippet({ trig = 'warn' }, { 'WARN', 'WARNING' }, { ctype = 1 }),
