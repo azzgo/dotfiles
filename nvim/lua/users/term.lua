@@ -59,7 +59,65 @@ local commands = {
 
 -- Function to show existing terminals
 local function show_terminal_list()
-  vim.cmd('TermSelect')
+  local Snacks = require("snacks")
+  local terminals = terms.get_all(true)
+  if #terminals == 0 then
+    vim.notify("没有可用终端", vim.log.levels.INFO)
+    return
+  end
+
+  local items = {}
+  for _, term in ipairs(terminals) do
+    table.insert(items, {
+      label = (term.display_name or ("Terminal " .. term.count)),
+      value = term,
+    })
+  end
+
+  Snacks.picker.pick({
+    title = "终端列表",
+    items = items,
+    refresh = true,
+    multi = false,
+    layout = {
+      preset = "select",
+      preview = false,
+    },
+    actions = {
+      open_terminal = function(picker, item)
+        local term = item.value;
+        picker:close()
+        if term:is_open() then
+          term:focus()
+        else
+          term:open()
+        end
+      end,
+      close_terminal = function(picker, item)
+        item.value:shutdown()
+        table.remove(items, item.idx)
+        if #items == 0 then
+          picker:close()
+          vim.schedule(function()
+            vim.notify("所有终端已销毁", vim.log.levels.INFO)
+          end)
+        else
+          picker:find()
+        end
+      end,
+    },
+    win = {
+      input = {
+        keys = {
+          ['<cr>'] = { 'open_terminal', mode = { "n", "i" }, desc = "打开终端" },
+          ["<c-x>"] = { "close_terminal", mode = { "n", "i" }, desc = "关闭终端" },
+        },
+      },
+    },
+    format_item = function(item)
+      return item.label
+    end,
+  })
 end
 
 -- Quit all existing terminals
