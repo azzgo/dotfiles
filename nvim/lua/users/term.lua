@@ -228,3 +228,24 @@ end, { desc = 'Hide current terminal' })
 
 -- Terminal rename key mapping with better UX
 vim.keymap.set('t', '<F2>', rename_current_terminal, { desc = 'Rename current terminal' })
+
+-- Function to destroy current terminal if filetype is toggleterm
+local function destroy_current_terminal()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local ft = vim.api.nvim_buf_get_option(bufnr, 'filetype')
+  
+  if ft == 'toggleterm' then
+    local current_term = require('toggleterm.terminal').find(function (term)
+      return term:is_focused();
+    end)
+    if current_term then
+      current_term:shutdown()
+      vim.notify("Terminal destroyed", vim.log.levels.INFO)
+    else
+      vim.notify("No terminal found to destroy", vim.log.levels.WARN)
+    end
+  end
+end
+
+-- Alt+F12 key mapping to destroy current terminal
+vim.keymap.set({'t'}, '<leader><F12>', destroy_current_terminal, { desc = 'Destroy current terminal if filetype is toggleterm' })
