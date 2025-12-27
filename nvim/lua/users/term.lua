@@ -51,9 +51,10 @@ end
 
 -- Commands definition
 local commands = {
-  root = 'Open in Root Directory',
-  buffer = 'Open in Buffer Directory',
+  root = 'New Root Directory Terminal',
+  buffer = 'New Buffer Directory Terminal',
   list = 'List Existing Terminals',
+  opencode = 'New Opencode Instance',
   quitall = 'Exit all Terminals'
 }
 
@@ -151,6 +152,10 @@ local function show_terminal_menu()
   if utils.check_buffer_is_a_file() then
     table.insert(choices, commands.buffer)
   end
+  -- add opencode when opencode exists in system
+  if vim.fn.executable("opencode") == 1 then
+    table.insert(choices, commands.opencode)
+  end
 
   table.insert(choices, commands.quitall);
 
@@ -166,6 +171,14 @@ local function show_terminal_menu()
       term:toggle()
     elseif choice == commands.list then
       show_terminal_list()
+    elseif choice == commands.opencode then
+      local Terminal = require('toggleterm.terminal').Terminal
+      local opencode_term = Terminal:new({
+        cmd = "opencode",
+        direction = "float",
+        display_name = "Opencode",
+      })
+      opencode_term:toggle()
     elseif choice == commands.quitall then
       quitAll(terminals)
     end
@@ -175,23 +188,11 @@ end
 
 -- Function to rename current terminal with better UX
 local function rename_current_terminal()
-  local current_term_id = require('toggleterm.terminal').get_focused_id()
-  if not current_term_id then
-    vim.notify("No active terminal to rename", vim.log.levels.WARN)
-    return
-  end
-
-  -- Find the current terminal in our list
-  local current_term = nil
-  for _, term in ipairs(terminals) do
-    if term.id == current_term_id then
-      current_term = term
-      break
-    end
-  end
-
+  local current_term = require('toggleterm.terminal').find(function (term)
+    return term:is_focused();
+  end)
   if not current_term then
-    vim.notify("Terminal not found in managed list", vim.log.levels.WARN)
+    vim.notify("No active terminal to rename", vim.log.levels.WARN)
     return
   end
 
@@ -233,7 +234,6 @@ vim.keymap.set('t', '<F2>', rename_current_terminal, { desc = 'Rename current te
 local function destroy_current_terminal()
   local bufnr = vim.api.nvim_get_current_buf()
   local ft = vim.api.nvim_buf_get_option(bufnr, 'filetype')
-  
   if ft == 'toggleterm' then
     local current_term = require('toggleterm.terminal').find(function (term)
       return term:is_focused();
