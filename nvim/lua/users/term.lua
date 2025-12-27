@@ -219,7 +219,7 @@ local function rename_current_terminal()
 end
 
 -- Key mappings
-vim.keymap.set({'n', 't'}, '<A-t>', show_terminal_menu, { desc = 'Open terminal menu' })
+vim.keymap.set({ 'n', 't' }, '<A-t>', show_terminal_menu, { desc = 'Open terminal menu' })
 
 -- Terminal mode key mappings
 vim.keymap.set('t', '<f12>', function()
