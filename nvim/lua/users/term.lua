@@ -138,6 +138,12 @@ local function show_terminal_menu()
     table.insert(choices, commands.list)
   end
 
+  for _, term in ipairs(terminals) do
+    if term:is_open() then
+      term:close()
+    end
+  end
+
   -- Always show root option
   table.insert(choices, commands.root)
 
@@ -213,7 +219,7 @@ local function rename_current_terminal()
 end
 
 -- Key mappings
-vim.keymap.set('n', '<A-t>', show_terminal_menu, { desc = 'Open terminal menu' })
+vim.keymap.set({'n', 't'}, '<A-t>', show_terminal_menu, { desc = 'Open terminal menu' })
 
 -- Terminal mode key mappings
 vim.keymap.set('t', '<f12>', function()
