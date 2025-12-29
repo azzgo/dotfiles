@@ -107,6 +107,12 @@ snacks.setup({
       height = 0.9,
     }
   },
+  image = {
+    enabled = true,
+    math = {
+      enabled = false,
+    }
+  },
 })
 
 vim.keymap.set("n", "<A-z>", function()
