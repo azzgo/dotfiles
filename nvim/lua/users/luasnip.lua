@@ -368,6 +368,30 @@ ls.add_snippets('markdown', {
   s('s', { t('~~'), i(1), t('~~') }),
   s('c', { t('```'), i(1), t('\n'), i(2), t('\n'), t('```') }),
   s('l', { t('['), i(1), t(']('), i(2), t(')') }),
+    s({ trig = 'prompt', name = 'Prompt 模板', desc = '五段式 prompt 模板' }, fmt(
+      [[
+## Background
+{1}
+
+## Requirement
+{2}
+
+## Constraints
+{3}
+
+## Instructions
+{4}
+
+## Output Format
+{5}
+      ]], {
+        i(1, "业务场景、技术栈现状"),
+        i(2, "功能目标"),
+        i(3, "性能、安全、兼容性、技术栈限制"),
+        i(4, "具体指令"),
+        i(5, "输出标准"),
+      })
+    ),
 });
 
 require('users.lib.coc-luasnip-adapter');
