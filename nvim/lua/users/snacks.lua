@@ -1,5 +1,6 @@
 local ok, snacks = pcall(require, "snacks")
 local helper = require('users.lib.self-helper')
+local utils = require('users.lib.utils')
 if not ok then
   return
 end
@@ -9,28 +10,28 @@ local dashboard_sections = {
 }
 
 local dashboard_config = {
-    preset = {
-      -- Defaults to a picker that supports `fzf-lua`, `telescope.nvim` and `mini.pick`
-      ---@type fun(cmd:string, opts:table)|nil
-      pick = nil,
-      keys = {
-        { icon = "", key = "e", desc = "New File", action = ":ene" },
-        { icon = "", key = "r", desc = "Load Session", action = function() require("persistence").load() end },
-        { icon = "󰒲 ", key = "l", desc = "Lazy", action = ":Lazy", enabled = package.loaded.lazy ~= nil },
-        { icon = "", key = "h", desc = "Mcphub", action = ":MCPHub" },
-        { icon = " ", key = "q", desc = "Quit", action = ":qa" },
-      },
-      header = [[
+  preset = {
+    -- Defaults to a picker that supports `fzf-lua`, `telescope.nvim` and `mini.pick`
+    ---@type fun(cmd:string, opts:table)|nil
+    pick = nil,
+    keys = {
+      { icon = "", key = "e", desc = "New File", action = ":ene" },
+      { icon = "", key = "r", desc = "Load Session", action = function() require("persistence").load() end },
+      { icon = "󰒲 ", key = "l", desc = "Lazy", action = ":Lazy", enabled = package.loaded.lazy ~= nil },
+      { icon = "", key = "h", desc = "Mcphub", action = ":MCPHub" },
+      { icon = " ", key = "q", desc = "Quit", action = ":qa" },
+    },
+    header = [[
 ███████╗███████╗███╗   ██╗
 ╚══███╔╝██╔════╝████╗  ██║
   ███╔╝ █████╗  ██╔██╗ ██║
  ███╔╝  ██╔══╝  ██║╚██╗██║
 ███████╗███████╗██║ ╚████║
 ╚══════╝╚══════╝╚═╝  ╚═══╝]],
-    },
-    -- item field formatters
-    sections = dashboard_sections,
-  }
+  },
+  -- item field formatters
+  sections = dashboard_sections,
+}
 
 local harpoon_files = helper.assemble_harsoon_files()
 if #harpoon_files > 0 then
@@ -113,6 +114,56 @@ snacks.setup({
       enabled = false,
     }
   },
+  scratch = {
+    win_by_ft = {
+      python = {
+        keys = {
+          ["source"] = {
+            "<cr>",
+            function(self)
+              local python_cmd = utils.get_python_cmd()
+              local content
+              local mode = vim.api.nvim_get_mode().mode
+              
+              if mode == "V" or mode == "v" or mode == "" then
+                content, _ = utils.get_selected_text(false)
+              else
+                local lines = vim.api.nvim_buf_get_lines(self.buf, 0, -1, false)
+                content = table.concat(lines, "\n")
+              end
+
+              utils.run_code_with_cmd(python_cmd, content, "py")
+            end,
+            desc = "Run buffer with Python",
+            mode = { "n", "x" },
+          },
+        },
+      },
+      javascript = {
+        keys = {
+          ["source"] = {
+            "<cr>",
+            function(self)
+              local node_cmd = utils.get_node_cmd()
+              local content
+              local mode = vim.api.nvim_get_mode().mode
+              
+              if mode == "V" or mode == "v" or mode == "" then
+                content, _ = utils.get_selected_text(false)
+              else
+                local lines = vim.api.nvim_buf_get_lines(self.buf, 0, -1, false)
+                content = table.concat(lines, "\n")
+              end
+
+              utils.run_code_with_cmd(node_cmd, content, "js")
+            end,
+            desc = "Run buffer with Node.js",
+            mode = { "n", "x" },
+          },
+        },
+      },
+    }
+  },
 })
 
 vim.keymap.set("n", "<A-z>", function()
@@ -122,7 +173,7 @@ vim.keymap.set("n", "<A-f>", function()
   Snacks.zen.zoom()
 end, { desc = "Dim focus" })
 
-vim.keymap.set({"n", "x", "i"}, "<A-s>", function()
+vim.keymap.set({ "n", "x", "i" }, "<A-s>", function()
   Snacks.scratch()
 end, { desc = "Toggle Scratch" })
 
@@ -158,12 +209,12 @@ vim.keymap.set("n", "<leader>:", function()
   Snacks.picker.commands()
 end, { desc = "Commands" })
 
-vim.keymap.set({"n", "i", "v" }, "<A-x>", function()
+vim.keymap.set({ "n", "i", "v" }, "<A-x>", function()
   Snacks.picker.commands()
 end, { desc = "Commands" })
 
 if vim.fn.has('python3') ~= 1 then
-  vim.keymap.set('n', '<leader>/', function() 
+  vim.keymap.set('n', '<leader>/', function()
     Snacks.picker.grep()
   end, { silent = true, noremap = true })
   vim.keymap.set('n', '<leader>f', function()
