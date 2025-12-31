@@ -122,7 +122,7 @@ vim.keymap.set("n", "<A-f>", function()
   Snacks.zen.zoom()
 end, { desc = "Dim focus" })
 
-vim.keymap.set({"n", "x"}, "<A-s>", function()
+vim.keymap.set({"n", "x", "i"}, "<A-s>", function()
   Snacks.scratch()
 end, { desc = "Toggle Scratch" })
 
