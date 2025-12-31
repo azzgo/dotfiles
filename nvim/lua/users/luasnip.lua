@@ -310,6 +310,20 @@ ls.add_snippets('gitcommit', {
   })),
 })
 
+--- python
+ls.add_snippets('python', {
+  s({ trig = "logd", name = 'log for debug' }, fmt(
+    'print(f"🚀 file:{1}-line:{2} {{{3}}}")',
+    {
+      f(function()
+        return utils.get_buffer_shortened_path(20)
+      end),
+      f(function() return tostring(vim.fn.line('.')) end), -- line number
+      i(1, "message"),
+    }
+  ))
+})
+
 --- ruby
 ls.add_snippets('ruby', {
   s({ trig = "logd", name = 'log for debug' }, fmt(
