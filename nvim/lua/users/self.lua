@@ -1,6 +1,7 @@
 local persistence_ok, persistence = pcall(require, "persistence")
 local luasnip_ok = pcall(require, "luasnip")
 local todo_ok = pcall(require, "todo-comments")
+local ai_prompts_ok, ai_prompts = pcall(require, "users.ai_prompts")
 local helper = require('users.lib.self-helper')
 local utils = require('users.lib.utils')
 local flash_ok, flash = pcall(require, 'flash')
@@ -11,6 +12,7 @@ local MENU_LABEL_ENUM = {
     SELECT_SESSION = '[Session] - select',
     LUASNIP = '[Luasnip] - snippets',
     LIST_TODOS = '[Todos] - lists',
+    AI_PROMPTS = '[AI] - prompt picker',
     BUFFER_DELETE_OTHERS = '[Buffer] - delete others',
     RELOAD_BUFFER_FORCE = '[Buffer] - force reload from disk',
     COPY_BUFFER_RELATIVE_PATH = '[Yank] - RelativePath',
@@ -70,6 +72,9 @@ local MENU = {
     end,
     [MENU_LABEL_ENUM.LUASNIP] = function()
         helper.list_snippets()
+    end,
+    [MENU_LABEL_ENUM.AI_PROMPTS] = function()
+        ai_prompts.open_picker()
     end,
     [MENU_LABEL_ENUM.COPY_BUFFER_RELATIVE_PATH] = function()
         local bufPath = vim.fn.expand('%f')
@@ -144,6 +149,10 @@ local function self_use_case_popup()
     end
     if luasnip_ok == true then
         table.insert(menu, MENU_LABEL_ENUM.LUASNIP)
+    end
+    
+    if ai_prompts_ok == true then
+        table.insert(menu, MENU_LABEL_ENUM.AI_PROMPTS)
     end
 
     if todo_ok == true then
