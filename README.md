@@ -57,8 +57,58 @@ Modern Neovim setup with Lua configuration, featuring:
 - Treesitter for enhanced syntax highlighting
 - Fuzzy finding with fzf-lua and telescope
 - Git integration and file management
+- **AI Prompt Picker**: Browse and insert AI prompt templates
 
 **Installation**: `just install-neovim`
+
+##### AI Prompt Picker
+
+The Neovim configuration includes an AI Prompt Picker for managing reusable AI prompt templates.
+
+**Quick Start**:
+1. Set your custom prompts directory (recommended):
+   ```bash
+   # Bash/Zsh (add to ~/.bashrc or ~/.zshrc)
+   export AI_PROMPTS_DIR="$HOME/my-prompts"
+   
+   # Nushell (add to config.nu)
+   $env.AI_PROMPTS_DIR = "~/my-prompts"
+   ```
+
+2. Open the picker in Neovim:
+   - Command: `:AIPromptPicker`
+   - Quick Actions: `<Alt-.>` → `[AI] - prompt picker`
+
+**Features**:
+- Recursive scanning of `.md` files
+- YAML front-matter support (title, description, tags)
+- Preview prompt content
+- Multiple actions:
+  - `<Enter>`: Edit prompt file
+  - `<Ctrl-v/s/t>`: Open in split/tab
+  - `<Ctrl-y>`: Copy to clipboard
+  - `<Ctrl-i>`: Insert at cursor
+
+**Prompt File Format**:
+```markdown
+---
+title: My Prompt Title
+description: Brief description
+tags:
+  - tag1
+  - tag2
+---
+
+Your prompt content here...
+```
+
+**Example Prompts**: See `prompt-library-example/` for reference templates:
+- `code-review.md`: Code review guidelines
+- `refactor.md`: Refactoring assistance
+- `tdd-help.md`: TDD test case generation
+- `examples/explain-code.md`: Code explanation template
+
+**Note**: The `prompt-library-example/` directory contains example templates. It's recommended to create your own custom directory using `AI_PROMPTS_DIR` for personal prompts.
 
 #### Vim
 Classic Vim configuration with:
