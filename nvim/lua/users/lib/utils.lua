@@ -125,4 +125,64 @@ function M.get_buffer_shortened_path(max_length)
   end
 end
 
+function M.get_python_cmd()
+  local python_cmd = vim.fn.exepath("python3")
+  if python_cmd == "" then
+    python_cmd = vim.fn.exepath("python")
+  end
+  return python_cmd
+end
+
+function M.get_node_cmd()
+  local node_cmd = vim.fn.exepath("node")
+  return node_cmd
+end
+
+function M.run_code_with_cmd(cmd, content, file_ext)
+  if cmd == "" then
+    vim.notify("Executable not found. Please install the required runtime.", vim.log.levels.ERROR)
+    return
+  end
+
+  if content == "" then
+    return
+  end
+
+  local temp_file = vim.fn.tempname() .. "." .. file_ext
+  local file = io.open(temp_file, "w")
+  if not file then
+    vim.notify("Failed to create temporary file", vim.log.levels.ERROR)
+    return
+  end
+
+  file:write(content)
+  file:close()
+
+  local result = ''
+  local error = ''
+
+  vim.fn.jobstart(cmd .. " " .. temp_file, {
+    on_stdout = function(_, data)
+      if data and #data > 0 then
+        result = result .. table.concat(data, "\n")
+      end
+    end,
+    on_stderr = function(_, data)
+      if data and #data > 0 then
+        error = error .. table.concat(data, "\n")
+      end
+    end,
+    on_exit = function(_, code)
+      vim.fn.delete(temp_file)
+      if code == 0 then
+        if result ~= "" then
+          vim.notify(vim.fn.trim(result), vim.log.levels.INFO)
+        end
+      else
+        vim.notify("Error: " .. vim.fn.trim(error), vim.log.levels.ERROR)
+      end
+    end,
+  })
+end
+
 return M
