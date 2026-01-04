@@ -3,16 +3,22 @@ local terms = require("toggleterm.terminal")
 
 -- Setup toggleterm
 require("toggleterm").setup({
-  size = 20,
+   size = function(term)
+    if term.direction == "horizontal" then
+      return 20
+    elseif term.direction == "vertical" then
+      return vim.o.columns * 0.7
+    end
+  end,
   open_mapping = nil, -- We'll handle this ourselves
   hide_numbers = true,
   shade_filetypes = {},
   shade_terminals = true,
   shading_factor = 2,
-  start_in_insert = true,
   insert_mappings = true,
+  start_in_insert = true,
   persist_size = true,
-  direction = 'float',
+  direction = 'horizontal',
   close_on_exit = true,
   shell = vim.o.shell,
   float_opts = {
@@ -33,7 +39,6 @@ local function create_terminal(cwd)
 
   local term = Terminal:new({
     count = term_counter,
-    direction = 'float',
     dir = cwd,
     display_name = "Terminal " .. term_counter .. (cwd and " (" .. vim.fn.fnamemodify(cwd, ":t") .. ")" or ""),
   })
@@ -173,9 +178,11 @@ local function show_terminal_menu()
       show_terminal_list()
     elseif choice == commands.opencode then
       local Terminal = require('toggleterm.terminal').Terminal
+      term_counter = (term_counter + 1) % 99
       local opencode_term = Terminal:new({
+        count = term_counter,
         cmd = "opencode",
-        direction = "float",
+        direction = "vertical",
         display_name = "Opencode",
       })
       opencode_term:toggle()
@@ -188,7 +195,7 @@ end
 
 -- Function to rename current terminal with better UX
 local function rename_current_terminal()
-  local current_term = require('toggleterm.terminal').find(function (term)
+  local current_term = require('toggleterm.terminal').find(function(term)
     return term:is_focused();
   end)
   if not current_term then
@@ -200,7 +207,7 @@ local function rename_current_terminal()
   current_term:toggle()
 
   -- Step 2: Show snacks input for rename
-  local current_name = current_term.display_name or ("Terminal " .. current_term.count)
+  local current_name = current_term.display_name or ("Terminal " .. current_term.name)
 
   require("snacks").input({
     prompt = "Rename terminal:",
@@ -235,7 +242,7 @@ local function destroy_current_terminal()
   local bufnr = vim.api.nvim_get_current_buf()
   local ft = vim.api.nvim_buf_get_option(bufnr, 'filetype')
   if ft == 'toggleterm' then
-    local current_term = require('toggleterm.terminal').find(function (term)
+    local current_term = require('toggleterm.terminal').find(function(term)
       return term:is_focused();
     end)
     if current_term then
@@ -248,4 +255,5 @@ local function destroy_current_terminal()
 end
 
 -- Alt+F12 key mapping to destroy current terminal
-vim.keymap.set({'t'}, '<leader><F12>', destroy_current_terminal, { desc = 'Destroy current terminal if filetype is toggleterm' })
+vim.keymap.set({ 't' }, '<leader><F12>', destroy_current_terminal,
+  { desc = 'Destroy current terminal if filetype is toggleterm' })
