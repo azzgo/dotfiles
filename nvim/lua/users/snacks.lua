@@ -169,7 +169,7 @@ snacks.setup({
 vim.keymap.set("n", "<A-z>", function()
   Snacks.zen()
 end, { desc = "Zen mode" })
-vim.keymap.set("n", "<A-f>", function()
+vim.keymap.set({"n", "t"}, "<A-f>", function()
   Snacks.zen.zoom()
 end, { desc = "Dim focus" })
 
