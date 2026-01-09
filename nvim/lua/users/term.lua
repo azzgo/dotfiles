@@ -144,12 +144,6 @@ local function show_terminal_menu()
     table.insert(choices, commands.list)
   end
 
-  for _, term in ipairs(terminals) do
-    if term:is_open() then
-      term:close()
-    end
-  end
-
   -- Always show root option
   table.insert(choices, commands.root)
 
