@@ -138,6 +138,7 @@ vnoremap <A-k> :m '<-2<cr>gv
 " switch between window
 nnoremap <A-o> <C-w><C-w>
 inoremap <A-o> <C-o><C-w><C-w>
+tnoremap <A-o> <C-\><C-n><C-w><C-w>
 
 "better intent
 vnoremap < <gv
