@@ -33,13 +33,14 @@ require("toggleterm").setup({
 
 local term_counter = 0;
 -- Helper function to create new terminal
-local function create_terminal(cwd)
+local function create_terminal(cwd, direction)
   local Terminal = require('toggleterm.terminal').Terminal
   term_counter = (term_counter + 1) % 99
 
   local term = Terminal:new({
     count = term_counter,
     dir = cwd,
+    direction = direction,
     display_name = "Terminal " .. term_counter .. (cwd and " (" .. vim.fn.fnamemodify(cwd, ":t") .. ")" or ""),
   })
 
@@ -139,9 +140,11 @@ end
 local function show_terminal_menu()
   local terminals = terms.get_all(true)
   local choices = {}
+  local direction = 'horizontal'
 
   if #terminals ~= 0 then
     table.insert(choices, commands.list)
+    direction = 'tab'
   end
 
   -- Always show root option
@@ -162,11 +165,11 @@ local function show_terminal_menu()
     prompt = 'Terminal Options:',
   }, function(choice)
     if choice == commands.root then
-      local term = create_terminal(vim.fn.getcwd())
+      local term = create_terminal(vim.fn.getcwd(), direction)
       term:toggle()
     elseif choice == commands.buffer then
       local buffer_cwd = get_buffer_cwd()
-      local term = create_terminal(buffer_cwd)
+      local term = create_terminal(buffer_cwd, direction)
       term:toggle()
     elseif choice == commands.list then
       show_terminal_list()

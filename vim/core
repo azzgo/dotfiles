@@ -106,6 +106,8 @@ nnoremap <silent> <A-p> <cmd>tabprevious<CR>
 nnoremap <silent> <A-n> <cmd>tabnext<CR>
 inoremap <silent> <A-p> <cmd>tabprevious<CR> 
 inoremap <silent> <A-n> <cmd>tabnext<CR>
+tnoremap <silent> <A-p> <cmd>tabprevious<CR> 
+tnoremap <silent> <A-n> <cmd>tabnext<CR>
 
 " map alt + n -> tab n
 nnoremap <silent> <A-1> 1gt
