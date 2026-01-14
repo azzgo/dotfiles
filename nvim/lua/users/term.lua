@@ -60,7 +60,6 @@ local commands = {
   root = 'New Root Directory Terminal',
   buffer = 'New Buffer Directory Terminal',
   list = 'List Existing Terminals',
-  opencode = 'New Opencode Instance',
   quitall = 'Exit all Terminals'
 }
 
@@ -154,10 +153,6 @@ local function show_terminal_menu()
   if utils.check_buffer_is_a_file() then
     table.insert(choices, commands.buffer)
   end
-  -- add opencode when opencode exists in system
-  if vim.fn.executable("opencode") == 1 then
-    table.insert(choices, commands.opencode)
-  end
 
   table.insert(choices, commands.quitall);
 
@@ -173,16 +168,6 @@ local function show_terminal_menu()
       term:toggle()
     elseif choice == commands.list then
       show_terminal_list()
-    elseif choice == commands.opencode then
-      local Terminal = require('toggleterm.terminal').Terminal
-      term_counter = (term_counter + 1) % 99
-      local opencode_term = Terminal:new({
-        count = term_counter,
-        cmd = "opencode",
-        direction = "vertical",
-        display_name = "Opencode",
-      })
-      opencode_term:toggle()
     elseif choice == commands.quitall then
       quitAll(terminals)
     end
