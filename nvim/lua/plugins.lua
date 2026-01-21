@@ -31,7 +31,16 @@ return require("lazy").setup({
       },
       opts = {
         hint = 'floating-big-letter',
-        filter_rules = { autoselect_one = true, include_current_win = true },
+        filter_rules = {
+          autoselect_one = true,
+          include_current_win = true,
+          bo = {
+            -- if the file type is one of following, the window will be ignored
+            filetype = { 'NvimTree', 'neo-tree', 'notify', 'snacks_notif' },
+            -- if the file type is one of following, the window will be ignored
+            buftype = {},
+          },
+        },
       }
     },
     {
@@ -64,7 +73,7 @@ return require("lazy").setup({
       init = function()
         vim.g.matchup_matchparen_deferred = 1;
       end,
-      config = function ()
+      config = function()
         vim.cmd([[
           highlight MatchWord guifg=#f5a97f guibg=#6c6f85 gui=bold
         ]])
@@ -98,14 +107,14 @@ return require("lazy").setup({
       end
     },
     -- theme
-    { 
+    {
       "catppuccin/nvim",
       name = "catppuccin",
       opts = {
       },
       lazy = true,
     },
-    { 'rose-pine/neovim', name = 'rose-pine',  lazy = true },
+    { 'rose-pine/neovim',    name = 'rose-pine', lazy = true },
 
     -- ##########lua plugins start##############
     -- ai plugins
@@ -152,7 +161,7 @@ return require("lazy").setup({
         ---@module 'snacks' <- Loads `snacks.nvim` types for configuration intellisense.
         { "folke/snacks.nvim", opts = { input = {}, picker = {}, terminal = {} } },
       },
-      config = function ()
+      config = function()
         require('users.opencode')
       end
     },
