@@ -150,6 +150,9 @@ vnoremap > >gv
 nnoremap <A-m> za
 nnoremap <A-M> zA
 
+"terminal escape
+tnoremap <A-esc> <C-\><C-n>
+
 "============ netrw setting ==============
 
 " tree style
