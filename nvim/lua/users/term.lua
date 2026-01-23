@@ -162,13 +162,13 @@ local function show_terminal_menu()
   vim.ui.select(choices, {
     prompt = 'Terminal Options:',
   }, function(choice)
-    if table.concat({ commands.root, commands.root_split }, choice) then
+    if vim.list_contains({ commands.root, commands.root_split }, choice) then
       if choice == commands.root_split then
         direction = 'vertical'
       end
       local term = create_terminal(vim.fn.getcwd(), direction)
       term:toggle()
-    elseif table.concat({ commands.buffer, commands.buffer_split }, choice) then
+    elseif vim.list_contains({ commands.buffer, commands.buffer_split }, choice) then
       if choice == commands.buffer_split then
         direction = 'vertical'
       end
