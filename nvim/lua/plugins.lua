@@ -165,18 +165,6 @@ return require("lazy").setup({
         require('users.opencode')
       end
     },
-    {
-      "ravitemer/mcphub.nvim",
-      dependencies = {
-        "nvim-lua/plenary.nvim", -- Required for Job and HTTP requests
-      },
-      -- comment the following line to ensure hub will be ready at the earliest
-      cmd = "MCPHub",                          -- lazy load by default
-      build = "npm install -g mcp-hub@latest", -- Installs required mcp-hub npm module
-      config = function()
-        require("users.mcphub")
-      end,
-    },
 
     {
       "numToStr/Comment.nvim",

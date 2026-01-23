@@ -18,7 +18,6 @@ local dashboard_config = {
       { icon = "", key = "e", desc = "New File", action = ":ene" },
       { icon = "", key = "r", desc = "Load Session", action = function() require("persistence").load() end },
       { icon = "󰒲 ", key = "l", desc = "Lazy", action = ":Lazy", enabled = package.loaded.lazy ~= nil },
-      { icon = "", key = "h", desc = "Mcphub", action = ":MCPHub" },
       { icon = " ", key = "q", desc = "Quit", action = ":qa" },
     },
     header = [[
