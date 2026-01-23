@@ -3,11 +3,11 @@ local terms = require("toggleterm.terminal")
 
 -- Setup toggleterm
 require("toggleterm").setup({
-   size = function(term)
+  size = function(term)
     if term.direction == "horizontal" then
       return 20
     elseif term.direction == "vertical" then
-      return vim.o.columns * 0.7
+      return vim.o.columns * 0.5
     end
   end,
   open_mapping = nil, -- We'll handle this ourselves
@@ -18,7 +18,7 @@ require("toggleterm").setup({
   insert_mappings = true,
   start_in_insert = true,
   persist_size = true,
-  direction = 'horizontal',
+  direction = 'float',
   close_on_exit = true,
   shell = vim.o.shell,
   float_opts = {
@@ -58,7 +58,9 @@ end
 -- Commands definition
 local commands = {
   root = 'New Root Directory Terminal',
+  root_split = 'New Root Directory Terminal(split)',
   buffer = 'New Buffer Directory Terminal',
+  buffer_split = 'New Buffer Directory Terminal(split)',
   list = 'List Existing Terminals',
   quitall = 'Exit all Terminals'
 }
@@ -116,7 +118,7 @@ local function show_terminal_list()
       input = {
         keys = {
           ['<cr>'] = { 'open_terminal', mode = { "n", "i" }, desc = "打开终端" },
-          ["<c-x>"] = { "close_terminal", mode = { "n", "i" }, desc = "关闭终端" },
+          ["<c-x>"] = { "close_terminal", mode = { "n", "i" }, desc = "删除终端" },
         },
       },
     },
@@ -139,19 +141,20 @@ end
 local function show_terminal_menu()
   local terminals = terms.get_all(true)
   local choices = {}
-  local direction = 'horizontal'
+  local direction = 'float'
 
   if #terminals ~= 0 then
     table.insert(choices, commands.list)
-    direction = 'tab'
   end
 
   -- Always show root option
   table.insert(choices, commands.root)
+  table.insert(choices, commands.root_split)
 
   -- Show buffer option only if we're in a file buffer
   if utils.check_buffer_is_a_file() then
     table.insert(choices, commands.buffer)
+    table.insert(choices, commands.buffer_split)
   end
 
   table.insert(choices, commands.quitall);
@@ -159,10 +162,16 @@ local function show_terminal_menu()
   vim.ui.select(choices, {
     prompt = 'Terminal Options:',
   }, function(choice)
-    if choice == commands.root then
+    if table.concat({ commands.root, commands.root_split }, choice) then
+      if choice == commands.root_split then
+        direction = 'vertical'
+      end
       local term = create_terminal(vim.fn.getcwd(), direction)
       term:toggle()
-    elseif choice == commands.buffer then
+    elseif table.concat({ commands.buffer, commands.buffer_split }, choice) then
+      if choice == commands.buffer_split then
+        direction = 'vertical'
+      end
       local buffer_cwd = get_buffer_cwd()
       local term = create_terminal(buffer_cwd, direction)
       term:toggle()

@@ -37,7 +37,7 @@ local opencode_actions = {
   },
 }
 
-vim.keymap.set({ "n", "t", "x" }, "<C-.>", function()
+vim.keymap.set({ "n", "t", "x" }, "<A-i>", function()
   local items = {}
   for _, v in ipairs(opencode_actions) do
     table.insert(items, v.label)

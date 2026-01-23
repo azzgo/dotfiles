@@ -67,6 +67,10 @@ set nobackup
 set nowritebackup
 set noswapfile
 
+
+" map to nop
+nnoremap <f1> <nop>
+
 " quick save and quit
 nnoremap <A-w> :w<CR>
 nnoremap <A-q> <C-w>c
