@@ -54,7 +54,7 @@ codecompanion.setup({
                 return "No staged changes found. Please stage your changes first with `git add` and then try again."
               end
               return string.format(
-                [[Based on the following git diff of staged changes, generate a commit message following the Conventional Commit specification and then use the cmd_runner tool to execute `git commit -m "your_generated_message"`:
+                [[Based on the following git diff of staged changes, generate a commit message(in English) following the Conventional Commit specification and then use the cmd_runner tool to execute `git commit -m "your_generated_message"`:
 
 ```diff
 %s
@@ -93,19 +93,6 @@ Please:
           },
         })
       end,
-      openrouter = function ()
-        return require("codecompanion.adapters").extend('openai_compatible', {
-          env = {
-            url = "https://openrouter.ai/api",
-            api_key = "cmd:pass show ai/openrouter | tail -n1 | tr -d '\n'",
-          },
-          schema = {
-            model = {
-              default = "qwen/qwen3-coder-30b-a3b-instruct",
-            },
-          },
-        })
-      end
     }
   },
   strategies = {
@@ -167,48 +154,4 @@ Please:
       },
     },
   },
-  extensions = {
-    history = {
-      enabled = true,
-      opts = {
-        history_dir = vim.fn.stdpath("data") .. "/codecompanion/",
-      },
-      callback = {
-        setup = function(opts)
-          local chat_keymaps = require("codecompanion.config").strategies.chat.keymaps
-          local dir = opts.history_dir
-          utils.make_sure_dir(dir)
-
-          chat_keymaps.save_chat = {
-            modes = {
-              n = opts.keymap or "g<A-w>",
-            },
-            description = "Save Chat",
-            callback = function(chat)
-              local buf = chat.bufnr
-              if utils.check_buffer_is_a_file(buf) then
-                vim.api.nvim_buf_call(buf, function()
-                  vim.cmd("write")
-                end)
-              else
-                -- generate a random filename based on date and time
-                local filename = os.date("%Y-%m-%d_%H-%M-%S") .. ".md"
-                local default_filepath = dir .. filename
-                Snacks.input({ prompt = "Save Location: ", default = default_filepath, icon = '' }, function(input)
-                  if input == nil then
-                    return
-                  end
-                  vim.api.nvim_buf_set_option(buf, "buftype", '')
-                  vim.api.nvim_buf_set_name(buf, input)
-                  vim.api.nvim_buf_call(buf, function()
-                    vim.cmd("write " .. input)
-                  end)
-                end)
-              end
-            end
-          }
-        end,
-      }
-    },
-  }
 })
