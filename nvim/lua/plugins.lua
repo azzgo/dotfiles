@@ -13,6 +13,7 @@ vim.opt.rtp:prepend(lazypath)
 
 return require("lazy").setup({
   root = vim.g.dot_config_path .. "/.local/lazy",
+  lockfile = vim.g.dot_config_path .. "/nvim/lua" .. "/lazy-lock.json",
   spec = {
     {
       's1n7ax/nvim-window-picker',
