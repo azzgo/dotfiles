@@ -239,14 +239,9 @@ return require("lazy").setup({
     { 'mracos/mermaid.vim' },
     {
       'nvim-treesitter/nvim-treesitter',
-      branch = 'master',
+      branch = 'main',
       config = function()
-        require 'nvim-treesitter.configs'.setup {
-          highlight = { enable = true, },
-          incremental_selection = { enable = false },
-          ensure_installed = { 'c', 'lua', 'javascript', 'typescript', 'vue', 'vim', 'vimdoc', 'query' },
-          indent = { enable = false },
-        }
+        require'nvim-treesitter'.install { 'c', 'lua', 'javascript', 'typescript', 'vue', 'vim', 'vimdoc', 'query' }
       end
     },
     -- fuzzy
