@@ -27,7 +27,8 @@ codecompanion.setup({
         },
         {
           role = "user",
-          content = "@{files} refine the test case in #{buffer}. If the test fixture desctiption is not suitable, change it. You should edit file and show the diff to me."
+          content =
+          "@{files} refine the test case in #{buffer}. If the test fixture desctiption is not suitable, change it. You should edit file and show the diff to me."
         }
       },
     },
@@ -44,10 +45,11 @@ codecompanion.setup({
         {
           {
             role = "system",
-            content = "You are an expert at following the Conventional Commit specification. You will generate a commit message and then execute the git commit command directly.",
+            content =
+            "You are an expert at following the Conventional Commit specification. You will generate a commit message and then execute the git commit command directly.",
           },
           {
-            role = "user", 
+            role = "user",
             content = function()
               local diff = vim.system({ "git", "diff", "--no-ext-diff", "--staged" }, { text = true }):wait()
               if diff.stdout == "" then
@@ -77,9 +79,38 @@ Please:
         },
       },
     },
+    -- based on builtin prompt `explain.md`
+    ['Explain code'] = {
+      strategy = "chat",
+      description = "Explain how the code work",
+      opts = {
+        index = 99,
+        is_default = false,
+        is_slash_cmd = true,
+        short_name = "explain",
+        auto_submit = false,
+      },
+      prompts = {
+        {
+          role = "system",
+          content = [[When asked to explain code, follow these steps:
+
+1. Identify the programming language.
+2. Describe the purpose of the code and reference core concepts from the programming language.
+3. Explain each function or significant block of code, including parameters and return values.
+4. Highlight any specific functions or methods used and their roles.
+5. Provide context on how the code fits into a larger application if applicable.
+]],
+        },
+        {
+          role = 'user',
+          content = '#{buffer} If reference can not reason full logic of the funciton, use @{read_file} and @{grep_search} @{file_search} refine reference, and please explain this code',
+        },
+      }
+    }
   },
   adapters = {
-    http= {
+    http = {
       local_llm = function()
         return require("codecompanion.adapters").extend("openai_compatible", {
           env = {
@@ -88,7 +119,7 @@ Please:
           },
           schema = {
             model = {
-              default = "gpt-oss:20b",  -- define llm model to be used
+              default = "gpt-oss:20b", -- define llm model to be used
             },
           },
         })
