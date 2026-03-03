@@ -40,6 +40,8 @@ let g:fugitive_summary_format = "%s %cr"
 
 au TextYankPost * silent! lua vim.highlight.on_yank {higroup="IncSearch", timeout=150}
 
+au FileType markdown,text set wrap
+
 "" local config for override
 call SourceIfExists("~/.config/nvim/local.vim")
 
