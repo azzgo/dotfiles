@@ -25,6 +25,7 @@ local MENU_LABEL_ENUM = {
     FLASH_TREESITTER = '[Flash] - treesitter',
     FLASH_JUMP_CWORD = '[Flash] - jump cword',
     TOGGLE_WRAP = '[View] - toggle wrap',
+    NEW_TAB = '[Builtin] New Tab',
     OPEN_QUICKFIX = '[Quickfix] - list',
     OPEN_LOCATION = '[Location] - list',
     SNACKS_PICKER = '[Snacks] - picker',
@@ -44,6 +45,9 @@ local MENU = {
     end,
     [MENU_LABEL_ENUM.LIST_TODOS] = function()
         Snacks.picker.todo_comments()
+    end,
+    [MENU_LABEL_ENUM.NEW_TAB] = function ()
+      vim.cmd [[ tabnew ]]
     end,
     [MENU_LABEL_ENUM.BUFFER_DELETE_OTHERS] = function()
         helper.buffer_delete_others()
@@ -139,6 +143,7 @@ local function self_use_case_popup()
         MENU_LABEL_ENUM.BUFFER_DELETE_OTHERS,
         MENU_LABEL_ENUM.RELOAD_BUFFER_FORCE,
         MENU_LABEL_ENUM.TOGGLE_WRAP,
+        MENU_LABEL_ENUM.NEW_TAB,
     }
     if persistence_ok == true then
         vim.list_extend(menu, {
