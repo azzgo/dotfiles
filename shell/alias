@@ -28,11 +28,35 @@ alias la='ls -lAh'
 alias rm="rm -i"
 
 function gcd() {
-  if [[ -x  $(command -v fzf) ]];then
+  if [[ -x $(command -v fzf) ]];then
     folder=$(git worktree list | fzf)
     if [[ -n $folder ]];then
      cd $(echo $folder | awk '{print $1}')
     fi
+  fi
+}
+
+function gwt() {
+  if [[ "$1" == "-d" ]]; then
+    if [[ -x $(command -v fzf) ]];then
+      selected=$(git worktree list | fzf --reverse)
+      if [[ -n $selected ]];then
+        path=$(echo $selected | awk '{print $1}')
+        branch=$(echo $selected | awk '{print $2}')
+        if [[ "$path" == "$PWD"* ]]; then
+          cd ~ || return
+        fi
+        git worktree remove "$path"
+      fi
+    fi
+  elif [[ -n "$1" ]]; then
+    branch_name="$1"
+    worktree_path=".worktree/$branch_name"
+    mkdir -p .worktree
+    git worktree add "$worktree_path" -b "$branch_name"
+  else
+    echo "Usage: gwt <branch_name>   # create worktree at .worktree/<branch_name>"
+    echo "       gwt -d              # delete worktree (fuzzy select)"
   fi
 }
 
