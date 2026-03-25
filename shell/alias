@@ -37,26 +37,53 @@ function gcd() {
 }
 
 function gwt() {
-  if [[ "$1" == "-d" ]]; then
-    if [[ -x $(command -v fzf) ]];then
-      selected=$(git worktree list | fzf --reverse)
-      if [[ -n $selected ]];then
-        path=$(echo $selected | awk '{print $1}')
-        branch=$(echo $selected | awk '{print $2}')
-        if [[ "$path" == "$PWD"* ]]; then
-          cd ~ || return
+  local delete_mode=false
+  local skip_confirm=false
+
+  while [[ "$1" == -* ]]; do
+    case "$1" in
+      -d) delete_mode=true; shift ;;
+      -y) skip_confirm=true; shift ;;
+      *) break ;;
+    esac
+  done
+
+  if [[ "$delete_mode" == true ]]; then
+    if [[ ! -x $(command -v fzf) ]];then
+      echo "fzf is required for deletion"
+      return 1
+    fi
+    selected=$(git worktree list | fzf --reverse)
+    if [[ -n $selected ]];then
+      path=$(echo $selected | awk '{print $1}')
+      branch=$(echo $selected | awk '{print $2}')
+      if [[ "$path" == "$PWD"* ]]; then
+        cd ~ || return
+      fi
+      git worktree remove "$path"
+      if [[ "$skip_confirm" == true ]]; then
+        git branch -D "$branch" 2>/dev/null && echo "Deleted branch $branch"
+      else
+        read -p "Delete local branch '$branch'? [y/N] " -n 1 -r
+        echo
+        if [[ "$REPLY" =~ ^[Yy]$ ]]; then
+          git branch -D "$branch" && echo "Deleted branch $branch"
         fi
-        git worktree remove "$path"
       fi
     fi
   elif [[ -n "$1" ]]; then
     branch_name="$1"
     worktree_path=".worktree/$branch_name"
     mkdir -p .worktree
-    git worktree add "$worktree_path" -b "$branch_name"
+    if git show-ref --verify --quiet "refs/heads/$branch_name"; then
+      git worktree add "$worktree_path" "$branch_name"
+    else
+      git worktree add "$worktree_path" -b "$branch_name"
+    fi
   else
     echo "Usage: gwt <branch_name>   # create worktree at .worktree/<branch_name>"
     echo "       gwt -d              # delete worktree (fuzzy select)"
+    echo "       gwt -d -y           # delete worktree and branch without confirm"
   fi
 }
 
