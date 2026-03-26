@@ -140,20 +140,7 @@ return require("lazy").setup({
         vim.g.copilot_enabled = false
       end
     },
-    {
-      "olimorris/codecompanion.nvim",
-      event = "VeryLazy",
-      dependencies = {
-        "nvim-lua/plenary.nvim",
-        "nvim-treesitter/nvim-treesitter",
-      },
-      keys = {
-        { "<leader>i", mode = { "n", "x" }, "<cmd>CodeCompanionActions<cr>", desc = "Code Companion Actions" },
-      },
-      config = function()
-        require('users.codecompanion')
-      end
-    },
+
     {
       "NickvanDyke/opencode.nvim",
       dependencies = {
@@ -236,7 +223,7 @@ return require("lazy").setup({
     -- syntax
     -- { "leafgarland/typescript-vim" },
     -- { "pangloss/vim-javascript" },
-    { 'mracos/mermaid.vim' },
+
     {
       'nvim-treesitter/nvim-treesitter',
       branch = 'main',
@@ -337,7 +324,7 @@ return require("lazy").setup({
     },
 
     -- vim-rec
-    { 'zaid/vim-rec',        init = function() vim.g.recutils_no_folding = 1 end },
+
     --- weapp
     -- { 'chemzqm/wxapp.vim' },
     --- marks enhance
