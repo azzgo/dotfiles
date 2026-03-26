@@ -30,6 +30,9 @@ local MENU_LABEL_ENUM = {
     OPEN_LOCATION = '[Location] - list',
     SNACKS_PICKER = '[Snacks] - picker',
     QUIT_ALL = '[Quit] - force quit all',
+    OPEN_MARKDOWN_PREVIEW = '[Markdown] - open preview',
+    STOP_MARKDOWN_PREVIEW = '[Markdown] - stop preview',
+    REFRESH_MARKDOWN_PREVIEW = '[Markdown] - refresh preview',
 }
 
 local MENU = {
@@ -129,6 +132,15 @@ local MENU = {
     [MENU_LABEL_ENUM.QUIT_ALL] = function()
         vim.cmd.quitall({ bang = true })
     end,
+    [MENU_LABEL_ENUM.OPEN_MARKDOWN_PREVIEW] = function()
+        vim.cmd.MarkdownPreview()
+    end,
+    [MENU_LABEL_ENUM.STOP_MARKDOWN_PREVIEW] = function()
+        vim.cmd.MarkdownPreviewStop()
+    end,
+    [MENU_LABEL_ENUM.REFRESH_MARKDOWN_PREVIEW] = function()
+        vim.cmd.MarkdownPreviewRefresh()
+    end,
 }
 
 local function self_use_case_popup()
@@ -173,6 +185,12 @@ local function self_use_case_popup()
     if vim.g.loaded_colorizer == 1 then
         table.insert(menu, MENU_LABEL_ENUM.TOGGLE_COLORIZER)
     end
+
+    vim.list_extend(menu, {
+        MENU_LABEL_ENUM.OPEN_MARKDOWN_PREVIEW,
+        MENU_LABEL_ENUM.STOP_MARKDOWN_PREVIEW,
+        MENU_LABEL_ENUM.REFRESH_MARKDOWN_PREVIEW,
+    })
 
     vim.ui.select(menu, { prompt = 'Quick Actions: ' }, function(action)
         if action == nil then
