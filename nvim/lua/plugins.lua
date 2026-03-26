@@ -393,6 +393,13 @@ return require("lazy").setup({
         require('users.diffview')
       end
     },
+    {
+      'selimacerbas/markdown-preview.nvim',
+      dependencies = { 'selimacerbas/live-server.nvim' },
+      config = function()
+        require('markdown_preview').setup({})
+      end
+    },
     -- ###### lua plugin end ##########
   },
 })
