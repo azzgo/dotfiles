@@ -128,20 +128,6 @@ return require("lazy").setup({
       end
     },
     {
-      'github/copilot.vim',
-      init = function()
-        -- y for yes
-        vim.keymap.set('i', '<M-y>', 'copilot#Accept("\\<CR>")', {
-          expr = true,
-          replace_keycodes = false
-        })
-        vim.g.copilot_no_tab_map = true
-        -- disable copilot in default
-        vim.g.copilot_enabled = false
-      end
-    },
-
-    {
       "NickvanDyke/opencode.nvim",
       dependencies = {
         -- Recommended for `ask()` and `select()`.
