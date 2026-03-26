@@ -6,15 +6,23 @@ end
 
 
 vim.g.opencode_opts = {
-  provider = {
-    enabled = "snacks",
-    snacks = {
-      win = {
-        position = "right",
-        width = 0.6,
-      },
-    },
-  }
+  server = {
+    start = function()
+      require("opencode.terminal").open("opencode --port", {
+        split = "right",
+        width = math.floor(vim.o.columns * 0.6),
+      })
+    end,
+    stop = function()
+      require("opencode.terminal").close()
+    end,
+    toggle = function()
+      require("opencode.terminal").toggle("opencode --port", {
+        split = "right",
+        width = math.floor(vim.o.columns * 0.6),
+      })
+    end,
+  },
 }
 
 vim.o.autoread = true
