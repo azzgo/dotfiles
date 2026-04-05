@@ -26,11 +26,11 @@ vim.o.autoread = true
 local sidekick_actions = {
   {
     label = "Toggle",
-    action = function() require("sidekick.cli").toggle({ focus = true }) end,
+    action = function() require("sidekick.cli").toggle({ focus = true, filter = { installed = true } }) end,
   },
   {
     label = "Select AI CLI",
-    action = function() require("sidekick.cli").select() end,
+    action = function() require("sidekick.cli").select({ filter = { installed = true } }) end,
   },
   {
     label = "Ask (@this:)",
