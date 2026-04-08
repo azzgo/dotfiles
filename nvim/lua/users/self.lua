@@ -247,8 +247,7 @@ local function git_resolve_conflicts()
     end)
 end
 
-vim.keymap.set("n", "<A-.>", function() self_use_case_popup() end)
-vim.keymap.set("i", "<A-.>", function() self_use_case_popup() end)
+vim.keymap.set({ "n", 't', 'i','x'}, "<A-.>", function() self_use_case_popup() end)
 vim.keymap.set({ "n", "v" }, "<A-u>", function() name_style_convert() end)
 vim.keymap.set({ "n", "v" }, "<A-g>", function()
     if vim.wo.diff then
