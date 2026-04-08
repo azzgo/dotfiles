@@ -244,3 +244,7 @@ local function destroy_current_terminal()
     end
   end
 end
+
+return {
+  show_terminal_menu = show_terminal_menu,
+}
