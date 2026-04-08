@@ -221,7 +221,7 @@ end
 vim.keymap.set({ 'n', 't' }, '<A-t>', show_terminal_menu, { desc = 'Open terminal menu' })
 
 -- Terminal mode key mappings
-vim.keymap.set('t', '<f12>', function()
+vim.keymap.set({'t', 'n', 'v', 'x' }, '<A-h>', function()
   vim.cmd('ToggleTermToggleAll')
 end, { desc = 'Hide current terminal' })
 
@@ -244,7 +244,3 @@ local function destroy_current_terminal()
     end
   end
 end
-
--- Alt+F12 key mapping to destroy current terminal
-vim.keymap.set({ 't' }, '<leader><F12>', destroy_current_terminal,
-  { desc = 'Destroy current terminal if filetype is toggleterm' })
