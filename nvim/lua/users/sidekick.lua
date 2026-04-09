@@ -12,6 +12,20 @@ sidekick.setup({
       split = {
         width = math.floor(vim.o.columns * 0.6),
       },
+      keys = {
+        buffers       = false,
+        files         = false,
+        hide_n        = false,
+        hide_ctrl_q   = false,
+        hide_ctrl_dot = false,
+        hide_ctrl_z   = false,
+        prompt        = false,
+        stopinsert    = false,
+        nav_left      = false,
+        nav_down      = false,
+        nav_up        = false,
+        nav_right     = false,
+      },
     },
     tools = {
       codex = {},
