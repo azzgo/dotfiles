@@ -51,8 +51,8 @@ local sidekick_actions = {
     action = function() require("sidekick.cli").send({ msg = "{this}" }) end,
   },
   {
-    label = "Select",
-    action = function() require("sidekick.cli").select() end,
+    label = "Prompt",
+    action = function() require("sidekick.cli").prompt() end,
   },
 }
 
