@@ -8,7 +8,7 @@ sidekick.setup({
   nes = { enabled = false },
   cli = {
     win = {
-      layout = "right",
+      layout = "float",
       split = {
         width = math.floor(vim.o.columns * 0.6),
       },
