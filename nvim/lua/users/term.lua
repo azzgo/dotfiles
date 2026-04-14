@@ -220,11 +220,6 @@ end
 -- Key mappings
 vim.keymap.set({ 'n', 't' }, '<A-t>', show_terminal_menu, { desc = 'Open terminal menu' })
 
--- Terminal mode key mappings
-vim.keymap.set({'t', 'n', 'v', 'x' }, '<A-h>', function()
-  vim.cmd('ToggleTermToggleAll')
-end, { desc = 'Hide current terminal' })
-
 -- Terminal rename key mapping with better UX
 vim.keymap.set('t', '<F2>', rename_current_terminal, { desc = 'Rename current terminal' })
 
