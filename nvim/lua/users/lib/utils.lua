@@ -29,6 +29,18 @@ function M.copy_to_clipboard(text)
   vim.fn.setreg('"', text)
 end
 
+function M.preserve_mode_for_selection()
+  if vim.fn.mode() == "v" or vim.fn.mode() == "V" then
+    isVisual = true
+  end
+
+  return function ()
+    if isVisual then
+      vim.cmd('normal! gv')
+    end
+  end
+end
+
 function M.get_selected_text(only_first_line)
   if vim.fn.mode() == "v" or vim.fn.mode() == "V" then
     vim.cmd([[execute "normal! \<ESC>"]])

@@ -4,6 +4,8 @@ if not ok then
   return
 end
 
+local utils = require('users.lib.utils')
+
 sidekick.setup({
   nes = { enabled = false },
   cli = {
@@ -66,7 +68,9 @@ vim.keymap.set({ "n", "t", "x" }, "<A-i>", function()
   for _, v in ipairs(sidekick_actions) do
     table.insert(items, v.label)
   end
+  local preserve = utils.preserve_mode_for_selection()
   vim.ui.select(items, { prompt = "Sidekick Action" }, function(choice)
+    preserve()
     for _, v in ipairs(sidekick_actions) do
       if v.label == choice then
         v.action()
