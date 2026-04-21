@@ -23,3 +23,7 @@ cmd fzf_jump ${{
     fi
 }}
 map <c-f> :fzf_jump
+
+cmd tail $tail -f -n 0 "$f"
+cmd logfx $tail -f -n 0 "$f" | fx
+map <c-t> :tail
