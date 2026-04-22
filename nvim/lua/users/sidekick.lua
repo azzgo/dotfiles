@@ -64,6 +64,7 @@ local sidekick_actions = {
 }
 
 vim.keymap.set({ "n", "t", "x" }, "<A-i>", function()
+  utils.hide_all_floats_in_current_tab()
   local items = {}
   for _, v in ipairs(sidekick_actions) do
     table.insert(items, v.label)

@@ -34,7 +34,7 @@ function M.preserve_mode_for_selection()
     isVisual = true
   end
 
-  return function ()
+  return function()
     if isVisual then
       vim.cmd('normal! gv')
     end
@@ -118,6 +118,7 @@ function M.check_buffer_is_a_file(bufnr)
   return is_file
 end
 
+
 function M.make_sure_dir(dir)
   if vim.fn.isdirectory(dir) == 0 then
     vim.fn.mkdir(dir, "p")
@@ -195,6 +196,19 @@ function M.run_code_with_cmd(cmd, content, file_ext)
       end
     end,
   })
+end
+
+function M.hide_all_floats_in_current_tab()
+  local wins = vim.api.nvim_tabpage_list_wins(0)
+
+  for _, win in ipairs(wins) do
+    if vim.api.nvim_win_is_valid(win) then
+      local config = vim.api.nvim_win_get_config(win)
+      if config.relative and config.relative ~= "" then
+        vim.api.nvim_win_hide(win)
+      end
+    end
+  end
 end
 
 return M
