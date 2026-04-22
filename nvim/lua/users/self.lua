@@ -247,19 +247,6 @@ local function git_resolve_conflicts()
     end)
 end
 
-local function hide_all_floats_in_current_tab()
-    local wins = vim.api.nvim_tabpage_list_wins(0)
-
-    for _, win in ipairs(wins) do
-        if vim.api.nvim_win_is_valid(win) then
-            local config = vim.api.nvim_win_get_config(win)
-            if config.relative and config.relative ~= "" then
-                vim.api.nvim_win_hide(win)
-            end
-        end
-    end
-end
-
 vim.keymap.set({ "n", 't', 'i','x'}, "<A-.>", function() self_use_case_popup() end)
 vim.keymap.set({ "n", "v" }, "<A-u>", function() name_style_convert() end)
 vim.keymap.set({ "n", "v" }, "<A-g>", function()
@@ -267,7 +254,9 @@ vim.keymap.set({ "n", "v" }, "<A-g>", function()
         git_resolve_conflicts()
     end
 end)
-vim.keymap.set({ "n", "t", "v", "x" }, "<A-h>", hide_all_floats_in_current_tab, { desc = "Hide all floats in current tab" })
+vim.keymap.set({ "n", "t", "v", "x" }, "<A-h>", function ()
+  utils.hide_all_floats_in_current_tab()
+end, { desc = "Hide all floats in current tab" })
 
 -- add font size increase and decrease to neovide
 if vim.g.neovide then

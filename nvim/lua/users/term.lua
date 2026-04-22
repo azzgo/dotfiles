@@ -141,6 +141,7 @@ end
 
 -- Main terminal selection menu
 local function show_terminal_menu()
+  utils.hide_all_floats_in_current_tab()
   local terminals = terms.get_all(true)
   local choices = {}
   local direction = 'float'
