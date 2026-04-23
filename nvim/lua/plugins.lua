@@ -358,11 +358,22 @@ return require("lazy").setup({
       end
     },
     {
-      'sindrets/diffview.nvim',
-      config = function()
-        require('users.diffview')
+      'barrettruth/diffs.nvim',
+      init = function ()
+        vim.g.diffs = {
+          integrations = {
+            fugitive = true,
+            gitsigns = true,
+          }
+        } 
       end
     },
+    -- {
+    --   'sindrets/diffview.nvim',
+    --   config = function()
+    --     require('users.diffview')
+    --   end
+    -- },
     {
       'selimacerbas/markdown-preview.nvim',
       dependencies = { 'selimacerbas/live-server.nvim' },
