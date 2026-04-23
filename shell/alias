@@ -28,10 +28,19 @@ alias la='ls -lAh'
 alias rm="rm -i"
 
 function gcd() {
-  if [[ -x $(command -v fzf) ]];then
+  local folder
+  
+  if [[ -n "$1" ]]; then
+    # 接收参数时：grep 过滤，取第一个匹配的路径
+    folder=$(git worktree list | grep "$1" | head -1)
+    if [[ -n $folder ]]; then
+      cd $(echo $folder | awk '{print $1}')
+    fi
+  elif [[ -x $(command -v fzf) ]]; then
+    # 不接收参数时：使用 fzf 交互选择
     folder=$(git worktree list | fzf)
-    if [[ -n $folder ]];then
-     cd $(echo $folder | awk '{print $1}')
+    if [[ -n $folder ]]; then
+      cd $(echo $folder | awk '{print $1}')
     fi
   fi
 }
