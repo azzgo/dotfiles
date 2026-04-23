@@ -109,6 +109,33 @@ function gco() {
   fi
 }
 
+function gff() {
+  local local_pattern="$1"
+  local master_branch local_branch
+
+  if [[ -z "$local_pattern" ]]; then
+    echo "Usage: gff <local_branch_pattern>"
+    return 1
+  fi
+
+  master_branch=$(git branch --show-current)
+  if [[ -z "$master_branch" ]]; then
+    echo "Current directory is not on a branch"
+    return 1
+  fi
+
+  gcd "$local_pattern" || return 1
+  local_branch=$(git branch --show-current)
+  if [[ -z "$local_branch" ]]; then
+    echo "Cannot resolve local branch from pattern: $local_pattern"
+    return 1
+  fi
+
+  git rebase "$master_branch" || return 1
+  gcd "$master_branch" || return 1
+  git merge --ff-only "$local_branch"
+}
+
 if [[ -x $(command -v nvim) ]];then
   alias v='nvim'
 elif [[ -x  $(command -v vim) ]];then
