@@ -31,10 +31,10 @@ function gcd() {
   local folder
   
   if [[ -n "$1" ]]; then
-    # 接收参数时：grep 过滤，取第一个匹配的路径
-    folder=$(git worktree list | grep "$1" | head -1)
+    # 接收参数时：在 branch 名称（最后一个字段 $NF）上进行模糊匹配
+    folder=$(git worktree list | awk -v pattern="$1" '$NF ~ pattern {print $1; exit}')
     if [[ -n $folder ]]; then
-      cd $(echo $folder | awk '{print $1}')
+      cd "$folder"
     fi
   elif [[ -x $(command -v fzf) ]]; then
     # 不接收参数时：使用 fzf 交互选择
