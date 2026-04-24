@@ -73,6 +73,10 @@ snacks.setup({
         },
       },
     },
+    layout = {
+      width = 0.9,
+      height = 0.9,
+    },
     actions = {
       flash = function(picker)
         require("flash").jump({
@@ -203,6 +207,10 @@ end, { desc = "List Marks" })
 
 vim.keymap.set("n", "<leader>r", function()
   Snacks.picker.recent()
+end, { desc = "recent files" })
+
+vim.keymap.set("n", "<leader>gl", function()
+  Snacks.lazygit.log()
 end, { desc = "recent files" })
 
 vim.keymap.set("n", "<leader>:", function()
