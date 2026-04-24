@@ -231,7 +231,12 @@ return require("lazy").setup({
     {
       "ibhagwan/fzf-lua",
       dependencies = { "nvim-tree/nvim-web-devicons" },
-      opts = {},
+      opts = {
+        winopts = {
+          height           = 0.9,            -- window height
+          width            = 0.9,            -- window width
+        },
+      },
       config = function()
         require('users.fzflua')
       end
