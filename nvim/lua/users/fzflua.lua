@@ -4,6 +4,13 @@ if not ok then
   return
 end
 
+fzfLua.setup({
+   winopts = { 
+     height           = 0.9,            -- window height
+     width            = 0.9,            -- window width
+   },
+})
+
 local utils = require('users.lib.utils')
 
 -- 使用 fzf-lua 实现 grep_string
