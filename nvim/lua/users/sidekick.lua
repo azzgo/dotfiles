@@ -52,6 +52,10 @@ local sidekick_actions = {
     action = function() require("sidekick.cli").send({ msg = "{this}" }) end,
   },
   {
+    label = "Ask (@{file})",
+    action = function() require("sidekick.cli").send({ msg = "{file}" }) end,
+  },
+  {
     label = "Prompt",
     action = function() require("sidekick.cli").prompt() end,
   },
