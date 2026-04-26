@@ -8,7 +8,7 @@
   "coc.nvim": { "branch": "release", "commit": "fb74029fc12b16e714c245d1f265f3071d1ea07c" },
   "colorizer": { "branch": "master", "commit": "72790a003d5a706c287486a1a81e3a6b32158b54" },
   "curl.nvim": { "branch": "main", "commit": "3ee14fbafc8169fc803e80562ce7ac5b4474bdff" },
-  "diffs.nvim": { "branch": "main", "commit": "190fb092a1e6751ab7d3bb8d340ca601140e81ea" },
+  "diffview.nvim": { "branch": "main", "commit": "385f26fd6a50e3b0b11cc9623f1f96cde00ef08c" },
   "flash.nvim": { "branch": "main", "commit": "fcea7ff883235d9024dc41e638f164a450c14ca2" },
   "fzf": { "branch": "master", "commit": "1acf980e95f59a755750a3e25b8973d9e732a9b0" },
   "fzf-lua": { "branch": "main", "commit": "bde73a6886b607246095aa59f396de5e0d036890" },
