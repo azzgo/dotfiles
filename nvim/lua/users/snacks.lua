@@ -209,10 +209,6 @@ vim.keymap.set("n", "<leader>r", function()
   Snacks.picker.recent()
 end, { desc = "recent files" })
 
-vim.keymap.set("n", "<leader>gl", function()
-  Snacks.lazygit.log()
-end, { desc = "recent files" })
-
 vim.keymap.set("n", "<leader>:", function()
   Snacks.picker.commands()
 end, { desc = "Commands" })
