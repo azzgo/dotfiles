@@ -1,0 +1,65 @@
+{
+  "defaultProvider": "codexcn",
+  "defaultModel": "gpt-5.4",
+  "defaultThinkingLevel": "medium",
+  "packages": [
+    "npm:pi-web-access",
+    "npm:pi-edit-session-in-place",
+    {
+      "source": "npm:pi-subagents",
+      "extensions": [
+        "+index.ts"
+      ],
+      "skills": [
+        "+skills/pi-subagents/SKILL.md"
+      ],
+      "prompts": [
+        "-prompts/parallel-research.md",
+        "-prompts/parallel-review.md",
+        "+prompts/gather-context-and-clarify.md",
+        "-prompts/parallel-cleanup.md"
+      ]
+    },
+    "npm:pi-mcp-adapter",
+    {
+      "source": "git:github.com/tmustier/pi-extensions",
+      "skills": [
+        "-extending-pi/skill-creator/SKILL.md",
+        "-pi-ralph-wiggum/SKILL.md"
+      ],
+      "extensions": [
+        "-arcade/picman.ts",
+        "-arcade/ping.ts",
+        "-arcade/spice-invaders.ts",
+        "-arcade/tetris.ts",
+        "-arcade/mario-not/mario-not.ts",
+        "-files-widget/index.ts",
+        "-pi-ralph-wiggum/index.ts",
+        "-session-recap/index.ts"
+      ]
+    },
+    "npm:pi-intercom"
+  ],
+  "enabledModels": [
+    "minimax-cn/MiniMax-M2.7",
+    "openrouter/deepseek/deepseek-v4-flash",
+    "openrouter/z-ai/glm-5-turbo",
+    "openrouter/moonshotai/kimi-k2.6",
+    "openrouter/deepseek/deepseek-v4-pro",
+    "deepseek/deepseek-v4-flash",
+    "deepseek/deepseek-v4-pro",
+    "codexcn/gpt-5.5",
+    "codexcn/gpt-5.3-codex",
+    "codexcn/gpt-5.4",
+    "github-copilot/gpt-5-mini",
+    "github-copilot/gpt-5.5",
+    "github-copilot/gpt-5.3-codex",
+    "github-copilot/claude-sonnet-4.6",
+    "github-copilot/claude-sonnet-4.5",
+    "github-copilot/gpt-5.4"
+  ],
+  "lastChangelogVersion": "0.72.1",
+  "extensions": [
+    "-extensions/sandbox/index.ts"
+  ]
+}

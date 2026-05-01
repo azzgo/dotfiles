@@ -113,6 +113,21 @@ install-terminals:
     
     echo "✅ Terminal configurations installed"
 
+# Install Pi shared configuration
+install-pi:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "🚀 Linking Pi shared configuration..."
+
+    mkdir -p ~/.pi ~/.pi/agent
+
+    ln -sf {{ dotfiles_dir }}/pi/agent/settings.json ~/.pi/agent/settings.json
+    ln -sf {{ dotfiles_dir }}/pi/agent/keybindings.json ~/.pi/agent/keybindings.json
+    ln -sf {{ dotfiles_dir }}/pi/mcp.json ~/.pi/agent/mcp.json
+
+    echo "⚠️  Keep local only: ~/.pi/agent/models.json ~/.pi/agent/auth.json"
+    echo "✅ Pi shared configuration linked"
+
 # Install shell configurations (bash, zsh, tmux, starship)
 install-shell:
     #!/usr/bin/env bash
@@ -174,3 +189,4 @@ info:
     [ -d {{ dotfiles_dir }}/alacritty ] && echo "  ✓ Alacritty"
     [ -d {{ dotfiles_dir }}/kitty ] && echo "  ✓ Kitty"
     [ -d {{ dotfiles_dir }}/ghostty ] && echo "  ✓ Ghostty"
+    [ -d {{ dotfiles_dir }}/pi ] && echo "  ✓ Pi shared config"

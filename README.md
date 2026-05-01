@@ -10,6 +10,7 @@ This repository contains configurations for:
 - **Terminals**: Alacritty, Kitty, Ghostty  
 - **Shells**: bash, zsh, nushell
 - **Development Tools**: starship prompt, tmux, tig git interface, and more
+- **AI Tooling**: Pi shared configuration (non-sensitive parts only)
 
 All configurations are designed to work together seamlessly and can be installed individually or as a complete environment.
 
@@ -44,6 +45,7 @@ just install-emacs     # Emacs configuration
 just install-ideavim   # IDEAVim configuration
 just install-terminals # Terminal configurations
 just install-shell     # Shell configurations
+just install-pi        # Pi shared configuration
 ```
 
 ## Configurations
@@ -193,6 +195,14 @@ Terminal multiplexer configuration with:
 - Session management
 - Integration with other tools
 
+#### Pi
+Shared Pi setup with:
+- Version-controlled `settings.json`, `keybindings.json`, and `mcp.json`
+- `models.json` and `auth.json` remain local on each machine
+- Only cross-device-safe Pi config is linked by dotfiles
+
+**Installation**: `just install-pi`
+
 #### Tig
 Interactive git interface featuring:
 - Enhanced git log browsing
@@ -212,6 +222,7 @@ Interactive git interface featuring:
 | `just install-ideavim` | Install IDEAVim configuration |
 | `just install-terminals` | Install all terminal configurations |
 | `just install-shell` | Install shell, tmux, and starship configurations |
+| `just install-pi` | Link shared Pi configuration files |
 | `just nvim-health` | Check Neovim health and dependencies |
 | `just nvim-update` | Update Neovim plugins |
 | `just nvim-leaderf` | Install LeaderF C extension |
@@ -231,6 +242,7 @@ The installation scripts create symbolic links to configuration files in this re
 - **IDEAVim**: Links `.ideavimrc` to home directory
 - **Terminals**: Links config directories to `~/.config/`
 - **Shells**: Sources shell configs in respective rc files, links tmux and starship configs
+- **Pi**: Links shared Pi config into `~/.pi/agent/`, while `models.json` and `auth.json` stay local per machine
 
 ## Customization
 
