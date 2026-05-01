@@ -14,3 +14,8 @@ emacs/lisp/init-local.el
 temp_dotfiles/
 .local/
 *.tar.gz
+
+# Local Pi secrets / machine state
+pi/agent/models.json
+pi/agent/auth.json
+pi/**/*.local.json
