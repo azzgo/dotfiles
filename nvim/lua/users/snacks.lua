@@ -119,61 +119,16 @@ snacks.setup({
     }
   },
   scratch = {
-    win_by_ft = {
-      python = {
-        keys = {
-          ["source"] = {
-            "<cr>",
-            function(self)
-              local python_cmd = utils.get_python_cmd()
-              local content
-              local mode = vim.api.nvim_get_mode().mode
-              
-              if mode == "V" or mode == "v" or mode == "" then
-                content, _ = utils.get_selected_text(false)
-              else
-                local lines = vim.api.nvim_buf_get_lines(self.buf, 0, -1, false)
-                content = table.concat(lines, "\n")
-              end
-
-              utils.run_code_with_cmd(python_cmd, content, "py")
-            end,
-            desc = "Run buffer with Python",
-            mode = { "n", "x" },
-          },
-        },
-      },
-      javascript = {
-        keys = {
-          ["source"] = {
-            "<cr>",
-            function(self)
-              local node_cmd = utils.get_node_cmd()
-              local content
-              local mode = vim.api.nvim_get_mode().mode
-              
-              if mode == "V" or mode == "v" or mode == "" then
-                content, _ = utils.get_selected_text(false)
-              else
-                local lines = vim.api.nvim_buf_get_lines(self.buf, 0, -1, false)
-                content = table.concat(lines, "\n")
-              end
-
-              utils.run_code_with_cmd(node_cmd, content, "js")
-            end,
-            desc = "Run buffer with Node.js",
-            mode = { "n", "x" },
-          },
-        },
-      },
-    }
+    ft = function()
+      return "markdown"
+    end,
   },
 })
 
 vim.keymap.set("n", "<A-z>", function()
   Snacks.zen()
 end, { desc = "Zen mode" })
-vim.keymap.set({"n", "t"}, "<A-f>", function()
+vim.keymap.set({ "n", "t" }, "<A-f>", function()
   Snacks.zen.zoom()
 end, { desc = "Dim focus" })
 
