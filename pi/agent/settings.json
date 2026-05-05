@@ -1,10 +1,9 @@
 {
   "defaultProvider": "codexcn",
-  "defaultModel": "gpt-5.4",
+  "defaultModel": "gpt-5.3-codex",
   "defaultThinkingLevel": "medium",
   "packages": [
     "npm:pi-web-access",
-    "npm:pi-edit-session-in-place",
     {
       "source": "npm:pi-subagents",
       "extensions": [
@@ -25,7 +24,8 @@
       "source": "git:github.com/tmustier/pi-extensions",
       "skills": [
         "-extending-pi/skill-creator/SKILL.md",
-        "-pi-ralph-wiggum/SKILL.md"
+        "-pi-ralph-wiggum/SKILL.md",
+        "-extending-pi/SKILL.md"
       ],
       "extensions": [
         "-arcade/picman.ts",
@@ -61,5 +61,10 @@
   "lastChangelogVersion": "0.72.1",
   "extensions": [
     "-extensions/sandbox/index.ts"
+  ],
+  "skills": [
+    "-../../.agents/skills/json-canvas/SKILL.md",
+    "-../../.agents/skills/obsidian-bases/SKILL.md",
+    "-../../.agents/skills/obsidian-markdown/SKILL.md"
   ]
 }
