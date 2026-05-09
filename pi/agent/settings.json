@@ -58,13 +58,23 @@
     "github-copilot/claude-sonnet-4.5",
     "github-copilot/gpt-5.4"
   ],
-  "lastChangelogVersion": "0.72.1",
+  "lastChangelogVersion": "0.73.0",
   "extensions": [
-    "-extensions/sandbox/index.ts"
+    "-extensions/sandbox/index.ts",
+    "+extensions/planning-files-runtime/index.ts",
+    "+extensions/plan-mode/index.ts"
   ],
+  "subagents": {
+    "agentOverrides": {
+      "worker": {
+        "model": "codexcn/gpt-5.3-codex",
+        "skills": [
+          "planning-with-files"
+        ]
+      }
+    }
+  },
   "skills": [
-    "-../../.agents/skills/json-canvas/SKILL.md",
-    "-../../.agents/skills/obsidian-bases/SKILL.md",
-    "-../../.agents/skills/obsidian-markdown/SKILL.md"
+    "+../../.agents/skills/planning-with-files/SKILL.md"
   ]
 }

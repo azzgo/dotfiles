@@ -7,6 +7,8 @@
 - `pi/agent/settings.json`
 - `pi/agent/keybindings.json`
 - `pi/mcp.json`
+- `pi/agent/extensions/planning-files-runtime/`
+- `pi/agent/extensions/plan-mode/`
 
 ## 保持本地，不入库
 
@@ -31,6 +33,18 @@
 
 去掉了原本机器相关的绝对路径参数，方便多端直接复用。
 
-### 3. agents skills 不迁移
+### 3. planning-files-runtime 扩展已迁移
+
+`~/.pi/agent/extensions/planning-files-runtime/` 已纳入 dotfiles。
+
+执行 `just install-pi` 时会把仓库中的扩展目录 link 到本机 Pi 扩展目录。
+
+### 4. plan-mode 扩展已迁移
+
+`~/.pi/agent/extensions/plan-mode/` 已纳入 dotfiles。
+
+执行 `just install-pi` 时会把仓库中的扩展目录 link 到本机 Pi 扩展目录。
+
+### 5. agents skills 不迁移
 
 `~/.agents/skills/...` 暂时不纳入这个仓库，继续保持现状。
