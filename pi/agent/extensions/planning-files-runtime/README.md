@@ -4,11 +4,16 @@ A local Pi extension that keeps planning files inside each project at `.pi/plann
 
 ## What it does
 
-- Adds `/plan-new` and `/plan-init` to create fresh planning files
+- Adds `/plan-new` and `/plan-init` to create fresh planning files via the skill scripts
 - Adds `/plan-status` to show current planning status
+- Adds `/plan-check` to check completion status via the skill script
+- Adds `/plan-attest` to attest or inspect the current plan via the skill script
+- Adds `/plan-catchup` to summarize planning state via the skill script
+- Adds `/plan-autocatchup` to show or toggle automatic catchup on session start
 - Adds `/plan-continue` to ask Pi to resync from the planning files
 - Redirects `task_plan.md`, `findings.md`, and `progress.md` to `.pi/planning/`
 - Injects recent planning context into the agent before it starts
+- Optionally queues an automatic catchup prompt on resumed sessions
 - Shows a small planning status widget in the Pi UI
 
 ## Managed files
