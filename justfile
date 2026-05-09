@@ -119,11 +119,17 @@ install-pi:
     set -euo pipefail
     echo "🚀 Linking Pi shared configuration..."
 
-    mkdir -p ~/.pi ~/.pi/agent
+    mkdir -p ~/.pi ~/.pi/agent ~/.pi/agent/extensions
 
     ln -sf {{ dotfiles_dir }}/pi/agent/settings.json ~/.pi/agent/settings.json
     ln -sf {{ dotfiles_dir }}/pi/agent/keybindings.json ~/.pi/agent/keybindings.json
     ln -sf {{ dotfiles_dir }}/pi/mcp.json ~/.pi/agent/mcp.json
+
+    rm -rf ~/.pi/agent/extensions/planning-files-runtime
+    ln -s {{ dotfiles_dir }}/pi/agent/extensions/planning-files-runtime ~/.pi/agent/extensions/planning-files-runtime
+
+    rm -rf ~/.pi/agent/extensions/plan-mode
+    ln -s {{ dotfiles_dir }}/pi/agent/extensions/plan-mode ~/.pi/agent/extensions/plan-mode
 
     echo "⚠️  Keep local only: ~/.pi/agent/models.json ~/.pi/agent/auth.json"
     echo "✅ Pi shared configuration linked"
