@@ -1,6 +1,6 @@
 {
   "defaultProvider": "codexcn",
-  "defaultModel": "gpt-5.3-codex",
+  "defaultModel": "gpt-5.4",
   "defaultThinkingLevel": "medium",
   "packages": [
     "npm:pi-web-access",
@@ -73,8 +73,5 @@
         ]
       }
     }
-  },
-  "skills": [
-    "+../../.agents/skills/planning-with-files/SKILL.md"
-  ]
+  }
 }

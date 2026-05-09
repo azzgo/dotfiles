@@ -1,5 +1,7 @@
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
 
 const CUSTOM_TYPE = "planning-files-runtime";
@@ -7,6 +9,9 @@ const STATUS_KEY = "planning-files-runtime";
 const WIDGET_KEY = "planning-files-runtime";
 const PLANNING_DIR = path.join(".pi", "planning");
 const PLANNING_FILES = ["task_plan.md", "findings.md", "progress.md"] as const;
+const EXTENSION_DIR = path.dirname(fileURLToPath(import.meta.url));
+const SKILL_ROOT = path.resolve(EXTENSION_DIR, "../../skills/planning-with-files");
+const SCRIPTS_DIR = path.join(SKILL_ROOT, "scripts");
 
 type PlanningFileName = (typeof PLANNING_FILES)[number];
 type PlanningState = {
@@ -16,6 +21,17 @@ type PlanningState = {
 	currentPhase?: string;
 	goal?: string;
 	resumedFromPreviousSession: boolean;
+};
+
+type RuntimeState = {
+	autoCatchupEnabled: boolean;
+};
+
+type ScriptResult = {
+	ok: boolean;
+	stdout: string;
+	stderr: string;
+	status: number;
 };
 
 function getPlanningRoot(cwd: string): string {
@@ -85,43 +101,11 @@ function getPlanningState(cwd: string, resumedFromPreviousSession: boolean): Pla
 	};
 }
 
-function buildTaskPlanTemplate(date: string): string {
-	return `# Task Plan: [Brief Description]\n\n## Goal\n[One sentence describing the end state]\n\n## Current Phase\nPhase 1\n\n## Phases\n\n### Phase 1: Requirements & Discovery\n- [ ] Understand user intent\n- [ ] Identify constraints\n- [ ] Document in findings.md\n- **Status:** in_progress\n\n### Phase 2: Planning & Structure\n- [ ] Define approach\n- [ ] Create project structure\n- **Status:** pending\n\n### Phase 3: Implementation\n- [ ] Execute the plan\n- [ ] Keep planning files in .pi/planning/\n- **Status:** pending\n\n### Phase 4: Testing & Verification\n- [ ] Verify requirements met\n- [ ] Document test results\n- **Status:** pending\n\n### Phase 5: Delivery\n- [ ] Review outputs\n- [ ] Deliver to user\n- **Status:** pending\n\n## Decisions Made\n| Decision | Rationale |\n|----------|-----------|\n\n## Errors Encountered\n| Error | Resolution |\n|-------|------------|\n\n## Notes\n- Planning files live in \`.pi/planning/\`.\n- Re-read this file before major decisions.\n- Update findings.md and progress.md continuously.\n\n## Session\n- Initialized: ${date}\n`;
-}
-
-function buildFindingsTemplate(): string {
-	return `# Findings & Decisions\n\n## Requirements\n-\n\n## Research Findings\n-\n\n## Technical Decisions\n| Decision | Rationale |\n|----------|-----------|\n\n## Issues Encountered\n| Issue | Resolution |\n|-------|------------|\n\n## Resources\n-\n`;
-}
-
-function buildProgressTemplate(date: string): string {
-	return `# Progress Log\n\n## Session: ${date}\n\n### Current Status\n- **Phase:** 1 - Requirements & Discovery\n- **Started:** ${date}\n\n### Actions Taken\n- Initialized planning files in \`.pi/planning/\`.\n\n### Test Results\n| Test | Expected | Actual | Status |\n|------|----------|--------|--------|\n\n### Errors\n| Error | Resolution |\n|-------|------------|\n`;
-}
-
-function writeNewPlanningFiles(cwd: string): { written: string[] } {
-	const planningRoot = getPlanningRoot(cwd);
-	const files = getPlanningFiles(cwd);
-	ensureDir(planningRoot);
-	const written: string[] = [];
-	const date = new Date().toISOString().slice(0, 10);
-	const contentByFile: Record<PlanningFileName, string> = {
-		"task_plan.md": buildTaskPlanTemplate(date),
-		"findings.md": buildFindingsTemplate(),
-		"progress.md": buildProgressTemplate(date),
-	};
-
-	for (const name of PLANNING_FILES) {
-		const target = files[name];
-		fs.writeFileSync(target, contentByFile[name], "utf8");
-		written.push(target);
-	}
-
-	return { written };
-}
-
-function summarizeState(state: PlanningState): string[] {
+function summarizeState(state: PlanningState, runtimeState: RuntimeState): string[] {
 	const lines = [`dir: ${state.planningRoot}`];
 	if (state.goal) lines.push(`goal: ${state.goal}`);
 	if (state.currentPhase) lines.push(`phase: ${state.currentPhase}`);
+	lines.push(`auto-catchup: ${runtimeState.autoCatchupEnabled ? "on" : "off"}`);
 	if (state.resumedFromPreviousSession) lines.push("resume: previous session detected");
 	return lines;
 }
@@ -136,7 +120,6 @@ function updateUi(ctx: ExtensionContext, state: PlanningState): void {
 
 	const summary = state.currentPhase ? `🧭 ${state.currentPhase}` : "🧭 planning";
 	ctx.ui.setStatus(STATUS_KEY, ctx.ui.theme.fg("accent", summary));
-	ctx.ui.setWidget(WIDGET_KEY, summarizeState(state), { placement: "aboveEditor" });
 }
 
 function getRedirectPath(inputPath: string, cwd: string): string | undefined {
@@ -177,41 +160,124 @@ function buildInjectedContext(state: PlanningState): string {
 	return `[PLANNING FILES RUNTIME]\nPlanning files for this project live under ${state.planningRoot}.\nDo not use root-level task_plan.md, findings.md, or progress.md in this project. Use the .pi/planning versions only.\n\nRules:\n- Re-read the plan before major decisions.\n- Update findings.md after discoveries.\n- Update progress.md after meaningful work or verification.\n- Keep task_plan.md as the source of truth for phase status.\n${resumeNote}\n\nCurrent task plan:\n${taskPlan || "(missing)"}\n\nRecent findings tail:\n${findings || "(missing)"}\n\nRecent progress tail:\n${progress || "(missing)"}`;
 }
 
+function splitArgs(rawArgs: string): string[] {
+	return rawArgs.trim() ? rawArgs.trim().split(/\s+/) : [];
+}
+
+function runProcess(command: string, args: string[], cwd: string): ScriptResult {
+	const result = spawnSync(command, args, {
+		cwd,
+		encoding: "utf8",
+		env: process.env,
+	});
+
+	if (result.error) {
+		return {
+			ok: false,
+			stdout: result.stdout ?? "",
+			stderr: result.error.message,
+			status: result.status ?? 1,
+		};
+	}
+
+	return {
+		ok: (result.status ?? 0) === 0,
+		stdout: result.stdout ?? "",
+		stderr: result.stderr ?? "",
+		status: result.status ?? 0,
+	};
+}
+
+function runShellScript(scriptName: string, cwd: string, args: string[] = []): ScriptResult {
+	return runProcess("sh", [path.join(SCRIPTS_DIR, scriptName), ...args], cwd);
+}
+
+function runPythonScript(scriptName: string, cwd: string, args: string[] = []): ScriptResult {
+	const scriptPath = path.join(SCRIPTS_DIR, scriptName);
+	for (const candidate of ["python3", "python"]) {
+		const result = runProcess(candidate, [scriptPath, ...args], cwd);
+		if (result.stderr.includes("ENOENT") || result.stderr.includes("not found")) continue;
+		return result;
+	}
+	return {
+		ok: false,
+		stdout: "",
+		stderr: "python3/python not available",
+		status: 1,
+	};
+}
+
+function notifyScriptResult(ctx: ExtensionContext, title: string, result: ScriptResult): void {
+	const parts = [title];
+	if (result.stdout.trim()) parts.push(result.stdout.trim());
+	if (result.stderr.trim()) parts.push(result.stderr.trim());
+	ctx.ui.notify(parts.join("\n"), result.ok ? "info" : "error");
+}
+
+function getStoredRuntimeState(ctx: ExtensionContext): RuntimeState {
+	const entries = ctx.sessionManager.getEntries();
+	const runtimeEntry = entries
+		.filter((entry: { type: string; customType?: string }) => entry.type === "custom" && entry.customType === CUSTOM_TYPE)
+		.pop() as { data?: { autoCatchupEnabled?: boolean } } | undefined;
+	return {
+		autoCatchupEnabled: runtimeEntry?.data?.autoCatchupEnabled ?? true,
+	};
+}
+
+function persistState(pi: ExtensionAPI, state: PlanningState, runtimeState: RuntimeState): void {
+	pi.appendEntry(CUSTOM_TYPE, {
+		planningRoot: state.planningRoot,
+		exists: state.exists,
+		currentPhase: state.currentPhase,
+		goal: state.goal,
+		autoCatchupEnabled: runtimeState.autoCatchupEnabled,
+		updatedAt: Date.now(),
+	});
+}
+
+function maybeQueueCatchup(pi: ExtensionAPI, ctx: ExtensionContext, state: PlanningState, runtimeState: RuntimeState): void {
+	if (!runtimeState.autoCatchupEnabled || !state.exists || !state.resumedFromPreviousSession) return;
+	const catchup = runPythonScript("session-catchup.py", ctx.cwd, [ctx.cwd]);
+	const summary = catchup.stdout.trim();
+	if (!catchup.ok || !summary || summary.includes("status: missing planning files")) return;
+	const prompt = `Read ${state.files["task_plan.md"]}, ${state.files["findings.md"]}, and ${state.files["progress.md"]}. Reconcile the current task state from those planning files before continuing.\n\nCatchup summary:\n${summary}`;
+	if (ctx.isIdle()) {
+		pi.sendUserMessage(prompt);
+	} else {
+		pi.sendUserMessage(prompt, { deliverAs: "followUp" });
+	}
+	ctx.ui.notify("Queued automatic planning catchup.", "info");
+}
+
 export default function planningFilesRuntime(pi: ExtensionAPI): void {
 	let state = getPlanningState(process.cwd(), false);
+	let runtimeState: RuntimeState = { autoCatchupEnabled: true };
 
 	function refresh(ctx?: ExtensionContext, resumedFromPreviousSession = state.resumedFromPreviousSession): void {
 		state = getPlanningState(ctx?.cwd ?? process.cwd(), resumedFromPreviousSession);
-		if (ctx) updateUi(ctx, state);
-	}
-
-	function persistState(): void {
-		pi.appendEntry(CUSTOM_TYPE, {
-			planningRoot: state.planningRoot,
-			exists: state.exists,
-			currentPhase: state.currentPhase,
-			goal: state.goal,
-			updatedAt: Date.now(),
-		});
+		if (ctx?.hasUI) {
+			updateUi(ctx, state);
+			ctx.ui.setWidget(WIDGET_KEY, summarizeState(state, runtimeState), { placement: "aboveEditor" });
+		}
 	}
 
 	pi.registerCommand("plan-new", {
-		description: "Start a fresh plan in .pi/planning/",
-		handler: async (_args, ctx) => {
-			const result = writeNewPlanningFiles(ctx.cwd);
+		description: "Start a fresh plan in .pi/planning/ via skill scripts",
+		handler: async (args, ctx) => {
+			const result = runShellScript("init-session.sh", ctx.cwd, splitArgs(args));
 			refresh(ctx, false);
-			persistState();
-			ctx.ui.notify(`new planning round started\nwritten: ${result.written.join(", ")}`, "info");
+			persistState(pi, state, runtimeState);
+			notifyScriptResult(ctx, "planning initialized", result);
 		},
 	});
 
 	pi.registerCommand("plan-init", {
 		description: "Alias for /plan-new",
-		handler: async (_args, ctx) => {
-			const result = writeNewPlanningFiles(ctx.cwd);
+		handler: async (args, ctx) => {
+			const result = runShellScript("init-session.sh", ctx.cwd, splitArgs(args));
 			refresh(ctx, false);
-			persistState();
-			ctx.ui.notify(`new planning round started\nwritten: ${result.written.join(", ")}`, "info");
+			persistState(pi, state, runtimeState);
+			notifyScriptResult(ctx, "planning initialized", result);
 		},
 	});
 
@@ -219,9 +285,55 @@ export default function planningFilesRuntime(pi: ExtensionAPI): void {
 		description: "Show current .pi/planning status",
 		handler: async (_args, ctx) => {
 			refresh(ctx);
-			const lines = summarizeState(state);
+			const lines = summarizeState(state, runtimeState);
 			lines.push(`files present: ${PLANNING_FILES.filter((name) => fileExists(state.files[name])).join(", ") || "none"}`);
 			ctx.ui.notify(lines.join("\n"), "info");
+		},
+	});
+
+	pi.registerCommand("plan-check", {
+		description: "Check plan completion status via skill script",
+		handler: async (_args, ctx) => {
+			const result = runShellScript("check-complete.sh", ctx.cwd);
+			notifyScriptResult(ctx, "plan check", result);
+		},
+	});
+
+	pi.registerCommand("plan-attest", {
+		description: "Attest or inspect the current task plan",
+		handler: async (args, ctx) => {
+			const result = runShellScript("attest-plan.sh", ctx.cwd, splitArgs(args));
+			notifyScriptResult(ctx, "plan attestation", result);
+		},
+	});
+
+	pi.registerCommand("plan-catchup", {
+		description: "Summarize planning state from skill script",
+		handler: async (_args, ctx) => {
+			const result = runPythonScript("session-catchup.py", ctx.cwd, [ctx.cwd]);
+			notifyScriptResult(ctx, "plan catchup", result);
+		},
+	});
+
+	pi.registerCommand("plan-autocatchup", {
+		description: "Show or toggle automatic planning catchup on session start",
+		handler: async (args, ctx) => {
+			const action = args.trim().toLowerCase();
+			if (action === "on" || action === "enable") {
+				runtimeState.autoCatchupEnabled = true;
+				persistState(pi, state, runtimeState);
+				refresh(ctx);
+				ctx.ui.notify("Automatic planning catchup enabled.", "info");
+				return;
+			}
+			if (action === "off" || action === "disable") {
+				runtimeState.autoCatchupEnabled = false;
+				persistState(pi, state, runtimeState);
+				refresh(ctx);
+				ctx.ui.notify("Automatic planning catchup disabled.", "info");
+				return;
+			}
+			ctx.ui.notify(`Automatic planning catchup: ${runtimeState.autoCatchupEnabled ? "on" : "off"}`, "info");
 		},
 	});
 
@@ -233,7 +345,11 @@ export default function planningFilesRuntime(pi: ExtensionAPI): void {
 				ctx.ui.notify("No .pi/planning files found. Run /plan-new first.", "warning");
 				return;
 			}
-			const prompt = `Read ${state.files["task_plan.md"]}, ${state.files["findings.md"]}, and ${state.files["progress.md"]}. Sync the current task state from those planning files before continuing.`;
+			const catchup = runPythonScript("session-catchup.py", ctx.cwd, [ctx.cwd]);
+			const summary = catchup.stdout.trim();
+			const prompt = summary
+				? `Read ${state.files["task_plan.md"]}, ${state.files["findings.md"]}, and ${state.files["progress.md"]}. Sync the current task state from those planning files before continuing.\n\nCatchup summary:\n${summary}`
+				: `Read ${state.files["task_plan.md"]}, ${state.files["findings.md"]}, and ${state.files["progress.md"]}. Sync the current task state from those planning files before continuing.`;
 			if (ctx.isIdle()) {
 				pi.sendUserMessage(prompt);
 			} else {
@@ -244,15 +360,16 @@ export default function planningFilesRuntime(pi: ExtensionAPI): void {
 	});
 
 	pi.on("session_start", async (event, ctx) => {
-		const resumed = event.reason === "resume" || event.reason === "fork" || event.reason === "new";
-		refresh(ctx, resumed);
-		persistState();
+		runtimeState = getStoredRuntimeState(ctx);
+		const resumedFromPreviousSession = event.reason === "resume" || event.reason === "fork";
+		refresh(ctx, resumedFromPreviousSession);
+		persistState(pi, state, runtimeState);
 		if (!state.exists) return;
-		updateUi(ctx, state);
-		const notice = resumed
+		const notice = resumedFromPreviousSession
 			? `Planning resumed from previous session. Source: ${event.previousSessionFile ?? "previous session"}`
 			: `Planning runtime attached to ${state.planningRoot}`;
 		ctx.ui.notify(notice, "info");
+		maybeQueueCatchup(pi, ctx, state, runtimeState);
 	});
 
 	pi.on("before_agent_start", async () => {
@@ -276,13 +393,11 @@ export default function planningFilesRuntime(pi: ExtensionAPI): void {
 	pi.on("tool_result", async (event, ctx) => {
 		if (!["write", "edit"].includes(event.toolName)) return;
 		refresh(ctx);
-		updateUi(ctx, state);
-		persistState();
+		persistState(pi, state, runtimeState);
 	});
 
 	pi.on("turn_end", async (_event, ctx) => {
 		refresh(ctx);
-		updateUi(ctx, state);
-		persistState();
+		persistState(pi, state, runtimeState);
 	});
 }

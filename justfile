@@ -131,6 +131,10 @@ install-pi:
     rm -rf ~/.pi/agent/extensions/plan-mode
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/plan-mode ~/.pi/agent/extensions/plan-mode
 
+    rm -rf ~/.pi/agent/skills
+    ln -s {{ dotfiles_dir }}/pi/agent/skills ~/.pi/agent/skills
+
+    echo "🔗 Linked whole global Pi skills directory: ~/.pi/agent/skills -> {{ dotfiles_dir }}/pi/agent/skills"
     echo "⚠️  Keep local only: ~/.pi/agent/models.json ~/.pi/agent/auth.json"
     echo "✅ Pi shared configuration linked"
 
