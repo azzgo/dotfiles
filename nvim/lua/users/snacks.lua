@@ -25,11 +25,11 @@ local function find_files(search)
   if not search then
     vim.ui.input({ prompt = "File> " }, function(input)
       if input and input ~= "" then
-        Snacks.picker.files({ search = input })
+        Snacks.picker.files({ pattern = input })
       end
     end)
   else
-    Snacks.picker.files({ search = search })
+    Snacks.picker.files({ pattern = search })
   end
 end
 
