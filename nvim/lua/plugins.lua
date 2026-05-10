@@ -214,33 +214,6 @@ return require("lazy").setup({
         require'nvim-treesitter'.install { 'c', 'lua', 'javascript', 'typescript', 'vue', 'vim', 'vimdoc', 'query' }
       end
     },
-    -- fuzzy
-    -- {
-    --   "Yggdroot/LeaderF",
-    --   -- conflic in cond, need do it manually now
-    --   -- build = function()
-    --   --   vim.cmd.LeaderfInstallCExtension()
-    --   -- end,
-    --   cond = function()
-    --     return vim.fn.has('python3') == 1;
-    --   end,
-    --   config = function()
-    --     require('users.leaderf')
-    --   end
-    -- },
-    {
-      "ibhagwan/fzf-lua",
-      dependencies = { "nvim-tree/nvim-web-devicons" },
-      opts = {
-        winopts = {
-          height           = 0.9,            -- window height
-          width            = 0.9,            -- window width
-        },
-      },
-      config = function()
-        require('users.fzflua')
-      end
-    },
     {
       'kevinhwang91/nvim-ufo',
       dependencies = { 'kevinhwang91/promise-async' },
