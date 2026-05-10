@@ -9,6 +9,30 @@ local dashboard_sections = {
   { section = "header" },
 }
 
+local function grep_string(search)
+  if not search then
+    vim.ui.input({ prompt = "Grep> " }, function(input)
+      if input and input ~= "" then
+        Snacks.picker.grep({ search = input })
+      end
+    end)
+  else
+    Snacks.picker.grep({ search = search })
+  end
+end
+
+local function find_files(search)
+  if not search then
+    vim.ui.input({ prompt = "File> " }, function(input)
+      if input and input ~= "" then
+        Snacks.picker.files({ search = input })
+      end
+    end)
+  else
+    Snacks.picker.files({ search = search })
+  end
+end
+
 local dashboard_config = {
   preset = {
     -- Defaults to a picker that supports `fzf-lua`, `telescope.nvim` and `mini.pick`
@@ -172,11 +196,23 @@ vim.keymap.set({ "n", "i", "v" }, "<A-x>", function()
   Snacks.picker.commands()
 end, { desc = "Commands" })
 
-if vim.fn.has('python3') ~= 1 then
-  vim.keymap.set('n', '<leader>/', function()
-    Snacks.picker.grep()
-  end, { silent = true, noremap = true })
-  vim.keymap.set('n', '<leader>f', function()
-    Snacks.picker.files()
-  end, { silent = true, noremap = true })
-end
+vim.keymap.set('n', '<A-l>', function() Snacks.picker.resume() end, { silent = true, noremap = true })
+vim.keymap.set('n', '<leader>f', find_files, { silent = true, noremap = true })
+vim.keymap.set('v', '<leader>f', function()
+  local text, _ = utils.get_selected_text(true)
+  find_files(text)
+end, { silent = true, noremap = true })
+
+vim.keymap.set('n', '<leader>/', function()
+  grep_string()
+end, { silent = true, noremap = true })
+vim.keymap.set('v', '<leader>/', function()
+  Snacks.picker.grep_word()
+end, { silent = true, noremap = true })
+vim.keymap.set('n', '<leader>gs', function()
+  Snacks.picker.git_status()
+end, { silent = true, noremap = true })
+
+vim.keymap.set('n', '<leader><leader>', function()
+  Snacks.picker()
+end, { silent = true, noremap = true })

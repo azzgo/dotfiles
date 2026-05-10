@@ -14,9 +14,11 @@
       ],
       "prompts": [
         "-prompts/parallel-research.md",
-        "-prompts/parallel-review.md",
         "+prompts/gather-context-and-clarify.md",
-        "-prompts/parallel-cleanup.md"
+        "-prompts/parallel-context-build.md",
+        "+prompts/parallel-handoff-plan.md",
+        "+prompts/parallel-review.md",
+        "+prompts/parallel-cleanup.md"
       ]
     },
     "npm:pi-mcp-adapter",
@@ -35,10 +37,12 @@
         "-arcade/mario-not/mario-not.ts",
         "-files-widget/index.ts",
         "-pi-ralph-wiggum/index.ts",
-        "-session-recap/index.ts"
+        "-session-recap/index.ts",
+        "-agent-guidance/agent-guidance.ts"
       ]
     },
-    "npm:pi-intercom"
+    "npm:pi-intercom",
+    "npm:pi-interactive-shell"
   ],
   "enabledModels": [
     "minimax-cn/MiniMax-M2.7",
