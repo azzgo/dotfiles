@@ -27,4 +27,12 @@ require("diffview").setup({
       end)
     end,
   },
+  view = {
+    default = {
+      layout = "diff2_horizontal",
+    },
+    cycle_layouts = {
+      default = { "diff2_horizontal", "diff1_inline" },
+    },
+  },
 })
