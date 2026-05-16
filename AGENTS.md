@@ -9,10 +9,16 @@
 - Shell：bash、zsh、nushell
 - 其它工具：tmux、starship、tig、Pi 相关共享配置
 
+Pi 相关约定补充：
+- 当前优先使用 `pi-interactive-shell` 统一承载外部 agent 调用与可观察子 agent 能力。
+- 在这个仓库的默认共享配置里，实际可依赖的外部 agent 以 `pi` 和 Cursor 的 `agent` 命令为主。
+
 仓库以“可单独安装、可组合安装”为目标，安装入口主要由 `justfile` 提供。
 
 ## 当前工作方式
 
+- 本仓库当前按 **trunk-based** 方式维护，默认直接在 `main` 上演进；除非用户明确要求，否则不要额外创建 feature branch。
+- 提交应尽量保持聚焦，避免把无关配置改动和当前任务混在一起。
 - 根目录下的 `README.md` 是面向用户的说明文档。
 - `justfile` 是安装与维护入口，常用命令包括：
   - `just install-all`
