@@ -1,28 +1,37 @@
 # planning-files-runtime
 
-A local Pi extension that keeps planning files inside each project at `.pi/planning/` and makes them easier to use across sessions.
+A single Pi extension that owns both:
 
-## What it does
+- baseline planning files workflow under `.pi/planning/`
+- an optional goal overlay that can drive a focused implementation run
 
-- Adds `/plan-new` and `/plan-init` to create fresh planning files via the skill scripts
-- Adds `/plan-status` to show current planning status
-- Adds `/plan-check` to check completion status via the skill script
-- Adds `/plan-attest` to attest or inspect the current plan via the skill script
-- Adds `/plan-catchup` to summarize planning state via the skill script
-- Adds `/plan-autocatchup` to show or toggle automatic catchup on session start
-- Adds `/plan-continue` to ask Pi to resync from the planning files
-- Redirects `task_plan.md`, `findings.md`, and `progress.md` to `.pi/planning/`
-- Injects recent planning context into the agent before it starts
-- Optionally queues an automatic catchup prompt on resumed sessions
-- Shows a small planning status widget in the Pi UI
+## Public commands
+
+- `/plan-new` — initialize or reset `.pi/planning/` and clear any current goal overlay
+- `/plan-goal-set` — create or continue clarifying a goal overlay without resetting planning files
+- `/plan-goal-impl` — start or resume implementing the committed goal using planning files as the execution tracker
 
 ## Managed files
 
-This extension expects and manages these files under the current project:
+Planning files:
 
 - `.pi/planning/task_plan.md`
 - `.pi/planning/findings.md`
 - `.pi/planning/progress.md`
+
+Goal overlay state:
+
+- `.pi/planning/.goal-state.json`
+
+## Runtime behavior
+
+- Redirects `task_plan.md`, `findings.md`, and `progress.md` into `.pi/planning/`
+- Injects planning context before the agent starts
+- Keeps baseline planning usable even when no goal overlay exists
+- Persists partial goal clarification so `/plan-goal-set` can continue from where it left off
+- On the first `/plan-goal-impl` for a committed goal, archives the old planning workspace and initializes a fresh planning run from the goal
+- On later `/plan-goal-impl` runs, resumes from existing planning files instead of resetting them again
+- Uses planning files as the only durable implementation tracker during goal execution
 
 ## Dotfiles integration
 
@@ -31,7 +40,3 @@ This directory is version-controlled in `dotfiles` and linked into:
 - `~/.pi/agent/extensions/planning-files-runtime`
 
 via `just install-pi`.
-
-## Entry file
-
-- `index.ts`
