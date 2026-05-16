@@ -29,6 +29,7 @@ Goal overlay state:
 - Injects planning context before the agent starts
 - Keeps baseline planning usable even when no goal overlay exists
 - Persists partial goal clarification so `/plan-goal-set` can continue from where it left off
+- Keeps `/plan-goal-set` drafting read-only by blocking `write`/`edit` and unsafe mutating shell commands during goal clarification
 - On the first `/plan-goal-impl` for a committed goal, archives the old planning workspace and initializes a fresh planning run from the goal
 - On later `/plan-goal-impl` runs, resumes from existing planning files instead of resetting them again
 - Uses planning files as the only durable implementation tracker during goal execution

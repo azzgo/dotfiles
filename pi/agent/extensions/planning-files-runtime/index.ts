@@ -19,7 +19,7 @@ const GOAL_TOOL_NAMES = [
 	"complete_plan_goal",
 ] as const;
 const CONTINUATION_DELAY_MS = 50;
-const MEANINGFUL_PROGRESS_TOOLS = new Set(["read", "bash", "edit", "write", "grep", "find", "ls"]);
+const MEANINGFUL_PROGRESS_TOOLS = new Set(["bash", "edit", "write", "grep", "find"]);
 
 type PlanningFileName = (typeof PLANNING_FILES)[number];
 type GoalOverlayStatus = "none" | "drafting" | "ready" | "active" | "paused" | "complete";
@@ -245,11 +245,14 @@ function normalizeGoalState(value: unknown): GoalOverlayState {
 	const status = normalizeString(raw.status);
 	const goal = normalizeGoalContract(raw.goal);
 	const implRaw = (raw.impl ?? {}) as Record<string, unknown>;
+	const normalizedStatus = ["none", "drafting", "ready", "active", "paused", "complete"].includes(status)
+		? (status as GoalOverlayStatus)
+		: goal
+			? "ready"
+			: "none";
 	return {
 		version: 1,
-		status: ["none", "drafting", "ready", "active", "paused", "complete"].includes(status)
-			? (status as GoalOverlayStatus)
-			: "none",
+		status: normalizedStatus,
 		updatedAt: normalizeString(raw.updatedAt) || nowIso(),
 		draft: normalizeGoalDraft(raw.draft),
 		goal,
@@ -452,7 +455,15 @@ function archivePlanningWorkspace(cwd: string, options: { includeGoalState: bool
 	const archiveDir = path.join(paths.archiveRoot, `${archiveStamp()}-${options.label}`);
 	ensureDir(archiveDir);
 	for (const target of archiveTargets) {
-		fs.renameSync(target, path.join(archiveDir, path.basename(target)));
+		const destination = path.join(archiveDir, path.basename(target));
+		try {
+			fs.renameSync(target, destination);
+		} catch (error) {
+			const code = typeof error === "object" && error !== null && "code" in error ? String((error as { code?: unknown }).code ?? "") : "";
+			if (code !== "EXDEV") throw error;
+			fs.copyFileSync(target, destination);
+			fs.rmSync(target, { force: true });
+		}
 	}
 	return archiveDir;
 }
@@ -696,10 +707,8 @@ function getRedirectPath(inputPath: string, cwd: string): string | undefined {
 	const target = path.join(getPaths(cwd).root, base);
 	const resolvedTarget = path.resolve(target);
 	const resolvedInput = path.resolve(cwd, normalized);
-	const rootCandidate = path.resolve(cwd, base);
 	if (resolvedInput === resolvedTarget) return undefined;
-	if (normalized === base || resolvedInput === rootCandidate) return target;
-	return undefined;
+	return target;
 }
 
 function redirectPlanningPath(event: { toolName: string; input: Record<string, unknown> }, cwd: string): boolean {
@@ -713,13 +722,19 @@ function redirectPlanningPath(event: { toolName: string; input: Record<string, u
 	return true;
 }
 
+function isUnsafeDraftingBash(command: string): boolean {
+	const trimmed = command.trim();
+	if (!trimmed) return true;
+	const unsafePatterns = [
+		/\b(?:rm|mv|cp|mkdir|rmdir|touch|chmod|chown)\b/,
+		/\b(?:git\s+(?:add|commit|push|pull|merge|rebase|checkout|switch|restore|reset|clean))\b/,
+		/\b(?:npm|pnpm|yarn|bun)\s+(?:install|add|remove|update|upgrade)\b/,
+	];
+	return unsafePatterns.some((pattern) => pattern.test(trimmed));
+}
+
 function isMeaningfulProgressToolCall(toolName: string, input: Record<string, unknown>): boolean {
 	if (!MEANINGFUL_PROGRESS_TOOLS.has(toolName)) return false;
-	if (toolName === "read") {
-		const rawPath = typeof input.path === "string" ? input.path : "";
-		const base = path.basename(rawPath);
-		if (PLANNING_FILES.includes(base as PlanningFileName) || base === GOAL_STATE_FILE) return false;
-	}
 	if (toolName === "bash") {
 		const command = typeof input.command === "string" ? input.command.trim() : "";
 		if (!command || /^echo\b/.test(command)) return false;
@@ -786,30 +801,11 @@ export default function planningFilesRuntime(pi: ExtensionAPI): void {
 
 	function refresh(ctx?: ExtensionContext, resumedFromPreviousSession = state.resumedFromPreviousSession): void {
 		state = getPlanningSnapshot(ctx?.cwd ?? process.cwd(), resumedFromPreviousSession);
-		syncGoalTools();
 		if (!ctx?.hasUI) return;
 		const statusText = formatStatusText(state);
 		ctx.ui.setStatus(STATUS_KEY, statusText ? ctx.ui.theme.fg("accent", statusText) : undefined);
 		const widgetLines = buildWidgetLines(state);
 		ctx.ui.setWidget(WIDGET_KEY, widgetLines, { placement: "aboveEditor" });
-	}
-
-	function syncGoalTools(): void {
-		try {
-			const active = new Set(pi.getActiveTools());
-			for (const toolName of GOAL_TOOL_NAMES) active.delete(toolName);
-			if (state.goalState.status === "drafting") {
-				active.add("save_plan_goal_draft");
-				active.add("commit_plan_goal");
-			}
-			if (state.goalState.status === "active") {
-				active.add("pause_plan_goal");
-				active.add("complete_plan_goal");
-			}
-			pi.setActiveTools(Array.from(active));
-		} catch {
-			// ignore; pi may not be ready to update tools yet
-		}
 	}
 
 	function queueContinuation(ctx: ExtensionContext, force = false): void {
@@ -822,7 +818,6 @@ export default function planningFilesRuntime(pi: ExtensionAPI): void {
 			continuationTimer = null;
 			const latest = getPlanningSnapshot(ctx.cwd, state.resumedFromPreviousSession);
 			state = latest;
-			syncGoalTools();
 			if (latest.goalState.status !== "active" || latest.goalState.impl.runId !== runId || latest.goalState.impl.planningResetRequired) {
 				continuationQueuedFor = null;
 				return;
@@ -1172,7 +1167,8 @@ export default function planningFilesRuntime(pi: ExtensionAPI): void {
 		ctx.ui.notify(label, "info");
 	});
 
-	pi.on("before_agent_start", async () => {
+	pi.on("before_agent_start", async (_event, ctx) => {
+		refresh(ctx, state.resumedFromPreviousSession);
 		const injected = buildInjectedContext(state);
 		if (!injected) return;
 		return {
@@ -1194,6 +1190,18 @@ export default function planningFilesRuntime(pi: ExtensionAPI): void {
 			return { block: true, reason: `${turnStoppedFor} already completed in this turn. Stop and summarize instead of calling more tools.` };
 		}
 		redirectPlanningPath(event as { toolName: string; input: Record<string, unknown> }, ctx.cwd);
+		const latestGoalState = readGoalState(ctx.cwd);
+		if (latestGoalState.status === "drafting") {
+			if (["write", "edit"].includes(event.toolName)) {
+				return { block: true, reason: "Goal drafting is read-only. Do not modify files until the goal is committed and /plan-goal-impl starts execution." };
+			}
+			if (event.toolName === "bash") {
+				const command = typeof event.input.command === "string" ? event.input.command : "";
+				if (isUnsafeDraftingBash(command)) {
+					return { block: true, reason: "Goal drafting only allows read-only reconnaissance commands. Use save_plan_goal_draft / commit_plan_goal instead of mutating the workspace." };
+				}
+			}
+		}
 		if (isMeaningfulProgressToolCall(event.toolName, event.input as Record<string, unknown>)) {
 			goalProgressToolCalledThisTurn = true;
 		}
