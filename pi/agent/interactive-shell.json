@@ -1,0 +1,26 @@
+{
+  "spawn": {
+    "defaultAgent": "pi",
+    "shortcut": "alt+shift+p",
+    "commands": {
+      "pi": "pi",
+      "codex": "codex",
+      "claude": "claude",
+      "cursor": "agent"
+    },
+    "defaultArgs": {
+      "pi": [],
+      "codex": [],
+      "claude": [],
+      "cursor": [
+        "--model",
+        "composer-2-fast"
+      ]
+    },
+    "worktree": false
+  },
+  "handsFreeQuietThreshold": 8000,
+  "handsFreeUpdateInterval": 60000,
+  "autoExitGracePeriod": 15000,
+  "minQueryIntervalSeconds": 60
+}

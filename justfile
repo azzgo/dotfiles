@@ -123,6 +123,7 @@ install-pi:
 
     ln -sf {{ dotfiles_dir }}/pi/agent/settings.json ~/.pi/agent/settings.json
     ln -sf {{ dotfiles_dir }}/pi/agent/keybindings.json ~/.pi/agent/keybindings.json
+    ln -sf {{ dotfiles_dir }}/pi/agent/interactive-shell.json ~/.pi/agent/interactive-shell.json
     ln -sf {{ dotfiles_dir }}/pi/mcp.json ~/.pi/agent/mcp.json
 
     rm -rf ~/.pi/agent/extensions/planning-files-runtime

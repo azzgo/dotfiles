@@ -6,6 +6,7 @@
 
 - `pi/agent/settings.json`
 - `pi/agent/keybindings.json`
+- `pi/agent/interactive-shell.json`
 - `pi/mcp.json`
 - `pi/agent/extensions/planning-files-runtime/`
 
@@ -38,9 +39,15 @@
 
 执行 `just install-pi` 时会把仓库中的扩展目录 link 到本机 Pi 扩展目录。
 
-### 4. planning-files-runtime 已内聚实现 planning + goal overlay
+### 4. pi-interactive-shell 默认配置已纳入 dotfiles
 
-当前只保留一个 Pi 扩展：`planning-files-runtime`。
+`~/.pi/agent/interactive-shell.json` 现在由 dotfiles 管理。
+
+当前共享默认配置以 `pi` 为默认 agent，并保留 Cursor CLI 的 `agent` 命令映射，便于通过 `pi-interactive-shell` 统一做外部 agent / 可观察子 agent 调度。
+
+### 5. planning-files-runtime 已内聚实现 planning + goal overlay
+
+当前业务侧只保留一个本地维护的 Pi 扩展：`planning-files-runtime`。
 
 它现在同时负责：
 
@@ -50,3 +57,5 @@
 - `plan-new` / `plan-goal-set` / `plan-goal-impl` 三个命令
 
 `planning-with-files` skill 与 `plan-mode` 已移除，不再单独管理。
+
+另外，当前共享 `settings.json` 里也已移除 `pi-subagents` 与 `pi-intercom`，统一优先走 `pi-interactive-shell` 提供的外部 agent / 子 agent 能力。
