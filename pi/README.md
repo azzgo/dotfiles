@@ -8,8 +8,6 @@
 - `pi/agent/keybindings.json`
 - `pi/mcp.json`
 - `pi/agent/extensions/planning-files-runtime/`
-- `pi/agent/extensions/plan-mode/`
-- `pi/agent/skills/`
 
 ## 保持本地，不入库
 
@@ -40,28 +38,15 @@
 
 执行 `just install-pi` 时会把仓库中的扩展目录 link 到本机 Pi 扩展目录。
 
-### 4. plan-mode 扩展已迁移
+### 4. planning-files-runtime 已内聚实现 planning + goal overlay
 
-`~/.pi/agent/extensions/plan-mode/` 已纳入 dotfiles。
+当前只保留一个 Pi 扩展：`planning-files-runtime`。
 
-执行 `just install-pi` 时会把仓库中的扩展目录 link 到本机 Pi 扩展目录。
+它现在同时负责：
 
-### 5. Pi global skills 已纳入统一管理
+- baseline planning files workflow
+- goal overlay 的设定与恢复
+- `task_plan.md` / `findings.md` / `progress.md` 的路径重定向
+- `plan-new` / `plan-goal-set` / `plan-goal-impl` 三个命令
 
-`~/.pi/agent/skills/` 现在整体由 dotfiles 管理，并 link 到仓库中的：
-
-- `pi/agent/skills/`
-
-这意味着放进这个目录的 global Pi skills 都会被统一纳入管理和自动发现，不需要在 `settings.json` 里逐个列出。
-
-其中 `planning-with-files` 自带 templates 和 scripts；`planning-files-runtime` extension 负责通过 Pi commands 调用它们。
-
-它现在位于：
-
-- `~/.pi/agent/skills/planning-with-files/`
-
-对应仓库目录：
-
-- `pi/agent/skills/planning-with-files/`
-
-执行 `just install-pi` 时会直接 link 整个 global Pi skills 目录：`~/.pi/agent/skills/ -> pi/agent/skills/`。
+`planning-with-files` skill 与 `plan-mode` 已移除，不再单独管理。
