@@ -1,11 +1,29 @@
 {
-  "defaultProvider": "openrouter",
-  "defaultModel": "z-ai/glm-5-turbo",
+  "defaultProvider": "github-copilot",
+  "defaultModel": "gpt-5.4",
   "defaultThinkingLevel": "high",
   "packages": [
     "npm:pi-web-access",
+    {
+      "source": "npm:pi-subagents",
+      "extensions": [
+        "+index.ts"
+      ],
+      "skills": [
+        "+skills/pi-subagents/SKILL.md"
+      ],
+      "prompts": [
+        "-prompts/parallel-research.md",
+        "+prompts/gather-context-and-clarify.md",
+        "-prompts/parallel-context-build.md",
+        "+prompts/parallel-handoff-plan.md",
+        "+prompts/parallel-review.md",
+        "+prompts/parallel-cleanup.md"
+      ]
+    },
     "npm:pi-mcp-adapter",
     "git:github.com/azzgo/pi-extensions",
+    "npm:pi-intercom",
     "npm:pi-interactive-shell"
   ],
   "enabledModels": [
