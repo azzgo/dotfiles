@@ -129,6 +129,9 @@ install-pi:
     rm -rf ~/.pi/agent/extensions/planning-files-runtime
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/planning-files-runtime ~/.pi/agent/extensions/planning-files-runtime
 
+    rm -rf ~/.pi/agent/prompts
+    ln -s {{ dotfiles_dir }}/pi/agent/prompts ~/.pi/agent/prompts
+
     echo "⚠️  Keep local only: ~/.pi/agent/models.json ~/.pi/agent/auth.json"
     echo "✅ Pi shared configuration linked"
 

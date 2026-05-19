@@ -197,7 +197,8 @@ Terminal multiplexer configuration with:
 
 #### Pi
 Shared Pi setup with:
-- Version-controlled `settings.json`, `keybindings.json`, `interactive-shell.json`, `mcp.json`, and `planning-files-runtime`
+- Version-controlled `settings.json`, `keybindings.json`, `interactive-shell.json`, `mcp.json`, `prompts/`, and `planning-files-runtime`
+- `pi/agent/prompts/` is linked to Pi's global prompt templates directory: `~/.pi/agent/prompts/`
 - `models.json` and `auth.json` remain local on each machine
 - Only cross-device-safe Pi config is linked by dotfiles
 
@@ -242,7 +243,7 @@ The installation scripts create symbolic links to configuration files in this re
 - **IDEAVim**: Links `.ideavimrc` to home directory
 - **Terminals**: Links config directories to `~/.config/`
 - **Shells**: Sources shell configs in respective rc files, links tmux and starship configs
-- **Pi**: Links shared Pi config into `~/.pi/agent/`, including `planning-files-runtime` and `interactive-shell.json`, while `models.json` and `auth.json` stay local per machine
+- **Pi**: Links shared Pi config into `~/.pi/agent/`, including `planning-files-runtime`, `interactive-shell.json`, and global prompt templates under `~/.pi/agent/prompts/`, while `models.json` and `auth.json` stay local per machine
 
 ## Customization
 
