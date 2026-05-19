@@ -1,6 +1,6 @@
 {
-  "defaultProvider": "github-copilot",
-  "defaultModel": "gpt-5.4",
+  "defaultProvider": "deepseek",
+  "defaultModel": "deepseek-v4-flash",
   "defaultThinkingLevel": "high",
   "packages": [
     "npm:pi-web-access",
@@ -16,9 +16,6 @@
     "openrouter/deepseek/deepseek-v4-pro",
     "deepseek/deepseek-v4-flash",
     "deepseek/deepseek-v4-pro",
-    "codexcn/gpt-5.5",
-    "codexcn/gpt-5.3-codex",
-    "codexcn/gpt-5.4",
     "github-copilot/gpt-5.5",
     "github-copilot/gpt-5.3-codex",
     "github-copilot/gpt-5.4",
@@ -26,7 +23,6 @@
   ],
   "lastChangelogVersion": "0.74.0",
   "extensions": [
-    "-extensions/sandbox/index.ts",
     "+extensions/planning-files-runtime/index.ts"
   ]
 }
