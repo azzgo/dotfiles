@@ -4,17 +4,13 @@
     "shortcut": "alt+shift+p",
     "commands": {
       "pi": "pi",
-      "codex": "codex",
-      "claude": "claude",
       "cursor": "agent"
     },
     "defaultArgs": {
       "pi": [],
-      "codex": [],
-      "claude": [],
       "cursor": [
         "--model",
-        "composer-2-fast"
+        "composer-2"
       ]
     },
     "worktree": false
