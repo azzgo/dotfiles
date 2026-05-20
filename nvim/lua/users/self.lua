@@ -18,6 +18,7 @@ local MENU_LABEL_ENUM = {
     COPY_BUFFER_RELATIVE_PATH = '[Yank] - RelativePath',
     COPY_BUFFER_ABSOLUTE_PATH = '[Yank] - AbsolutePath',
     COPY_BUFFER_FILE_NAME = '[Yank] - Filename',
+    COPY_BUFFER_FILE_NAME_WITH_LINE = '[Yank] - Filename :Line',
     TO_CAMEL = 'To CamelCase',
     TO_KABAB = 'To kabab-case',
     TO_SNACK = 'To snack_case',
@@ -97,6 +98,18 @@ local MENU = {
         local bufPath = vim.fn.expand('%:p')
         utils.copy_to_clipboard(bufPath)
     end,
+    [MENU_LABEL_ENUM.COPY_BUFFER_FILE_NAME_WITH_LINE] = function()
+        local bufPath = vim.fn.expand('%f')
+        local fileName = vim.fn.fnamemodify(bufPath, ':t')
+        local startLine = vim.fn.line("'<")
+        local endLine = vim.fn.line("'>")
+        local curLine = vim.fn.line('.')
+        if startLine > 0 and endLine > 0 and startLine ~= endLine then
+            utils.copy_to_clipboard(fileName .. ' :L' .. startLine .. '-' .. endLine)
+        else
+            utils.copy_to_clipboard(fileName .. ' :L' .. curLine)
+        end
+    end,
     [MENU_LABEL_ENUM.TO_CAMEL] = function()
         local text, set_text = utils.get_selected_text()
         local camel_case = utils.to_camel_case(text)
@@ -147,6 +160,7 @@ local function self_use_case_popup()
     local menu = {
         MENU_LABEL_ENUM.QUIT_ALL,
         MENU_LABEL_ENUM.COPY_BUFFER_FILE_NAME,
+        MENU_LABEL_ENUM.COPY_BUFFER_FILE_NAME_WITH_LINE,
         MENU_LABEL_ENUM.COPY_BUFFER_RELATIVE_PATH,
         MENU_LABEL_ENUM.COPY_BUFFER_ABSOLUTE_PATH,
         MENU_LABEL_ENUM.OPEN_QUICKFIX,

@@ -1,6 +1,6 @@
 {
-  "defaultProvider": "minimax-cn",
-  "defaultModel": "MiniMax-M2.7",
+  "defaultProvider": "deepseek",
+  "defaultModel": "deepseek-v4-pro",
   "defaultThinkingLevel": "high",
   "packages": [
     "npm:pi-web-access",
