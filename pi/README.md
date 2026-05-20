@@ -8,6 +8,7 @@
 - `pi/agent/keybindings.json`
 - `pi/agent/interactive-shell.json`
 - `pi/agent/prompts/`
+- `pi/agent/skills/`
 - `pi/mcp.json`
 - `pi/agent/extensions/planning-files-runtime/`
 
@@ -46,7 +47,16 @@
 
 当前共享默认配置以 `pi` 为默认 agent，并保留 Cursor CLI 的 `agent` 命令映射，便于通过 `pi-interactive-shell` 统一做外部 agent / 可观察子 agent 调度。
 
-### 5. prompt templates 已纳入 dotfiles
+### 5. skills 已纳入 dotfiles
+
+`pi/agent/skills/` 会通过 `just install-pi` link 到 `~/.pi/agent/skills/`。
+
+当前维护的 skills：
+- `improve-codebase-architecture` — 代码库架构改进
+- `pixso-implement-design` — Pixso 设计稿实现
+- `skill-creator` — Skill 创建工具
+
+### 6. prompt templates 已纳入 dotfiles
 
 `pi/agent/prompts/` 会通过 `just install-pi` link 到全局 Pi prompt templates 目录：
 
@@ -54,7 +64,7 @@
 
 这样仓库里的 prompts（例如 `grill-me.md`）可以直接作为全局 `/prompt-name` 使用。
 
-### 6. planning-files-runtime 已内聚实现 planning + goal overlay
+### 7. planning-files-runtime 已内聚实现 planning + goal overlay
 
 当前业务侧只保留一个本地维护的 Pi 扩展：`planning-files-runtime`。
 

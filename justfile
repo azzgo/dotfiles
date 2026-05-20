@@ -132,6 +132,9 @@ install-pi:
     rm -rf ~/.pi/agent/prompts
     ln -s {{ dotfiles_dir }}/pi/agent/prompts ~/.pi/agent/prompts
 
+    rm -rf ~/.pi/agent/skills
+    ln -s {{ dotfiles_dir }}/pi/agent/skills ~/.pi/agent/skills
+
     echo "⚠️  Keep local only: ~/.pi/agent/models.json ~/.pi/agent/auth.json"
     echo "✅ Pi shared configuration linked"
 
