@@ -1,43 +1,44 @@
 # planning-files-runtime
 
-A single Pi extension that owns both:
+A single Pi extension that owns:
 
 - baseline planning files workflow under `.pi/planning/`
-- an optional goal overlay that can drive a focused implementation run
+- an optional goal overlay that drives focused implementation runs
+- goal design blueprint (`goal-design.md`) with staged drafting (4 stages)
 
 ## Public commands
 
-- `/plan-new` — initialize or reset `.pi/planning/` and clear any current goal overlay
-- `/plan-goal-set` — create or continue clarifying a goal overlay without resetting planning files
-- `/plan-goal-impl` — start or resume implementing the committed goal using planning files as the execution tracker
+- `/plan-new` — reset `.pi/planning/` including goal-design.md + tasks/, clear goal overlay
+- `/plan-goal-set` — 4-stage goal drafting (as-is → design → story → task), outputs to goal-design.md
+- `/plan-goal-impl` — execute committed goal using Task Plan from goal-design.md as blueprint
 
 ## Managed files
 
-Planning files:
+Session tracking (per-run):
 
 - `.pi/planning/task_plan.md`
 - `.pi/planning/findings.md`
 - `.pi/planning/progress.md`
 
+Goal epic blueprint (cross-run):
+
+- `.pi/planning/goal-design.md` — Design, Story Breakdown, Task Plan index
+- `.pi/planning/tasks/task-NN.md` — individual Task cards with deps + TDD
+
 Goal overlay state:
 
-- `.pi/planning/.goal-state.json`
+- `.pi/planning/.goal-state.json` — includes `draftingStage` field for 4-stage tracking
 
 ## Runtime behavior
 
-- Redirects `task_plan.md`, `findings.md`, and `progress.md` into `.pi/planning/`
-- Injects planning context before the agent starts
-- Keeps baseline planning usable even when no goal overlay exists
-- Persists partial goal clarification so `/plan-goal-set` can continue from where it left off
-- Keeps `/plan-goal-set` drafting read-only by blocking `write`/`edit` and unsafe mutating shell commands during goal clarification
-- On the first `/plan-goal-impl` for a committed goal, archives the old planning workspace and initializes a fresh planning run from the goal
-- On later `/plan-goal-impl` runs, resumes from existing planning files instead of resetting them again
-- Uses planning files as the only durable implementation tracker during goal execution
+- Redirects `task_plan.md`, `findings.md`, `progress.md`, `goal-design.md` into `.pi/planning/`
+- Injects planning context + Task index before agent starts
+- Drafting stages auto-advance; agent asks user only when key info missing
+- Drafting: `write` blocked outside `.pi/planning/`; `edit` allowed inside; `bash` read-only
+- `commit_plan_goal` validates `goal-design.md` exists and non-empty
+- `goal-design.md` + `tasks/` persist across runs; only archived on `/plan-new`
+- Execution follows Task hard/soft deps + TDD (red → green → refactor, 1 commit per Task)
 
 ## Dotfiles integration
 
-This directory is version-controlled in `dotfiles` and linked into:
-
-- `~/.pi/agent/extensions/planning-files-runtime`
-
-via `just install-pi`.
+Version-controlled in `dotfiles`, linked into `~/.pi/agent/extensions/planning-files-runtime` via `just install-pi`.
