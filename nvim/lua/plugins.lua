@@ -208,10 +208,9 @@ return require("lazy").setup({
     -- { "pangloss/vim-javascript" },
 
     {
-      'nvim-treesitter/nvim-treesitter',
-      branch = 'main',
+      'romus204/tree-sitter-manager.nvim',
       config = function()
-        require'nvim-treesitter'.install { 'c', 'lua', 'javascript', 'typescript', 'vue', 'vim', 'vimdoc', 'query' }
+        require('tree-sitter-manager').setup({})
       end
     },
     {
