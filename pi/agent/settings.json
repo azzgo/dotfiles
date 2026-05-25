@@ -20,7 +20,7 @@
     "opencode-go/deepseek-v4-flash",
     "opencode-go/qwen3.6-plus"
   ],
-  "lastChangelogVersion": "0.74.0",
+  "lastChangelogVersion": "0.74.2",
   "extensions": [
     "+extensions/planning-files-runtime/index.ts"
   ]
