@@ -1,5 +1,5 @@
 {
-  "defaultProvider": "opencode-go",
+  "defaultProvider": "deepseek",
   "defaultModel": "deepseek-v4-pro",
   "defaultThinkingLevel": "high",
   "packages": [
@@ -11,14 +11,7 @@
   "enabledModels": [
     "minimax-cn/MiniMax-M2.7",
     "deepseek/deepseek-v4-flash",
-    "deepseek/deepseek-v4-pro",
-    "github-copilot/gpt-5.5",
-    "github-copilot/gpt-5.3-codex",
-    "github-copilot/gpt-5.4",
-    "github-copilot/gpt-5.4-mini",
-    "opencode-go/deepseek-v4-pro",
-    "opencode-go/deepseek-v4-flash",
-    "opencode-go/qwen3.6-plus"
+    "deepseek/deepseek-v4-pro"
   ],
   "lastChangelogVersion": "0.74.2",
   "extensions": [
