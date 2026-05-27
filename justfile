@@ -121,7 +121,12 @@ install-pi:
 
     mkdir -p ~/.pi ~/.pi/agent ~/.pi/agent/extensions
 
-    ln -sf {{ dotfiles_dir }}/pi/agent/settings.json ~/.pi/agent/settings.json
+    if [ ! -f ~/.pi/agent/settings.json ]; then
+        cp {{ dotfiles_dir }}/pi/agent/settings.json ~/.pi/agent/settings.json
+        echo "  📋 Created local copy of settings.json (you can edit it freely)"
+    else
+        echo "  ⏭️  settings.json already exists, skipping (preserve local copy)"
+    fi
     ln -sf {{ dotfiles_dir }}/pi/agent/keybindings.json ~/.pi/agent/keybindings.json
     ln -sf {{ dotfiles_dir }}/pi/agent/interactive-shell.json ~/.pi/agent/interactive-shell.json
     ln -sf {{ dotfiles_dir }}/pi/mcp.json ~/.pi/agent/mcp.json
@@ -135,7 +140,7 @@ install-pi:
     rm -rf ~/.pi/agent/skills
     ln -s {{ dotfiles_dir }}/pi/agent/skills ~/.pi/agent/skills
 
-    echo "⚠️  Keep local only: ~/.pi/agent/models.json ~/.pi/agent/auth.json"
+    echo "⚠️  Keep local only: ~/.pi/agent/models.json ~/.pi/agent/auth.json ~/.pi/agent/settings.json"
     echo "✅ Pi shared configuration linked"
 
 # Install shell configurations (bash, zsh, tmux, starship)
