@@ -255,11 +255,13 @@ return require("lazy").setup({
     --- tabby
     { "nanozuki/tabby.nvim", config = function() require('users.tabby') end },
 
-    -- undotree
+    -- undo-atone
     {
-      "mbbill/undotree",
+      "XXiaoA/atone.nvim",
+      cmd = "Atone",
       config = function()
-        vim.keymap.set('n', '<leader>u', vim.cmd.UndotreeToggle, {})
+        require("atone").setup()
+        vim.keymap.set('n', '<leader>u', vim.cmd.Atone, {})
       end,
       event = 'VeryLazy'
     },
