@@ -140,3 +140,13 @@ if [[ -x $(command -v lf) ]];then
     cd "$(command lf -print-last-dir "$@")"
   }
 fi
+
+function dotbin() {
+  if [[ $# -lt 1 ]]; then
+    echo "Usage: dotbin <command> [args...]" >&2
+    return 1
+  fi
+  local cmd=".local/bin/$1"
+  shift
+  "$cmd" "$@"
+}
