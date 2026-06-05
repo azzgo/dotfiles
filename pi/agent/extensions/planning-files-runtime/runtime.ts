@@ -2,13 +2,11 @@ import { Type } from "@earendil-works/pi-ai";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
 import {
-	CUSTOM_TYPE,
 	CONTINUATION_DELAY_MS,
 	GOAL_TOOL_NAMES,
 	MESSAGE_TYPE_CONTINUATION,
 	MESSAGE_TYPE_GOAL_IMPL,
 	MESSAGE_TYPE_GOAL_SET,
-	STATUS_KEY,
 	WIDGET_KEY,
 } from "./types";
 import type {
@@ -25,8 +23,8 @@ import { ensureDir, fileExists, getPaths, normalizeString, normalizeStringArray,
 import { defaultGoalDraft, defaultGoalState, readGoalState, writeGoalState } from "./state";
 import { archivePlanningWorkspace, createGoalDesignSkeleton, hasPlanningFiles, initializePlanningWorkspace } from "./workspace";
 import { appendProgressTimeline } from "./markdown";
-import { buildGoalImplPrompt, buildGoalSetPrompt, buildInjectedContext, getPlanningSnapshot } from "./prompts";
-import { buildWidgetLines, formatStatusText } from "./ui";
+import { buildGoalImplPrompt, buildGoalSetPrompt, getPlanningSnapshot } from "./prompts";
+import { buildWidgetLines } from "./ui";
 import { isInPlanningDir, isMeaningfulProgressToolCall, isUnsafeDraftingBash, redirectPlanningPath } from "./guards";
 import { mergeDraft, setGoalStatus } from "./draft";
 
@@ -77,8 +75,6 @@ export default function planningFilesRuntime(pi: ExtensionAPI): void {
 	function refresh(ctx?: ExtensionContext, resumedFromPreviousSession = state.resumedFromPreviousSession): void {
 		state = getPlanningSnapshot(ctx?.cwd ?? process.cwd(), resumedFromPreviousSession);
 		if (!ctx?.hasUI) return;
-		const statusText = formatStatusText(state);
-		ctx.ui.setStatus(STATUS_KEY, statusText ? ctx.ui.theme.fg("accent", statusText) : undefined);
 		const widgetLines = buildWidgetLines(state);
 		ctx.ui.setWidget(WIDGET_KEY, widgetLines, { placement: "aboveEditor" });
 	}
@@ -438,15 +434,6 @@ export default function planningFilesRuntime(pi: ExtensionAPI): void {
 
 	pi.on("before_agent_start", async (_event, ctx) => {
 		refresh(ctx, state.resumedFromPreviousSession);
-		const injected = buildInjectedContext(state);
-		if (!injected) return;
-		return {
-			message: {
-				customType: CUSTOM_TYPE,
-				content: injected,
-				display: false,
-			},
-		};
 	});
 
 	pi.on("turn_start", async () => {
