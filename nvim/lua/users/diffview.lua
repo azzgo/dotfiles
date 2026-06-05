@@ -16,12 +16,14 @@ vim.keymap.set('n', '<leader>gc', function()
 end, {})
 
 
+local actions = require("diffview.actions")
+
 require("diffview").setup({
   hooks = {
-    view_enter = function(view)
+    view_enter = function()
       vim.cmd.CocDisable()
     end,
-    view_leave = function(view)
+    view_leave = function()
       vim.schedule(function()
         vim.cmd.CocEnable()
       end)
@@ -33,6 +35,17 @@ require("diffview").setup({
     },
     cycle_layouts = {
       default = { "diff2_horizontal", "diff1_inline" },
+    },
+  },
+  keymaps = {
+    view = {
+      { "n", "gf", actions.goto_file_edit_close, { desc = "Open the file and close" } },
+    },
+    file_panel = {
+      { "n", "gf", actions.goto_file_edit_close, { desc = "Open the file and close" } },
+    },
+    file_history_panel = {
+      { "n", "gf", actions.goto_file_edit_close, { desc = "Open the file and close" } },
     },
   },
 })
