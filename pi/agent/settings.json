@@ -13,8 +13,9 @@
     "deepseek/deepseek-v4-flash",
     "deepseek/deepseek-v4-pro"
   ],
-  "lastChangelogVersion": "0.74.2",
+  "lastChangelogVersion": "0.78.1",
   "extensions": [
-    "+extensions/planning-files-runtime/index.ts"
+    "+extensions/planning-files-runtime/index.ts",
+    "+extensions/agent-timer/index.ts"
   ]
 }
