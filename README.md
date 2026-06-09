@@ -7,7 +7,7 @@ A comprehensive collection of configurations for editors, terminals, shells, and
 This repository contains configurations for:
 
 - **Editors**: Neovim, Vim, Emacs, IDEAVim
-- **Terminals**: Alacritty, Kitty, Ghostty  
+- **Terminals**: Alacritty, Kitty, Ghostty
 - **Shells**: bash, zsh, nushell
 - **Development Tools**: starship prompt, tmux, tig git interface, and more
 - **AI Tooling**: Pi shared configuration (non-sensitive parts only)
@@ -40,7 +40,7 @@ just install-all
 
 # Or install specific components
 just install-neovim    # Neovim configuration
-just install-vim       # Vim configuration  
+just install-vim       # Vim configuration
 just install-emacs     # Emacs configuration
 just install-ideavim   # IDEAVim configuration
 just install-terminals # Terminal configurations
@@ -72,7 +72,7 @@ The Neovim configuration includes an AI Prompt Picker for managing reusable AI p
    ```bash
    # Bash/Zsh (add to ~/.bashrc or ~/.zshrc)
    export AI_PROMPTS_DIR="$HOME/my-prompts"
-   
+
    # Nushell (add to config.nu)
    $env.AI_PROMPTS_DIR = "~/my-prompts"
    ```
@@ -133,7 +133,7 @@ Vim emulation for JetBrains IDEs with:
 - Essential Vim bindings and motions
 - IDE integration optimizations
 
-**Requirements**: Install IdeaVim plugin from JetBrains Plugin Store  
+**Requirements**: Install IdeaVim plugin from JetBrains Plugin Store
 **Installation**: `just install-ideavim`
 
 ### Terminals
@@ -166,7 +166,7 @@ Enhanced bash configuration with:
 - Navigation shortcuts and productivity helpers
 - Color scheme integration
 
-#### Zsh  
+#### Zsh
 Advanced zsh setup featuring:
 - Shared aliases with bash for consistency
 - Enhanced completion and history
@@ -197,12 +197,13 @@ Terminal multiplexer configuration with:
 
 #### Pi
 Shared Pi setup with:
-- Version-controlled `settings.json`, `keybindings.json`, `interactive-shell.json`, `mcp.json`, `prompts/`, and `planning-files-runtime`
+- Version-controlled `settings.json`, `keybindings.json`, `interactive-shell.json`, `mcp.json`, `prompts/`, `skills/`, `extensions/`
+- `pi/agent/APPEND_SYSTEM.md` — appended to pi's system prompt globally, instructing the agent to use `interactive_shell` for blocking commands
 - `pi/agent/prompts/` is linked to Pi's global prompt templates directory: `~/.pi/agent/prompts/`
 - `models.json` and `auth.json` remain local on each machine
 - Only cross-device-safe Pi config is linked by dotfiles
 
-**Installation**: `just install-pi`
+**Installation**: `just install-pi` or `just link`
 
 #### Tig
 Interactive git interface featuring:
@@ -224,6 +225,7 @@ Interactive git interface featuring:
 | `just install-terminals` | Install all terminal configurations |
 | `just install-shell` | Install shell, tmux, and starship configurations |
 | `just install-pi` | Link shared Pi configuration files |
+| `just link` | Alias for `install-pi` |
 | `just nvim-health` | Check Neovim health and dependencies |
 | `just nvim-update` | Update Neovim plugins |
 | `just nvim-leaderf` | Install LeaderF C extension |
@@ -238,7 +240,7 @@ The installation scripts create symbolic links to configuration files in this re
 ### What Gets Installed
 
 - **Neovim**: Sources `nvim/init.vim` in `~/.config/nvim/init.vim`
-- **Vim**: Sources `vim/vimrc` in `~/.vimrc`  
+- **Vim**: Sources `vim/vimrc` in `~/.vimrc`
 - **Emacs**: Links configuration files to `~/.emacs.d/`
 - **IDEAVim**: Links `.ideavimrc` to home directory
 - **Terminals**: Links config directories to `~/.config/`
@@ -250,7 +252,7 @@ The installation scripts create symbolic links to configuration files in this re
 All configurations are designed to be modular and customizable:
 
 - **Local overrides**: Most configurations support local customization files
-- **Modular structure**: Individual components can be used independently  
+- **Modular structure**: Individual components can be used independently
 - **Theme consistency**: Coordinated color schemes across tools where supported
 
 ## Troubleshooting
