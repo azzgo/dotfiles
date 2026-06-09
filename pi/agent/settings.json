@@ -5,7 +5,6 @@
   "packages": [
     "npm:pi-web-access",
     "npm:pi-mcp-adapter",
-    "git:github.com/azzgo/pi-extensions",
     "npm:pi-interactive-shell"
   ],
   "enabledModels": [
