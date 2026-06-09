@@ -135,6 +135,8 @@ install-pi:
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/planning-files-runtime ~/.pi/agent/extensions/planning-files-runtime
     rm -rf ~/.pi/agent/extensions/agent-timer
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/agent-timer ~/.pi/agent/extensions/agent-timer
+    rm -rf ~/.pi/agent/extensions/readonly-mode
+    ln -s {{ dotfiles_dir }}/pi/agent/extensions/readonly-mode ~/.pi/agent/extensions/readonly-mode
 
     rm -rf ~/.pi/agent/prompts
     ln -s {{ dotfiles_dir }}/pi/agent/prompts ~/.pi/agent/prompts
