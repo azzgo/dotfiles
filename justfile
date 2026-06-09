@@ -129,6 +129,7 @@ install-pi:
     fi
     ln -sf {{ dotfiles_dir }}/pi/agent/keybindings.json ~/.pi/agent/keybindings.json
     ln -sf {{ dotfiles_dir }}/pi/agent/interactive-shell.json ~/.pi/agent/interactive-shell.json
+    ln -sf {{ dotfiles_dir }}/pi/agent/APPEND_SYSTEM.md ~/.pi/agent/APPEND_SYSTEM.md
     ln -sf {{ dotfiles_dir }}/pi/mcp.json ~/.pi/agent/mcp.json
 
     rm -rf ~/.pi/agent/extensions/planning-files-runtime
@@ -167,6 +168,9 @@ install-shell:
     mkdir -p ~/.config
     ln -sf {{ dotfiles_dir }}/starship.toml ~/.config/starship.toml
     echo "✅ Shell configurations installed"
+
+# Alias for install-pi (link Pi shared config)
+link: install-pi
 
 # Install all configurations
 install-all: install-neovim install-vim install-shell install-terminals
