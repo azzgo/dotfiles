@@ -30,12 +30,9 @@ function M.copy_to_clipboard(text)
 end
 
 function M.preserve_mode_for_selection()
-  if vim.fn.mode() == "v" or vim.fn.mode() == "V" then
-    isVisual = true
-  end
-
+  local was_visual = vim.fn.mode() == "v" or vim.fn.mode() == "V"
   return function()
-    if isVisual then
+    if was_visual then
       vim.cmd('normal! gv')
     end
   end
@@ -209,6 +206,56 @@ function M.hide_all_floats_in_current_tab()
       end
     end
   end
+end
+
+--- Pi naming convention
+M.PI_PREFIX = "Pi"
+M.PI_COMMAND = "pi"
+
+--- Check if a terminal is a Pi terminal
+---@param term table toggleterm terminal object
+---@return boolean
+function M.is_pi_terminal(term)
+  if not term or not term.display_name then
+    return false
+  end
+  return term.display_name:sub(1, #M.PI_PREFIX) == M.PI_PREFIX
+end
+
+--- Make a Pi display name with optional suffix
+---@param name string|nil suffix (e.g., "2" -> "Pi-2"). nil or "" returns just "Pi"
+---@return string
+function M.make_pi_name(name)
+  if name and name ~= "" then
+    return M.PI_PREFIX .. "-" .. name
+  end
+  return M.PI_PREFIX
+end
+
+--- Find the next available Pi terminal name
+--- Scans existing Pi terminals and returns the next sequential name
+---@return string
+function M.next_pi_name()
+  local terms = require("toggleterm.terminal").get_all(true)
+  local max_num = 0
+  for _, term in ipairs(terms) do
+    if M.is_pi_terminal(term) then
+      local name = term.display_name
+      if name == M.PI_PREFIX then
+        max_num = math.max(max_num, 1)
+      else
+        local suffix = name:sub(#M.PI_PREFIX + 2) -- after "Pi-"
+        local num = tonumber(suffix)
+        if num then
+          max_num = math.max(max_num, num)
+        end
+      end
+    end
+  end
+  if max_num == 0 then
+    return M.PI_PREFIX
+  end
+  return M.make_pi_name(tostring(max_num + 1))
 end
 
 return M
