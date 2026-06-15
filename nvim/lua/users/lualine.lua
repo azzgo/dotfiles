@@ -6,17 +6,20 @@ if not ok then
 end
 
 local function ai_statusline()
-  local ok_status, status = pcall(require, "sidekick.status")
-  if not ok_status then
+  local utils = require('users.lib.utils')
+  local ok_term, terms = pcall(require, "toggleterm.terminal")
+  if not ok_term then
     return ""
   end
-  local cli = status.cli()
-  if #cli > 0 then
-    return " " .. (#cli > 1 and #cli or "")
+  local all = terms.get_all(true)
+  local pi_count = 0
+  for _, term in ipairs(all) do
+    if utils.is_pi_terminal(term) then
+      pi_count = pi_count + 1
+    end
   end
-  local copilot = status.get()
-  if copilot then
-    return " "
+  if pi_count > 0 then
+    return " " .. (pi_count > 1 and pi_count or "")
   end
   return ""
 end

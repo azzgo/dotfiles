@@ -78,10 +78,12 @@ local function show_terminal_list()
 
   local items = {}
   for _, term in ipairs(terminals) do
-    table.insert(items, {
-      label = (term.display_name or ("Terminal " .. term.count)),
-      value = term,
-    })
+    if not utils.is_pi_terminal(term) then
+      table.insert(items, {
+        label = (term.display_name or ("Terminal " .. term.count)),
+        value = term,
+      })
+    end
   end
 
   Snacks.picker.pick({
@@ -210,6 +212,12 @@ local function rename_current_terminal()
     if new_name and new_name:match("^%s*(.-)%s*$") ~= "" then
       -- Step 3a: User confirmed - apply new name and restore terminal
       new_name = new_name:match("^%s*(.-)%s*$") -- trim whitespace
+      -- Ensure Pi terminals keep the Pi prefix
+      if utils.is_pi_terminal(current_term) then
+        if new_name:sub(1, #utils.PI_PREFIX) ~= utils.PI_PREFIX then
+          new_name = utils.PI_PREFIX .. "-" .. new_name
+        end
+      end
       vim.cmd(current_term.count .. "ToggleTermSetName " .. vim.fn.shellescape(new_name))
       current_term:toggle()                     -- restore terminal
       vim.notify("Terminal renamed to: " .. new_name, vim.log.levels.INFO)

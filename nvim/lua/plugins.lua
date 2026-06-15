@@ -127,13 +127,13 @@ return require("lazy").setup({
         require('users.ai_prompts')
       end
     },
+
     {
-      "folke/sidekick.nvim",
-      dependencies = {
-        { "folke/snacks.nvim", opts = { input = {}, picker = {}, terminal = {} } },
-      },
+      dir = vim.g.dot_config_path .. "/nvim/lua/users",
+      name = "pi-agent",
+      lazy = false,
       config = function()
-        require('users.sidekick')
+        require('users.pi_agent')
       end
     },
 
