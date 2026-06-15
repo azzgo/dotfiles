@@ -93,8 +93,8 @@ const WIDGET_KEY = "agent-timer-widget";
 
 export function setupAgentTimer(pi: ExtensionAPI): void {
   let durationTimer: ReturnType<typeof setInterval> | null = null;
-  let accumulatedMs = 0;
-  let currentTurnStart = 0;
+  let sessionStartTime = 0;
+  let isActive = false;
   let sessionId = "";
   let tuiRef: { requestRender: () => void } | null = null;
   let ctxRef: ExtensionCommandContext | null = null;
@@ -104,23 +104,24 @@ export function setupAgentTimer(pi: ExtensionAPI): void {
   };
 
   /**
-   * Total active agent time. When a turn is running, includes both
-   * previously accumulated turns AND the current turn's elapsed time.
+   * Total elapsed time from session start to now.
    *
-   * This is the key fix for the dispatch-reset bug: even when a new
-   * turn starts (e.g. triggered by interactive_shell completion),
-   * the accumulated time from earlier turns is always visible.
+   * Continuous timer: from the first turn_start to session_shutdown,
+   * all wall-clock time is counted — including idle gaps between turns
+   * (e.g. waiting for an interactive_shell sub-agent to return).
+   * This matches the intuitive notion of "how long has this agent session
+   * been running".
    */
   const totalActiveMs = (): number =>
-    accumulatedMs + (currentTurnStart > 0 ? Date.now() - currentTurnStart : 0);
+    sessionStartTime > 0 ? Date.now() - sessionStartTime : 0;
 
   const updateAgentStatus = (): void => {
     if (!ctxRef) return;
     const theme = ctxRef.ui.theme;
     const d = formatDuration(totalActiveMs());
-    const icon = currentTurnStart > 0
+    const icon = isActive
       ? theme.fg("accent", "●")   // active turn
-      : theme.fg("dim", "○");     // idle
+      : theme.fg("dim", "○");     // idle (between turns, e.g. waiting for sub-agent)
     ctxRef.ui.setStatus(
       STATUS_KEY,
       icon + " " + theme.fg("accent", theme.bold("Agent")) + " " + theme.fg("dim", d),
@@ -153,15 +154,13 @@ export function setupAgentTimer(pi: ExtensionAPI): void {
     // Try to restore last-run data for continuity display.
     const lastRun = await readLastRun();
 
-    // Only reset accumulated time for genuinely new sessions, not reloads.
+    // Reset timer for genuinely new sessions.
     // reason: "startup" | "reload" | "new" | "resume" | "fork"
     if (_event.reason === "startup" || _event.reason === "resume" || _event.reason === "new") {
-      accumulatedMs = 0;
+      sessionStartTime = 0;
+      isActive = false;
     }
-    // On "fork" and "reload", keep accumulated time to avoid visual reset.
-    // (A fork event on the main pi is unlikely, but be defensive.)
-
-    currentTurnStart = 0;
+    // On "fork" and "reload", keep sessionStartTime to avoid visual reset.
 
     // Hidden widget to capture tui reference — same pattern as pi-interactive-shell
     ctx.ui.setWidget(
@@ -172,11 +171,8 @@ export function setupAgentTimer(pi: ExtensionAPI): void {
       },
     );
 
-    // Show initial status: idle state with accumulated time (or last-run info)
-    if (accumulatedMs === 0 && lastRun && lastRun.durationMs > 0) {
-      // Show last-run info briefly, then switch to real accumulated time
-      // once turns start. We set accumulatedMs to 0 but show the last-run
-      // info as the status text directly.
+    // Show initial status: idle state with last-run info (if no active session yet)
+    if (sessionStartTime === 0 && lastRun && lastRun.durationMs > 0) {
       const theme = ctx.ui.theme;
       const d = formatDuration(lastRun.durationMs);
       ctx.ui.setStatus(
@@ -191,21 +187,21 @@ export function setupAgentTimer(pi: ExtensionAPI): void {
   // ── turn_start / turn_end ─────────────────────────────────────────
 
   pi.on("turn_start", async (_event) => {
-    // Only track the turn start time; accumulatedMs preserves history.
-    currentTurnStart = Date.now();
+    // On the very first turn, establish the session start time.
+    if (sessionStartTime === 0) {
+      sessionStartTime = Date.now();
+    }
+    isActive = true;
     startInterval();
     updateAgentStatus();
   });
 
   pi.on("turn_end", async () => {
-    // Accumulate this turn's duration into the running total.
-    if (currentTurnStart > 0) {
-      accumulatedMs += Date.now() - currentTurnStart;
-      currentTurnStart = 0;
-    }
+    // Stay idle but keep the interval running — time continues to accrue
+    // even between turns (e.g. while waiting for interactive_shell dispatch).
+    isActive = false;
     updateAgentStatus();
-    // Stop the 1s interval when idle — saves CPU.
-    stopInterval();
+    // Don't stop the interval! Continuous timer keeps ticking.
   });
 
   // ── session_shutdown ──────────────────────────────────────────────
@@ -215,24 +211,20 @@ export function setupAgentTimer(pi: ExtensionAPI): void {
     tuiRef = null;
     ctx.ui.setWidget(WIDGET_KEY, undefined);
 
-    // Capture any still-active turn before finalizing.
-    if (currentTurnStart > 0) {
-      accumulatedMs += Date.now() - currentTurnStart;
-      currentTurnStart = 0;
-    }
+    const totalMs = sessionStartTime > 0 ? Date.now() - sessionStartTime : 0;
 
-    if (accumulatedMs > 0) {
+    if (totalMs > 0) {
       // Persist for next startup.
       await writeLastRun({
         sessionId,
-        startTime: Date.now() - accumulatedMs,
+        startTime: sessionStartTime,
         endTime: Date.now(),
-        durationMs: accumulatedMs,
+        durationMs: totalMs,
       });
 
       // Show "last run" info in the status bar.
       const theme = ctx.ui.theme;
-      const d = formatDuration(accumulatedMs);
+      const d = formatDuration(totalMs);
       ctx.ui.setStatus(
         STATUS_KEY,
         theme.fg("dim", "○") + " " + theme.fg("dim", "Last run:") + " " + d,
@@ -242,7 +234,8 @@ export function setupAgentTimer(pi: ExtensionAPI): void {
     }
 
     // Clear state — ready for next session.
-    accumulatedMs = 0;
+    sessionStartTime = 0;
+    isActive = false;
     sessionId = "";
     ctxRef = null;
   });
