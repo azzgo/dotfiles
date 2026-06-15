@@ -172,7 +172,7 @@ function M.list()
   local items = {}
   for _, term in ipairs(pi_terms) do
     table.insert(items, {
-      label = term.display_name or ("Pi " .. term.count),
+      label = term.display_name or ("Pi " .. term.id),
       value = term,
     })
   end
@@ -252,7 +252,7 @@ function M.rename()
       if new_name:sub(1, #utils.PI_PREFIX) ~= utils.PI_PREFIX then
         new_name = utils.PI_PREFIX .. "-" .. new_name
       end
-      vim.cmd(current_term.count .. "ToggleTermSetName " .. vim.fn.shellescape(new_name))
+      vim.cmd(current_term.id .. "ToggleTermSetName " .. vim.fn.shellescape(new_name))
       current_term:toggle()
       vim.notify("Pi terminal renamed to: " .. new_name, vim.log.levels.INFO)
     else

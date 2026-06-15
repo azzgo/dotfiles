@@ -213,13 +213,18 @@ M.PI_PREFIX = "Pi"
 M.PI_COMMAND = "pi"
 
 --- Check if a terminal is a Pi terminal
+--- Matches "Pi" exactly or "Pi-" prefix (e.g., "Pi-2", "Pi-custom")
 ---@param term table toggleterm terminal object
 ---@return boolean
 function M.is_pi_terminal(term)
   if not term or not term.display_name then
     return false
   end
-  return term.display_name:sub(1, #M.PI_PREFIX) == M.PI_PREFIX
+  local name = term.display_name
+  if name == M.PI_PREFIX then
+    return true
+  end
+  return name:sub(1, #M.PI_PREFIX + 1) == M.PI_PREFIX .. "-"
 end
 
 --- Make a Pi display name with optional suffix

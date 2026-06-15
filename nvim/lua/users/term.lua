@@ -33,18 +33,18 @@ require("toggleterm").setup({
   }
 })
 
-local term_counter = 0;
 -- Helper function to create new terminal
 local function create_terminal(cwd, direction)
   local Terminal = require('toggleterm.terminal').Terminal
-  term_counter = (term_counter + 1) % 99
 
   local term = Terminal:new({
-    count = term_counter,
     dir = cwd,
     direction = direction,
-    display_name = "Terminal " .. term_counter .. (cwd and " (" .. vim.fn.fnamemodify(cwd, ":t") .. ")" or ""),
   })
+
+  -- Set display_name after creation so we can use the auto-assigned id
+  local id = term.id
+  term.display_name = "Terminal " .. id .. (cwd and " (" .. vim.fn.fnamemodify(cwd, ":t") .. ")" or "")
 
   return term
 end
@@ -80,10 +80,15 @@ local function show_terminal_list()
   for _, term in ipairs(terminals) do
     if not utils.is_pi_terminal(term) then
       table.insert(items, {
-        label = (term.display_name or ("Terminal " .. term.count)),
+        label = (term.display_name or ("Terminal " .. term.id)),
         value = term,
       })
     end
+  end
+
+  if #items == 0 then
+    vim.notify("没有可用终端（所有终端都是 Pi）", vim.log.levels.INFO)
+    return
   end
 
   Snacks.picker.pick({
@@ -218,7 +223,7 @@ local function rename_current_terminal()
           new_name = utils.PI_PREFIX .. "-" .. new_name
         end
       end
-      vim.cmd(current_term.count .. "ToggleTermSetName " .. vim.fn.shellescape(new_name))
+      vim.cmd(current_term.id .. "ToggleTermSetName " .. vim.fn.shellescape(new_name))
       current_term:toggle()                     -- restore terminal
       vim.notify("Terminal renamed to: " .. new_name, vim.log.levels.INFO)
     else
