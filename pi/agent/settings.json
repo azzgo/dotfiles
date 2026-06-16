@@ -15,6 +15,6 @@
   "lastChangelogVersion": "0.78.1",
   "extensions": [
     "+extensions/planning-files-runtime/index.ts",
-    "+extensions/agent-timer/index.ts"
+    "+extensions/readonly-mode/index.ts"
   ]
 }
