@@ -100,11 +100,13 @@ export function formatTimeAgo(ms: number): string {
 //   ○ (idle)   — timer freezes, shows the last completed turn's duration
 //
 // Sub-agent detection via tool_call interception:
-//   - interactive_shell with mode:"dispatch" or mode:"hands-free" → sets flag
-//   - interactive_shell with kill:true or dismissBackground → clears flag
-//   - turn_end: if sub-agent pending → keep counting (don't freeze)
-//   - turn_start: if sub-agent pending → clear flag, keep counting (don't reset)
-//   - This ensures dispatch sub-agent wall-clock time is accurately reflected.
+//   - interactive_shell with mode:"dispatch" or mode:"hands-free" → increment counter
+//   - interactive_shell with kill:true or dismissBackground → decrement counter
+//   - turn_end: if counter > 0 → keep counting (don't freeze)
+//   - turn_start: if counter > 0 → decrement, keep counting (don't reset)
+//   - Counter handles multiple concurrent sub-agents correctly: each triggerTurn
+//     from a completed sub-agent decrements by one, so the timer keeps counting
+//     until ALL sub-agents have completed and been processed.
 
 const STATUS_KEY = "agent-timer";
 const WIDGET_KEY = "agent-timer-widget";
@@ -115,7 +117,7 @@ export function setupAgentTimer(pi: ExtensionAPI): void {
   let turnStartTime = 0;
   let lastTurnDurationMs = 0;
   let isActive = false;
-  let subAgentPending = false;
+  let subAgentCount = 0;
   let sessionId = "";
   let tuiRef: { requestRender: () => void } | null = null;
   let ctxRef: ExtensionCommandContext | null = null;
@@ -178,19 +180,19 @@ export function setupAgentTimer(pi: ExtensionAPI): void {
       (input.mode === "dispatch" || input.mode === "hands-free") &&
       (typeof input.command === "string" || typeof input.spawn === "object")
     ) {
-      subAgentPending = true;
+      subAgentCount++;
       return;
     }
 
     // Ending sub-agent sessions
     if (input.kill === true) {
-      subAgentPending = false;
+      subAgentCount = Math.max(0, subAgentCount - 1);
       return;
     }
 
     // dismissBackground: true (all) or "session-id" (specific)
     if (input.dismissBackground === true || typeof input.dismissBackground === "string") {
-      subAgentPending = false;
+      subAgentCount = Math.max(0, subAgentCount - 1);
       return;
     }
   });
@@ -213,7 +215,7 @@ export function setupAgentTimer(pi: ExtensionAPI): void {
       turnStartTime = 0;
       lastTurnDurationMs = 0;
       isActive = false;
-      subAgentPending = false;
+      subAgentCount = 0;
     }
     // On "fork" and "reload", keep sessionStartTime to avoid visual reset.
 
@@ -242,11 +244,11 @@ export function setupAgentTimer(pi: ExtensionAPI): void {
   // ── turn_start / turn_end ─────────────────────────────────────────
   //
   // Sub-agent-aware per-turn timing:
-  //   ● turn_start (no sub-agent) → reset counter to 0, start live count-up
-  //   ● turn_start (sub-agent pending) → clear flag, keep counting (dispatch
-  //     completed and triggered this turn via triggerTurn)
-  //   ● turn_end (sub-agent pending) → keep counting, stay in ● mode
-  //   ○ turn_end (no sub-agent) → freeze at last turn's duration, stop interval
+  //   ● turn_start (counter == 0) → reset timer to 0, start live count-up
+  //   ● turn_start (counter > 0) → decrement counter, keep counting (one
+  //     dispatch completed and triggered this turn via triggerTurn)
+  //   ● turn_end (counter > 0) → keep counting, stay in ● mode
+  //   ○ turn_end (counter == 0) → freeze at last turn's duration, stop interval
 
   pi.on("turn_start", async (_event) => {
     // Record session start on first turn (used for "Last run" persistence).
@@ -254,11 +256,13 @@ export function setupAgentTimer(pi: ExtensionAPI): void {
       sessionStartTime = Date.now();
     }
 
-    if (subAgentPending) {
-      // Sub-agent completed and triggered this turn via triggerTurn.
-      // Clear the flag and keep counting — the timer has been running
-      // continuously through the sub-agent wait.
-      subAgentPending = false;
+    if (subAgentCount > 0) {
+      // One dispatch sub-agent completed and triggered this turn.
+      // Decrement the counter and keep counting — the timer has been
+      // running continuously through the sub-agent wait. If other
+      // sub-agents are still running, the counter stays > 0 and
+      // the timer keeps counting through subsequent turn_end events.
+      subAgentCount--;
       // turnStartTime stays as-is, isActive stays true
       startInterval();
       updateAgentStatus();
@@ -273,8 +277,8 @@ export function setupAgentTimer(pi: ExtensionAPI): void {
   });
 
   pi.on("turn_end", async () => {
-    if (subAgentPending) {
-      // Sub-agent is still running (e.g. dispatch/hands-free).
+    if (subAgentCount > 0) {
+      // One or more sub-agents are still running (e.g. dispatch/hands-free).
       // Keep counting, stay in ● mode, don't freeze.
       updateAgentStatus();
     } else {
@@ -323,7 +327,7 @@ export function setupAgentTimer(pi: ExtensionAPI): void {
     turnStartTime = 0;
     lastTurnDurationMs = 0;
     isActive = false;
-    subAgentPending = false;
+    subAgentCount = 0;
     sessionId = "";
     ctxRef = null;
   });
