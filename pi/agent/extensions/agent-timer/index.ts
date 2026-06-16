@@ -1,13 +1,19 @@
 /**
- * agent-timer — Standalone pi extension for persistent agent duration display.
+ * agent-timer — Standalone pi extension for per-turn agent duration display.
  *
  * Shows agent running time in the status bar:
- *   ● Agent · 2h 35m 12s   (active, updates every second)
- *   ○ Agent · 2h 35m 12s   (idle, between turns)
+ *   ● Agent · 2h 35m 12s   (active turn, live count-up, resets each turn)
+ *   ○ Agent · 2h 35m 12s   (idle, frozen at last completed turn's duration)
  *   ○ Last run: 2h 35m     (after shutdown, persisted to disk)
  *
- * Fixes the dispatch-reset bug: accumulated time is always shown, never
- * lost when interactive_shell completion triggers a new turn.
+ * Per-turn timing with sub-agent awareness:
+ *   When interactive_shell dispatch/hands-free sub-agents are running,
+ *   the timer keeps counting through turn_end boundaries and does NOT
+ *   reset on the subsequent triggerTurn turn_start. This ensures the
+ *   wall-clock time spent waiting for sub-agents is accurately reflected.
+ *
+ *   ● = counting (active turn OR sub-agent running)
+ *   ○ = frozen  (truly idle, no sub-agent)
  */
 
 import type { ExtensionAPI, ExtensionCommandContext, Theme } from "@earendil-works/pi-coding-agent";
@@ -87,6 +93,18 @@ export function formatTimeAgo(ms: number): string {
 // =============================================================================
 // Timer state machine
 // =============================================================================
+//
+// Timing model with sub-agent awareness:
+//   ● (active) — timer resets to 0 at turn_start, live count-up every second
+//   ● (sub-agent) — timer keeps counting through turn_end while sub-agent runs
+//   ○ (idle)   — timer freezes, shows the last completed turn's duration
+//
+// Sub-agent detection via tool_call interception:
+//   - interactive_shell with mode:"dispatch" or mode:"hands-free" → sets flag
+//   - interactive_shell with kill:true or dismissBackground → clears flag
+//   - turn_end: if sub-agent pending → keep counting (don't freeze)
+//   - turn_start: if sub-agent pending → clear flag, keep counting (don't reset)
+//   - This ensures dispatch sub-agent wall-clock time is accurately reflected.
 
 const STATUS_KEY = "agent-timer";
 const WIDGET_KEY = "agent-timer-widget";
@@ -94,7 +112,10 @@ const WIDGET_KEY = "agent-timer-widget";
 export function setupAgentTimer(pi: ExtensionAPI): void {
   let durationTimer: ReturnType<typeof setInterval> | null = null;
   let sessionStartTime = 0;
+  let turnStartTime = 0;
+  let lastTurnDurationMs = 0;
   let isActive = false;
+  let subAgentPending = false;
   let sessionId = "";
   let tuiRef: { requestRender: () => void } | null = null;
   let ctxRef: ExtensionCommandContext | null = null;
@@ -104,24 +125,22 @@ export function setupAgentTimer(pi: ExtensionAPI): void {
   };
 
   /**
-   * Total elapsed time from session start to now.
-   *
-   * Continuous timer: from the first turn_start to session_shutdown,
-   * all wall-clock time is counted — including idle gaps between turns
-   * (e.g. waiting for an interactive_shell sub-agent to return).
-   * This matches the intuitive notion of "how long has this agent session
-   * been running".
+   * Current display duration:
+   * - If active (●): time elapsed since turn_start (live count-up)
+   * - If idle (○):  frozen duration of the last completed turn
    */
-  const totalActiveMs = (): number =>
-    sessionStartTime > 0 ? Date.now() - sessionStartTime : 0;
+  const currentDisplayMs = (): number =>
+    isActive && turnStartTime > 0
+      ? Date.now() - turnStartTime
+      : lastTurnDurationMs;
 
   const updateAgentStatus = (): void => {
     if (!ctxRef) return;
     const theme = ctxRef.ui.theme;
-    const d = formatDuration(totalActiveMs());
+    const d = formatDuration(currentDisplayMs());
     const icon = isActive
-      ? theme.fg("accent", "●")   // active turn
-      : theme.fg("dim", "○");     // idle (between turns, e.g. waiting for sub-agent)
+      ? theme.fg("accent", "●")   // active turn or sub-agent running
+      : theme.fg("dim", "○");     // idle, frozen at last turn's duration
     ctxRef.ui.setStatus(
       STATUS_KEY,
       icon + " " + theme.fg("accent", theme.bold("Agent")) + " " + theme.fg("dim", d),
@@ -143,6 +162,39 @@ export function setupAgentTimer(pi: ExtensionAPI): void {
     }
   };
 
+  // ── tool_call (sub-agent detection) ──────────────────────────────
+  //
+  // Intercept interactive_shell calls to track when sub-agents are
+  // dispatched. This must be registered before turn_start/turn_end
+  // so the flag is set before turn_end evaluates it.
+
+  pi.on("tool_call", (event) => {
+    if (event.toolName !== "interactive_shell") return;
+
+    const input = event.input as Record<string, unknown>;
+
+    // Starting a sub-agent session (dispatch or hands-free with command/spawn)
+    if (
+      (input.mode === "dispatch" || input.mode === "hands-free") &&
+      (typeof input.command === "string" || typeof input.spawn === "object")
+    ) {
+      subAgentPending = true;
+      return;
+    }
+
+    // Ending sub-agent sessions
+    if (input.kill === true) {
+      subAgentPending = false;
+      return;
+    }
+
+    // dismissBackground: true (all) or "session-id" (specific)
+    if (input.dismissBackground === true || typeof input.dismissBackground === "string") {
+      subAgentPending = false;
+      return;
+    }
+  });
+
   // ── session_start ────────────────────────────────────────────────
 
   pi.on("session_start", async (_event, ctx) => {
@@ -158,7 +210,10 @@ export function setupAgentTimer(pi: ExtensionAPI): void {
     // reason: "startup" | "reload" | "new" | "resume" | "fork"
     if (_event.reason === "startup" || _event.reason === "resume" || _event.reason === "new") {
       sessionStartTime = 0;
+      turnStartTime = 0;
+      lastTurnDurationMs = 0;
       isActive = false;
+      subAgentPending = false;
     }
     // On "fork" and "reload", keep sessionStartTime to avoid visual reset.
 
@@ -185,23 +240,53 @@ export function setupAgentTimer(pi: ExtensionAPI): void {
   });
 
   // ── turn_start / turn_end ─────────────────────────────────────────
+  //
+  // Sub-agent-aware per-turn timing:
+  //   ● turn_start (no sub-agent) → reset counter to 0, start live count-up
+  //   ● turn_start (sub-agent pending) → clear flag, keep counting (dispatch
+  //     completed and triggered this turn via triggerTurn)
+  //   ● turn_end (sub-agent pending) → keep counting, stay in ● mode
+  //   ○ turn_end (no sub-agent) → freeze at last turn's duration, stop interval
 
   pi.on("turn_start", async (_event) => {
-    // On the very first turn, establish the session start time.
+    // Record session start on first turn (used for "Last run" persistence).
     if (sessionStartTime === 0) {
       sessionStartTime = Date.now();
     }
-    isActive = true;
-    startInterval();
-    updateAgentStatus();
+
+    if (subAgentPending) {
+      // Sub-agent completed and triggered this turn via triggerTurn.
+      // Clear the flag and keep counting — the timer has been running
+      // continuously through the sub-agent wait.
+      subAgentPending = false;
+      // turnStartTime stays as-is, isActive stays true
+      startInterval();
+      updateAgentStatus();
+    } else {
+      // Normal: reset per-turn timer, each new turn starts from zero.
+      turnStartTime = Date.now();
+      lastTurnDurationMs = 0;
+      isActive = true;
+      startInterval();
+      updateAgentStatus();
+    }
   });
 
   pi.on("turn_end", async () => {
-    // Stay idle but keep the interval running — time continues to accrue
-    // even between turns (e.g. while waiting for interactive_shell dispatch).
-    isActive = false;
-    updateAgentStatus();
-    // Don't stop the interval! Continuous timer keeps ticking.
+    if (subAgentPending) {
+      // Sub-agent is still running (e.g. dispatch/hands-free).
+      // Keep counting, stay in ● mode, don't freeze.
+      updateAgentStatus();
+    } else {
+      // Freeze at the duration of the just-completed turn.
+      if (turnStartTime > 0) {
+        lastTurnDurationMs = Date.now() - turnStartTime;
+      }
+      turnStartTime = 0;
+      isActive = false;
+      stopInterval();
+      updateAgentStatus();
+    }
   });
 
   // ── session_shutdown ──────────────────────────────────────────────
@@ -235,7 +320,10 @@ export function setupAgentTimer(pi: ExtensionAPI): void {
 
     // Clear state — ready for next session.
     sessionStartTime = 0;
+    turnStartTime = 0;
+    lastTurnDurationMs = 0;
     isActive = false;
+    subAgentPending = false;
     sessionId = "";
     ctxRef = null;
   });
