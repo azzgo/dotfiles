@@ -1,55 +1,61 @@
 local utils = require('users.lib.utils')
-local terms = require("toggleterm.terminal")
 
--- Setup toggleterm
-require("toggleterm").setup({
-  size = function(term)
-    if term.direction == "horizontal" then
-      return 20
-    elseif term.direction == "vertical" then
-      return vim.o.columns * 0.5
-    end
-  end,
-  open_mapping = nil, -- We'll handle this ourselves
-  hide_numbers = true,
-  shade_filetypes = {},
-  shade_terminals = true,
-  shading_factor = 2,
-  insert_mappings = true,
-  start_in_insert = true,
-  persist_size = true,
-  direction = 'float',
-  close_on_exit = true,
-  shell = vim.o.shell,
-  float_opts = {
-    border = 'curved',
-    width = math.floor(vim.o.columns * 0.9),
-    height = math.floor(vim.o.lines * 0.9),
-    winblend = 0,
-    highlights = {
-      border = "Normal",
-      background = "Normal",
-    }
+--- Terminal display names (for winbar)
+--- keyed by snacks.win id
+local term_names = {}
+
+--- Get the display name for a terminal
+---@param term snacks.win
+---@return string
+local function get_term_name(term)
+  return term_names[term.id] or ("Terminal " .. term.id)
+end
+
+--- Set the display name for a terminal
+---@param term snacks.win
+---@param name string
+local function set_term_name(term, name)
+  term_names[term.id] = name
+  if term:win_valid() then
+    vim.wo[term.win].winbar = " " .. name .. " "
+  end
+end
+
+--- Create a new terminal
+---@param cwd? string
+---@param position? "float"|"bottom"|"top"|"left"|"right"
+---@return snacks.win
+local function create_terminal(cwd, position)
+  position = position or "float"
+  local opts = {
+    cwd = cwd,
+    interactive = true,
+    win = {
+      position = position,
+      style = "terminal",
+      border = position == "float" and "rounded" or "none",
+      wo = {
+        winbar = "",
+      },
+    },
   }
-})
 
--- Helper function to create new terminal
-local function create_terminal(cwd, direction)
-  local Terminal = require('toggleterm.terminal').Terminal
+  if position == "float" then
+    opts.win.width = math.floor(vim.o.columns * 0.9)
+    opts.win.height = math.floor(vim.o.lines * 0.9)
+  elseif position == "horizontal" or position == "bottom" then
+    opts.win.height = 20
+  elseif position == "vertical" or position == "left" or position == "right" then
+    opts.win.width = math.floor(vim.o.columns * 0.5)
+  end
 
-  local term = Terminal:new({
-    dir = cwd,
-    direction = direction,
-  })
-
-  -- Set display_name after creation so we can use the auto-assigned id
-  local id = term.id
-  term.display_name = "Terminal " .. id .. (cwd and " (" .. vim.fn.fnamemodify(cwd, ":t") .. ")" or "")
-
+  local term = Snacks.terminal.open(nil, opts)
+  local name = "Terminal " .. term.id .. (cwd and " (" .. vim.fn.fnamemodify(cwd, ":t") .. ")" or "")
+  set_term_name(term, name)
   return term
 end
 
--- Helper function to get current buffer directory
+--- Helper function to get current buffer directory
 local function get_buffer_cwd()
   if utils.check_buffer_is_a_file() then
     return vim.fn.expand('%:p:h')
@@ -57,7 +63,7 @@ local function get_buffer_cwd()
   return nil
 end
 
--- Commands definition
+--- Commands definition
 local commands = {
   root = 'New Root Directory Terminal',
   root_split = 'New Root Directory Terminal(split)',
@@ -67,20 +73,19 @@ local commands = {
   quitall = 'Exit all Terminals'
 }
 
--- Function to show existing terminals
+--- Function to show existing terminals
 local function show_terminal_list()
-  local Snacks = require("snacks")
-  local terminals = terms.get_all(true)
-  if #terminals == 0 then
+  local all = Snacks.terminal.list()
+  if #all == 0 then
     vim.notify("没有可用终端", vim.log.levels.INFO)
     return
   end
 
   local items = {}
-  for _, term in ipairs(terminals) do
+  for _, term in ipairs(all) do
     if not utils.is_pi_terminal(term) then
       table.insert(items, {
-        label = (term.display_name or ("Terminal " .. term.id)),
+        label = get_term_name(term),
         value = term,
       })
     end
@@ -102,16 +107,18 @@ local function show_terminal_list()
     },
     actions = {
       open_terminal = function(picker, item)
-        local term = item.value;
+        local term = item.value
         picker:close()
-        if term:is_open() then
+        if term:valid() then
           term:focus()
         else
-          term:open()
+          term:show()
         end
       end,
       close_terminal = function(picker, item)
-        item.value:shutdown()
+        local term = item.value
+        term:close()
+        term_names[term.id] = nil
         table.remove(items, item.idx)
         if #items == 0 then
           picker:close()
@@ -137,23 +144,34 @@ local function show_terminal_list()
   })
 end
 
--- Quit all existing terminals
-local function quitAll(terminals)
-  for i in pairs(terminals) do
-    terminals[i]:shutdown();
+--- Quit all existing terminals
+local function quitAll()
+  local all = Snacks.terminal.list()
+  for _, term in ipairs(all) do
+    if not utils.is_pi_terminal(term) then
+      term:close()
+      term_names[term.id] = nil
+    end
   end
-  vim.notify("All terminial removed.", vim.log.levels.INFO)
+  vim.notify("All terminals removed.", vim.log.levels.INFO)
 end
 
-
--- Main terminal selection menu
+--- Main terminal selection menu
 local function show_terminal_menu()
   utils.hide_all_floats_in_current_tab()
-  local terminals = terms.get_all(true)
+  local all = Snacks.terminal.list()
   local choices = {}
-  local direction = 'float'
+  local position = 'float'
 
-  if #terminals ~= 0 then
+  -- Filter out Pi terminals for the list
+  local non_pi = {}
+  for _, term in ipairs(all) do
+    if not utils.is_pi_terminal(term) then
+      table.insert(non_pi, term)
+    end
+  end
+
+  if #non_pi ~= 0 then
     table.insert(choices, commands.list)
   end
 
@@ -167,48 +185,48 @@ local function show_terminal_menu()
     table.insert(choices, commands.buffer_split)
   end
 
-  table.insert(choices, commands.quitall);
+  table.insert(choices, commands.quitall)
 
   vim.ui.select(choices, {
     prompt = 'Terminal Options:',
   }, function(choice)
     if vim.list_contains({ commands.root, commands.root_split }, choice) then
-      if choice == commands.root_split then
-        direction = 'vertical'
-      end
-      local term = create_terminal(vim.fn.getcwd(), direction)
-      term:toggle()
+      local pos = choice == commands.root_split and "right" or "float"
+      create_terminal(vim.fn.getcwd(), pos)
     elseif vim.list_contains({ commands.buffer, commands.buffer_split }, choice) then
-      if choice == commands.buffer_split then
-        direction = 'vertical'
-      end
+      local pos = choice == commands.buffer_split and "right" or "float"
       local buffer_cwd = get_buffer_cwd()
-      local term = create_terminal(buffer_cwd, direction)
-      term:toggle()
+      create_terminal(buffer_cwd, pos)
     elseif choice == commands.list then
       show_terminal_list()
     elseif choice == commands.quitall then
-      quitAll(terminals)
+      quitAll()
     end
   end)
 end
 
-
--- Function to rename current terminal with better UX
+--- Function to rename current terminal with better UX
 local function rename_current_terminal()
-  local current_term = require('toggleterm.terminal').find(function(term)
-    return term:is_focused();
-  end)
+  -- Find the focused terminal window
+  local all = Snacks.terminal.list()
+  local current_term = nil
+  for _, term in ipairs(all) do
+    if term:win_valid() and vim.api.nvim_get_current_win() == term.win then
+      current_term = term
+      break
+    end
+  end
+
   if not current_term then
     vim.notify("No active terminal to rename", vim.log.levels.WARN)
     return
   end
 
-  -- Step 1: Close the terminal
-  current_term:toggle()
+  -- Step 1: Hide the terminal
+  current_term:hide()
 
   -- Step 2: Show snacks input for rename
-  local current_name = current_term.display_name or ("Terminal " .. current_term.name)
+  local current_name = get_term_name(current_term)
 
   require("snacks").input({
     prompt = "Rename terminal:",
@@ -223,12 +241,12 @@ local function rename_current_terminal()
           new_name = utils.PI_PREFIX .. "-" .. new_name
         end
       end
-      vim.cmd(current_term.id .. "ToggleTermSetName " .. vim.fn.shellescape(new_name))
-      current_term:toggle()                     -- restore terminal
+      set_term_name(current_term, new_name)
+      current_term:show()
       vim.notify("Terminal renamed to: " .. new_name, vim.log.levels.INFO)
     else
       -- Step 3b: User cancelled or empty input - just restore terminal
-      current_term:toggle()
+      current_term:show()
     end
   end)
 end
@@ -239,20 +257,21 @@ vim.keymap.set({ 'n', 't' }, '<A-t>', show_terminal_menu, { desc = 'Open termina
 -- Terminal rename key mapping with better UX
 vim.keymap.set('t', '<F2>', rename_current_terminal, { desc = 'Rename current terminal' })
 
--- Function to destroy current terminal if filetype is toggleterm
+-- Function to destroy current terminal if filetype is snacks_terminal
 local function destroy_current_terminal()
   local bufnr = vim.api.nvim_get_current_buf()
   local ft = vim.api.nvim_buf_get_option(bufnr, 'filetype')
-  if ft == 'toggleterm' then
-    local current_term = require('toggleterm.terminal').find(function(term)
-      return term:is_focused();
-    end)
-    if current_term then
-      current_term:shutdown()
-      vim.notify("Terminal destroyed", vim.log.levels.INFO)
-    else
-      vim.notify("No terminal found to destroy", vim.log.levels.WARN)
+  if ft == 'snacks_terminal' then
+    local all = Snacks.terminal.list()
+    for _, term in ipairs(all) do
+      if term.buf == bufnr then
+        term:close()
+        term_names[term.id] = nil
+        vim.notify("Terminal destroyed", vim.log.levels.INFO)
+        return
+      end
     end
+    vim.notify("No terminal found to destroy", vim.log.levels.WARN)
   end
 end
 

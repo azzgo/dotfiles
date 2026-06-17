@@ -196,8 +196,18 @@ function M.run_code_with_cmd(cmd, content, file_ext)
 end
 
 function M.hide_all_floats_in_current_tab()
-  local wins = vim.api.nvim_tabpage_list_wins(0)
+  -- First, properly hide any snacks.terminal windows so their internal state stays correct
+  local ok, snacks = pcall(require, "snacks")
+  if ok then
+    for _, term in ipairs(snacks.terminal.list()) do
+      if term:valid() then
+        term:hide()
+      end
+    end
+  end
 
+  -- Then hide remaining float windows (non-terminal floats)
+  local wins = vim.api.nvim_tabpage_list_wins(0)
   for _, win in ipairs(wins) do
     if vim.api.nvim_win_is_valid(win) then
       local config = vim.api.nvim_win_get_config(win)
@@ -212,19 +222,35 @@ end
 M.PI_PREFIX = "Pi"
 M.PI_COMMAND = "pi"
 
---- Check if a terminal is a Pi terminal
---- Matches "Pi" exactly or "Pi-" prefix (e.g., "Pi-2", "Pi-custom")
----@param term table toggleterm terminal object
+--- Check if a buffer is a Pi terminal (snacks.terminal version)
+---@param buf number buffer number
 ---@return boolean
-function M.is_pi_terminal(term)
-  if not term or not term.display_name then
+function M.buf_is_pi(buf)
+  if not buf or not vim.api.nvim_buf_is_valid(buf) then
     return false
   end
-  local name = term.display_name
-  if name == M.PI_PREFIX then
-    return true
+  local meta = vim.b[buf].snacks_terminal
+  if not meta then
+    return false
   end
-  return name:sub(1, #M.PI_PREFIX + 1) == M.PI_PREFIX .. "-"
+  -- cmd can be "pi" (string) or { "pi" } (table)
+  local cmd = meta.cmd
+  if type(cmd) == "string" then
+    return cmd == "pi"
+  elseif type(cmd) == "table" then
+    return cmd[1] == "pi"
+  end
+  return false
+end
+
+--- Check if a snacks.win terminal is a Pi terminal
+---@param term table snacks.win object
+---@return boolean
+function M.is_pi_terminal(term)
+  if not term or not term.buf then
+    return false
+  end
+  return M.buf_is_pi(term.buf)
 end
 
 --- Make a Pi display name with optional suffix
@@ -241,14 +267,18 @@ end
 --- Scans existing Pi terminals and returns the next sequential name
 ---@return string
 function M.next_pi_name()
-  local terms = require("toggleterm.terminal").get_all(true)
+  local ok, snacks = pcall(require, "snacks")
+  if not ok then
+    return M.PI_PREFIX
+  end
+  local all = snacks.terminal.list()
   local max_num = 0
-  for _, term in ipairs(terms) do
+  for _, term in ipairs(all) do
     if M.is_pi_terminal(term) then
-      local name = term.display_name
+      local name = vim.b[term.buf].pi_name
       if name == M.PI_PREFIX then
         max_num = math.max(max_num, 1)
-      else
+      elseif name then
         local suffix = name:sub(#M.PI_PREFIX + 2) -- after "Pi-"
         local num = tonumber(suffix)
         if num then

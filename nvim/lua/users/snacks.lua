@@ -147,6 +147,9 @@ snacks.setup({
       return "markdown"
     end,
   },
+  terminal = {
+    win = { style = "terminal" },
+  },
 })
 
 vim.keymap.set("n", "<A-z>", function()

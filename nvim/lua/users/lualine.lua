@@ -7,11 +7,11 @@ end
 
 local function ai_statusline()
   local utils = require('users.lib.utils')
-  local ok_term, terms = pcall(require, "toggleterm.terminal")
-  if not ok_term then
+  local ok, snacks = pcall(require, "snacks")
+  if not ok then
     return ""
   end
-  local all = terms.get_all(true)
+  local all = snacks.terminal.list()
   local pi_count = 0
   for _, term in ipairs(all) do
     if utils.is_pi_terminal(term) then
