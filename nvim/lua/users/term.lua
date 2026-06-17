@@ -205,57 +205,8 @@ local function show_terminal_menu()
   end)
 end
 
---- Function to rename current terminal with better UX
-local function rename_current_terminal()
-  -- Find the focused terminal window
-  local all = Snacks.terminal.list()
-  local current_term = nil
-  for _, term in ipairs(all) do
-    if term:win_valid() and vim.api.nvim_get_current_win() == term.win then
-      current_term = term
-      break
-    end
-  end
-
-  if not current_term then
-    vim.notify("No active terminal to rename", vim.log.levels.WARN)
-    return
-  end
-
-  -- Step 1: Hide the terminal
-  current_term:hide()
-
-  -- Step 2: Show snacks input for rename
-  local current_name = get_term_name(current_term)
-
-  require("snacks").input({
-    prompt = "Rename terminal:",
-    value = current_name,
-  }, function(new_name)
-    if new_name and new_name:match("^%s*(.-)%s*$") ~= "" then
-      -- Step 3a: User confirmed - apply new name and restore terminal
-      new_name = new_name:match("^%s*(.-)%s*$") -- trim whitespace
-      -- Ensure Pi terminals keep the Pi prefix
-      if utils.is_pi_terminal(current_term) then
-        if new_name:sub(1, #utils.PI_PREFIX) ~= utils.PI_PREFIX then
-          new_name = utils.PI_PREFIX .. "-" .. new_name
-        end
-      end
-      set_term_name(current_term, new_name)
-      current_term:show()
-      vim.notify("Terminal renamed to: " .. new_name, vim.log.levels.INFO)
-    else
-      -- Step 3b: User cancelled or empty input - just restore terminal
-      current_term:show()
-    end
-  end)
-end
-
 -- Key mappings
 vim.keymap.set({ 'n', 't' }, '<A-t>', show_terminal_menu, { desc = 'Open terminal menu' })
-
--- Terminal rename key mapping with better UX
-vim.keymap.set('t', '<F2>', rename_current_terminal, { desc = 'Rename current terminal' })
 
 -- Function to destroy current terminal if filetype is snacks_terminal
 local function destroy_current_terminal()
