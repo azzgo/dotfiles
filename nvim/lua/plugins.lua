@@ -134,6 +134,7 @@ return require("lazy").setup({
       lazy = false,
       config = function()
         require('users.pi_agent')
+        require('users.term')
       end
     },
 
@@ -314,12 +315,7 @@ return require("lazy").setup({
         ]]
       end
     },
-    {
-      'akinsho/toggleterm.nvim',
-      config = function()
-        require('users.term')
-      end
-    },
+
     {
       "oysandvik94/curl.nvim",
       cmd = { "CurlOpen" },
