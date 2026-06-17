@@ -18,16 +18,6 @@ local function find_pi(predicate)
   return nil
 end
 
---- Set the winbar display name for a Pi terminal
----@param term snacks.win
----@param name string
-local function set_pi_name(term, name)
-  vim.b[term.buf].pi_name = name
-  if term:win_valid() then
-    vim.wo[term.win].winbar = " " .. name .. " "
-  end
-end
-
 --- Create a new Pi terminal
 ---@return snacks.win|nil
 function M.new()
@@ -261,46 +251,6 @@ function M.list()
   })
 end
 
---- Rename the focused Pi terminal
-function M.rename()
-  local all = Snacks.terminal.list()
-  local current_term = nil
-  for _, term in ipairs(all) do
-    if utils.is_pi_terminal(term) and term:win_valid() and vim.api.nvim_get_current_win() == term.win then
-      current_term = term
-      break
-    end
-  end
-
-  if not current_term then
-    vim.notify("No active Pi terminal to rename", vim.log.levels.WARN)
-    return
-  end
-
-  -- Hide terminal first
-  current_term:hide()
-
-  local current_name = vim.b[current_term.buf].pi_name or ("Pi " .. current_term.id)
-
-  require("snacks").input({
-    prompt = "Rename Pi terminal:",
-    value = current_name,
-  }, function(new_name)
-    if new_name and new_name:match("^%s*(.-)%s*$") ~= "" then
-      new_name = new_name:match("^%s*(.-)%s*$")
-      -- Ensure the name keeps the Pi prefix
-      if new_name:sub(1, #utils.PI_PREFIX) ~= utils.PI_PREFIX then
-        new_name = utils.PI_PREFIX .. "-" .. new_name
-      end
-      set_pi_name(current_term, new_name)
-      current_term:show()
-      vim.notify("Pi terminal renamed to: " .. new_name, vim.log.levels.INFO)
-    else
-      current_term:show()
-    end
-  end)
-end
-
 --- Helper: create new Pi and toggle it (for menu use)
 function M.new_and_toggle()
   local term = M.new()
@@ -316,7 +266,6 @@ local menu_items = {
   { label = "Send @this",     action = M.send_selection },
   { label = "Send @file",     action = M.send_file },
   { label = "New Pi",         action = M.new_and_toggle },
-  { label = "Rename Pi",      action = M.rename },
 }
 
 --- Show the Pi actions menu (<A-i>)
