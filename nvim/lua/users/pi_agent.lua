@@ -5,6 +5,9 @@ local M = {}
 --- Track the last toggled Pi terminal id for toggle resolution
 local last_pi_id = nil
 
+--- Counter for unique Pi terminal IDs (ensures each Pi gets a unique tid in Snacks.terminal)
+local pi_counter = 0
+
 --- Find a Pi terminal by predicate
 ---@param predicate fun(term): boolean
 ---@return snacks.win|nil
@@ -26,11 +29,13 @@ function M.new()
     return nil
   end
 
+  pi_counter = pi_counter + 1
   local name = utils.next_pi_name()
   local dir = vim.fn.getcwd()
 
   local term = Snacks.terminal.open({ "pi" }, {
     cwd = dir,
+    count = pi_counter,
     auto_close = false,
     interactive = true,
     win = {
@@ -46,28 +51,19 @@ function M.new()
   })
 
   vim.b[term.buf].pi_name = name
+  last_pi_id = term.id
   return term
 end
 
---- Toggle a Pi terminal.
---- Resolution order: focused Pi > last_pi (still alive) > any visible Pi > create new
+--- Toggle the last opened Pi terminal.
+--- If last_pi is alive, toggle it (show if hidden, hide if visible).
+--- If no last_pi, hide any visible Pi, or create a new one.
 function M.toggle()
-  -- 1. focused Pi?
-  local focused = find_pi(function(term)
-    return term:win_valid() and vim.api.nvim_get_current_win() == term.win
-  end)
-  if focused then
-    last_pi_id = focused.id
-    focused:toggle()
-    return
-  end
-
-  -- 2. last_pi still alive?
+  -- 1. last_pi still alive?
   if last_pi_id then
     local all = Snacks.terminal.list()
     for _, term in ipairs(all) do
       if term.id == last_pi_id then
-        last_pi_id = term.id
         term:toggle()
         return
       end
@@ -75,7 +71,7 @@ function M.toggle()
   end
   last_pi_id = nil
 
-  -- 3. any visible Pi?
+  -- 2. any visible Pi? hide it
   local visible = find_pi(function(term) return term:valid() end)
   if visible then
     last_pi_id = visible.id
@@ -83,11 +79,8 @@ function M.toggle()
     return
   end
 
-  -- 4. none → create new
-  local term = M.new()
-  if term then
-    last_pi_id = term.id
-  end
+  -- 3. none → create new
+  M.new()
 end
 
 --- Ensure a Pi terminal is open and return it, creating one if needed.
@@ -110,6 +103,7 @@ local function ensure_pi_open()
     if not term:valid() then
       term:show()
     end
+    last_pi_id = term.id
     term:focus()
     return term
   end
@@ -217,6 +211,7 @@ function M.list()
       open_terminal = function(picker, item)
         local term = item.value
         picker:close()
+        last_pi_id = term.id
         if term:valid() then
           term:focus()
         else
