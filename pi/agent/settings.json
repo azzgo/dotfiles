@@ -2,6 +2,11 @@
   "defaultProvider": "deepseek",
   "defaultModel": "deepseek-v4-pro",
   "defaultThinkingLevel": "high",
+  "collapseChangelog": true,
+  "quietStartup": true,
+  "compaction": {
+    "enabled": false
+  },
   "packages": [
     "npm:pi-web-access",
     "npm:pi-mcp-adapter",
