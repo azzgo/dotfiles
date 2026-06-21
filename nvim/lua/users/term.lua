@@ -16,9 +16,6 @@ end
 ---@param name string
 local function set_term_name(term, name)
   term_names[term.id] = name
-  if term:win_valid() then
-    vim.wo[term.win].winbar = " " .. name .. " "
-  end
 end
 
 --- Create a new terminal
@@ -32,7 +29,7 @@ local function create_terminal(cwd, position)
     interactive = true,
     win = {
       position = position,
-      style = "terminal",
+      style = {},
       border = position == "float" and "rounded" or "none",
       wo = {
         winbar = "",
@@ -43,6 +40,7 @@ local function create_terminal(cwd, position)
   if position == "float" then
     opts.win.width = math.floor(vim.o.columns * 0.9)
     opts.win.height = math.floor(vim.o.lines * 0.9)
+    opts.win.backdrop = 60
   elseif position == "horizontal" or position == "bottom" then
     opts.win.height = 20
   elseif position == "vertical" or position == "left" or position == "right" then
@@ -52,6 +50,13 @@ local function create_terminal(cwd, position)
   local term = Snacks.terminal.open(nil, opts)
   local name = "Terminal " .. term.id .. (cwd and " (" .. vim.fn.fnamemodify(cwd, ":t") .. ")" or "")
   set_term_name(term, name)
+  if term:win_valid() then
+    if position == "float" then
+      term:set_title(" " .. name .. " ", "center")
+    else
+      vim.wo[term.win].winbar = " " .. name .. " "
+    end
+  end
   return term
 end
 

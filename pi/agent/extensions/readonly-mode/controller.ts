@@ -6,12 +6,11 @@
  */
 
 import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent';
-import { READONLY_TOOLS, STATE_ENTRY } from './constants.js';
+import { STATE_ENTRY } from './constants.js';
 import { findSavedReadonlyState, type PersistedState, type StateEntry } from './state.js';
 
 export class ReadonlyController {
   private enabled = false;
-  private previousTools: string[] | undefined;
 
   constructor(private readonly pi: ExtensionAPI) {}
 
@@ -24,20 +23,14 @@ export class ReadonlyController {
   }
 
   enter(ctx: ExtensionContext): void {
-    this.previousTools = [...this.pi.getActiveTools()];
     this.enabled = true;
-    this.pi.setActiveTools(READONLY_TOOLS);
     this.updateUI(ctx);
     this.persist();
-    ctx.ui.notify('🛡️ Read-only mode ON — exploration & planning only', 'info');
+    ctx.ui.notify('🛡️ Read-only mode ON — core tools restricted, MCP/skills unrestricted', 'info');
   }
 
   exit(ctx: ExtensionContext): void {
     this.enabled = false;
-    if (this.previousTools) {
-      this.pi.setActiveTools(this.previousTools);
-      this.previousTools = undefined;
-    }
     this.updateUI(ctx);
     this.persist();
     ctx.ui.notify('🛡️ Read-only mode OFF — full tool access restored', 'info');
@@ -55,10 +48,6 @@ export class ReadonlyController {
     const saved = findSavedReadonlyState(entries);
     if (saved !== undefined) {
       this.enabled = saved;
-    }
-
-    if (this.enabled) {
-      this.pi.setActiveTools(READONLY_TOOLS);
     }
 
     this.updateUI(ctx);
