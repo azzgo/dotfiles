@@ -197,7 +197,7 @@ function M.list()
     local name = vim.b[term.buf].pi_name or ("Pi " .. term.id)
     table.insert(items, {
       label = name,
-      value = term,
+      value = term.id,
     })
   end
 
@@ -212,18 +212,22 @@ function M.list()
     },
     actions = {
       open_terminal = function(picker, item)
-        local term = item.value
+        local term = find_pi(function(t) return t.id == item.value end)
         picker:close()
-        last_pi_id = term.id
-        if term:valid() then
-          term:focus()
-        else
-          term:show()
+        if term then
+          last_pi_id = term.id
+          if term:valid() then
+            term:focus()
+          else
+            term:show()
+          end
         end
       end,
       close_terminal = function(picker, item)
-        local term = item.value
-        term:close()
+        local term = find_pi(function(t) return t.id == item.value end)
+        if term then
+          term:close()
+        end
         table.remove(items, item.idx)
         if #items == 0 then
           picker:close()
