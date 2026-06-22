@@ -5,6 +5,19 @@ local M = {}
 --- Track the last toggled Pi terminal id for toggle resolution
 local last_pi_id = nil
 
+--- Resume a Pi terminal by sending SIGCONT (harmless if already running).
+--- Fixes the Ctrl+Z suspend issue: when you press Ctrl+Z inside the Pi terminal,
+--- the pi process gets SIGTSTP and stops responding. This sends SIGCONT to wake it up.
+---@param term snacks.win
+local function resume_pi(term)
+  if not term or not term.buf then return end
+  local channel = vim.bo[term.buf].channel
+  if not channel or channel <= 0 then return end
+  local pid = vim.fn.jobpid(channel)
+  if not pid or pid <= 0 then return end
+  vim.fn.system("kill -CONT " .. pid)
+end
+
 --- Counter for unique Pi terminal IDs (ensures each Pi gets a unique tid in Snacks.terminal)
 local pi_counter = 0
 
@@ -67,6 +80,7 @@ function M.toggle()
     local all = Snacks.terminal.list()
     for _, term in ipairs(all) do
       if term.id == last_pi_id then
+        resume_pi(term)
         term:toggle()
         return
       end
@@ -77,6 +91,7 @@ function M.toggle()
   -- 2. any visible Pi? hide it
   local visible = find_pi(function(term) return term:valid() end)
   if visible then
+    resume_pi(visible)
     last_pi_id = visible.id
     visible:toggle()
     return
@@ -106,6 +121,7 @@ local function ensure_pi_open()
     if not term:valid() then
       term:show()
     end
+    resume_pi(term)
     last_pi_id = term.id
     term:focus()
     return term
@@ -215,6 +231,7 @@ function M.list()
         local term = find_pi(function(t) return t.id == item.value end)
         picker:close()
         if term then
+          resume_pi(term)
           last_pi_id = term.id
           if term:valid() then
             term:focus()
