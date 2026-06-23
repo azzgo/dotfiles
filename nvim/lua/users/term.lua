@@ -102,7 +102,7 @@ local function show_terminal_list()
   end
 
   Snacks.picker.pick({
-    title = "终端列表",
+    title = "终端列表  (<c-r>rename  <c-n>new)",
     items = items,
     refresh = true,
     multi = false,
@@ -134,12 +134,38 @@ local function show_terminal_list()
           picker:find()
         end
       end,
+      rename_terminal = function(picker, item)
+        local term = item.value
+        picker:close()
+        local current = get_term_name(term)
+        vim.ui.input({ prompt = "Rename terminal: ", default = current }, function(input)
+          if input and input ~= "" then
+            set_term_name(term, input)
+            if term:win_valid() then
+              if term.win_opts and term.win_opts.position == "float" then
+                term:set_title(" " .. input .. " ", "center")
+              else
+                vim.wo[term.win].winbar = " " .. input .. " "
+              end
+            end
+            vim.notify('Terminal renamed to "' .. input .. '"', vim.log.levels.INFO)
+          else
+            vim.notify("Rename cancelled", vim.log.levels.INFO)
+          end
+        end)
+      end,
+      new_terminal = function(picker, _item)
+        picker:close()
+        create_terminal(vim.fn.getcwd(), "float")
+      end,
     },
     win = {
       input = {
         keys = {
           ['<cr>'] = { 'open_terminal', mode = { "n", "i" }, desc = "打开终端" },
           ["<c-x>"] = { "close_terminal", mode = { "n", "i" }, desc = "删除终端" },
+          ["<c-r>"] = { "rename_terminal", mode = { "n", "i" }, desc = "重命名终端" },
+          ["<c-n>"] = { "new_terminal", mode = { "n", "i" }, desc = "新建终端" },
         },
       },
     },

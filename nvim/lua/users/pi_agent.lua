@@ -218,7 +218,7 @@ function M.list()
   end
 
   Snacks.picker.pick({
-    title = "Pi Terminals",
+    title = "Pi Terminals  (<c-r>rename  <c-n>new)",
     items = items,
     refresh = true,
     multi = false,
@@ -255,12 +255,35 @@ function M.list()
           picker:find()
         end
       end,
+      rename_terminal = function(picker, item)
+        local term = find_pi(function(t) return t.id == item.value end)
+        if not term then return end
+        picker:close()
+        local current = vim.b[term.buf].pi_name or ""
+        vim.ui.input({ prompt = "Rename Pi terminal: ", default = current }, function(input)
+          if input and input ~= "" then
+            vim.b[term.buf].pi_name = input
+            if term:win_valid() then
+              term:set_title(" " .. input .. " ", "center")
+            end
+            vim.notify('Pi terminal renamed to "' .. input .. '"', vim.log.levels.INFO)
+          else
+            vim.notify("Rename cancelled", vim.log.levels.INFO)
+          end
+        end)
+      end,
+      new_terminal = function(picker, _item)
+        picker:close()
+        M.new()
+      end,
     },
     win = {
       input = {
         keys = {
           ['<cr>'] = { 'open_terminal', mode = { "n", "i" }, desc = "Open terminal" },
           ["<c-x>"] = { "close_terminal", mode = { "n", "i" }, desc = "Close terminal" },
+          ["<c-r>"] = { "rename_terminal", mode = { "n", "i" }, desc = "Rename terminal" },
+          ["<c-n>"] = { "new_terminal", mode = { "n", "i" }, desc = "New Pi terminal" },
         },
       },
     },
