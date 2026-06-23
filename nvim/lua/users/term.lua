@@ -89,8 +89,10 @@ local function show_terminal_list()
   local items = {}
   for _, term in ipairs(all) do
     if not utils.is_pi_terminal(term) then
+      local name = get_term_name(term)
       table.insert(items, {
-        label = get_term_name(term),
+        text = name,
+        label = name,
         value = term,
       })
     end
@@ -107,8 +109,7 @@ local function show_terminal_list()
     refresh = true,
     multi = false,
     layout = {
-      preset = "select",
-      preview = false,
+      preset = "default",
     },
     actions = {
       open_terminal = function(picker, item)
@@ -169,6 +170,27 @@ local function show_terminal_list()
         },
       },
     },
+    preview = function(ctx)
+      local term = ctx.item.value
+      local buf = term.buf
+
+      if not buf or not vim.api.nvim_buf_is_valid(buf) then
+        ctx.preview:set_lines({ "[Terminal buffer no longer exists]" })
+        return true
+      end
+
+      local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+
+      -- Trim to last N lines for preview
+      local max_lines = 100
+      if #lines > max_lines then
+        lines = vim.list_slice(lines, #lines - max_lines + 1, #lines)
+      end
+
+      ctx.preview:set_lines(lines)
+      ctx.preview.win:set_title(" " .. ctx.item.label .. " ", "center")
+      return true
+    end,
     format_item = function(item)
       return item.label
     end,
