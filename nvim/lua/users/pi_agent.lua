@@ -49,7 +49,7 @@ function M.new()
   local term = Snacks.terminal.open({ "pi" }, {
     cwd = dir,
     count = pi_counter,
-    auto_close = false,
+    auto_close = true,
     interactive = true,
     win = {
       position = "float",
