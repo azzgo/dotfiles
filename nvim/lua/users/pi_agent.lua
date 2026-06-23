@@ -212,6 +212,7 @@ function M.list()
   for _, term in ipairs(pi_terms) do
     local name = vim.b[term.buf].pi_name or ("Pi " .. term.id)
     table.insert(items, {
+      text = name,
       label = name,
       value = term.id,
     })
@@ -223,8 +224,7 @@ function M.list()
     refresh = true,
     multi = false,
     layout = {
-      preset = "select",
-      preview = false,
+      preset = "default",
     },
     actions = {
       open_terminal = function(picker, item)
@@ -287,6 +287,32 @@ function M.list()
         },
       },
     },
+    preview = function(ctx)
+      local term_id = ctx.item.value
+      local term = find_pi(function(t) return t.id == term_id end)
+      if not term then
+        ctx.preview:set_lines({ "[Pi terminal no longer exists]" })
+        return true
+      end
+
+      local buf = term.buf
+      if not buf or not vim.api.nvim_buf_is_valid(buf) then
+        ctx.preview:set_lines({ "[Pi terminal buffer no longer exists]" })
+        return true
+      end
+
+      local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+
+      -- Trim to last N lines for preview
+      local max_lines = 100
+      if #lines > max_lines then
+        lines = vim.list_slice(lines, #lines - max_lines + 1, #lines)
+      end
+
+      ctx.preview:set_lines(lines)
+      ctx.preview.win:set_title(" " .. ctx.item.label .. " ", "center")
+      return true
+    end,
     format_item = function(item)
       return item.label
     end,
