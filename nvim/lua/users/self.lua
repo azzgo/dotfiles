@@ -14,7 +14,6 @@ local MENU_LABEL_ENUM = {
     LIST_TODOS = '[Todos] - lists',
     AI_PROMPTS = '[AI] - prompt picker',
     BUFFER_DELETE_OTHERS = '[Buffer] - delete others',
-    RELOAD_BUFFER_FORCE = '[Buffer] - force reload from disk',
     COPY_BUFFER_RELATIVE_PATH = '[Yank] - RelativePath',
     COPY_BUFFER_ABSOLUTE_PATH = '[Yank] - AbsolutePath',
     COPY_BUFFER_FILE_NAME = '[Yank] - Filename',
@@ -57,10 +56,7 @@ local MENU = {
         helper.buffer_delete_others()
         vim.notify('Other buffers deleted')
     end,
-    [MENU_LABEL_ENUM.RELOAD_BUFFER_FORCE] = function()
-        vim.cmd('edit!')
-        vim.notify('Buffer force reloaded from disk', vim.log.levels.WARN, { title = 'Buffer' })
-    end,
+
     [MENU_LABEL_ENUM.TOGGLE_COLORIZER] = function()
         vim.fn['colorizer#ColorToggle']()
         if vim.fn.exists('#Colorizer') == 1 then
@@ -167,7 +163,6 @@ local function self_use_case_popup()
         MENU_LABEL_ENUM.OPEN_LOCATION,
         MENU_LABEL_ENUM.SNACKS_PICKER,
         MENU_LABEL_ENUM.BUFFER_DELETE_OTHERS,
-        MENU_LABEL_ENUM.RELOAD_BUFFER_FORCE,
         MENU_LABEL_ENUM.TOGGLE_WRAP,
         MENU_LABEL_ENUM.NEW_TAB,
     }
@@ -271,6 +266,14 @@ end)
 vim.keymap.set({ "n", "t", "v", "x" }, "<A-h>", function ()
   utils.hide_all_floats_in_current_tab()
 end, { desc = "Hide all floats in current tab" })
+
+vim.keymap.set({ "n", "i", "v" }, "<A-r>", function()
+  local choice = vim.fn.confirm("Force reload current buffer from disk?", "&Yes\n&No", 2, "Question")
+  if choice == 1 then
+    vim.cmd('edit!')
+    vim.notify('Buffer force reloaded from disk', vim.log.levels.WARN, { title = 'Buffer' })
+  end
+end, { desc = "Force reload current buffer with confirm" })
 
 -- add font size increase and decrease to neovide
 if vim.g.neovide then
