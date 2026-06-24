@@ -1,7 +1,7 @@
 local utils = require('users.lib.utils')
 
-local M = {}
 
+local M = {}
 --- Track the last toggled Pi terminal id for toggle resolution
 local last_pi_id = nil
 
@@ -158,7 +158,7 @@ function M.send_file()
 
   local channel = vim.bo[term.buf].channel
   if channel and channel > 0 then
-    vim.fn.chansend(channel, "@" .. rel)
+    vim.fn.chansend(channel, "@" .. rel .. "\n")
   end
 end
 
@@ -170,15 +170,18 @@ function M.send_selection()
     return
   end
 
-  -- Get visual selection line range (marks persist after <Esc>)
-  local start_line = vim.fn.line("'<")
-  local end_line = vim.fn.line("'>")
   local msg
-  if start_line > 0 and end_line > 0 then
-    if start_line == end_line then
-      msg = "@" .. rel .. " L" .. start_line
-    else
-      msg = "@" .. rel .. " L" .. start_line .. " - L" .. end_line
+  if vim.fn.mode() == "v" or vim.fn.mode() == "V" then
+    vim.cmd([[execute "normal! \<ESC>"]])
+    -- Get visual selection line range (marks persist after <Esc>)
+    local start_line = vim.fn.line("'<")
+    local end_line = vim.fn.line("'>")
+    if start_line > 0 and end_line > 0 then
+      if start_line == end_line then
+        msg = "@" .. rel .. " L" .. start_line
+      else
+        msg = "@" .. rel .. " L" .. start_line .. " - L" .. end_line
+      end
     end
   else
     msg = "@" .. rel .. " L" .. vim.fn.line(".")
@@ -189,7 +192,7 @@ function M.send_selection()
 
   local channel = vim.bo[term.buf].channel
   if channel and channel > 0 then
-    vim.fn.chansend(channel, msg)
+    vim.fn.chansend(channel, msg .. "\n")
   end
 end
 
