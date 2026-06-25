@@ -19,7 +19,7 @@ import type {
 	SaveGoalDraftParams,
 } from "./types";
 
-import { ensureDir, fileExists, getPaths, normalizeString, normalizeStringArray, nowIso, readText } from "./utils";
+import { ensureDir, fileExists, getPaths, normalizeString, normalizeStringArray, nowIso, readText, tailLines } from "./utils";
 import { defaultGoalDraft, defaultGoalState, readGoalState, writeGoalState } from "./state";
 import { archivePlanningWorkspace, createGoalDesignSkeleton, hasPlanningFiles, initializePlanningWorkspace } from "./workspace";
 import { appendProgressTimeline } from "./markdown";
@@ -419,6 +419,72 @@ export default function planningFilesRuntime(pi: ExtensionAPI): void {
 		description: "Start or resume implementing the committed goal using planning files as the execution tracker.",
 		handler: async (_args, ctx) => {
 			startOrResumeGoalImpl(ctx);
+		},
+	});
+
+	pi.registerCommand("plan-update", {
+		description: "检查当前进展和发现是否与 planning files 记录的内容对齐延续。如果是，让 agent 更新 planning files；如果不是，询问用户是否要 reset 再写，还是先中断。",
+		handler: async (_args, ctx) => {
+			const snapshot = getPlanningSnapshot(ctx.cwd, state.resumedFromPreviousSession);
+			state = snapshot;
+
+			if (!snapshot.exists) {
+				ctx.ui.notify("没有 planning files，无需更新。", "info");
+				return;
+			}
+
+			pi.sendMessage(
+				{
+					customType: "planning-files-runtime-update-context",
+					content: [
+						"[PLAN UPDATE]",
+						"Refresh planning files (task_plan.md, findings.md, progress.md) with current workspace context.",
+						"",
+						"## Planning File Location (REQUIRED)",
+						`All planning files for this project live under ${snapshot.planningRoot}.`,
+						"Do NOT create or write task_plan.md, findings.md, or progress.md anywhere else (e.g. repo root or docs/).",
+						"Always write/edit using these exact paths:",
+						`- ${snapshot.files["task_plan.md"]}`,
+						`- ${snapshot.files["findings.md"]}`,
+						`- ${snapshot.files["progress.md"]}`,
+						"",
+						"## Continuity Check",
+						"Compare actual progress & findings against what's recorded in planning files:",
+						"- Is the last recorded progress in progress.md a continuation of what you're doing now?",
+						"- Are the findings and decisions in findings.md still valid in the current context?",
+						"- Is task_plan.md's phase/next-action still what you should be working on?",
+						"- Are there new findings or progress not yet recorded?",
+						"",
+						"### If it IS a continuation",
+						"Use write/edit to update the planning files at the exact paths above:",
+						"- findings.md: append new discoveries",
+						"- progress.md: append new progress",
+						"- task_plan.md: update phase, next action, blocker, etc.",
+						"",
+						"### If it is NOT a continuation (progress doesn't align, context changed, old records stale)",
+						"Don't write yet. Explain what changed and ask the user:",
+						"1. **reset** — Archive current planning files, reinitialize, then write fresh content",
+						"2. **write-anyway** — Append current context to planning files despite discontinuity",
+						"3. **abort** — Don't write, wait for user decision",
+						"",
+						"## Current Planning State",
+						`Phase: ${snapshot.currentPhase ?? "(missing)"}`,
+						`Next action: ${snapshot.nextAction ?? "(missing)"}`,
+						`Blocker: ${snapshot.blocker ?? "(none)"}`,
+						"",
+						"## task_plan.md",
+						readText(snapshot.files["task_plan.md"]) || "(missing)",
+						"",
+						"## findings.md (tail)",
+						tailLines(readText(snapshot.files["findings.md"]), 30) || "(missing)",
+						"",
+						"## progress.md (tail)",
+						tailLines(readText(snapshot.files["progress.md"]), 30) || "(missing)",
+					].join("\n"),
+					display: false,
+				},
+				{ triggerTurn: true },
+			);
 		},
 	});
 
