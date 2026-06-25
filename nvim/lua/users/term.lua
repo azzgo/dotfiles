@@ -104,7 +104,7 @@ local function show_terminal_list()
   end
 
   Snacks.picker.pick({
-    title = "终端列表  (<c-r>rename  <c-n>new)",
+    title = "终端列表  (<c-r>rename  <c-t>new)",
     items = items,
     refresh = true,
     multi = false,
@@ -166,7 +166,7 @@ local function show_terminal_list()
           ['<cr>'] = { 'open_terminal', mode = { "n", "i" }, desc = "打开终端" },
           ["<c-x>"] = { "close_terminal", mode = { "n", "i" }, desc = "删除终端" },
           ["<c-r>"] = { "rename_terminal", mode = { "n", "i" }, desc = "重命名终端" },
-          ["<c-n>"] = { "new_terminal", mode = { "n", "i" }, desc = "新建终端" },
+          ["<c-t>"] = { "new_terminal", mode = { "n", "i" }, desc = "新建终端" },
         },
       },
     },

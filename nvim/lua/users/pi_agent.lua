@@ -222,7 +222,7 @@ function M.list()
   end
 
   Snacks.picker.pick({
-    title = "Pi Terminals  (<c-r>rename  <c-n>new)",
+    title = "Pi Terminals  (<c-r>rename  <c-t>new)",
     items = items,
     refresh = true,
     multi = false,
@@ -286,7 +286,7 @@ function M.list()
           ['<cr>'] = { 'open_terminal', mode = { "n", "i" }, desc = "Open terminal" },
           ["<c-x>"] = { "close_terminal", mode = { "n", "i" }, desc = "Close terminal" },
           ["<c-r>"] = { "rename_terminal", mode = { "n", "i" }, desc = "Rename terminal" },
-          ["<c-n>"] = { "new_terminal", mode = { "n", "i" }, desc = "New Pi terminal" },
+          ["<c-t>"] = { "new_terminal", mode = { "n", "i" }, desc = "New Pi terminal" },
         },
       },
     },
