@@ -268,8 +268,8 @@ vim.keymap.set({ "n", "t", "v", "x" }, "<A-h>", function ()
 end, { desc = "Hide all floats in current tab" })
 
 vim.keymap.set({ "n", "i", "v" }, "<A-r>", function()
-  local choice = vim.fn.confirm("Force reload current buffer from disk?", "&Yes\n&No", 2, "Question")
-  if choice == 1 then
+  local ok, choice = pcall(vim.fn.confirm, "Force reload current buffer from disk?", "&Yes\n&No", 2, "Question")
+  if ok and choice == 1 then
     vim.cmd('edit!')
     vim.notify('Buffer force reloaded from disk', vim.log.levels.WARN, { title = 'Buffer' })
   end
