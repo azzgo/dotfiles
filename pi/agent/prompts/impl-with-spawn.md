@@ -12,9 +12,9 @@ Choose the spawn agent based on the target model:
 | Model family | Agent | Reason |
 |---|---|---|
 | `composer` (e.g. `composer-2.5`, `composer-2-fast`) | **cursor** | Composer is Cursor's exclusive model |
-| `deepseek` (e.g. `deepseek-v4-flash`, `deepseek-v4-pro`) | **pi** | DeepSeek is only configured on pi |
+| `deepseek` — `deepseek-v4-flash` | **opencode-go** | Prefer opencode-go for flash |
+| `deepseek` — `deepseek-v4-pro` | **deepseek (official)** | Prefer the official DeepSeek provider |
 | `minimax` (e.g. `MiniMax-M2.7`) | **pi** | MiniMax is configured on pi |
-| Copilot models (claude/gpt/gemini) | **pi** | Available via GitHub Copilot on pi |
 | User explicitly names an agent | Use that agent | — |
 
 ## Model Selection (IMPORTANT)
@@ -26,10 +26,10 @@ Choose the spawn agent based on the target model:
    - Cursor: `agent --list-models`
 2. **Prioritize cost-effective models** (each maps to an agent):
    - `minimax` → pi
-   - `deepseek-v4-flash` / `deepseek-v4-pro` → pi
+   - `deepseek-v4-flash` → opencode-go
+   - `deepseek-v4-pro` → deepseek (official)
    - `composer-2.5` → cursor
    - `composer-2-fast` → cursor (Cursor's default)
-   - `gpt-4o-mini` / `gpt-5-mini` → pi (last resort)
 3. Pass the selected model via `--model` flag.
 
 Example (pi with deepseek):
