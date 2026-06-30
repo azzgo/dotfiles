@@ -139,6 +139,9 @@ install-pi:
     rm -rf ~/.pi/agent/extensions/readonly-mode
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/readonly-mode ~/.pi/agent/extensions/readonly-mode
 
+    rm -f ~/.pi/agent/extensions/xfer.ts
+    ln -s {{ dotfiles_dir }}/pi/agent/extensions/xfer.ts ~/.pi/agent/extensions/xfer.ts
+
     rm -rf ~/.pi/agent/prompts
     ln -s {{ dotfiles_dir }}/pi/agent/prompts ~/.pi/agent/prompts
 
