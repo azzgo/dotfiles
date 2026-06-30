@@ -209,6 +209,41 @@ local function quitAll()
   vim.notify("All terminals removed.", vim.log.levels.INFO)
 end
 
+--- Track the last toggled terminal id for toggle resolution
+local last_term_id = nil
+
+--- Toggle the last used terminal.
+--- If the last terminal is alive, toggle it (show if hidden, hide if visible).
+--- If no last terminal, find any existing non-Pi terminal and toggle it.
+--- If no terminals exist, create one in the root directory.
+local function toggle_terminal()
+  -- 1. Check if last tracked terminal is still alive
+  if last_term_id then
+    local all = Snacks.terminal.list()
+    for _, term in ipairs(all) do
+      if term.id == last_term_id and not utils.is_pi_terminal(term) then
+        term:toggle()
+        return
+      end
+    end
+    last_term_id = nil
+  end
+
+  -- 2. Look for any existing non-Pi terminal
+  local all = Snacks.terminal.list()
+  for _, term in ipairs(all) do
+    if not utils.is_pi_terminal(term) then
+      last_term_id = term.id
+      term:toggle()
+      return
+    end
+  end
+
+  -- 3. No terminals exist → create one in root
+  local term = create_terminal(vim.fn.getcwd(), "float")
+  last_term_id = term.id
+end
+
 --- Main terminal selection menu
 local function show_terminal_menu()
   utils.hide_all_floats_in_current_tab()
@@ -259,7 +294,8 @@ local function show_terminal_menu()
 end
 
 -- Key mappings
-vim.keymap.set({ 'n', 't' }, '<A-t>', show_terminal_menu, { desc = 'Open terminal menu' })
+vim.keymap.set({ 'n', 't' }, '<A-t>', toggle_terminal, { desc = 'Toggle terminal' })
+vim.keymap.set({ 'n' }, '<c-t>', show_terminal_menu, { desc = 'Open terminal menu' })
 
 -- Function to destroy current terminal if filetype is snacks_terminal
 local function destroy_current_terminal()
