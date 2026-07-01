@@ -1,33 +1,33 @@
 /**
- * Xfer — 跨项目单向对话交接扩展
+ * Xfer — unidirectional cross-project handoff extension
  *
- * 将当前对话通过 /handoff prompt 风格生成 markdown 交接文档，
- * 通过 Unix socket 单向发送给另一台 Pi 实例。
+ * Generate a markdown handoff doc via /handoff-style prompt,
+ * send it via Unix socket to another Pi instance.
  *
- * ⚡ 纯单向发送，不等待回复。调用方想回传时，再调 /xfer 发一次即可。
+ * ⚡ One-way only, no wait. Reply by calling /xfer again.
  *
- * 安装:
- *   just install-pi    # 自动 symlink 到 ~/.pi/agent/extensions/
+ * Install:
+ *   just install-pi    # auto symlink to ~/.pi/agent/extensions/
  *
- * 用法:
- *   /xfer                     — 帮助
- *   /xfer list                — 列出可用 peer（Tab 补全）
- *   /xfer rename <name>       — 重命名当前 agent
- *   /xfer <target> <要求>     — 发起交接（LLM 生成文档 + 调用 xfer_to）
+ * Usage:
+ *   /xfer                     — help
+ *   /xfer list                — list peers (Tab complete)
+ *   /xfer rename <name>       — rename this agent
+ *   /xfer <target> <req>      — handoff (LLM doc + xfer_to)
  *
- * LLM 工具:
+ * LLM Tool:
  *   xfer_to(target, summary, handoff_document)
- *       → 写 /tmp/pi-xfer-<id>.md
- *       → socket 通知目标 {file, summary}
- *       → 立即返回 handoff_id（不等待）
+ *       → write /tmp/pi-xfer-<id>.md
+ *       → socket notify target {file, summary}
+ *       → return handoff_id immediately (no wait)
  *
- * 回传同样用 /xfer：
- *   当你想回复对方时，再调 /xfer <原发送方> <回复内容> 即可。
- *   每个 xfer 都是独立的单向消息。
+ * Reply also via /xfer:
+ *   To reply, /xfer <original sender> <message>.
+ *   Each xfer is independent one-way.
  *
- * 协议:
+ * Protocol:
  *   Unix socket @ ~/pi-handoff/agents/<name>.sock
- *   消息: xfer-notify (JSON lines, 单向)
+ *   Message: xfer-notify (JSON lines, one-way)
  */
 
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
@@ -38,12 +38,12 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
 
-// ── 常量 ──
+// ── Constants ──
 
 const XFER_DIR = path.join(os.homedir(), "pi-handoff", "agents");
 const CONNECT_TIMEOUT_MS = 5_000;
 
-// ── 工具函数 ──
+// ── Utils ──
 
 function msgId(): string {
   return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
@@ -59,7 +59,9 @@ function deriveName(pi: ExtensionAPI): string {
       if (s.name) return s.name;
     }
   } catch { /* fall through */ }
-  return path.basename(process.cwd()) || `pi-${process.pid}`;
+  const base = path.basename(process.cwd()) || `pi-${process.pid}`;
+  const suffix = Math.random().toString(36).slice(2, 6);
+  return `${base}_${suffix}`;
 }
 
 function listPeers(myName: string): string[] {
@@ -73,7 +75,7 @@ function listPeers(myName: string): string[] {
   } catch { return []; }
 }
 
-/** 连接目标 socket，发消息，等 ack，断开 */
+/** Connect to target socket, send, wait ack, close */
 function sendNotify(target: string, msg: object): Promise<void> {
   return new Promise((resolve, reject) => {
     const endpoint = path.join(XFER_DIR, `${target}.sock`);
@@ -100,7 +102,7 @@ function sendNotify(target: string, msg: object): Promise<void> {
   });
 }
 
-// ── 扩展 ──
+// ── Extension ──
 
 export default function (pi: ExtensionAPI) {
   pi.registerFlag("xfer-name", {
@@ -109,7 +111,7 @@ export default function (pi: ExtensionAPI) {
     default: undefined,
   });
 
-  // ── 状态 ──
+  // ── State ──
 
   let identity: {
     name: string;
@@ -118,7 +120,7 @@ export default function (pi: ExtensionAPI) {
     server: net.Server | null;
   } | null = null;
 
-  // ── Socket Server（接收外来 xfer）──
+  // ── Socket Server (inbound xfer) ──
 
   function createServer(): net.Server {
     return net.createServer((socket) => {
@@ -133,16 +135,17 @@ export default function (pi: ExtensionAPI) {
         let msg: any;
         try { msg = JSON.parse(line); } catch { return; }
 
-        // 只处理 xfer-notify（单向交接通知）
+        // only handle xfer-notify (one-way handoff)
         if (msg.type === "xfer-notify") {
-          // 注入 followUp，让当前 LLM 读到交接文档和处理要求
+          // inject followUp so LLM reads doc and handles request
           pi.sendMessage({
             customType: "xfer-inbound",
             content:
               `📨 [Xfer from **${msg.from}**]\n\n` +
-              `**要求**: ${msg.summary}\n\n` +
-              `**交接文档**: \`${msg.file}\`\n\n` +
-              `请先读取交接文档，然后按要求处理。`,
+              `**Request**: ${msg.summary}\n\n` +
+              `**Doc**: \`${msg.file}\`\n\n` +
+              `Read the doc and handle the request.\n` +
+              `Reply via \`/xfer ${msg.from}\` if needed.`,
             display: true,
           }, { deliverAs: "followUp", triggerTurn: true });
 
@@ -152,7 +155,7 @@ export default function (pi: ExtensionAPI) {
     });
   }
 
-  // ── 启动：注册 socket ──
+  // ── Startup: register socket ──
 
   pi.on("session_start", async (_event, ctx) => {
     const name = deriveName(pi);
@@ -169,14 +172,14 @@ export default function (pi: ExtensionAPI) {
     });
   });
 
-  // ── /xfer 命令 ──
+  // ── /xfer command ──
 
   pi.registerCommand("xfer", {
     description:
-      "Xfer: 单向发送 handoff 给另一个 Pi。\n" +
-      "  /xfer <target> <要求>  — 生成文档并发给目标\n" +
-      "  /xfer list              — 查看可用 peer\n" +
-      "  /xfer rename <name>     — 重命名当前 agent",
+      "Xfer: one-way handoff to another Pi.\n" +
+      "  /xfer <target> <request>  — generate doc and send\n" +
+      "  /xfer list               — list peers\n" +
+      "  /xfer rename <name>      — rename this agent",
 
     getArgumentCompletions: (prefix: string): AutocompleteItem[] | null => {
       const peers = listPeers(identity?.name ?? "");
@@ -195,14 +198,14 @@ export default function (pi: ExtensionAPI) {
       const parts = (args ?? "").trim().split(/\s+/);
       const cmd = parts[0];
 
-      // ── 帮助 ──
+      // ── help ──
       if (!cmd || cmd === "help") {
         ctx.ui.notify(
-          "📡 /xfer <target> <要求> — 生成 handoff 文档并发给目标\n" +
-          "   /xfer list           — 查看可用 peer\n" +
-          "   /xfer rename <name>  — 重命名当前 agent\n" +
+          "📡 /xfer <target> <request> — generate handoff doc\n" +
+          "   /xfer list               — list peers\n" +
+          "   /xfer rename <name>      — rename this agent\n" +
           "\n" +
-          "💡 单向发送，不等待回复。回传请再调一次 /xfer。",
+          "💡 One-way, no wait. Reply via /xfer.",
           "info",
         );
         return;
@@ -244,7 +247,7 @@ export default function (pi: ExtensionAPI) {
       const target = cmd;
       const requirement = parts.slice(1).join(" ");
       if (!requirement) {
-        ctx.ui.notify(`Usage: /xfer ${target} <一句话要求>`, "error");
+        ctx.ui.notify(`Usage: /xfer ${target} <request>`, "error");
         return;
       }
 
@@ -255,24 +258,26 @@ export default function (pi: ExtensionAPI) {
       }
 
       pi.sendUserMessage(
-        `## 任务交接请求（单向）\n\n` +
-        `**目标 Agent**: ${target}\n` +
-        `**一句话要求**: ${requirement}\n\n` +
-        `请根据当前对话上下文，生成一份 handoff markdown 文档，` +
-        `然后调用 \`xfer_to\` tool 发送给 ${target}。\n\n` +
-        `handoff 文档应包含：\n` +
-        `- 背景/上下文摘要\n` +
-        `- 要解决的问题\n` +
-        `- 对目标的具体要求\n` +
-        `- 相关的文件/代码引用\n` +
-        `- 备注或注意事项\n\n` +
-        `注意：xfer 是单向发送，不等待回复。发给目标后会立即返回一个 handoff_id 供参考。`,
+        `## Handoff Request (one-way)\n\n` +
+        `**Target**: ${target}\n` +
+        `**From**: ${identity.name}\n` +
+        `**Request**: ${requirement}\n\n` +
+        `Based on chat context, write a markdown handoff doc ` +
+        `and call \`xfer_to\` to send it to ${target}.\n\n` +
+        `Handoff doc must include:\n` +
+        `- Context summary\n` +
+        `- Problem to solve\n` +
+        `- Specific requirements\n` +
+        `- Relevant files/code references\n` +
+        `- **Return address**: from=\`${identity.name}\`, reply via \`/xfer ${identity.name}\` (optional)\n` +
+        `- Notes\n\n` +
+        `Note: xfer is one-way, no reply wait. Returns handoff_id upon delivery.`,
         { deliverAs: "followUp", triggerTurn: true },
       );
     },
   });
 
-  // ── xfer_to tool（单向发送，不等待回复）──
+  // ── xfer_to tool (one-way, no wait) ──
 
   pi.registerTool({
     name: "xfer_to",
@@ -286,7 +291,7 @@ export default function (pi: ExtensionAPI) {
       "4. Returns immediately with a handoff_id — no reply waiting\n\n" +
       "To send a response back, the other Pi will use /xfer to send a new handoff.\n\n" +
       "Example:\n" +
-      "  User: /xfer proj-b 帮我查接口超时原因\n" +
+      "  User: /xfer proj-b investigate API timeout\n" +
       "  → LLM generates handoff doc → calls xfer_to(target='proj-b', ...)",
 
     parameters: Type.Object({
@@ -310,10 +315,10 @@ export default function (pi: ExtensionAPI) {
       const mid = msgId();
       const tmpFile = path.join(os.tmpdir(), `pi-xfer-${mid}.md`);
 
-      // 1. 写交接文档到临时文件
+      // 1. write handoff doc to tmp
       fs.writeFileSync(tmpFile, handoff_document, "utf-8");
 
-      // 2. 发送通知给目标
+      // 2. notify target
       if (onUpdate) {
         onUpdate({
           content: [{ type: "text", text: `📨 Sending to "${target}"...` }],
@@ -334,13 +339,12 @@ export default function (pi: ExtensionAPI) {
         throw new Error(`xfer: failed to notify "${target}" — ${err.message}`);
       }
 
-      // 3. 单向发送完成，立即返回（不等待回复）
+      // 3. done, return immediately (no wait)
       return {
         content: [{
           type: "text",
-          text: `✅ Sent to "${target}" (handoff_id: ${mid})\n\n交接文档: ${tmpFile}\n\n` +
-                `这是一个单向交接，不等待回复。` +
-                `对方如需回传，会通过 /xfer 再发一条新消息。`,
+          text: `✅ Sent to "${target}" (handoff_id: ${mid})\n\nDoc: ${tmpFile}\n\n` +
+                `One-way handoff — reply via /xfer if needed.`,
         }],
         details: {
           target,
@@ -352,7 +356,7 @@ export default function (pi: ExtensionAPI) {
     },
   });
 
-  // ── 关闭清理 ──
+  // ── Cleanup ──
 
   pi.on("session_shutdown", async () => {
     if (identity) {
