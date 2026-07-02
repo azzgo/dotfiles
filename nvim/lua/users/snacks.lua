@@ -199,7 +199,7 @@ vim.keymap.set({ "n", "i", "v" }, "<A-x>", function()
   Snacks.picker.commands()
 end, { desc = "Commands" })
 
-vim.keymap.set('n', '<A-l>', function() Snacks.picker.resume() end, { silent = true, noremap = true })
+vim.keymap.set('n', '<leader>l', function() Snacks.picker.resume() end, { silent = true, noremap = true })
 vim.keymap.set('n', '<leader>f', find_files, { silent = true, noremap = true })
 vim.keymap.set('v', '<leader>f', function()
   local text, _ = utils.get_selected_text(true)
