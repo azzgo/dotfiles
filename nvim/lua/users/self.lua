@@ -1,7 +1,6 @@
 local persistence_ok, persistence = pcall(require, "persistence")
 local luasnip_ok = pcall(require, "luasnip")
 local todo_ok = pcall(require, "todo-comments")
-local ai_prompts_ok, ai_prompts = pcall(require, "users.ai_prompts")
 local helper = require('users.lib.self-helper')
 local utils = require('users.lib.utils')
 local flash_ok, flash = pcall(require, 'flash')
@@ -177,9 +176,6 @@ local function self_use_case_popup()
         table.insert(menu, MENU_LABEL_ENUM.LUASNIP)
     end
     
-    if ai_prompts_ok == true then
-        table.insert(menu, MENU_LABEL_ENUM.AI_PROMPTS)
-    end
 
     if todo_ok == true then
         table.insert(menu, MENU_LABEL_ENUM.LIST_TODOS)
