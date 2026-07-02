@@ -332,7 +332,6 @@ end
 
 --- Menu items definition
 local menu_items = {
-  { label = "List Pi",        action = M.list },
   { label = "Send @this",     action = M.send_selection },
   { label = "Send @file",     action = M.send_file },
   { label = "New Pi",         action = M.new_and_toggle },
@@ -370,7 +369,7 @@ end
 
 -- Register keymaps
 vim.keymap.set({ "n", "t", "x" }, "<A-i>", M.toggle, { desc = "Toggle Pi terminal" })
-vim.keymap.set({ "n", "t" }, "<A-l>", M.list, { desc = "Toggle Pi list" })
-vim.keymap.set({ "n", "x" }, "<space>i", M.show_actions_menu, { desc = "Pi actions menu" })
+vim.keymap.set({ "n", "x" }, "<space>i", M.list, { desc = "Toggle Pi list" })
+vim.keymap.set({ "n", "t", "x" }, "<A-l>", M.show_actions_menu, { desc = "Pi actions menu" })
 
 return M
