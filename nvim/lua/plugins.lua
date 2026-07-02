@@ -118,16 +118,6 @@ return require("lazy").setup({
     { 'rose-pine/neovim',    name = 'rose-pine', lazy = true },
 
     -- ##########lua plugins start##############
-    -- ai plugins
-    {
-      dir = vim.g.dot_config_path .. "/nvim/lua/users",
-      name = "ai-prompts",
-      lazy = false,
-      config = function()
-        require('users.ai_prompts')
-      end
-    },
-
     {
       dir = vim.g.dot_config_path .. "/nvim/lua/users",
       name = "pi-agent",
