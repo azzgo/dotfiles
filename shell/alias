@@ -134,6 +134,11 @@ if [[ -x $(command -v yazi) ]];then
   }
 fi
 
+# just alias
+if [[ -x $(command -v just) ]];then
+  alias j=just
+fi
+
 # lf alias
 if [[ -x $(command -v lf) ]];then
   function lfc () {
