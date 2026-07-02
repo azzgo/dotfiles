@@ -269,6 +269,7 @@ export default function (pi: ExtensionAPI) {
         `- Problem to solve\n` +
         `- Specific requirements\n` +
         `- Relevant files/code references\n` +
+        `- **Suggested skills**: Skills from the agent's repertoire that would help complete the task.\n` +
         `- **Return address**: from=\`${identity.name}\`, reply via \`/xfer ${identity.name}\` (optional)\n` +
         `- Notes\n\n` +
         `Note: xfer is one-way, no reply wait. Returns handoff_id upon delivery.`,
@@ -304,7 +305,8 @@ export default function (pi: ExtensionAPI) {
       handoff_document: Type.String({
         description:
           "Full markdown handoff document. Include: context, problem, " +
-          "specific request for the target, relevant files/code, and notes.",
+          "specific request for the target, relevant files/code, " +
+          "suggested skills for the target agent, and notes.",
       }),
     }),
 
