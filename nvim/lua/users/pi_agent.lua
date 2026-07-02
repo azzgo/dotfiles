@@ -370,6 +370,7 @@ end
 
 -- Register keymaps
 vim.keymap.set({ "n", "t", "x" }, "<A-i>", M.toggle, { desc = "Toggle Pi terminal" })
+vim.keymap.set({ "n", "t" }, "<A-l>", M.list, { desc = "Toggle Pi list" })
 vim.keymap.set({ "n", "x" }, "<space>i", M.show_actions_menu, { desc = "Pi actions menu" })
 
 return M
