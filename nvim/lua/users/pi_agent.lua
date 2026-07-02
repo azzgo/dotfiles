@@ -89,7 +89,7 @@ function M.toggle()
   last_pi_id = nil
 
   -- 2. any visible Pi? hide it
-  local visible = find_pi(function(term) return term:valid() end)
+  local visible = find_pi(function(_) return true end)
   if visible then
     resume_pi(visible)
     last_pi_id = visible.id
