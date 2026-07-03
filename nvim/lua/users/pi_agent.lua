@@ -287,6 +287,7 @@ function M.list()
           ["<c-x>"] = { "close_terminal", mode = { "n", "i" }, desc = "Close terminal" },
           ["<c-r>"] = { "rename_terminal", mode = { "n", "i" }, desc = "Rename terminal" },
           ["<c-t>"] = { "new_terminal", mode = { "n", "i" }, desc = "New Pi terminal" },
+          ["<A-h>"] = { "close", mode = { "n", "i" }, desc = "Close picker" },
         },
       },
     },
@@ -351,25 +352,54 @@ function M.show_actions_menu()
 
   utils.hide_all_floats_in_current_tab()
 
-  local labels = {}
-  for _, item in ipairs(menu_items) do
-    table.insert(labels, item.label)
-  end
   local preserve = utils.preserve_mode_for_selection()
-  vim.ui.select(labels, { prompt = "Pi Actions" }, function(choice)
-    preserve()
-    for _, item in ipairs(menu_items) do
-      if item.label == choice then
+
+  local items = {}
+  for _, item in ipairs(menu_items) do
+    table.insert(items, {
+      text = item.label,
+      label = item.label,
+      action = item.action,
+    })
+  end
+
+  Snacks.picker.pick({
+    title = "Pi Actions",
+    items = items,
+    refresh = true,
+    multi = false,
+    layout = {
+      preset = "select",
+      layout = {
+        height = 0.25,
+        max_width = 60,
+        min_width = 30,
+      },
+    },
+    actions = {
+      execute_action = function(picker, item)
+        picker:close()
+        preserve()
         item.action()
-        break
-      end
-    end
-  end)
+      end,
+    },
+    win = {
+      input = {
+        keys = {
+          ['<cr>'] = { 'execute_action', mode = { "n", "i" }, desc = "Execute action" },
+          ['<A-h>'] = { 'close', mode = { "n", "i" }, desc = "Close menu" },
+        },
+      },
+    },
+    format_item = function(item)
+      return item.label
+    end,
+  })
 end
 
 -- Register keymaps
-vim.keymap.set({ "n", "t", "x" }, "<A-i>", M.toggle, { desc = "Toggle Pi terminal" })
+vim.keymap.set({ "n", "t", "x", 'i' }, "<A-l>", M.toggle, { desc = "Toggle Pi terminal" })
 vim.keymap.set({ "n", "x" }, "<space>i", M.list, { desc = "Toggle Pi list" })
-vim.keymap.set({ "n", "t", "x" }, "<A-l>", M.show_actions_menu, { desc = "Pi actions menu" })
+vim.keymap.set({ "n", "t", "x", 'i' }, "<A-i>", M.show_actions_menu, { desc = "Pi actions menu" })
 
 return M
