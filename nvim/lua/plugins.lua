@@ -100,12 +100,16 @@ return require("lazy").setup({
     },
     -- git command support
     {
-      "tpope/vim-fugitive",
-      config = function()
-        vim.cmd [[
-        exe 'source' (g:vim_config_path . '/after/plugin/fugitive.vim')
-      ]]
-      end
+      "NeogitOrg/neogit",
+      lazy = true,
+      dependencies = {
+        "dlyongemallo/diffview.nvim",        -- optional
+        "folke/snacks.nvim",             -- optional
+      },
+      cmd = "Neogit",
+      keys = {
+        { "<leader>gg", "<cmd>Neogit<cr>", desc = "Show Neogit UI" }
+      }
     },
     -- theme
     {
@@ -301,7 +305,6 @@ return require("lazy").setup({
       config = function()
         vim.cmd [[
         exe 'source' (g:vim_config_path . '/after/plugin/fzf-tasks.vim')
-        exe 'source' (g:vim_config_path . '/after/plugin/fugitive-run.vim')
         ]]
       end
     },
