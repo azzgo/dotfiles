@@ -163,7 +163,7 @@ function M.send_file()
 end
 
 --- Send location reference to Pi (@path L22 - L33)
-function M.send_selection()
+function M.send_selection(start_line, end_line)
   local rel = get_relative_path()
   if not rel then
     vim.notify("Buffer has no file path", vim.log.levels.WARN)
@@ -171,20 +171,12 @@ function M.send_selection()
   end
 
   local msg
-  if vim.fn.mode() == "v" or vim.fn.mode() == "V" then
-    vim.cmd([[execute "normal! \<ESC>"]])
-    -- Get visual selection line range (marks persist after <Esc>)
-    local start_line = vim.fn.line("'<")
-    local end_line = vim.fn.line("'>")
-    if start_line > 0 and end_line > 0 then
-      if start_line == end_line then
-        msg = "@" .. rel .. " L" .. start_line
-      else
-        msg = "@" .. rel .. " L" .. start_line .. " - L" .. end_line
-      end
+  if start_line > 0 and end_line > 0 then
+    if start_line == end_line then
+      msg = "@" .. rel .. " L" .. start_line
+    else
+      msg = "@" .. rel .. " L" .. start_line .. " - L" .. end_line
     end
-  else
-    msg = "@" .. rel .. " L" .. vim.fn.line(".")
   end
 
   local term = ensure_pi_open()
@@ -331,15 +323,21 @@ function M.new_and_toggle()
   end
 end
 
---- Menu items definition
-local menu_items = {
-  { label = "Send @this",     action = M.send_selection },
-  { label = "Send @file",     action = M.send_file },
-  { label = "New Pi",         action = M.new_and_toggle },
-}
 
 --- Show the Pi actions menu (<A-i>)
 function M.show_actions_menu()
+  local start_line, end_line = utils.preserve_for_selection_range()
+  --- Menu items definition
+  local menu_items = {
+    {
+      label = "Send @this",
+      action = function()
+        M.send_selection(start_line, end_line)
+      end
+    },
+    { label = "Send @file", action = M.send_file },
+    { label = "New Pi",     action = M.new_and_toggle },
+  }
   -- Capture the currently focused/visible Pi terminal BEFORE hiding floats,
   -- so toggle/send actions can still find it after the menu hides everything.
   local focused = find_pi(function(term)
@@ -351,8 +349,6 @@ function M.show_actions_menu()
   end
 
   utils.hide_all_floats_in_current_tab()
-
-  local preserve = utils.preserve_mode_for_selection()
 
   local items = {}
   for _, item in ipairs(menu_items) do
@@ -379,7 +375,6 @@ function M.show_actions_menu()
     actions = {
       execute_action = function(picker, item)
         picker:close()
-        preserve()
         item.action()
       end,
     },
