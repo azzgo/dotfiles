@@ -29,12 +29,17 @@ function M.copy_to_clipboard(text)
   vim.fn.setreg('"', text)
 end
 
-function M.preserve_mode_for_selection()
+function M.preserve_for_selection_range()
   local was_visual = vim.fn.mode() == "v" or vim.fn.mode() == "V"
-  return function()
-    if was_visual then
-      vim.cmd('normal! gv')
-    end
+  if was_visual then
+    vim.cmd([[execute "normal! \<ESC>"]])
+    -- Get visual selection line range (marks persist after <Esc>)
+    local start_line = vim.fn.line("'<")
+    local end_line = vim.fn.line("'>")
+    return start_line, end_line
+  else 
+    local line = vim.fn.line('.')
+    return line, line
   end
 end
 
