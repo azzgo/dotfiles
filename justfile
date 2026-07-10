@@ -138,6 +138,8 @@ install-pi:
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/agent-timer ~/.pi/agent/extensions/agent-timer
     rm -rf ~/.pi/agent/extensions/readonly-mode
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/readonly-mode ~/.pi/agent/extensions/readonly-mode
+    rm -rf ~/.pi/agent/extensions/hashline-edit
+    ln -s {{ dotfiles_dir }}/pi/agent/extensions/hashline-edit ~/.pi/agent/extensions/hashline-edit
 
     rm -f ~/.pi/agent/extensions/xfer.ts
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/xfer.ts ~/.pi/agent/extensions/xfer.ts
