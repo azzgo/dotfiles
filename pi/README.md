@@ -12,7 +12,6 @@
 - `pi/mcp.json`
 - `pi/agent/extensions/planning-files-runtime/`
 - `pi/agent/extensions/readonly-mode/`
-- `pi/agent/extensions/hashline-edit/`
 - `pi/agent/extensions/agent-timer/`
 - `pi/agent/extensions/xfer.ts`
 
@@ -67,19 +66,6 @@
 - `~/.pi/agent/prompts/*.md`
 
 这样仓库里的 prompts（例如 `grill-me.md`）可以直接作为全局 `/prompt-name` 使用。
-
-### 7. hashline-edit (lite) — hash 锚点编辑协议
-
-`pi/agent/extensions/hashline-edit/` 是从 [pi-hashline-edit](https://github.com/RimuruW/pi-hashline-edit) 裁剪的最小实现，用内容哈希锚点替换内置 `read`/`edit`。
-
-Lite 版特点：
-- 用 `node:crypto` MD5 替换 xxhashjs，零外部依赖
-- hash 长度硬编码为 2，无配置文件
-- 只保留 `replace` + `replace_text` 两个 op（无 append/prepend）
-- 无 grep、无 3-way merge、无多版本 snapshot
-- 保留 stale anchor 检测 + 重复编辑检测 + noop loop guard
-
-详见扩展目录下的 `README.md`。参考源码：`/Users/ison/dev/sources/pi-hashline-edit`。
 
 ### 8. planning-files-runtime 已内聚实现 planning + goal overlay
 
