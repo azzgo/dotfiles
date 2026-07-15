@@ -10,7 +10,8 @@
   "packages": [
     "npm:pi-web-access",
     "npm:pi-mcp-adapter",
-    "npm:pi-interactive-shell"
+    "npm:pi-interactive-shell",
+    "npm:pi-hashline-edit"
   ],
   "enabledModels": [
     "minimax-cn/MiniMax-M2.7",
@@ -21,6 +22,6 @@
   "extensions": [
     "+extensions/planning-files-runtime/index.ts",
     "+extensions/readonly-mode/index.ts",
-    "+extensions/hashline-edit/index.ts"
+    "-extensions/hashline-edit/index.ts"
   ]
 }
