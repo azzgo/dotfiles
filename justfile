@@ -3,7 +3,7 @@
 
 # Default variables
 dotfiles_dir := justfile_directory()
-temp_dir := dotfiles_dir / "temp_dotfiles" 
+temp_dir := dotfiles_dir / "temp_dotfiles"
 
 # List all available recipes
 default:
@@ -16,7 +16,7 @@ pack-linux64:
     echo "📦 Packaging dotfiles for Linux x64..."
     rm -rf {{ temp_dir }}
     mkdir -p {{ temp_dir }}
-    
+
     rsync -av \
         --exclude='nvim-linux-x86_64.tar.gz' \
         --exclude='nvim-linux-x86_64' \
@@ -27,7 +27,7 @@ pack-linux64:
         --exclude='dotfiles.linux64.tar.gz' \
         --exclude='justfile' \
         {{ dotfiles_dir }}/ {{ temp_dir }}/
-    
+
     tar -czvf {{ dotfiles_dir }}/dotfiles.linux64.tar.gz -C {{ temp_dir }} .
     rm -rf {{ temp_dir }}
     echo "✅ Package created: dotfiles.linux64.tar.gz"
@@ -37,21 +37,21 @@ install-neovim:
     #!/usr/bin/env bash
     set -euo pipefail
     echo "🚀 Installing Neovim configuration..."
-    
+
     # Create neovim config directory
     mkdir -p ~/.config/nvim
-    
+
     # Add source line to init.vim if not already present
     if ! grep -q "source.*{{ dotfiles_dir }}/nvim/init.vim" ~/.config/nvim/init.vim 2>/dev/null; then
         echo "source {{ dotfiles_dir }}/nvim/init.vim" >> ~/.config/nvim/init.vim
     fi
-    
+
     # Install plugins and update Treesitter
     echo "Installing Lazy plugins..."
     nvim --headless -c 'Lazy install' -c 'qa'
     echo "Updating Treesitter parsers..."
     nvim --headless -c 'TSUpdateSync' -c 'sleep 20' -c 'qa'
-    
+
     # Create vim symlink
     ln -sf {{ dotfiles_dir }}/vim ~/.vim
     echo "✅ Neovim configuration installed"
@@ -61,12 +61,12 @@ install-vim:
     #!/usr/bin/env bash
     set -euo pipefail
     echo "🚀 Installing Vim configuration..."
-    
+
     # Add source line to .vimrc if not already present
     if ! grep -q "source.*{{ dotfiles_dir }}/vim/vimrc" ~/.vimrc 2>/dev/null; then
         echo "source {{ dotfiles_dir }}/vim/vimrc" >> ~/.vimrc
     fi
-    
+
     # Install vim plugins
     vim +PlugInstall +qa
     echo "✅ Vim configuration installed"
@@ -84,14 +84,14 @@ install-emacs:
     #!/usr/bin/env bash
     set -euo pipefail
     echo "🚀 Installing Emacs configuration..."
-    
+
     # Create emacs config directory
     mkdir -p ~/.emacs.d/lisp
-    
+
     # Create symlinks
     ln -sf {{ dotfiles_dir }}/emacs/init.el ~/.emacs.d/init.el
     ln -sf {{ dotfiles_dir }}/emacs/lisp ~/.emacs.d/lisp
-    
+
     # Create local config file if it doesn't exist
     if [ ! -f ~/.emacs.d/lisp/init-local.el ]; then
         echo "(provide 'init-local)" > ~/.emacs.d/lisp/init-local.el
@@ -103,14 +103,14 @@ install-terminals:
     #!/usr/bin/env bash
     set -euo pipefail
     echo "🚀 Installing terminal configurations..."
-    
+
     mkdir -p ~/.config
-    
+
     # Install terminal configs if they exist
     [ -d {{ dotfiles_dir }}/alacritty ] && ln -sf {{ dotfiles_dir }}/alacritty ~/.config/alacritty
     [ -d {{ dotfiles_dir }}/kitty ] && ln -sf {{ dotfiles_dir }}/kitty ~/.config/kitty  
     [ -d {{ dotfiles_dir }}/ghostty ] && ln -sf {{ dotfiles_dir }}/ghostty ~/.config/ghostty
-    
+
     echo "✅ Terminal configurations installed"
 
 # Install Pi shared configuration
@@ -138,8 +138,6 @@ install-pi:
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/agent-timer ~/.pi/agent/extensions/agent-timer
     rm -rf ~/.pi/agent/extensions/readonly-mode
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/readonly-mode ~/.pi/agent/extensions/readonly-mode
-    rm -rf ~/.pi/agent/extensions/hashline-edit
-    ln -s {{ dotfiles_dir }}/pi/agent/extensions/hashline-edit ~/.pi/agent/extensions/hashline-edit
 
     rm -f ~/.pi/agent/extensions/xfer.ts
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/xfer.ts ~/.pi/agent/extensions/xfer.ts
@@ -158,16 +156,16 @@ install-shell:
     #!/usr/bin/env bash
     set -euo pipefail
     echo "🚀 Installing shell configurations..."
-    
+
     # Add shell sources if not already present
     if ! grep -q "source.*{{ dotfiles_dir }}/shell/bashrc" ~/.bashrc 2>/dev/null; then
         echo "source {{ dotfiles_dir }}/shell/bashrc" >> ~/.bashrc
     fi
-    
+
     if ! grep -q "source.*{{ dotfiles_dir }}/shell/zshrc" ~/.zshrc 2>/dev/null; then
         echo "source {{ dotfiles_dir }}/shell/zshrc" >> ~/.zshrc
     fi
-    
+
     # Create symlinks
     ln -sf {{ dotfiles_dir }}/tmux.conf ~/.tmux.conf
     mkdir -p ~/.config
