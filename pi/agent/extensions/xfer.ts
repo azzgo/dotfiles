@@ -144,8 +144,8 @@ export default function (pi: ExtensionAPI) {
               `📨 [Xfer from **${msg.from}**]\n\n` +
               `**Request**: ${msg.summary}\n\n` +
               `**Doc**: \`${msg.file}\`\n\n` +
-              `Read the doc and handle the request.\n` +
-              `Reply via \`/xfer ${msg.from}\` if needed.`,
+              `Read the doc and handle the request.` +
+              `\n\nXfer is one-way — only reply if you have meaningful new information to communicate back.`,
             display: true,
           }, { deliverAs: "followUp", triggerTurn: true });
 
@@ -270,7 +270,7 @@ export default function (pi: ExtensionAPI) {
         `- Specific requirements\n` +
         `- Relevant files/code references\n` +
         `- **Suggested skills**: Skills from the agent's repertoire that would help complete the task.\n` +
-        `- **Return address**: from=\`${identity.name}\`, reply via \`/xfer ${identity.name}\` (optional)\n` +
+        `- **Return address**: from=\`${identity.name}\`. Only reply back if you have new information to share.\n` +
         `- Notes\n\n` +
         `Note: xfer is one-way, no reply wait. Returns handoff_id upon delivery.`,
         { deliverAs: "followUp", triggerTurn: true },
@@ -290,7 +290,9 @@ export default function (pi: ExtensionAPI) {
       "2. Call xfer_to with: target name, one-sentence summary, full document body\n" +
       "3. The tool saves the doc to /tmp/ and sends a socket notification to the target\n" +
       "4. Returns immediately with a handoff_id — no reply waiting\n\n" +
-      "To send a response back, the other Pi will use /xfer to send a new handoff.\n\n" +
+      "IMPORTANT: One-way handoff. Do NOT reply with acknowledgements or " +
+      "unnecessary follow-ups. Only xfer back if you have meaningful new " +
+      "information to share.\n\n" +
       "Example:\n" +
       "  User: /xfer proj-b investigate API timeout\n" +
       "  → LLM generates handoff doc → calls xfer_to(target='proj-b', ...)",
