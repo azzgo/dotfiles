@@ -49,6 +49,22 @@ function msgId(): string {
   return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
 }
 
+function encodeAgentName(name: string): string {
+  return encodeURIComponent(name);
+}
+
+function decodeAgentName(name: string): string {
+  try {
+    return decodeURIComponent(name);
+  } catch {
+    return name;
+  }
+}
+
+function endpointForName(name: string): string {
+  return path.join(XFER_DIR, `${encodeAgentName(name)}.sock`);
+}
+
 function deriveName(pi: ExtensionAPI): string {
   const flag = pi.getFlag("xfer-name") as string | undefined;
   if (flag) return flag;
@@ -70,6 +86,7 @@ function listPeers(myName: string): string[] {
     return fs.readdirSync(XFER_DIR)
       .filter(f => f.endsWith(".sock"))
       .map(f => f.replace(/\.sock$/, ""))
+      .map(decodeAgentName)
       .filter(n => n !== myName)
       .sort();
   } catch { return []; }
@@ -78,7 +95,7 @@ function listPeers(myName: string): string[] {
 /** Connect to target socket, send, wait ack, close */
 function sendNotify(target: string, msg: object): Promise<void> {
   return new Promise((resolve, reject) => {
-    const endpoint = path.join(XFER_DIR, `${target}.sock`);
+    const endpoint = endpointForName(target);
     if (!fs.existsSync(endpoint)) {
       return reject(new Error(`peer "${target}" not found`));
     }
@@ -160,7 +177,7 @@ export default function (pi: ExtensionAPI) {
   pi.on("session_start", async (_event, ctx) => {
     const name = deriveName(pi);
     fs.mkdirSync(XFER_DIR, { recursive: true });
-    const endpoint = path.join(XFER_DIR, `${name}.sock`);
+    const endpoint = endpointForName(name);
     try { fs.unlinkSync(endpoint); } catch { /* ok */ }
 
     identity = { name, cwd: ctx.cwd || process.cwd(), endpoint, server: null };
@@ -234,7 +251,7 @@ export default function (pi: ExtensionAPI) {
         try { identity.server?.close(); } catch { /* ok */ }
         try { fs.unlinkSync(identity.endpoint); } catch { /* ok */ }
         identity.name = newName;
-        identity.endpoint = path.join(XFER_DIR, `${newName}.sock`);
+        identity.endpoint = endpointForName(newName);
         const server = createServer();
         identity.server = server;
         await new Promise<void>(resolve => server.listen(identity.endpoint, resolve));
@@ -251,7 +268,7 @@ export default function (pi: ExtensionAPI) {
         return;
       }
 
-      const targetEndpoint = path.join(XFER_DIR, `${target}.sock`);
+      const targetEndpoint = endpointForName(target);
       if (!fs.existsSync(targetEndpoint)) {
         ctx.ui.notify(`❌ Peer "${target}" not found — use /xfer list`, "error");
         return;
