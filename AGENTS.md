@@ -73,11 +73,11 @@ Skills 定义文件位于多个搜索路径，按优先级加载：
 | 3 | `~/.agents/skills/` | 其他 agent skill（browser-bridge、pixso、skill-creator） |
 
 本仓库维护的 skills（`grill-with-docs`、`prototype` 等）统一安装在 `~/.pi/agent/skills/` 下。
-`~/.pi/agent/skills/README.md` 仅记录本仓库维护的 skill 来源、安装日期、调整内容和上游地址，不包含其他来源的 skill。
+`~/.pi/agent/skills/README.txt` 仅记录本仓库维护的 skill 来源、安装日期、调整内容和上游地址，不包含其他来源的 skill。
 
 Skills 维护规则：
 
-1. **记录来源** — 从外部安装的 skill 必须在 `~/.pi/agent/skills/README.md` 中记录来源 URL、commit hash 和安装日期，以便日后判断是否需要升级。
+1. **记录来源** — 从外部安装的 skill 必须在 `~/.pi/agent/skills/README.txt` 中记录来源 URL、commit hash 和安装日期，以便日后判断是否需要升级。
 2. **检查上游再更新** — 更新外部 skill 前，先 `git log` 查看上游变更，确认值得更新再操作。
 3. **混合来源 skill 保留双上游** — 从多个来源精炼的 skill（如 `code-review`）需同时记录所有上游 URL。
 4. **机器本地** — `~/.pi/agent/skills/` 下的 skill 需要每台机器单独安装，不会通过本仓库自动同步。
