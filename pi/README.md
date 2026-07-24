@@ -55,9 +55,10 @@
 `pi/agent/skills/` 会通过 `just install-pi` link 到 `~/.pi/agent/skills/`。
 
 当前维护的 skills：
-- `improve-codebase-architecture` — 代码库架构改进
-- `pixso-implement-design` — Pixso 设计稿实现
-- `skill-creator` — Skill 创建工具
+- `wayfinder` — Personal Wayfinder（本地 taskmd 决策地图）
+- `grill-with-docs` — 对着领域文档 grilling 计划
+- `prototype` — throwaway prototype 验证设计问题
+- `code-review` / `impl-with-spawn` / `improve-codebase-architecture` — 其它本地维护 skills
 
 ### 6. prompt templates 已纳入 dotfiles
 
@@ -65,7 +66,7 @@
 
 - `~/.pi/agent/prompts/*.md`
 
-这样仓库里的 prompts（例如 `grill-me.md`）可以直接作为全局 `/prompt-name` 使用。
+这样仓库里的 prompts（例如 `grill-me.md`、`wayfinder.md`）可以直接作为全局 `/prompt-name` 使用。
 
 ### 8. planning-files-runtime 已内聚实现 planning + goal overlay
 
