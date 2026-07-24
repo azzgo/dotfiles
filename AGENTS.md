@@ -61,3 +61,24 @@ Pi 相关约定补充：
 1. 优先阅读 `README.md`、`justfile`、相关配置文件再改动。
 2. 不要把 `.local/`、机器本地文件或秘密信息纳入版本控制。
 3. 如果需要调整 Neovim 插件安装位置，请以 `nvim/lua/plugins.lua` 中的 `root = vim.g.dot_config_path .. "/.local/lazy"` 为准。
+
+## Skills 维护要求
+
+Skills 定义文件位于多个搜索路径，按优先级加载：
+
+| 优先级 | 路径 | 说明 |
+|--------|------|------|
+| 1 | `~/.pi/agent/skills/` | 手动安装/精炼的 skill（本仓库相关 skill 安装在此） |
+| 2 | `~/.pi/agent/npm/node_modules/*/skills/` | npm 包自带 skill（如 pi-interactive-shell、librarian），不要直接修改 |
+| 3 | `~/.agents/skills/` | 其他 agent skill（browser-bridge、pixso、skill-creator） |
+
+本仓库维护的 skills（`grill-with-docs`、`prototype` 等）统一安装在 `~/.pi/agent/skills/` 下。
+`~/.pi/agent/skills/README.md` 仅记录本仓库维护的 skill 来源、安装日期、调整内容和上游地址，不包含其他来源的 skill。
+
+Skills 维护规则：
+
+1. **记录来源** — 从外部安装的 skill 必须在 `~/.pi/agent/skills/README.md` 中记录来源 URL、commit hash 和安装日期，以便日后判断是否需要升级。
+2. **检查上游再更新** — 更新外部 skill 前，先 `git log` 查看上游变更，确认值得更新再操作。
+3. **混合来源 skill 保留双上游** — 从多个来源精炼的 skill（如 `code-review`）需同时记录所有上游 URL。
+4. **机器本地** — `~/.pi/agent/skills/` 下的 skill 需要每台机器单独安装，不会通过本仓库自动同步。
+5. **只记本仓库维护的** — README 中不要混入 npm 管理或与本仓库无关的 skill 条目。
