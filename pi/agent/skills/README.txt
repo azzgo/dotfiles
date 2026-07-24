@@ -67,3 +67,13 @@ Skills are loaded from multiple locations in order:
 | **Adjustments** | Installed as-is with no modifications. Files: SKILL.md, LOGIC.md, UI.md, agents/openai.yaml |
 | **Upstream** | https://github.com/mattpocock/skills — check for upstream changes regularly |
 
+
+### `wayfinder`
+
+| Field | Value |
+|-------|-------|
+| **Source** | Personal adaptation of [mattpocock/skills wayfinder](https://github.com/mattpocock/skills/blob/main/skills/engineering/wayfinder/SKILL.md) |
+| **Description** | Personal Wayfinder — local decision-map skill over taskmd; keeps original chart/work method, removes team ceremony, stays separate from Planning Files Runtime |
+| **Installed** | 2026-07-24 |
+| **Adjustments** | taskmd backend only; per-repo `.pi/wayfinder/tickets/`; Ticket/Map templates; local skill mapping; thin `/wayfinder` prompt shortcut; no Planning Files Runtime merge |
+| **Upstream** | https://github.com/mattpocock/skills — check for upstream method changes regularly |
