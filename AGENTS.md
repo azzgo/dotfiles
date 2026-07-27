@@ -54,7 +54,6 @@ Pi 相关约定补充：
 - `alacritty/` / `kitty/` / `ghostty/`：终端配置
 - `pi/`：Pi 共享配置
 - `scripts/`：辅助脚本
-- `prompt-library-example/`：AI Prompt 示例
 
 ## 给后续代理的提醒
 
