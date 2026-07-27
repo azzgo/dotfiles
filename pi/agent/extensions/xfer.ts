@@ -12,7 +12,7 @@
  * Usage:
  *   /xfer                     — help
  *   /xfer list                — list peers (Tab complete)
- *   /xfer rename <name>       — rename this agent
+ *   /xfer name [<name>]       — show or set this agent's name
  *   /xfer <target> <req>      — handoff (LLM doc + xfer_to)
  *
  * LLM Tool:
@@ -196,13 +196,14 @@ export default function (pi: ExtensionAPI) {
       "Xfer: one-way handoff to another Pi.\n" +
       "  /xfer <target> <request>  — generate doc and send\n" +
       "  /xfer list               — list peers\n" +
-      "  /xfer rename <name>      — rename this agent",
+      "  /xfer name [<name>]      — show or set name",
+
 
     getArgumentCompletions: (prefix: string): AutocompleteItem[] | null => {
       const peers = listPeers(identity?.name ?? "");
       const all: AutocompleteItem[] = [
         { value: "list", label: "list", description: "List available peers" },
-        { value: "rename", label: "rename", description: "Rename this agent" },
+        { value: "name", label: "name", description: "Show or set this agent's name" },
         ...peers.map(p => ({
           value: p, label: p, description: `Peer agent: ${p}`,
         })),
@@ -220,7 +221,8 @@ export default function (pi: ExtensionAPI) {
         ctx.ui.notify(
           "📡 /xfer <target> <request> — generate handoff doc\n" +
           "   /xfer list               — list peers\n" +
-          "   /xfer rename <name>      — rename this agent\n" +
+          "   /xfer name [<name>]      — show or set name\n" +
+
           "\n" +
           "💡 One-way, no wait. Reply via /xfer.",
           "info",
@@ -240,11 +242,13 @@ export default function (pi: ExtensionAPI) {
         return;
       }
 
-      // ── rename ──
-      if (cmd === "rename") {
+      // ── name (show or set) ──
+      if (cmd === "name") {
         const newName = parts[1];
         if (!newName) {
-          ctx.ui.notify("Usage: /xfer rename <name>", "error");
+          // show current name
+          if (!identity) return;
+          ctx.ui.notify(`📡 Current name: ${identity.name}`, "info");
           return;
         }
         if (!identity) return;
