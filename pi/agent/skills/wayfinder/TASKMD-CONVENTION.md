@@ -119,13 +119,18 @@ All five sections must exist even when empty.
 ```
 
 All five sections must exist even when empty.
+When the Ticket is completed, a `## Decision` section is inserted at the very top (before `## Question`) —
+see [Complete Ticket](#complete-ticket) and [Decision double-write](#decision-double-write).
 
 ## Decision double-write
 
 When completing a Ticket:
 
 1. Fill Ticket `## Resolution`
-2. Append one line to Map `## Decisions So Far`:
+2. **Insert a `## Decision` section at the very top of the Ticket body** with a one-paragraph
+   summary of what was decided and why — the completed Ticket must read as a decision
+   record, not an exploration document. Existing body sections stay unchanged.
+3. Append one line to Map `## Decisions So Far`:
 
 ```markdown
 - [<Ticket title>](link-or-id-context) — <one-line gist>
@@ -225,9 +230,12 @@ taskmd -d .pi/wayfinder/tickets set <ticket-id> --status completed
 ```
 
 1. write `## Resolution`
-2. append Map `## Decisions So Far`
-3. set status `completed`
-4. graduate fog / out-of-scope as needed
+2. **insert a `## Decision` section at the very top of the Ticket body** (before `## Question`) —
+   the summary of what was decided and why, so the completed Ticket reads as a decision
+   record from the first line, not as an ongoing exploration
+3. append Map `## Decisions So Far`
+4. set status `completed`
+5. graduate fog / out-of-scope as needed
 
 ### Cancel Ticket
 

@@ -241,8 +241,11 @@ Use when an Active Map already exists.
 3. Mark it Current (`status=in-progress`) before real work.
 4. Resolve it with the matching local capability.
 5. Write:
-   - full answer into Ticket `Resolution`
-   - one-line gist into Map `Decisions So Far`
+   - full answer into Ticket `## Resolution`
+   - **one-paragraph convergence summary as a new `## Decision` section at the very top of the**
+     **Ticket body** (so the completed Ticket reads as a decision record from first glance,
+     not as an ongoing exploration)
+   - one-line gist into Map `## Decisions So Far`
 6. Mark Ticket `completed` (or `cancelled` only if abandoned before answer).
 7. Graduate fog into new Tickets if now sharp; clear graduated fog from `Not Yet Specified`.
 8. Rule mis-scoped work into `Out of Scope` and cancel those Tickets.
