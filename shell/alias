@@ -155,3 +155,14 @@ function dotbin() {
   shift
   "$cmd" "$@"
 }
+
+# kctx
+if [[ -x $(command -v kubectl) ]];then
+  kctx() {
+    local context
+    context=$(kubectl config get-contexts -o name | fzf --height 40% --reverse)
+    if [ -n "$context" ]; then
+      kubectl config use-context "$context"
+    fi
+  }
+fi
