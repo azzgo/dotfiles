@@ -33,6 +33,7 @@
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import type { AutocompleteItem } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
+import { copyToClipboard } from "@earendil-works/pi-coding-agent";
 import * as net from "node:net";
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -246,9 +247,14 @@ export default function (pi: ExtensionAPI) {
       if (cmd === "name") {
         const newName = parts[1];
         if (!newName) {
-          // show current name
+          // show current name + copy to clipboard
           if (!identity) return;
-          ctx.ui.notify(`📡 Current name: ${identity.name}`, "info");
+          try {
+            await copyToClipboard(identity.name);
+            ctx.ui.notify(`📡 Current name: ${identity.name} (copied to clipboard)`, "info");
+          } catch {
+            ctx.ui.notify(`📡 Current name: ${identity.name}`, "info");
+          }
           return;
         }
         if (!identity) return;
