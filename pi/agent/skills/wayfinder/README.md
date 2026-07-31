@@ -154,21 +154,31 @@ Work   →  在已有 Map 上前进
 
 1. Destination 够清楚  
 2. 关键决策已在 Decisions So Far  
-3. Frontier 上不再有「还得先决策」的 Ticket  
+3. Frontier 上不再有「还得先决策」的 Ticket（剩下的是 `waiting-human` 或已 graduation）  
 4. 剩下主要是「怎么实现」  
 
-→ 关掉/完成这张 Map，切到实现侧（Planning 或直接开干）。
+→ 关掉/完成这张 Map，**按当前环境实际可用的路径**交给实现侧（capability-aware：探测 `/plan-goal-set`+`/plan-goal-impl`、cursor/pi spawn、直接写代码等，推荐合适的，不写死单一路径）。
 
 ---
 
 ## Ticket 类型（规划层）
 
-| 类型 | 用途 | 常见本地能力 |
-|---|---|---|
-| `research` | 查清事实 | `/explore-codebase` 等 |
-| `grilling` | 和你对决策 | `grill-with-docs` |
-| `prototype` | 廉价验证手感 | `prototype` |
-| `setup` | 解锁后续决策的准备工作 | 无固定 skill |
+每个 Ticket 有一个 **channel（通道）**：
+
+- **AFK**：agent 自己能拿到答案（查仓库/查网/跑命令）
+- **HITL**：答案必须经过人——agent **绝不**替人回答，而是写一份**精确的 intake brief**（问谁、问什么、什么形式的答案、解锁哪些下游 Ticket），然后停下等人
+
+| 类型 | 默认 channel | 用途 | 常见本地能力 |
+|---|---|---|---|
+| `research` | AFK | 查清事实 | `/explore-codebase` 等 |
+| `research` + HITL | HITL | 事实只有人能取到（同事/需求方/拿不到的架构文档） | 无 — 写 intake brief 后 `waiting-human` |
+| `grilling` | HITL（固定） | 和你对决策 | `grill-with-docs` |
+| `prototype` | HITL（固定） | 廉价验证手感 | `prototype` |
+| `setup` | AFK 或 HITL | 解锁后续决策的准备工作 | 无固定 skill |
+
+通道用标签 `wayfinder:hitl` 标记 HITL；不标即 AFK。`research`/`setup` 是真正双模式的，可按情况设 HITL。
+
+**HITL research 绝不自动结掉**：agent 不会因为"能猜"就自己填答案，而是写 brief、置 `waiting-human`、等人回来。
 
 实现阶段的拆分任务 **不要** 往这里塞。
 
@@ -176,13 +186,15 @@ Work   →  在已有 Map 上前进
 
 ## 硬边界（用的时候请记住）
 
-1. **Plan, don't do** — 默认不交付生产实现  
-2. **Single-Ticket Session** — 一次主推一张 Ticket  
+1. **Plan, don't do** — 默认不交付生产实现；Wayfinder 会话对生产代码**只读**（只可写 `.pi/wayfinder/` 和一次性原型草稿；写 handoff spec 算规划不算实现）  
+2. **Single-Ticket = 方向纪律** — 一次主推一张 Ticket。**向下**钻探（取相关上下文、问技能、把本 Ticket 的工作拆开各查各的）是忠诚的，允许；**横向**蔓出（冒出一个**不同的独立问题**）必须**新建 Ticket 并换会话**处理，绝不在当前 Ticket 里顺手解决  
 3. **一个 repo 同时只有一个 Active Map**  
 4. Destination 大变 → **关旧图、开新图**，不原地拧成另一件事  
-5. **parent = 归属**；**dependency = 谁挡谁**（Frontier 只看依赖）  
-6. 结论 **双写**：Ticket 全文 + Map Decisions So Far 一行摘要  
+5. **parent = 归属**；**dependency = 谁挡谁**（Frontier 只看依赖；`waiting-human` 不算 Frontier）  
+6. 结论 **三写**：填 `## Resolution`、在 Ticket 顶部插一段 `## Decision` 摘要（结掉的 Ticket 一眼读起来是决策记录而非探索日志）、并在 Map Decisions So Far 加一行摘要  
 7. 雾和范围外要写正式区块，别装成已经想清楚或假装没看见  
+8. **HITL 不自动结** — HITL 通道 Ticket 永远不被 agent 替人解决，只给 intake brief + `waiting-human`  
+9. **成熟即毕业** — Ticket 一旦"没有决策、只剩怎么实现"，以 **graduation** 方式 `completed`：Resolution 写 handoff 指针，不在 Wayfinder 里实现  
 
 ---
 

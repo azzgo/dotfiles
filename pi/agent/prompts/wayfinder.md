@@ -14,7 +14,9 @@ This prompt is a **thin shortcut only**. Do **not** invent a second methodology 
 ## Hard rules from the skill
 
 - taskmd is an explicit prerequisite; no silent fallback tracker
-- Plan, don't do
+- Plan, don't do — read-only to production code (`.pi/wayfinder/` + throwaway prototype scratch only); writing a handoff spec is planning
+- Single-Ticket = directional: **downward** exploration is faithful; **sideways** questions become new Tickets handled in a **new session**, never resolved inline
+- HITL never auto-resolved: a HITL-channel Ticket (`wayfinder:hitl`, or `prototype`/`grilling`) is never resolved by the agent — it gets an intake brief and `waiting-human`
 - One Active Map; one Current Ticket focus
 - Parent = membership; dependency = ordering
 - Refer by name, not bare ids
@@ -48,6 +50,11 @@ Parse the user arguments (`$@`) as follows:
 ### `work [ticket-name-or-hint...]`
 - advance exactly one Current Ticket
 - if ticket hint provided, that choice wins over automatic Frontier selection
+- **pre-execution gate**: read the Ticket's channel before resolving
+  - HITL (`wayfinder:hitl` / `prototype` / `grilling`): do **not** auto-resolve — for `research`+HITL write intake brief + set `waiting-human` + stop; for `grilling`/`prototype` start the live exchange
+  - AFK (`research` / `setup`): resolve with matching capability
+- **single-Ticket directional**: downward exploration OK; sideways questions → new Ticket for a new session, never inline
+- mature "ready to build, no decision left" Tickets → **graduate** (Resolution = handoff pointer, `completed`), do not implement here
 
 ### `status`
 - report state only
