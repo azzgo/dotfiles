@@ -36,6 +36,14 @@ All Wayfinder records must carry a `wayfinder:*` tag. Untagged taskmd records ar
 | Grilling Ticket | `wayfinder:grilling` |
 | Setup Ticket | `wayfinder:setup` |
 
+**Channel tag** (optional, encodes HITL/AFK — see [Ticket types, channels](SKILL.md#ticket-types-channels-and-local-capabilities)):
+
+| Tag | Meaning |
+|---|---|
+| `wayfinder:hitl` | Ticket is HITL-channel — agent must not auto-resolve; write intake brief and set `waiting-human` |
+
+Absence of `wayfinder:hitl` means AFK. `prototype`/`grilling` are HITL by nature (tag redundant but allowed). Use `wayfinder:hitl` on `research`/`setup` when the answer/prep must come through a human.
+
 Optional extra tag for bulk filtering: `wayfinder`
 
 Do **not** rely on taskmd `type` / `group` / `scope` for first-class Wayfinder identity. Tags are the membership system.
@@ -48,16 +56,17 @@ Do **not** rely on taskmd `type` / `group` / `scope` for first-class Wayfinder i
 | Historical Map | `completed` or `cancelled` | Closed map |
 | Current Ticket | `in-progress` | Session focus |
 | Ready / waiting Ticket | `pending` | Not started; may wait on deps |
-| Answered Ticket | `completed` | Decision recorded, including negative answers |
+| Awaiting-human Ticket | `waiting-human` | HITL Ticket paused on human input; intake brief issued |
+| Answered Ticket | `completed` | Decision recorded (incl. negative answers); also **graduated** handoff Tickets |
 | Abandoned Ticket | `cancelled` | Lost relevance before answer |
-| Exceptionally stuck Ticket | `blocked` | Real external blocker only |
+| Exceptionally stuck Ticket | `blocked` | Real external blocker only (permissions, broken env) — **not** routine human-input waits |
 
 Rules:
 
 - Only one Active Map (`wayfinder:map` + `in-progress`)
 - Only one Current Ticket (non-map + `in-progress`) preferred
 - Ordinary unmet dependencies stay `pending`
-- Reserve `blocked` for real exceptions
+- `waiting-human` is the routine "needs a human" state; `blocked` is reserved for true exceptions
 
 ## Relationship model
 
@@ -147,11 +156,13 @@ Frontier candidates are Tickets that:
 3. have `status=pending`
 4. have all dependencies satisfied / completed
 5. are not already the Current Ticket
+6. are **not** `waiting-human` (those are paused on a human, not takeable)
 
 Practical composition:
 
 - use taskmd dependency-aware next/list features where available
 - filter to Wayfinder tags + `status=pending`
+- explicitly exclude `status=waiting-human` (paused on human, not Frontier)
 - skip map records
 - if user named a Ticket, that overrides automatic selection
 
@@ -222,6 +233,21 @@ taskmd -d .pi/wayfinder/tickets set <ticket-id> --status in-progress
 Set chosen Ticket to `status=in-progress`.  
 Ensure no other non-map Ticket remains `in-progress` unless the user intentionally overrides.
 
+### Park on human input (HITL)
+
+For a HITL-channel Ticket (`research`+HITL, `prototype`, `grilling`, `setup`+HITL), the agent does **not** auto-resolve. For `research`+HITL in particular:
+
+1. write the **intake brief** into `## Notes` (who to ask / where to look; exact question; answer form; downstream Tickets waiting on it)
+2. set `status=waiting-human`
+3. **stop** — do not fill `## Resolution`
+4. resume (fill `## Resolution`, complete) only when the human returns with the input
+
+```bash
+taskmd -d .pi/wayfinder/tickets set <ticket-id> --status waiting-human
+```
+
+`prototype`/`grilling` are live HITL exchanges and stay `in-progress` during the conversation, not `waiting-human`.
+
 ### Complete Ticket
 
 ```bash
@@ -236,6 +262,18 @@ taskmd -d .pi/wayfinder/tickets set <ticket-id> --status completed
 3. append Map `## Decisions So Far`
 4. set status `completed`
 5. graduate fog / out-of-scope as needed
+
+#### Graduation (handoff to build)
+
+When a Ticket has matured into "ready to build, no decision left", complete it as a **graduation** rather than a decision:
+
+- `## Resolution` = handoff pointer, e.g. `Graduated → Planning Goal <id>` or a spec link
+- `## Decision` summary states it was handed off to build, not decided inline
+- Map `## Decisions So Far` line records it as a **route step** (e.g. `- [Name](link) — graduated to build → Planning Goal 003`)
+- status `completed`
+- do **not** implement the destination here (Wayfinder session is read-only to production code)
+
+Graduation is a resolution mode, not a new status or type.
 
 ### Cancel Ticket
 
@@ -275,6 +313,8 @@ Foreground overlay (`hands-free` / interactive) is optional when the user wants 
 - Active Map name + destination gist
 - Current Ticket name (if any)
 - Frontier candidates (named)
+- Tickets `waiting-human` (named, with intake-brief status) — surfaced separately from Frontier
+- graduated Tickets not yet built (named, with handoff pointer)
 - blocked exceptions
 - recent Decisions So Far (tail)
 
@@ -289,6 +329,7 @@ Stop and ask the human when detecting:
 - Wayfinder-tagged records outside `.pi/wayfinder/tickets/`
 - Tickets without parent Map
 - circular dependencies (use taskmd validate if available)
+- HITL Tickets stuck `in-progress` without a live human exchange (should be `waiting-human` or completed)
 
 ## Language boundary
 

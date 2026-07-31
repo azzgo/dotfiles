@@ -34,8 +34,11 @@ Not allowed by default:
 - production implementation of the destination
 - turning Tickets into a build backlog
 - silently expanding into Planning Files Runtime execution
+- mutating production code — the Wayfinder session is **read-only** to production code; only `.pi/wayfinder/` and throwaway prototype scratch may be written
 
-When remaining work is mostly "how to implement", exit Wayfinder and hand off to implementation planning (`/plan-goal-set`, `/plan-goal-impl`, or ordinary coding).
+Writing a handoff spec / Planning Goal contract is **planning**, not implementation — it stays in scope.
+
+When remaining work is mostly "how to implement", exit Wayfinder (see [Exit condition](#exit-condition)) and hand off using whatever implementation path is actually available in this environment (**capability-aware**, not hard-coded).
 
 ## Core objects
 
@@ -148,14 +151,34 @@ Each Ticket is a taskmd record under the Active Map.
 <new tickets / fog / out-of-scope candidates surfaced by resolution>
 ```
 
-### Ticket types and local capabilities
+### Ticket types, channels, and local capabilities
 
-| Type | Intent | Default local capability |
-|---|---|---|
-| `research` | Gather facts needed for a decision | `/explore-codebase` for in-repo research |
-| `prototype` | Cheap concrete artifact to react to | `prototype` skill |
-| `grilling` | Live decision interview | `grill-with-docs` (fallback `/grill-me`) |
-| `setup` | Prep work that unblocks a later decision | no dedicated skill; checklist / shell / manual prep |
+Every Ticket has a **channel** — how its answer is obtained:
+
+- **AFK** — the agent drives it alone (research in the repo / on the web; shell prep).
+- **HITL** — the answer only comes through a human; the agent **never** stands in for the human's side.
+
+Channel defaults by type; only `research` and `setup` are genuinely dual-mode:
+
+| Type | Intent | Default channel | Local capability |
+|---|---|---|---|
+| `research` | Gather facts needed for a decision | AFK | `/explore-codebase` (in-repo) or web research |
+| `research` + HITL | Facts only obtainable via a human (a colleague, the requirement owner, an architecture doc the agent can't reach) | HITL | none the agent runs itself — see [HITL research](#hitl-research) |
+| `prototype` | Cheap concrete artifact to react to | HITL (fixed) | `prototype` skill |
+| `grilling` | Live decision interview | HITL (fixed) | `grill-with-docs` (fallback `/grill-me`) |
+| `setup` | Prep work that unblocks a later decision | AFK or HITL | no dedicated skill; checklist / shell / manual prep |
+
+Channel is recorded as the tag `wayfinder:hitl` when HITL; its absence means AFK. `prototype`/`grilling` are HITL by nature, so the tag is redundant but harmless.
+
+#### HITL research
+
+A `research` + HITL Ticket resolves to an **answer** (like any research), but the agent cannot fetch it itself. The agent's job is to **write a precise intake brief**, then **stop**:
+
+- who to ask / where to look (person, doc, system)
+- the exact question, and the form of answer that would unblock each downstream Ticket
+- which downstream Tickets wait on it
+
+The agent sets the Ticket to `waiting-human` and does **not** auto-resolve it, even if it could guess an answer. Resolution resumes when the human returns with the input; only then is `## Resolution` filled.
 
 Do **not** hard-code foreign skills. When handing off, recommend only capabilities available in the current agent/repo environment (**Capability-Aware Handoff**).
 
@@ -165,11 +188,12 @@ Do **not** hard-code foreign skills. When handing off, recommend only capabiliti
 |---|---|
 | `pending` | Not started; may still wait on dependencies |
 | `in-progress` | Current Ticket (or Active Map) |
-| `completed` | Answered, including negative conclusions |
+| `waiting-human` | Ticket paused awaiting human input (typically a HITL Ticket whose intake brief has been issued) |
+| `completed` | Answered, including negative conclusions; also used for **graduated** Tickets handed off to build |
 | `cancelled` | Lost relevance before resolution / mis-scoped |
-| `blocked` | Real exceptional blocker only (permissions, broken env, missing external input) |
+| `blocked` | Real external blocker only (permissions, broken env); **not** for routine human-input waits |
 
-Ordinary unmet dependencies stay `pending`. Do **not** mark every dependent Ticket `blocked`.
+`waiting-human` is the routine "needs a human" state; reserve `blocked` for true exceptions. Ordinary unmet dependencies stay `pending`. Do **not** mark every dependent Ticket `blocked`.
 
 ## Frontier
 
@@ -180,6 +204,7 @@ The Frontier is:
 - `status=pending`
 - all Ticket dependencies satisfied
 - not already the Current Ticket
+- not `waiting-human` (paused on a human, not takeable)
 
 Selection rules:
 
@@ -199,16 +224,17 @@ Fog is formal. Out of Scope is formal. Neither is a junk drawer.
 
 ## Invariants
 
-1. **Plan, don't do**
+1. **Plan, don't do** — read-only to production code; writing a handoff spec is planning, not implementation
 2. **Refer by name**
-3. **Single-Ticket Session** — advance exactly one Current Ticket (small research bursts allowed only if they feed that same Ticket)
-4. **Decision Double-Write** — write Resolution on the Ticket **and** append a one-line gist to Map `Decisions So Far`
+3. **Single-Ticket Session, directional** — advance exactly one Current Ticket. Exploration that **points down** (drills into this Ticket's question: fetch related context, consult skills, split the Ticket's own work and research each sub-area) is faithful and allowed. Exploration that **points sideways** — surfacing a *different, independent* question — must **graduate to a new Ticket** and be handled in a **new session**, never resolved inline in this one.
+4. **Decision Double-Write** — on completing a Ticket: write `## Resolution`, **insert a `## Decision` summary section at the top of the Ticket body** (so a closed Ticket reads as a decision record, not an exploration log), **and** append a one-line gist to Map `Decisions So Far`
 5. **One Active Map**
 6. **Parent = membership; Dependency = ordering**
 7. **No silent tracker fallback**
 8. **No silent destination invention**
+9. **HITL never auto-resolved** — a HITL-channel Ticket is never resolved by the agent standing in for the human; it gets an intake brief and `waiting-human`
 
-Parallel **read-only** sub-agents are allowed for research if all results merge back into the same Current Ticket / Map.
+Parallel **read-only** research sub-agents are allowed **only in Chart mode**, **only for `research`-AFK Tickets**, and all results merge back into the Map/Chart pass. They are never used to resolve HITL Tickets.
 
 ## Modes
 
@@ -226,7 +252,7 @@ Use when there is no usable Active Map, or the destination has shifted enough to
 6. Create the Tickets that are already sharp.
 7. Wire Ticket dependencies in a second pass (need ids first).
 8. Leave the rest in `Not Yet Specified` / `Out of Scope`.
-9. Optionally fire parallel research sub-agents for fresh `research` Tickets.
+9. Optionally fire parallel **read-only** research sub-agents for fresh `research`-**AFK** Tickets (never research-HITL; see Invariant #9).
 10. Stop. Charting does not resolve non-research Tickets in the same pass unless the user explicitly continues into Work mode.
 
 ### Work Through the Map
@@ -239,18 +265,23 @@ Use when an Active Map already exists.
    - else Current Ticket if already `in-progress`
    - else first/best Frontier Ticket
 3. Mark it Current (`status=in-progress`) before real work.
-4. Resolve it with the matching local capability.
-5. Write:
+4. **Pre-execution gate**, before resolving:
+   - read the Ticket's channel (type + `wayfinder:hitl`)
+   - if **HITL** (`research`+HITL, `prototype`, `grilling`, or `setup`+HITL): the agent does **not** auto-resolve. For `research`+HITL, write the [intake brief](#hitl-research) into `## Notes`, set `status=waiting-human`, and **stop** — resume only when the human returns. For `grilling`/`prototype`, begin the live exchange with the human.
+   - if **AFK** (`research` or `setup`): proceed to resolve with the matching local capability.
+5. Resolve it within the Single-Ticket boundary: **downward** exploration is fine; **sideways** questions become new Tickets for a new session, never handled inline.
+6. Write:
    - full answer into Ticket `## Resolution`
    - **one-paragraph convergence summary as a new `## Decision` section at the very top of the**
      **Ticket body** (so the completed Ticket reads as a decision record from first glance,
      not as an ongoing exploration)
    - one-line gist into Map `## Decisions So Far`
-6. Mark Ticket `completed` (or `cancelled` only if abandoned before answer).
-7. Graduate fog into new Tickets if now sharp; clear graduated fog from `Not Yet Specified`.
-8. Rule mis-scoped work into `Out of Scope` and cancel those Tickets.
-9. Update / create dependency edges as needed.
-10. Stop after that one Ticket unless the user explicitly continues.
+7. Mark Ticket `completed` (or `cancelled` only if abandoned before answer).
+8. **Graduate** if the Ticket has matured into "ready to build, no decision left": set `## Resolution` to a handoff pointer (e.g. `Graduated → Planning Goal <id>` / spec link), mark `completed`, and record the gist in `## Decisions So Far` as a route step — do **not** implement it here.
+9. Graduate fog into new Tickets if now sharp; clear graduated fog from `Not Yet Specified`.
+10. Rule mis-scoped work into `Out of Scope` and cancel those Tickets.
+11. Update / create dependency edges as needed.
+12. Stop after that one Ticket unless the user explicitly continues.
 
 ## Destination Shift
 
@@ -267,14 +298,14 @@ Exit Wayfinder when all are true:
 
 1. Destination is clear enough
 2. necessary decisions are recorded in `Decisions So Far`
-3. Frontier no longer holds decision-blocking Tickets
+3. Frontier no longer holds decision-blocking Tickets (remaining Tickets are `waiting-human` or graduated)
 4. remaining work is primarily implementation rather than choice
 
 Then:
 
 - finish the Active Map
 - summarize the route for the user
-- hand off to Planning Files Runtime / implementation if needed
+- **capability-aware handoff**: detect which implementation paths actually exist in this environment (`/plan-goal-set` + `/plan-goal-impl`, cursor/pi spawn agents, ordinary coding, etc.) and recommend the fitting one — do **not** hard-code a single path
 
 ## Invocation surface
 
@@ -290,6 +321,7 @@ Thin prompt shortcut: `/wayfinder` (see `pi/agent/prompts/wayfinder.md`).
 | `/wayfinder work` | Advance one Current Ticket |
 | `/wayfinder status` | Report state only; no mutation |
 | `/wayfinder ui` | Open taskmd Web UI for human inspection (background by default) |
+| `/wayfinder help` | Print the command surface + one-paragraph when-to-use guidance; start no work |
 
 Smart entry routing:
 
