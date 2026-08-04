@@ -1,5 +1,16 @@
 {
-  "mcpServers": {},
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "enabled": true,
+      "args": [
+        "chrome-devtools-mcp@latest",
+        "--categoryExtensions=true"
+      ],
+      "directTools": false,
+      "lifecycle": "keep-alive"
+    }
+  },
   "settings": {
     "idleTimeout": 0
   }
