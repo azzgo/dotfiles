@@ -10,7 +10,7 @@ quick-terminal-size = 50%
 keybind = super+v=unbind
 keybind = ctrl+shift+c=copy_to_clipboard
 keybind = ctrl+shift+v=paste_from_clipboard
-keybind = global:cmd+enter=toggle_quick_terminal
+keybind = global:cmd+ctrl+enter=toggle_quick_terminal
 
 # Tabs
 keybind = alt+ctrl+1=goto_tab:1
