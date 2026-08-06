@@ -1,6 +1,7 @@
 ---
 name: wayfinder
 description: Plan foggy, multi-session work as a local decision map of Tickets on taskmd, then resolve one Ticket at a time until the route to the destination is clear. Personal Wayfinder variant — no team claim flow, taskmd backend only, separate from Planning Files Runtime.
+disable-model-invocation: true
 ---
 
 # Personal Wayfinder

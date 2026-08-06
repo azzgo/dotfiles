@@ -1,6 +1,7 @@
 ---
 name: impl-with-spawn
 description: Delegate goal tasks to pi or cursor sub-agents via interactive_shell. Defaults to headless background dispatch. Supports parallel multi-agent delegation when subtasks are independent. Use when the user wants to "implement this", "build X", "fix Y", "add feature Z", or run multi-step coding tasks by dispatching to sub-agents.
+disable-model-invocation: true
 ---
 
 # Impl with Spawn
