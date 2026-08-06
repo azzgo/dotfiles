@@ -1,6 +1,7 @@
 ---
 name: code-review
 description: Two-axis structured code review — Standards (does the code follow documented standards + the Fowler smell baseline + SOLID?) and Spec (does it match the originating requirement?). Both axes run as independent sub-agents to avoid cross-contamination; pick whatever sub-agent mechanism is available. The main agent then aggregates and supplements with code quality, race-condition analysis, removal plan, and simplification opportunities. Default review-only, does not change code.
+disable-model-invocation: true
 ---
 
 # Code Review
