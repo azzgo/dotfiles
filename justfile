@@ -79,26 +79,7 @@ install-ideavim:
     ln -sf {{ dotfiles_dir }}/ideavimrc ~/.ideavimrc
     echo "✅ IdeaVim configuration installed"
 
-# Install Emacs configuration
-install-emacs:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    echo "🚀 Installing Emacs configuration..."
-
-    # Create emacs config directory
-    mkdir -p ~/.emacs.d/lisp
-
-    # Create symlinks
-    ln -sf {{ dotfiles_dir }}/emacs/init.el ~/.emacs.d/init.el
-    ln -sf {{ dotfiles_dir }}/emacs/lisp ~/.emacs.d/lisp
-
-    # Create local config file if it doesn't exist
-    if [ ! -f ~/.emacs.d/lisp/init-local.el ]; then
-        echo "(provide 'init-local)" > ~/.emacs.d/lisp/init-local.el
-    fi
-    echo "✅ Emacs configuration installed"
-
-# Install terminal configurations (Alacritty, Kitty, Ghostty)
+# Install terminal configurations (Alacritty, Ghostty)
 install-terminals:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -108,7 +89,6 @@ install-terminals:
 
     # Install terminal configs if they exist
     [ -d {{ dotfiles_dir }}/alacritty ] && ln -sf {{ dotfiles_dir }}/alacritty ~/.config/alacritty
-    [ -d {{ dotfiles_dir }}/kitty ] && ln -sf {{ dotfiles_dir }}/kitty ~/.config/kitty  
     [ -d {{ dotfiles_dir }}/ghostty ] && ln -sf {{ dotfiles_dir }}/ghostty ~/.config/ghostty
 
     echo "✅ Terminal configurations installed"
@@ -210,9 +190,7 @@ info:
     [ -d {{ dotfiles_dir }}/nvim ] && echo "  ✓ Neovim"
     [ -d {{ dotfiles_dir }}/vim ] && echo "  ✓ Vim" 
     [ -f {{ dotfiles_dir }}/ideavimrc ] && echo "  ✓ IdeaVim"
-    [ -d {{ dotfiles_dir }}/emacs ] && echo "  ✓ Emacs"
     [ -d {{ dotfiles_dir }}/shell ] && echo "  ✓ Shell configs"
     [ -d {{ dotfiles_dir }}/alacritty ] && echo "  ✓ Alacritty"
-    [ -d {{ dotfiles_dir }}/kitty ] && echo "  ✓ Kitty"
     [ -d {{ dotfiles_dir }}/ghostty ] && echo "  ✓ Ghostty"
     [ -d {{ dotfiles_dir }}/pi ] && echo "  ✓ Pi shared config"

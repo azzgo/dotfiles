@@ -6,10 +6,10 @@ A comprehensive collection of configurations for editors, terminals, shells, and
 
 This repository contains configurations for:
 
-- **Editors**: Neovim, Vim, Emacs, IDEAVim
-- **Terminals**: Alacritty, Kitty, Ghostty
+- **Editors**: Neovim, Vim, IDEAVim
+- **Terminals**: Alacritty, Ghostty
 - **Shells**: bash, zsh, nushell
-- **Development Tools**: starship prompt, tmux, tig git interface, and more
+- **Development Tools**: starship prompt, tmux, and more
 - **AI Tooling**: Pi shared configuration (non-sensitive parts only)
 
 All configurations are designed to work together seamlessly and can be installed individually or as a complete environment.
@@ -41,7 +41,6 @@ just install-all
 # Or install specific components
 just install-neovim    # Neovim configuration
 just install-vim       # Vim configuration
-just install-emacs     # Emacs configuration
 just install-ideavim   # IDEAVim configuration
 just install-terminals # Terminal configurations
 just install-shell     # Shell configurations
@@ -71,14 +70,6 @@ Classic Vim configuration with:
 
 **Installation**: `just install-vim`
 
-#### Emacs
-Modular Emacs configuration with:
-- Organized into separate feature modules
-- Modern package management
-- Customizable local configuration support
-
-**Installation**: `just install-emacs`
-
 #### IDEAVim
 Vim emulation for JetBrains IDEs with:
 - Essential Vim bindings and motions
@@ -95,12 +86,6 @@ GPU-accelerated terminal with:
 - Optimized font configuration
 - Custom key bindings for copy/paste
 - Performance-focused settings
-
-#### Kitty
-Feature-rich terminal emulator with:
-- Advanced text rendering
-- Theme support and customization
-- Efficient resource usage
 
 #### Ghostty
 Modern terminal emulator with:
@@ -156,14 +141,6 @@ Shared Pi setup with:
 
 **Installation**: `just install-pi` or `just link`
 
-#### Tig
-Interactive git interface featuring:
-- Enhanced git log browsing
-- Custom key bindings
-- Clipboard integration for commit hashes
-
-**Included with shell installation**: `just install-shell`
-
 ## Available Just Commands
 
 | Command | Description |
@@ -171,7 +148,6 @@ Interactive git interface featuring:
 | `just install-all` | Install all configurations |
 | `just install-neovim` | Install Neovim configuration and plugins |
 | `just install-vim` | Install Vim configuration and plugins |
-| `just install-emacs` | Install Emacs configuration |
 | `just install-ideavim` | Install IDEAVim configuration |
 | `just install-terminals` | Install all terminal configurations |
 | `just install-shell` | Install shell, tmux, and starship configurations |
@@ -192,7 +168,6 @@ The installation scripts create symbolic links to configuration files in this re
 
 - **Neovim**: Sources `nvim/init.vim` in `~/.config/nvim/init.vim`
 - **Vim**: Sources `vim/vimrc` in `~/.vimrc`
-- **Emacs**: Links configuration files to `~/.emacs.d/`
 - **IDEAVim**: Links `.ideavimrc` to home directory
 - **Terminals**: Links config directories to `~/.config/`
 - **Shells**: Sources shell configs in respective rc files, links tmux and starship configs

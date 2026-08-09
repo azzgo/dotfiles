@@ -4,10 +4,10 @@
 
 这是一个个人 Dotfiles 仓库，用于统一管理常用开发环境配置，包括：
 
-- 编辑器：Neovim、Vim、Emacs、IDEAVim
-- 终端：Alacritty、Kitty、Ghostty
+- 编辑器：Neovim、Vim、IDEAVim
+- 终端：Alacritty、Ghostty
 - Shell：bash、zsh、nushell
-- 其它工具：tmux、starship、tig、Pi 相关共享配置
+- 其它工具：tmux、starship、Pi 相关共享配置
 
 Pi 相关约定补充：
 - 当前优先使用 `pi-interactive-shell` 统一承载外部 agent 调用与可观察子 agent 能力。
@@ -49,9 +49,8 @@ Pi 相关约定补充：
 
 - `nvim/`：Neovim 配置
 - `vim/`：Vim 配置
-- `emacs/`：Emacs 配置
 - `shell/`：Shell 配置
-- `alacritty/` / `kitty/` / `ghostty/`：终端配置
+- `alacritty/` / `ghostty/`：终端配置
 - `pi/`：Pi 共享配置
 - `scripts/`：辅助脚本
 
