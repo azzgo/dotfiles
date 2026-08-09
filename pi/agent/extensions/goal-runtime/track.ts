@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import path from "node:path";
 import type { TrackState } from "./types";
 import { TRACK_FILES, TRACK_DIR } from "./types";
@@ -90,4 +91,31 @@ export function progressTimeline(cwd: string, message: string): void {
 // transient briefs (verify instructions etc.) live under .pi/track/ but are not part of the two canonical files
 export function briefPath(cwd: string, name: string): string {
 	return path.join(trackDir(cwd), name);
+}
+
+// ---- verify-brief one-time token ----
+//
+// `verify_goal_result` is governed by a one-time token minted at review entry and
+// embedded in the verify brief. Only a caller that read the brief (the dispatched
+// verifier) can echo the token back, weakly binding resolution of `in-review` to
+// the independent verifier rather than the orchestrator's self-review.
+
+export function verifyBriefPath(cwd: string, goalId: string): string {
+	return briefPath(cwd, `verify-brief-${goalId}.md`);
+}
+
+export function mintVerifyToken(): string {
+	return randomUUID();
+}
+
+/** Write a verify brief with the token embedded; returns the token. */
+export function writeVerifyBrief(cwd: string, goalId: string, brief: string, token: string): void {
+	const withToken = `${brief.trim()}\n\nVERIFY_TOKEN: ${token}\n`;
+	writeText(verifyBriefPath(cwd, goalId), withToken);
+}
+
+/** Read the token currently recorded in the verify brief, or null. */
+export function readVerifyToken(cwd: string, goalId: string): string | null {
+	const match = readText(verifyBriefPath(cwd, goalId)).match(/^VERIFY_TOKEN:\s*(\S+)\s*$/m);
+	return match?.[1] ?? null;
 }

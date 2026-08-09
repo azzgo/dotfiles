@@ -173,6 +173,7 @@ export type RequestReviewParams = {
 
 export type VerifyResultParams = {
 	goalId: string;
+	token: string;
 	pass: boolean;
 	evidence?: string[];
 };
