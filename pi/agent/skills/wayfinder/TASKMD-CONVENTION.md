@@ -267,9 +267,9 @@ taskmd -d .pi/wayfinder/tickets set <ticket-id> --status completed
 
 When a Ticket has matured into "ready to build, no decision left", complete it as a **graduation** rather than a decision:
 
-- `## Resolution` = handoff pointer, e.g. `Graduated → Planning Goal <id>` or a spec link
+- `## Resolution` = handoff pointer, e.g. `Graduated → Goal <id>` or a spec link
 - `## Decision` summary states it was handed off to build, not decided inline
-- Map `## Decisions So Far` line records it as a **route step** (e.g. `- [Name](link) — graduated to build → Planning Goal 003`)
+- Map `## Decisions So Far` line records it as a **route step** (e.g. `- [Name](link) — graduated to build → Goal 003`)
 - status `completed`
 - do **not** implement the destination here (Wayfinder session is read-only to production code)
 

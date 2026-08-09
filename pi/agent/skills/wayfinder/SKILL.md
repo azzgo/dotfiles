@@ -1,6 +1,6 @@
 ---
 name: wayfinder
-description: Plan foggy, multi-session work as a local decision map of Tickets on taskmd, then resolve one Ticket at a time until the route to the destination is clear. Personal Wayfinder variant — no team claim flow, taskmd backend only, separate from Planning Files Runtime.
+description: Plan foggy, multi-session work as a local decision map of Tickets on taskmd, then resolve one Ticket at a time until the route to the destination is clear. Personal Wayfinder variant — no team claim flow, taskmd backend only, separate from Goal Runtime.
 disable-model-invocation: true
 ---
 
@@ -15,7 +15,7 @@ This is a **Personal Wayfinder**:
 - keeps the original decision-oriented method
 - removes team collaboration ceremony
 - uses **taskmd as an explicit backend** (not built-in, not swapped silently)
-- stays **separate from Planning Files Runtime** (`.pi/planning/`)
+- stays **separate from Goal Runtime** (`.pi/goals/` + `.pi/track/`)
 - recommends only capabilities available in the current agent/repo environment
 
 ## Plan, don't do
@@ -34,10 +34,10 @@ Not allowed by default:
 
 - production implementation of the destination
 - turning Tickets into a build backlog
-- silently expanding into Planning Files Runtime execution
+- silently expanding into Goal Runtime execution
 - mutating production code — the Wayfinder session is **read-only** to production code; only `.pi/wayfinder/` and throwaway prototype scratch may be written
 
-Writing a handoff spec / Planning Goal contract is **planning**, not implementation — it stays in scope. Specs are Wayfinder's decision-layer output and may be written **incrementally** (a partial spec as soon as one part of the exploration is decided, handed off via Graduate) or as a single unified spec when exploration completes.
+Writing a handoff spec / Goal contract is **planning**, not implementation — it stays in scope. Specs are Wayfinder's decision-layer output and may be written **incrementally** (a partial spec as soon as one part of the exploration is decided, handed off via Graduate) or as a single unified spec when exploration completes.
 
 When remaining work is mostly "how to implement", exit Wayfinder (see [Exit condition](#exit-condition)) and hand off using whatever implementation path is actually available in this environment (**capability-aware**, not hard-coded).
 
@@ -50,7 +50,7 @@ When remaining work is mostly "how to implement", exit Wayfinder (see [Exit cond
 | **Frontier** | Unblocked pending Tickets under the Active Map |
 | **Current Ticket** | The single Ticket this session is advancing |
 | **Wayfinder Workspace** | Per-repo local storage at `.pi/wayfinder/` |
-| **Planning Task** | Implementation work under `.pi/planning/` — different system |
+| **Task** | Implementation work under Goal Runtime (`.pi/goals/` records + `.pi/track/`) — different system |
 
 Human-facing prose always says **Ticket**, never "task", except when quoting literal taskmd CLI objects/commands.
 
@@ -278,7 +278,7 @@ Use when an Active Map already exists.
      not as an ongoing exploration)
    - one-line gist into Map `## Decisions So Far`
 7. Mark Ticket `completed` (or `cancelled` only if abandoned before answer).
-8. **Graduate** if the Ticket has matured into "ready to build, no decision left": set `## Resolution` to a pointer into the **spec layer** (e.g. `Graduated → Planning Goal <id>` / spec link), mark `completed`, and record the gist in `## Decisions So Far` as a route step. This is the partial-spec handoff path: a separate implementation agent/session may now build that spec'd portion, in parallel with ongoing exploration — but do **not** implement it inside Wayfinder.
+8. **Graduate** if the Ticket has matured into "ready to build, no decision left": set `## Resolution` to a pointer into the **spec layer** (e.g. `Graduated → Goal <id>` / spec link), mark `completed`, and record the gist in `## Decisions So Far` as a route step. This is the partial-spec handoff path: a separate implementation agent/session may now build that spec'd portion, in parallel with ongoing exploration — but do **not** implement it inside Wayfinder.
 9. Graduate fog into new Tickets if now sharp; clear graduated fog from `Not Yet Specified`.
 10. Rule mis-scoped work into `Out of Scope` and cancel those Tickets.
 11. Update / create dependency edges as needed.
@@ -307,8 +307,8 @@ Then:
 - finish the Active Map
 - summarize the route for the user
 - **capability-aware, spec-as-boundary handoff**:
-  - **Spec side (Wayfinder's own output).** Recommend finalizing the spec via whatever spec-writing capability actually exists here (`/plan-goal-set` or an alternative). Partial specs may already have been handed off during exploration via Graduate; at exit the unified spec covers the rest.
-  - **Implementation side (separate agent/session, never inside Wayfinder).** Once a spec exists, recommend opening a new session for the fitting path (`/plan-goal-impl`, cursor/pi spawn agents, ordinary coding, etc.). Implementation for an already-spec'd portion may have started earlier and may continue in parallel with remaining exploration — but never in the Wayfinder session, and never bundled with spec-writing.
+  - **Spec side (Wayfinder's own output).** Recommend finalizing the spec via whatever spec-writing capability actually exists here (`/goal set` or an alternative). Partial specs may already have been handed off during exploration via Graduate; at exit the unified spec covers the rest.
+  - **Implementation side (separate agent/session, never inside Wayfinder).** Once a spec exists, recommend opening a new session for the fitting path (`/goal run`, cursor/pi spawn agents, ordinary coding, etc.). Implementation for an already-spec'd portion may have started earlier and may continue in parallel with remaining exploration — but never in the Wayfinder session, and never bundled with spec-writing.
 - detect which capabilities actually exist on each side and recommend the fitting one — do **not** hard-code a single path.
 
 ## Invocation surface
@@ -341,14 +341,14 @@ Smart entry routing:
 |---|---|
 | Personal Wayfinder | Decision map while foggy |
 | taskmd | Local backend + human Web UI |
-| `/plan-goal-set` (Planning Goal spec) | Writing the implementable spec — Wayfinder's decision-layer output; may be incremental (partial) or unified (at exit) |
-| `/plan-goal-impl` (Planning Files Runtime) | Implementation session — always a separate agent/session; may run in parallel with ongoing Wayfinder exploration once a spec exists |
+| `/goal set` (Goal spec) | Writing the implementable spec — Wayfinder's decision-layer output; may be incremental (partial) or unified (at exit) |
+| `/goal run` (Goal Runtime) | Implementation session — always a separate agent/session; may run in parallel with ongoing Wayfinder exploration once a spec exists |
 | `grill-with-docs` / `prototype` / `/explore-codebase` | Local capabilities used by Ticket types |
 
 Never confuse:
 
 - **Ticket** (Wayfinder decision unit)
-- **Planning Task** (implementation unit under `.pi/planning/tasks/`)
+- **Task** (implementation unit under Goal Runtime: `.pi/goals/` records + `.pi/track/`)
 - taskmd's underlying `task` record (storage primitive only)
 
 ## Do / Don't
@@ -364,7 +364,7 @@ Never confuse:
 ### Don't
 
 - invent a tracker when taskmd is missing
-- merge Wayfinder into Planning Files Runtime
+- merge Wayfinder into Goal Runtime
 - implement the destination under Wayfinder
 - resolve many unrelated Tickets in one unfocused session
 - use bare ids in human-facing narration

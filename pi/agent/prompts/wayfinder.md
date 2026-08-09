@@ -20,7 +20,7 @@ This prompt is a **thin shortcut only**. Do **not** invent a second methodology 
 - One Active Map; one Current Ticket focus
 - Parent = membership; dependency = ordering
 - Refer by name, not bare ids
-- Tickets are Wayfinder decision units, not Planning Files Runtime tasks
+- Tickets are Wayfinder decision units, not Goal Runtime Tasks
 - Workspace: `.pi/wayfinder/tickets/`
 
 ## Command routing for $@

@@ -19,7 +19,7 @@
   ],
   "lastChangelogVersion": "0.78.1",
   "extensions": [
-    "+extensions/planning-files-runtime/index.ts",
+    "+extensions/goal-runtime/index.ts",
     "+extensions/readonly-mode/index.ts"
   ]
 }
