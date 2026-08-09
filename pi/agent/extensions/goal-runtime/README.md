@@ -68,6 +68,12 @@ Track never on the board; Goal → Track one-way; lifecycle truth in `phase`.
 - Completion is gated by an **independent read-only verifier sub-agent** (also dispatched
   overlay-silent with `PI_GOAL_RUNTIME_CHILD=1`), which reads the Goal/Stories/Tasks + Track,
   checks acceptance criteria, and resolves `in-review` via `verify_goal_result`.
+- `verify_goal_result` is **token-governed**: `request_goal_review` / `/goal review` mints a
+  one-time `VERIFY_TOKEN` embedded in the verify brief (`.pi/track/verify-brief-<id>.md`);
+  the verifier must echo it back, so only a caller that read the brief (the dispatched
+  verifier) can resolve `in-review` — the orchestrator cannot self-verify.
+- If goal records are hand-edited so that more than one goal is `active`, `/goal status`,
+  smart entry, and the widget surface a warning (one-active is exclusive; pick one).
 - The continuation mechanism keeps the orchestrator driving while `active` and advances the
   serial queue when the current goal reaches a terminal phase.
 

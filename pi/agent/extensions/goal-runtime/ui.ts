@@ -28,6 +28,8 @@ export function formatStatusText(state: GoalSnapshot): string | undefined {
 export function buildWidgetLines(state: GoalSnapshot): string[] | undefined {
 	if (!state.storeExists && !state.track.exists && state.goals.length === 0) return undefined;
 	const lines: string[] = [];
+	const actives = state.goals.filter((g) => g.phase === "active");
+	if (actives.length > 1) lines.push(`⚠ multiple active goals: ${actives.map((g) => g.id).join(", ")}`);
 	lines.push(`goals: ${state.goalsDir} (taskmd)`);
 	lines.push(`track: ${state.trackDir}${state.track.exists ? "" : " (empty)"}`);
 	if (state.activeGoal) {

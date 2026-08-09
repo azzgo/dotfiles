@@ -127,8 +127,9 @@ export function buildReviewBrief(snapshot: GoalSnapshot, goalId: string): string
 		progress || "(empty)",
 		"",
 		"Decision:",
-		"- PASS (all success criteria verifiably met): call `verify_goal_result({ goalId: \"" + goal.id + "\", pass: true, evidence: [...] })`.",
-		"- FAIL (something is missing or broken): call `verify_goal_result({ goalId: \"" + goal.id + "\", pass: false, evidence: [...] })` — this sends the goal back to active for rework.",
+		"- The VERIFY_TOKEN line at the end of this brief is required: pass it to verify_goal_result as the `token` argument. It proves you (the dispatched verifier) read this brief.",
+		"- PASS (all success criteria verifiably met): call `verify_goal_result({ goalId: \"" + goal.id + "\", token: <VERIFY_TOKEN below>, pass: true, evidence: [...] })`.",
+		"- FAIL (something is missing or broken): call `verify_goal_result({ goalId: \"" + goal.id + "\", token: <VERIFY_TOKEN below>, pass: false, evidence: [...] })` — this sends the goal back to active for rework.",
 		"- Then stop; report a one-line verdict.",
 	].join("\n");
 }
@@ -190,7 +191,15 @@ export function buildGoalListText(snapshot: GoalSnapshot): string {
 	return lines.join("\n");
 }
 
+/** Warning when more than one goal is phase=active (should never happen via the runtime; indicates a hand-edit). */
+export function multiActiveWarn(snapshot: GoalSnapshot): string | undefined {
+	const actives = snapshot.goals.filter((g) => g.phase === "active");
+	if (actives.length <= 1) return undefined;
+	return `⚠ ${actives.length} goals are active (${actives.map((g) => g.id).join(", ")}) — one-active is exclusive. Pick one: e.g. /goal run <id> to activate only it, or /goal abandon <id> for the others.`;
+}
+
 export function buildGoalStatusText(snapshot: GoalSnapshot, goalId?: string): string {
+	const warn = multiActiveWarn(snapshot);
 	const target = goalId
 		? resolveGoal(snapshot.cwd, goalId)
 		: snapshot.activeGoal ?? snapshot.draftingGoal ?? snapshot.goals.at(-1) ?? null;
@@ -202,6 +211,7 @@ export function buildGoalStatusText(snapshot: GoalSnapshot, goalId?: string): st
 	const tasks = listTasks(snapshot.cwd, target.id);
 	const lines = [
 		`[GOAL STATUS] ${target.id} ${target.phase} (status ${target.status}) · ${target.title}`,
+		...(warn ? [warn] : []),
 		...(target.sourceTopic ? [`Source topic: ${target.sourceTopic}`] : []),
 		`Objective: ${contract.objective || "(not set)"}`,
 		`Success criteria (${contract.successCriteria.length}): ${contract.successCriteria.join("; ") || "(none)"}`,
@@ -233,8 +243,10 @@ export function buildTrackStatusText(snapshot: GoalSnapshot): string {
 }
 
 export function buildGoalSmartEntryPrompt(snapshot: GoalSnapshot): string {
+	const warn = multiActiveWarn(snapshot);
 	return [
 		"[GOAL SMART ENTRY]",
+		...(warn ? [warn] : []),
 		"Inspect the goal state below and route to the right next action:",
 		"- drafting goal exists → continue that drafting session (`/goal set <topic>` semantics).",
 		"- active goal exists → continue implementation (`/goal run` semantics; resume the active goal).",

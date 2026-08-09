@@ -32,8 +32,8 @@ import type {
 	VerifyResultParams,
 } from "./types";
 
-import { ensureDir, goalsDir, splitFrontmatter, upsertBodySection, writeText } from "./utils";
-import { appendToTrack, briefPath, initTrack, progressTimeline } from "./track";
+import { ensureDir, goalsDir, splitFrontmatter, upsertBodySection } from "./utils";
+import { appendToTrack, initTrack, mintVerifyToken, progressTimeline, readVerifyToken, writeVerifyBrief } from "./track";
 import { getSnapshot, readQueueState, storeExists, writeQueueState } from "./state";
 import {
 	GOAL_BODY_TEMPLATE,
@@ -238,13 +238,15 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 		activateGoal(ctx, targets[0]!, targets.slice(1).map((g) => g.id));
 	}
 
-	function enterReview(ctx: ExtensionContext, goal: GoalRecord): void {
+	function enterReview(ctx: ExtensionContext, goal: GoalRecord): string {
 		transitionPhase(ctx.cwd, goal.id, "in-review");
 		progressTimeline(ctx.cwd, `Goal ${goal.id} moved to in-review for independent verification`);
 		const brief = buildReviewBrief(getSnapshot(ctx.cwd, snapshot.resumedFromPreviousSession), goal.id);
-		writeText(briefPath(ctx.cwd, `verify-brief-${goal.id}.md`), brief);
+		const token = mintVerifyToken();
+		writeVerifyBrief(ctx.cwd, goal.id, brief, token);
 		clearContinuation();
 		refresh(ctx, false);
+		return token;
 	}
 
 	function requestReview(q: string | undefined, ctx: ExtensionContext): void {
@@ -261,7 +263,7 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 		if (goal.phase === "paused") transitionPhase(ctx.cwd, goal.id, "active");
 		enterReview(ctx, goal);
 		send(
-			`[GOAL REVIEW]\nGoal ${goal.id} (${goal.title}) is now phase=in-review.\nDispatch the independent read-only verifier via interactive_shell: background dispatch, raw command form with the child marker env, e.g.\ninteractive_shell({ command: "PI_GOAL_RUNTIME_CHILD=1 pi -p 'You are the independent verifier for goal ${goal.id}. Read .pi/track/verify-brief-${goal.id}.md and follow it exactly. Then call verify_goal_result with your verdict.'", mode: "dispatch", background: true, reason: "goal-review-${goal.id}" })\nThen stop. Do NOT self-verify.`,
+			`[GOAL REVIEW]\nGoal ${goal.id} (${goal.title}) is now phase=in-review.\nDispatch the independent read-only verifier via interactive_shell: background dispatch, raw command form with the child marker env, e.g.\ninteractive_shell({ command: "PI_GOAL_RUNTIME_CHILD=1 pi -p 'You are the independent verifier for goal ${goal.id}. Read .pi/track/verify-brief-${goal.id}.md and follow it exactly. Then call verify_goal_result with your verdict and the VERIFY_TOKEN from the brief.'", mode: "dispatch", background: true, reason: "goal-review-${goal.id}" })\nThen stop. Do NOT self-verify.`,
 			MESSAGE_TYPE_GOAL_REVIEW,
 		);
 	}
@@ -499,10 +501,10 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 						type: "text",
 						text: [
 							`Goal ${goal.id} (${goal.title}) is now phase=in-review.`,
-							`Brief written to .pi/track/verify-brief-${goal.id}.md.`,
+							`Brief written to .pi/track/verify-brief-${goal.id}.md (contains the VERIFY_TOKEN).`,
 							"",
 							"Dispatch the independent read-only verifier now, then STOP (do not self-verify):",
-							`interactive_shell({ command: "PI_GOAL_RUNTIME_CHILD=1 pi -p 'You are the independent verifier for goal ${goal.id}. Read .pi/track/verify-brief-${goal.id}.md and follow it exactly. Then call verify_goal_result with your verdict.'", mode: "dispatch", background: true, reason: "goal-review-${goal.id}" })`,
+							`interactive_shell({ command: "PI_GOAL_RUNTIME_CHILD=1 pi -p 'You are the independent verifier for goal ${goal.id}. Read .pi/track/verify-brief-${goal.id}.md and follow it exactly. Then call verify_goal_result with your verdict and the VERIFY_TOKEN from the brief.'", mode: "dispatch", background: true, reason: "goal-review-${goal.id}" })`,
 						].join("\n"),
 					},
 				],
@@ -519,6 +521,7 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 		promptGuidelines: ["Use verify_goal_result only as the independent read-only verifier, only on an in-review goal."],
 		parameters: Type.Object({
 			goalId: Type.String({ description: "Goal record id (must be phase=in-review)" }),
+			token: Type.String({ description: "One-time VERIFY_TOKEN read from the verify brief (.pi/track/verify-brief-<id>.md) — proves the caller is the dispatched verifier" }),
 			pass: Type.Boolean({ description: "true = all success criteria verifiably met; false = needs rework" }),
 			evidence: Type.Optional(Type.Array(Type.String(), { description: "Verifier evidence / failed checks" })),
 		}),
@@ -529,6 +532,14 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 			}
 			if (goal.phase !== "in-review") {
 				return { content: [{ type: "text", text: `verify_goal_result rejected: goal ${goal.id} is ${goal.phase}, not in-review. Only the verifier may resolve in-review.` }], isError: true, details: {} };
+			}
+			const expected = readVerifyToken(ctx.cwd, goal.id);
+			if (!expected || !params.token || params.token.trim() !== expected) {
+				return {
+					content: [{ type: "text", text: `verify_goal_result rejected: VERIFY_TOKEN mismatch for goal ${goal.id}. Read the token from .pi/track/verify-brief-${goal.id}.md — only the dispatched verifier can resolve in-review.` }],
+					isError: true,
+					details: {},
+				};
 			}
 			if (params.pass) {
 				transitionPhase(ctx.cwd, goal.id, "complete");
