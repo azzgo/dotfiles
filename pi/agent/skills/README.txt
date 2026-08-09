@@ -73,7 +73,7 @@ Skills are loaded from multiple locations in order:
 | Field | Value |
 |-------|-------|
 | **Source** | Personal adaptation of [mattpocock/skills wayfinder](https://github.com/mattpocock/skills/blob/main/skills/engineering/wayfinder/SKILL.md) |
-| **Description** | Personal Wayfinder — local decision-map skill over taskmd; keeps original chart/work method, removes team ceremony, stays separate from Planning Files Runtime |
+| **Description** | Personal Wayfinder — local decision-map skill over taskmd; keeps original chart/work method, removes team ceremony, stays separate from Goal Runtime |
 | **Installed** | 2026-07-24 |
-| **Adjustments** | taskmd backend only; per-repo `.pi/wayfinder/tickets/`; Ticket/Map templates; local skill mapping; thin `/wayfinder` prompt shortcut; no Planning Files Runtime merge. 2026-07-31: added `disable-model-invocation: true` (no model auto-invocation; explicit trigger only) |
+| **Adjustments** | taskmd backend only; per-repo `.pi/wayfinder/tickets/`; Ticket/Map templates; local skill mapping; thin `/wayfinder` prompt shortcut; no Goal Runtime merge. 2026-07-31: added `disable-model-invocation: true` (no model auto-invocation; explicit trigger only) |
 | **Upstream** | https://github.com/mattpocock/skills — check for upstream method changes regularly |

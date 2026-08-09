@@ -10,7 +10,7 @@
 - `pi/agent/prompts/`
 - `pi/agent/skills/`
 - `pi/mcp.json`
-- `pi/agent/extensions/planning-files-runtime/`
+- `pi/agent/extensions/goal-runtime/`
 - `pi/agent/extensions/readonly-mode/`
 - `pi/agent/extensions/agent-timer/`
 - `pi/agent/extensions/xfer.ts`
@@ -38,9 +38,9 @@
 
 去掉了原本机器相关的绝对路径参数，方便多端直接复用。
 
-### 3. planning-files-runtime 扩展已迁移
+### 3. goal-runtime 扩展已迁移
 
-`~/.pi/agent/extensions/planning-files-runtime/` 已纳入 dotfiles。
+`~/.pi/agent/extensions/goal-runtime/` 已纳入 dotfiles。
 
 执行 `just install-pi` 时会把仓库中的扩展目录 link 到本机 Pi 扩展目录。
 
@@ -68,16 +68,15 @@
 
 这样仓库里的 prompts（例如 `grill-me.md`、`wayfinder.md`）可以直接作为全局 `/prompt-name` 使用。
 
-### 8. planning-files-runtime 已内聚实现 planning + goal overlay
+### 8. goal-runtime 已内聚实现 Goals/Stories/Tasks + Track
 
-当前业务侧只保留一个本地维护的 Pi 扩展：`planning-files-runtime`。
+当前业务侧只保留一个本地维护的 Pi 扩展：`goal-runtime`（前身 planning-files-runtime）。
 
 它现在同时负责：
 
-- baseline planning files workflow
-- goal overlay 的设定与恢复
-- `task_plan.md` / `findings.md` / `progress.md` 的路径重定向
-- `plan-new` / `plan-goal-set` / `plan-goal-impl` 三个命令
+- Goals/Stories/Tasks 存 taskmd（`.pi/goals/`，tag 族 `goal` / `goal:story` / `goal:task`），Track 工作记忆存 `.pi/track/`（findings.md + progress.md）
+- 生命周期：phase 为准，status 为派生投影；one active 互斥
+- 命令族：`/goal`（set / run / list / status / review / abandon / ui）+ `/track`（new / update / status）
 
 `planning-with-files` skill 与 `plan-mode` 已移除，不再单独管理。
 

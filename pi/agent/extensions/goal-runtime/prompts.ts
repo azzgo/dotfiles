@@ -1,0 +1,286 @@
+import type { GoalRecord, GoalSnapshot, StoryRecord, TaskRecord, TaskTier } from "./types";
+import { CHILD_ENV_MARKER, GOALS_DIR, TRACK_DIR } from "./types";
+import { computeTaskTiers, listStories, listTasks, readGoalContract, resolveGoal } from "./taskmd";
+import { tailLines, truncate } from "./utils";
+
+function goalLine(goal: GoalRecord): string {
+	const stage = goal.draftingStage ? ` · stage ${goal.draftingStage}` : "";
+	const openQ = goal.openQuestions && goal.openQuestions.length > 0 ? ` · ${goal.openQuestions.length} open q` : "";
+	return `${goal.id} ${goal.phase}${stage}${openQ} · ${goal.title}`;
+}
+
+// ---- /goal set (drafting) ----
+
+export function buildGoalSetPrompt(goal: GoalRecord, supplementalInput?: string): string {
+	const stage = goal.draftingStage || "as-is";
+	return [
+		"[GOAL SET]",
+		"Focused drafting session for ONE goal. Output is taskmd records in .pi/goals/ (store is `.pi/goals`, tag family `goal` / `goal:story` / `goal:task`).",
+		"Work through 4 stages. Track the current stage in the Goal record frontmatter (`drafting_stage`) — use the save_goal_draft tool or edit the frontmatter directly.",
+		"Ask the user only when key info is missing. Keep notes in the Goal record `## Drafting Notes` / frontmatter.",
+		"",
+		"- Stage 1 as-is: read code. Map real paths, APIs, DB schema, components. Fill the Goal body contract sections (Objective / Success Criteria / Constraints / Out of Scope / Blocker Rule) and `## Design / As-Is Analysis`.",
+		"- Stage 2 design: recommend 1 approach; note alternatives + why rejected. Write into `## Design / Recommended Approach` + `## Design / Rejected Alternatives`. Cover compat, rollback, test strategy.",
+		"- Stage 3 story: for each vertical slice (end-to-end deliverable), `taskmd -d .pi/goals add \"<Story title>\" --tags goal:story --parent <goal-id> --status pending`, then overwrite the body with the Story template (`## What`, `## Layers`, `## Acceptance Criteria`).",
+		"- Stage 4 task: break Stories into Tasks. `taskmd -d .pi/goals add \"<Task title>\" --tags goal:task --parent <story-id> [--depends-on <ids>] --status pending`, then overwrite the body with the Task template (`## One-Commit Spec`, `## Hard Deps`, `## Soft Deps`, `## TDD Marker`). 1 commit per Task. Mark TDD (unit|component|integration|no).",
+		"- When the contract is complete (all 5 contract sections non-empty) AND at least one Story with at least one Task exists: call `commit_goal`.",
+		"",
+		"Output style: caveman. Drop filler. Tech precision. Arrow for causality.",
+		"",
+		`Current stage: ${stage}`,
+		`Goal: ${goalLine(goal)}`,
+		...(goal.sourceTopic ? [`Source topic: ${goal.sourceTopic}`] : []),
+		...(goal.openQuestions && goal.openQuestions.length > 0 ? [`Open questions (${goal.openQuestions.length}): ${goal.openQuestions.join("; ")}`] : []),
+		...(goal.nextRecommendedQuestion ? [`Recommended next question: ${goal.nextRecommendedQuestion}`] : []),
+		...(supplementalInput ? ["", "New user input for this drafting step:", supplementalInput] : []),
+	].join("\n");
+}
+
+// ---- /goal run (orchestrator) ----
+
+export function buildGoalImplPrompt(snapshot: GoalSnapshot, goalId: string, mode: "start" | "resume" | "continue"): string {
+	const goal = resolveGoal(snapshot.cwd, goalId);
+	if (!goal) {
+		return "[GOAL RUN]\nGoal not found. Run /goal list to see available goals.";
+	}
+	const contract = readGoalContract(goal);
+	const stories = listStories(snapshot.cwd, goal.id);
+	const tasks = listTasks(snapshot.cwd, goal.id);
+	const tiers = computeTaskTiers(snapshot.cwd, goal.id);
+	const findings = truncate(tailLines(snapshot.track.findings, 15), 1000);
+	const progress = truncate(tailLines(snapshot.track.progress, 15), 1000);
+	const queueNote = snapshot.queue.length > 0
+		? `\nSerial queue after this goal: ${snapshot.queue.join(", ")} — the queue advances automatically when this goal completes (verifier pass).`
+		: "";
+
+	return [
+		`[GOAL RUN mode=${mode} goal=${goal.id} runCount=${goal.runCount}]`,
+		`You are the **orchestrator** for Goal ${goal.id} (${goal.title}). Goal Runtime stores Goals/Stories/Tasks as taskmd records in ${GOALS_DIR}; Track (working memory) lives in ${TRACK_DIR}/{findings,progress}.md.`,
+		"",
+		"Goal contract:",
+		`- Objective: ${contract.objective}`,
+		`- Success criteria: ${contract.successCriteria.join("; ") || "(none)"}`,
+		`- Constraints: ${contract.constraints.join("; ") || "(none)"}`,
+		`- Out of scope: ${contract.outOfScope.join("; ") || "(none)"}`,
+		`- If blocked: ${contract.blockerRule || "(none)"}`,
+		"",
+		"Stories & Tasks (taskmd):",
+		...(stories.length === 0 ? ["- (no stories yet)"] : stories.map((s) => `- Story ${s.id} [${s.status}] ${s.title}`)),
+		...(tasks.length === 0 ? ["- (no tasks yet)"] : tasks.map((t) => `- Task ${t.id} [${t.status}]${t.dependencies.length > 0 ? ` deps=${t.dependencies.join(",")}` : ""} ${t.title}`)),
+		"",
+		"Execution tiers (same tier = independent, parallel-safe):",
+		...(tiers.length === 0 ? ["- (no computable tiers; work top-down from stories)"] : tiers.map((t) => `- tier ${t.tier}: ${t.taskIds.join(", ")}`)),
+		queueNote,
+		"",
+		"Execution protocol:",
+		"- Re-read the Goal/Story/Task records before major decisions (`taskmd -d .pi/goals get <id>`).",
+		"- **You (orchestrator) are the sole Track writer.** Update findings.md / progress.md at .pi/track/ after meaningful work, verification, blockers, completion evidence.",
+		"- **Parallel execution:** independent Tasks (no hard dep within the same tier) fan out to leaf sub-agents via the `impl-with-spawn` skill — `interactive_shell` background dispatch (`mode: \"dispatch\"`, `background: true`).",
+		"- **Leaf agents must be overlay-silent**: dispatch with the raw command form and the child marker env, e.g. `interactive_shell({ command: \"PI_GOAL_RUNTIME_CHILD=1 pi -p '<self-contained task prompt>'\", mode: \"dispatch\", background: true, reason: \"goal-<id>-task-<taskId>\" })`. Child agents must NOT write Track and must NOT touch goal state — they only do code work and return a summary.",
+		"- Consolidate results into Track serially between tiers. Never start tier N+1 before tier N is consolidated.",
+		"- Self-check against success criteria while active (this is NOT a state).",
+		"- If you hit a real blocker, call `pause_goal` with a concrete reason and suggested action.",
+		"- When implementation is done (success criteria satisfied, evidence in Track), call `request_goal_review` — it flips the goal to in-review and tells you how to dispatch the independent verifier. Do NOT self-verify.",
+		"",
+		"Recent findings (tail):",
+		findings || "(empty)",
+		"",
+		"Recent progress (tail):",
+		progress || "(empty)",
+	].join("\n");
+}
+
+// ---- verification ----
+
+/**
+ * Brief for the independent read-only verifier sub-agent. The verifier is
+ * dispatched overlay-silent (PI_GOAL_RUNTIME_CHILD=1) and resolves the goal's
+ * in-review phase via the verify_goal_result tool.
+ */
+export function buildReviewBrief(snapshot: GoalSnapshot, goalId: string): string {
+	const goal = resolveGoal(snapshot.cwd, goalId);
+	if (!goal) return "Goal not found.";
+	const contract = readGoalContract(goal);
+	const stories = listStories(snapshot.cwd, goal.id);
+	const tasks = listTasks(snapshot.cwd, goal.id);
+	const progress = truncate(tailLines(snapshot.track.progress, 25), 1500);
+	return [
+		`[GOAL REVIEW] Independent verifier for Goal ${goal.id} (${goal.title}), currently phase=in-review.`,
+		"You are a **read-only verifier** — do NOT modify production code, Track, or goal state except via the verify_goal_result tool.",
+		"",
+		"Contract:",
+		`- Objective: ${contract.objective}`,
+		`- Success criteria: ${contract.successCriteria.join("; ") || "(none)"}`,
+		`- Constraints: ${contract.constraints.join("; ") || "(none)"}`,
+		`- Out of scope: ${contract.outOfScope.join("; ") || "(none)"}`,
+		"",
+		"Scope of evidence:",
+		"- Read the Goal record (`taskmd -d .pi/goals get ${goal.id}`), its Stories, its Tasks.",
+		"- Read Track progress.md / findings.md at .pi/track/ (completion evidence lives there).",
+		"- Inspect the actual code changes (git log/diff) against each success criterion.",
+		"- Run `taskmd -d .pi/goals verify <task-id>` for tasks that carry verify hooks, if any.",
+		"",
+		`Stories: ${stories.map((s) => `${s.id} [${s.status}] ${s.title}`).join("; ") || "(none)"}`,
+		`Tasks: ${tasks.map((t) => `${t.id} [${t.status}] ${t.title}`).join("; ") || "(none)"}`,
+		"",
+		"Progress tail:",
+		progress || "(empty)",
+		"",
+		"Decision:",
+		"- PASS (all success criteria verifiably met): call `verify_goal_result({ goalId: \"" + goal.id + "\", pass: true, evidence: [...] })`.",
+		"- FAIL (something is missing or broken): call `verify_goal_result({ goalId: \"" + goal.id + "\", pass: false, evidence: [...] })` — this sends the goal back to active for rework.",
+		"- Then stop; report a one-line verdict.",
+	].join("\n");
+}
+
+// ---- /track update ----
+
+export function buildTrackUpdatePrompt(snapshot: GoalSnapshot): string {
+	const active = snapshot.activeGoal;
+	return [
+		"[TRACK UPDATE]",
+		"Refresh Track (.pi/track/findings.md + .pi/track/progress.md) with current workspace context.",
+		"Track is flat working memory — NOT taskmd, never on the board. Do NOT create or write findings.md / progress.md anywhere else.",
+		`- findings.md: ${snapshot.trackDir}/findings.md`,
+		`- progress.md: ${snapshot.trackDir}/progress.md`,
+		"",
+		"## Continuity Check",
+		"Compare actual progress & findings against what's recorded:",
+		"- Is the last recorded progress a continuation of what you're doing now?",
+		"- Are findings/decisions still valid in the current context?",
+		"- Are there new findings or progress not yet recorded?",
+		"",
+		"### If it IS a continuation",
+		"Use write/edit at the exact paths above: findings.md append new discoveries; progress.md append new progress (Timeline / Work Completed / Verification / Blockers / Completion Evidence).",
+		"",
+		"### If it is NOT a continuation (progress doesn't align, context changed, old records stale)",
+		"Don't write yet. Ask the user: 1. **reset** — `/track new` then write fresh content; 2. **write-anyway** — append despite discontinuity; 3. **abort** — don't write.",
+		"",
+		"## Current Goal State",
+		...(active
+			? [`Active: ${active.id} [${active.phase}] ${active.title}`, `Run count: ${active.runCount ?? 0}`]
+			: ["No active goal."]),
+		...(snapshot.draftingGoal ? [`Drafting: ${snapshot.draftingGoal.id} [stage ${snapshot.draftingGoal.draftingStage ?? "as-is"}] ${snapshot.draftingGoal.title}`] : []),
+		...(snapshot.queue.length > 0 ? [`Queue: ${snapshot.queue.join(", ")}`] : []),
+		"",
+		"## findings.md (tail)",
+		tailLines(snapshot.track.findings, 30) || "(missing)",
+		"",
+		"## progress.md (tail)",
+		tailLines(snapshot.track.progress, 30) || "(missing)",
+	].join("\n");
+}
+
+// ---- list / status / smart entry ----
+
+export function buildGoalListText(snapshot: GoalSnapshot): string {
+	if (snapshot.goals.length === 0) {
+		return "[GOAL LIST]\nNo goals yet in .pi/goals. Run `/goal set <topic>` to create the first one.";
+	}
+	const lines = [
+		"[GOAL LIST]",
+		`Store: ${GOALS_DIR} (taskmd) · Track: ${TRACK_DIR}`,
+		"",
+		...snapshot.goals.map((g) => {
+			const q = g.id === snapshot.activeGoal?.id ? " ◀ active" : "";
+			return `- ${g.id} ${g.phase}${g.draftingStage ? `(stage ${g.draftingStage})` : ""} · ${g.title}${q}`;
+		}),
+		...(snapshot.queue.length > 0 ? ["", `Serial queue: ${snapshot.queue.join(", ")}`] : []),
+	];
+	return lines.join("\n");
+}
+
+export function buildGoalStatusText(snapshot: GoalSnapshot, goalId?: string): string {
+	const target = goalId
+		? resolveGoal(snapshot.cwd, goalId)
+		: snapshot.activeGoal ?? snapshot.draftingGoal ?? snapshot.goals.at(-1) ?? null;
+	if (!target) {
+		return "[GOAL STATUS]\nNo goal selected and none active/drafting. Run /goal list.";
+	}
+	const contract = readGoalContract(target);
+	const stories = listStories(snapshot.cwd, target.id);
+	const tasks = listTasks(snapshot.cwd, target.id);
+	const lines = [
+		`[GOAL STATUS] ${target.id} ${target.phase} (status ${target.status}) · ${target.title}`,
+		...(target.sourceTopic ? [`Source topic: ${target.sourceTopic}`] : []),
+		`Objective: ${contract.objective || "(not set)"}`,
+		`Success criteria (${contract.successCriteria.length}): ${contract.successCriteria.join("; ") || "(none)"}`,
+		`Constraints (${contract.constraints.length}): ${contract.constraints.join("; ") || "(none)"}`,
+		`Out of scope (${contract.outOfScope.length}): ${contract.outOfScope.join("; ") || "(none)"}`,
+		`Blocker rule: ${contract.blockerRule || "(not set)"}`,
+		...(target.draftingStage ? [`Drafting stage: ${target.draftingStage}`] : []),
+		...(target.openQuestions && target.openQuestions.length > 0 ? [`Open questions: ${target.openQuestions.join("; ")}`] : []),
+		...(target.nextRecommendedQuestion ? [`Next recommended question: ${target.nextRecommendedQuestion}`] : []),
+		`Stories: ${stories.map((s) => `${s.id} [${s.status}] ${s.title}`).join("; ") || "(none)"}`,
+		`Tasks: ${tasks.map((t) => `${t.id} [${t.status}] ${t.title}`).join("; ") || "(none)"}`,
+	];
+	return lines.join("\n");
+}
+
+export function buildTrackStatusText(snapshot: GoalSnapshot): string {
+	return [
+		"[TRACK STATUS]",
+		`Track dir: ${snapshot.trackDir}`,
+		`exists: ${snapshot.track.exists}`,
+		...(snapshot.activeGoal ? [`active goal: ${snapshot.activeGoal.id} [${snapshot.activeGoal.phase}] ${snapshot.activeGoal.title}`] : []),
+		"",
+		"## findings.md (tail)",
+		tailLines(snapshot.track.findings, 20) || "(missing)",
+		"",
+		"## progress.md (tail)",
+		tailLines(snapshot.track.progress, 20) || "(missing)",
+	].join("\n");
+}
+
+export function buildGoalSmartEntryPrompt(snapshot: GoalSnapshot): string {
+	return [
+		"[GOAL SMART ENTRY]",
+		"Inspect the goal state below and route to the right next action:",
+		"- drafting goal exists → continue that drafting session (`/goal set <topic>` semantics).",
+		"- active goal exists → continue implementation (`/goal run` semantics; resume the active goal).",
+		"- ready goal exists, nothing active → recommend `/goal run <id>`.",
+		"- nothing exists → ask the user for a topic to run `/goal set <topic>`.",
+		...(snapshot.queue.length > 0 ? [`- serial queue pending: ${snapshot.queue.join(", ")}`] : []),
+		"",
+		"Goals:",
+		...(snapshot.goals.length === 0 ? ["- (none)"] : snapshot.goals.map((g) => `- ${goalLine(g)}`)),
+	].join("\n");
+}
+
+// ---- injected context (before_agent_start) ----
+
+export function buildInjectedContext(snapshot: GoalSnapshot): string | undefined {
+	const active = snapshot.activeGoal;
+	const drafting = snapshot.draftingGoal;
+	if (!active && !drafting && snapshot.goals.length === 0) return undefined;
+	const lines: string[] = [];
+	lines.push("[GOAL RUNTIME]");
+	lines.push(`Goal store: ${GOALS_DIR} (taskmd; use the taskmd CLI, never a fallback tracker). Track: ${TRACK_DIR}/{findings,progress}.md (flat working memory; orchestrator-only writes while a goal is active).`);
+	if (active) {
+		lines.push(`active goal: ${active.id} [${active.phase}] ${active.title}`);
+		const contract = readGoalContract(active);
+		if (contract.objective) lines.push(`objective: ${contract.objective}`);
+		if (snapshot.queue.length > 0) lines.push(`serial queue: ${snapshot.queue.join(", ")}`);
+	}
+	if (drafting) {
+		lines.push(`drafting goal: ${drafting.id} [stage ${drafting.draftingStage ?? "as-is"}] ${drafting.title}`);
+		if (drafting.openQuestions && drafting.openQuestions.length > 0) {
+			lines.push(`drafting open questions (${drafting.openQuestions.length}): ${drafting.openQuestions.join("; ")}`);
+		}
+		if (drafting.nextRecommendedQuestion) lines.push(`next drafting question: ${drafting.nextRecommendedQuestion}`);
+	}
+	if (active) {
+		lines.push("");
+		lines.push("Track progress tail:");
+		lines.push(truncate(tailLines(snapshot.track.progress, 8), 800) || "(empty)");
+	}
+	const resumeNote = snapshot.resumedFromPreviousSession
+		? "- This session continues from a previous Pi session. Reconcile your next actions against the goal records + Track before changing code."
+		: "";
+	if (resumeNote) lines.push(resumeNote);
+	return lines.join("\n");
+}
+
+// ---- helper export for tests ----
+
+export const _test = { computeTaskTiers, CHILD_ENV_MARKER };

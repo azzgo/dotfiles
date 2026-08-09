@@ -1,6 +1,6 @@
-# Pi Planning Workflows
+# Pi Goal, Track & Wayfinder Workflows
 
-This context defines the local planning workflows maintained in this dotfiles repo for Pi. It distinguishes execution-oriented planning from decision-oriented wayfinding so future prompts, skills, and automation use consistent terms.
+This context defines the local workflows maintained in this dotfiles repo for Pi. It distinguishes goal-driven execution (Goals and Track, via Goal Runtime) from decision-oriented wayfinding so future prompts, skills, and automation use consistent terms.
 
 ## Language
 
@@ -8,17 +8,25 @@ This context defines the local planning workflows maintained in this dotfiles re
 A decision-oriented planning workflow for work that is still foggy. It maps a destination, unresolved decisions, and dependency edges before implementation starts.
 _Avoid_: implementation plan, task runner, todo list
 
-**Planning Files Runtime**:
-An execution-oriented Pi extension that manages `.pi/planning/` files and goal overlays during implementation. It is separate from Wayfinder unless an explicit integration is chosen later.
+**Goal Runtime**:
+The execution-oriented Pi extension (`goal-runtime`) that manages Goals (durable, taskmd-backed implementation targets) and Track (the shared working-memory scratchpad) during implementation. It shares the taskmd backend with Wayfinder but keeps separate stores and tag families.
 _Avoid_: wayfinder, roadmap engine, issue tracker
+
+**Track**:
+The shared, reset-able working-memory scratchpad managed by Goal Runtime — the freeform findings and progress narrative that accumulates execution context. Track is orthogonal to Goals: resetting it (`/track new`) clears the scratchpad without touching Goal records, and Track updates (`/track update`) run independently of goal lifecycle.
+_Avoid_: goal history, permanent log, per-goal notebook
+
+**Project**:
+The repository scope that owns one Goal Runtime workspace and the Goals within it. A Project may hold many Goals, but only one Goal may be active at a time.
+_Avoid_: workspace (see Wayfinder Workspace), map, global account
 
 **Local Skill**:
 A Pi skill maintained inside this dotfiles repo for personal use on the current machine setup. It optimizes for local usefulness, not packaging or external distribution.
 _Avoid_: package, product, shared extension
 
 **Taskmd Backend**:
-The local task tracker used by this Wayfinder variant for storing maps, tickets, and dependency edges, exposed through taskmd's CLI and web UI. It is an explicit prerequisite of execution, not a built-in fallback and not part of the skill itself.
-_Avoid_: embedded database, planning runtime, custom UI core
+The local task tracker used as shared storage by both Wayfinder (Maps, Tickets, dependency edges) and Goal Runtime (Goals, Stories, Tasks), exposed through taskmd's CLI and web UI. Each system uses its own store directory and tag family. It is an explicit prerequisite, not a built-in fallback.
+_Avoid_: embedded database, custom UI core, wayfinder-only backend
 
 **Personal Wayfinder**:
 A local Wayfinder variant that keeps the original decision-oriented method while removing team coordination ceremony. It recommends only the skills and prompts available in this repo.
@@ -26,15 +34,23 @@ _Avoid_: generic issue tracker workflow, full team-process port
 
 **Wayfinder Workspace**:
 The per-repository local storage area for a Personal Wayfinder map and its tickets, stored by default at `.pi/wayfinder/`. It is isolated from other repositories and kept out of version control.
-_Avoid_: global tracker, shared inbox, planning-files directory
+_Avoid_: global tracker, shared inbox, goal-runtime directory
 
 **Ticket**:
-A Wayfinder child item that captures one decision, investigation, prototype, or other unit of planning work under a Map. In taskmd it is stored as a task, but Wayfinder prose should call it a Ticket to avoid confusion with planning tasks.
+A Wayfinder child item that captures one decision, investigation, prototype, or other unit of planning work under a Map. In taskmd it is stored as a task, but Wayfinder prose should call it a Ticket to avoid confusion with Goal Runtime Tasks.
 _Avoid_: task, todo, card
 
-**Planning Task**:
-An execution-phase work item defined by Planning Files Runtime in `.pi/planning/tasks/`. It is distinct from a Wayfinder Ticket and belongs to implementation, not decision mapping.
-_Avoid_: ticket, wayfinder task
+**Task**:
+The leaf execution unit under a Story in Goal Runtime — a one-commit-granularity work item with dependency edges and TDD markers, stored as a taskmd record. It is the parallelizable unit of implementation, distinct from a Wayfinder Ticket (decision unit) and from taskmd's generic storage primitive.
+_Avoid_: ticket, wayfinder task, taskmd storage primitive
+
+**Goal**:
+A durable implementation target owned by Goal Runtime — an epic or feature expressed as a contract (objective, acceptance criteria, constraints, out-of-scope) and a design blueprint, decomposed into Stories and Tasks. A Project holds many Goals, each with its own identity; a Goal is retained after completion for traceability rather than consumed once. It is the spec-layer handoff target for Wayfinder (`Graduated → Goal`).
+_Avoid_: ticket, todo, one-shot disposable feature
+
+**Story**:
+A vertical-slice breakdown layer of a Goal — an end-to-end deliverable with its own acceptance criteria, sitting between a Goal and its Tasks. A Goal is decomposed into Stories, and each Story into Tasks.
+_Avoid_: epic, ticket, milestone, task
 
 **Active Map**:
 The single Wayfinder Map in a repository that is currently being worked through. A repository may keep historical Maps, but only one Map may be active at a time.

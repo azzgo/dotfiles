@@ -132,8 +132,8 @@ install-pi:
     ln -sf {{ dotfiles_dir }}/pi/agent/APPEND_SYSTEM.md ~/.pi/agent/APPEND_SYSTEM.md
     ln -sf {{ dotfiles_dir }}/pi/mcp.json ~/.pi/agent/mcp.json
 
-    rm -rf ~/.pi/agent/extensions/planning-files-runtime
-    ln -s {{ dotfiles_dir }}/pi/agent/extensions/planning-files-runtime ~/.pi/agent/extensions/planning-files-runtime
+    rm -rf ~/.pi/agent/extensions/goal-runtime
+    ln -s {{ dotfiles_dir }}/pi/agent/extensions/goal-runtime ~/.pi/agent/extensions/goal-runtime
     rm -rf ~/.pi/agent/extensions/agent-timer
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/agent-timer ~/.pi/agent/extensions/agent-timer
     rm -rf ~/.pi/agent/extensions/readonly-mode

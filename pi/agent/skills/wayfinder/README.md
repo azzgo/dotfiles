@@ -11,7 +11,7 @@
 
 ## 一句话
 
-> **Wayfinder 管「路线怎么定」；Planning 管「路线怎么走完」。**  
+> **Wayfinder 管「路线怎么定」；Goal Runtime 管「路线怎么走完」。**  
 > 雾浓用 Wayfinder，雾散就离开它。
 
 它在本地用 **taskmd** 维护一张决策地图（Map）和若干决策票据（Ticket），一次只推进一张 Ticket，直到到达 Destination 的路径足够清楚。
@@ -30,7 +30,7 @@
 ### 不解决
 
 - 普通待办列表、日常 issue 管理
-- 已经决策清楚后的**实现进度**（那是 Planning Files Runtime）
+- 已经决策清楚后的**实现进度**（那是 Goal Runtime）
 - 自动写生产代码、交付 destination 本身
 - 团队多人认领 / 协作看板（本版刻意去掉）
 
@@ -42,14 +42,14 @@
 |---|---|---|
 | **Personal Wayfinder** | 决策期导航 | `.pi/wayfinder/tickets/` |
 | **taskmd** | 本地后端 + 给人看的 Web UI | 同上（CLI/Web 操作） |
-| **Planning Files Runtime** | 实现期进度与 goal overlay | `.pi/planning/` |
+| **Goal Runtime** | 实现期进度（Goals/Stories/Tasks 存 taskmd + Track 工作记忆） | `.pi/goals/` + `.pi/track/` |
 
 ```text
 雾里选路  →  Wayfinder（decide）
-路清了    →  /plan-goal-set · /plan-goal-impl 或直接写代码（build）
+路清了    →  /goal set · /goal run 或直接写代码（build）
 ```
 
-不要把 Wayfinder Ticket 和 Planning Task 混叫「task」。
+不要把 Wayfinder Ticket 和 Goal Runtime Task 混叫「task」。
 
 ---
 
@@ -157,7 +157,7 @@ Work   →  在已有 Map 上前进
 3. Frontier 上不再有「还得先决策」的 Ticket（剩下的是 `waiting-human` 或已 graduation）  
 4. 剩下主要是「怎么实现」  
 
-→ 关掉/完成这张 Map，**按当前环境实际可用的路径**交给实现侧（capability-aware：探测 `/plan-goal-set`+`/plan-goal-impl`、cursor/pi spawn、直接写代码等，推荐合适的，不写死单一路径）。
+→ 关掉/完成这张 Map，**按当前环境实际可用的路径**交给实现侧（capability-aware：探测 `/goal set`+`/goal run`、cursor/pi spawn、直接写代码等，推荐合适的，不写死单一路径）。
 
 ---
 
@@ -214,7 +214,7 @@ Work   →  在已有 Map 上前进
 /wayfinder work  ──(一张)──►  决策变清
         │
         ▼
-   实现阶段（Planning / 写代码）
+   实现阶段（Goal Runtime / 写代码）
 ```
 
 ---
@@ -234,10 +234,10 @@ Work   →  在已有 Map 上前进
 
 | 场景 | 更好选择 |
 |---|---|
-| 「帮我实现这个已定方案」 | Planning / 直接实现 |
+| 「帮我实现这个已定方案」 | Goal Runtime / 直接实现 |
 | 「这段代码怎么读」 | `/explore-codebase` |
 | 「列一下今天要改的文件」 | 普通清单，不必开 Map |
-| 「顺手把 planning-files-runtime 也融进来」 | 明确 Out of Scope，另开图或以后再说 |
+| 「顺手把 goal-runtime 也融进来」 | 明确 Out of Scope，另开图或以后再说 |
 
 ---
 
@@ -245,5 +245,5 @@ Work   →  在已有 Map 上前进
 
 - **个人本地 skill**，放在本 dotfiles 仓库，不为分发  
 - 后端固定为 **taskmd**（显式依赖）  
-- 与 **Planning Files Runtime 隔离**，除非以后单独决定融合  
+- 与 **Goal Runtime 隔离**，除非以后单独决定融合  
 - skill/约定文档为英文；本 README 为中文用户指南  
