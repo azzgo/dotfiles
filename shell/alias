@@ -139,6 +139,11 @@ if [[ -x $(command -v just) ]];then
   alias j=just
 fi
 
+# herdr alias
+if [[ -x $(command -v herdr) ]];then
+  alias h=herdr
+fi
+
 # lf alias
 if [[ -x $(command -v lf) ]];then
   function lfc () {

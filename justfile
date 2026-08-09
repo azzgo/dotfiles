@@ -152,11 +152,21 @@ install-shell:
     ln -sf {{ dotfiles_dir }}/starship.toml ~/.config/starship.toml
     echo "✅ Shell configurations installed"
 
+# Install herdr configuration
+install-herdr:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "🚀 Installing herdr configuration..."
+
+    mkdir -p ~/.config/herdr
+    ln -sf {{ dotfiles_dir }}/herdr/config.toml ~/.config/herdr/config.toml
+    echo "✅ herdr configuration linked (logs/session state stays local)"
+
 # Alias for install-pi (link Pi shared config)
 link: install-pi
 
 # Install all configurations
-install-all: install-neovim install-vim install-shell install-terminals
+install-all: install-neovim install-vim install-shell install-terminals install-herdr
     echo "🎉 All configurations installed!"
 
 # Development helpers
@@ -193,4 +203,5 @@ info:
     [ -d {{ dotfiles_dir }}/shell ] && echo "  ✓ Shell configs"
     [ -d {{ dotfiles_dir }}/alacritty ] && echo "  ✓ Alacritty"
     [ -d {{ dotfiles_dir }}/ghostty ] && echo "  ✓ Ghostty"
+    [ -d {{ dotfiles_dir }}/herdr ] && echo "  ✓ herdr"
     [ -d {{ dotfiles_dir }}/pi ] && echo "  ✓ Pi shared config"

@@ -45,6 +45,7 @@ just install-ideavim   # IDEAVim configuration
 just install-terminals # Terminal configurations
 just install-shell     # Shell configurations
 just install-pi        # Pi shared configuration
+just install-herdr    # herdr configuration (symlink config.toml)
 ```
 
 ## Configurations
@@ -152,6 +153,7 @@ Shared Pi setup with:
 | `just install-terminals` | Install all terminal configurations |
 | `just install-shell` | Install shell, tmux, and starship configurations |
 | `just install-pi` | Link shared Pi configuration files |
+| `just install-herdr` | Symlink herdr config.toml into ~/.config/herdr |
 | `just link` | Alias for `install-pi` |
 | `just nvim-health` | Check Neovim health and dependencies |
 | `just nvim-update` | Update Neovim plugins |
