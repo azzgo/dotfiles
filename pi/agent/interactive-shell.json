@@ -7,7 +7,7 @@
       "cursor": "agent"
     },
     "defaultArgs": {
-      "pi": [],
+      "pi": ["-p"],
       "cursor": [
         "--model",
         "composer-2.5"
