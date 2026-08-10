@@ -67,7 +67,7 @@ function endpointForName(name: string): string {
 }
 
 function deriveName(pi: ExtensionAPI): string {
-  const flag = pi.getFlag("xfer-name") as string | undefined;
+  const flag = pi.getFlag("xfer") as string | undefined;
   if (flag) return flag;
   try {
     const sPath = path.join(process.cwd(), ".pi", "settings.json");
@@ -123,7 +123,7 @@ function sendNotify(target: string, msg: object): Promise<void> {
 // ── Extension ──
 
 export default function (pi: ExtensionAPI) {
-  pi.registerFlag("xfer-name", {
+  pi.registerFlag("xfer", {
     description: "Override xfer agent name (default: current directory name)",
     type: "string",
     default: undefined,
