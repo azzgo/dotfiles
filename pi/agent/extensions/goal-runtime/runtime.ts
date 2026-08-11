@@ -11,8 +11,9 @@ import {
 	GOAL_TOOL_NAMES,
 	MESSAGE_TYPE_GOAL_CONTINUATION,
 	MESSAGE_TYPE_GOAL_IMPL,
+	MESSAGE_TYPE_GOAL_RUN_PROPOSE,
 	MESSAGE_TYPE_GOAL_LIST,
-	MESSAGE_TYPE_GOAL_REVIEW,
+	MESSAGE_TYPE_GOAL_REVIEW_PROPOSE,
 	MESSAGE_TYPE_GOAL_SET,
 	MESSAGE_TYPE_GOAL_SMART,
 	MESSAGE_TYPE_GOAL_STATUS,
@@ -23,6 +24,7 @@ import {
 	WIDGET_KEY,
 } from "./types";
 import type {
+	ActivateGoalParams,
 	CommitGoalParams,
 	GoalPhase,
 	GoalRecord,
@@ -53,26 +55,28 @@ import {
 } from "./taskmd";
 import {
 	buildGoalImplPrompt,
+	buildGoalRunProposalPrompt,
 	buildGoalListText,
 	buildGoalSetPrompt,
 	buildGoalSmartEntryPrompt,
 	buildGoalStatusText,
 	buildInjectedContext,
 	buildReviewBrief,
+	buildGoalReviewProposalPrompt,
 	buildTrackStatusText,
 	buildTrackUpdatePrompt,
 } from "./prompts";
 import { buildWidgetLines } from "./ui";
-import { isInGoalsDir, isMeaningfulProgressToolCall, isUnsafeDraftingBash, redirectTrackPath } from "./guards";
+import { isDirectPhaseMutationBash, isInGoalsDir, isMeaningfulProgressToolCall, isUnsafeDraftingBash, redirectTrackPath } from "./guards";
 
 const GOAL_HELP = [
 	"/goal — goal-runtime command family (taskmd-backed Goals/Stories/Tasks + flat Track)",
 	"  /goal                      smart entry: inspect state and route",
 	"  /goal set <topic>          one focused drafting session (stages 1-2 -> Goal body, 3 -> Stories, 4 -> Tasks)",
-	"  /goal run [<id>...]        activate (exclusive) + execute; serial queue when multiple ids",
+	"  /goal run [nl]             propose goal(s) from natural language; confirm to execute (multiple = serial queue); empty = model recommends",
 	"  /goal list                 list all goals (retained, incl. completed/abandoned)",
 	"  /goal status [<id>]        goal detail",
-	"  /goal review [<id>]        send an active goal to in-review + dispatch independent verifier",
+	"  /goal review [nl]          propose a goal to send to verification; confirm to execute; empty = model recommends",
 	"  /goal abandon <id>         abandon a goal (terminal)",
 	"  /goal ui                   open the taskmd board for the goals store",
 	"  /goal help                 this help",
@@ -218,24 +222,23 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 		send(buildGoalImplPrompt(snapshot, goal.id, mode), MESSAGE_TYPE_GOAL_IMPL, opts);
 	}
 
-	function startGoalImpl(ids: string[], ctx: ExtensionContext): void {
+	function startGoalRunProposal(intent: string, ctx: ExtensionContext): void {
 		if (!requireTaskmd(ctx)) return;
-		let targets: GoalRecord[] = [];
-		if (ids.length > 0) {
-			for (const q of ids) {
-				const g = resolveGoal(ctx.cwd, q);
-				if (g) targets.push(g);
-				else ctx.ui.notify(`Goal "${q}" not found.`, "warning");
-			}
-		} else {
-			if (snapshot.activeGoal) targets = [snapshot.activeGoal];
-			else targets = snapshot.goals.filter((g) => g.phase === "ready").slice(0, 1);
-		}
-		if (targets.length === 0) {
-			ctx.ui.notify("No goal to run. Use /goal set <topic> first, or pass a goal id.", "warning");
+		if (snapshot.goals.length === 0) {
+			ctx.ui.notify("No goal to run. Use /goal set <topic> first.", "warning");
 			return;
 		}
-		activateGoal(ctx, targets[0]!, targets.slice(1).map((g) => g.id));
+		send(buildGoalRunProposalPrompt(snapshot, intent), MESSAGE_TYPE_GOAL_RUN_PROPOSE);
+	}
+
+	function startGoalReviewProposal(intent: string, ctx: ExtensionContext): void {
+		if (!requireTaskmd(ctx)) return;
+		const reviewable = snapshot.goals.filter((g) => g.phase === "active" || g.phase === "paused");
+		if (reviewable.length === 0) {
+			ctx.ui.notify("No goal can enter review. A goal must be active or paused first.", "warning");
+			return;
+		}
+		send(buildGoalReviewProposalPrompt(snapshot, intent), MESSAGE_TYPE_GOAL_REVIEW_PROPOSE);
 	}
 
 	function enterReview(ctx: ExtensionContext, goal: GoalRecord): string {
@@ -249,24 +252,6 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 		return token;
 	}
 
-	function requestReview(q: string | undefined, ctx: ExtensionContext): void {
-		if (!requireTaskmd(ctx)) return;
-		const goal = q ? resolveGoal(ctx.cwd, q) : snapshot.activeGoal;
-		if (!goal) {
-			ctx.ui.notify("No goal to review. Pass a goal id or activate one first.", "warning");
-			return;
-		}
-		if (goal.phase !== "active" && goal.phase !== "paused") {
-			ctx.ui.notify(`Goal ${goal.id} is ${goal.phase}; only active (or paused) goals can enter review.`, "warning");
-			return;
-		}
-		if (goal.phase === "paused") transitionPhase(ctx.cwd, goal.id, "active");
-		enterReview(ctx, goal);
-		send(
-			`[GOAL REVIEW]\nGoal ${goal.id} (${goal.title}) is now phase=in-review.\nDispatch the independent read-only verifier via interactive_shell: background dispatch, raw command form with the child marker env, e.g.\ninteractive_shell({ command: "PI_GOAL_RUNTIME_CHILD=1 pi -p 'You are the independent verifier for goal ${goal.id}. Read .pi/track/verify-brief-${goal.id}.md and follow it exactly. Then call verify_goal_result with your verdict and the VERIFY_TOKEN from the brief.'", mode: "dispatch", background: true, reason: "goal-review-${goal.id}" })\nThen stop. Do NOT self-verify.`,
-			MESSAGE_TYPE_GOAL_REVIEW,
-		);
-	}
 
 	function abandonGoal(q: string | undefined, ctx: ExtensionContext): void {
 		if (!requireTaskmd(ctx)) return;
@@ -516,7 +501,7 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 	pi.registerTool({
 		name: "verify_goal_result",
 		label: "Verify Goal Result",
-		description: "Resolve a goal's in-review phase: pass -> complete (sealed), fail -> back to active (rework). Only callable on an in-review goal.",
+		description: "Resolve a goal's in-review phase: pass -> complete (sealed), fail -> back to active (rework). VERIFIER-ONLY: only the dispatched verifier sub-agent (PI_GOAL_RUNTIME_CHILD=1) may call this; the orchestrator must not self-verify.",
 		promptSnippet: "Record the independent verifier's verdict.",
 		promptGuidelines: ["Use verify_goal_result only as the independent read-only verifier, only on an in-review goal."],
 		parameters: Type.Object({
@@ -526,6 +511,13 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 			evidence: Type.Optional(Type.Array(Type.String(), { description: "Verifier evidence / failed checks" })),
 		}),
 		async execute(_toolCallId, params: VerifyResultParams, _signal, _onUpdate, ctx) {
+			if (!isChild) {
+				return {
+					content: [{ type: "text", text: "verify_goal_result rejected: this tool is reserved for the dispatched verifier sub-agent (PI_GOAL_RUNTIME_CHILD=1). The orchestrator must NOT self-verify — when implementation is done call request_goal_review (-> in-review), then dispatch the verifier via interactive_shell as that tool instructs, then stop." }],
+					isError: true,
+					details: {},
+				};
+			}
 			const goal = resolveGoal(ctx.cwd, params.goalId);
 			if (!goal) {
 				return { content: [{ type: "text", text: "verify_goal_result rejected: goal not found." }], isError: true, details: {} };
@@ -563,6 +555,43 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 		},
 	});
 
+	pi.registerTool({
+		name: "activate_goal",
+		label: "Activate Goal",
+		description: "Activate a goal for execution after the user confirmed the proposal (exclusive active: auto-pauses any other active goal; serial queue if `queue` ids given). Emits the orchestrator prompt.",
+		promptSnippet: "Activate the user-confirmed goal to start/resume implementation.",
+		promptGuidelines: [
+			"Use activate_goal only AFTER the user confirmed the proposal in chat.",
+			"Pass the goal id exactly as it appears in the goal menu. Use `queue` to enqueue further goals to run serially after this one (not parallel).",
+			"After calling activate_goal, stop — the orchestrator turn takes over.",
+		],
+		parameters: Type.Object({
+			goalId: Type.String({ description: "Goal id (from the goal menu) to activate" }),
+			queue: Type.Optional(Type.Array(Type.String(), { description: "Additional goal ids to run serially after goalId, in order" })),
+		}),
+		async execute(_toolCallId, params: ActivateGoalParams, _signal, _onUpdate, ctx) {
+			const goal = resolveGoal(ctx.cwd, params.goalId);
+			if (!goal) {
+				return { content: [{ type: "text", text: `activate_goal rejected: goal "${params.goalId}" not found.` }], isError: true, details: {} };
+			}
+			if (goal.phase === "drafting") {
+				return { content: [{ type: "text", text: `activate_goal rejected: goal ${goal.id} is still drafting. Finish /goal set and commit_goal first.` }], isError: true, details: {} };
+			}
+			if (TERMINAL_PHASES.includes(goal.phase) || goal.phase === "in-review") {
+				return { content: [{ type: "text", text: `activate_goal rejected: goal ${goal.id} is ${goal.phase}; it cannot be activated.` }], isError: true, details: {} };
+			}
+			const queueGoals = (params.queue ?? [])
+				.map((q) => resolveGoal(ctx.cwd, q))
+				.filter((g): g is GoalRecord => g !== null);
+			activateGoal(ctx, goal, queueGoals.map((g) => g.id));
+			turnStoppedFor = "activate_goal";
+			return {
+				content: [{ type: "text", text: `Goal ${goal.id} (${goal.title}) activated.${queueGoals.length > 0 ? ` Serial queue: ${queueGoals.map((g) => g.id).join(", ")}` : ""}` }],
+				details: { goalId: goal.id, phase: "active", queue: queueGoals.map((g) => g.id) },
+			};
+		},
+	});
+
 	// ---- commands ----
 
 	pi.registerCommand("goal", {
@@ -580,7 +609,7 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 					startDrafting(restStr, ctx);
 					break;
 				case "run":
-					startGoalImpl(rest.filter(Boolean), ctx);
+					startGoalRunProposal(restStr, ctx);
 					break;
 				case "list":
 					if (!requireTaskmd(ctx)) break;
@@ -591,7 +620,7 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 					send(buildGoalStatusText(snapshot, rest[0]), MESSAGE_TYPE_GOAL_STATUS);
 					break;
 				case "review":
-					requestReview(rest[0], ctx);
+					startGoalReviewProposal(restStr, ctx);
 					break;
 				case "abandon":
 					abandonGoal(rest[0], ctx);
@@ -668,6 +697,12 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 			return { block: true, reason: `${turnStoppedFor} already completed in this turn. Stop and summarize instead of calling more tools.` };
 		}
 		redirectTrackPath(event as { toolName: string; input: Record<string, unknown> }, ctx.cwd);
+		if (event.toolName === "bash") {
+			const phaseCommand = typeof event.input.command === "string" ? event.input.command : "";
+			if (isDirectPhaseMutationBash(phaseCommand)) {
+				return { block: true, reason: "Direct taskmd phase/status mutation is blocked. Goal lifecycle transitions must go through the goal-runtime tools (commit_goal / activate_goal / pause_goal / request_goal_review / verify_goal_result / abandon), never `taskmd set --phase/--status`. To finish a goal: call request_goal_review (-> in-review), then dispatch the verifier." };
+			}
+		}
 		if (!isChild && snapshot.draftingGoal) {
 			if (event.toolName === "write" || event.toolName === "edit") {
 				const filePath = typeof event.input.path === "string" ? event.input.path : "";

@@ -27,10 +27,10 @@ See `docs/adr/0001-goal-runtime-on-taskmd.md` (decision of record) and `CONTEXT.
 
 - `/goal` — smart entry: inspect state and route
 - `/goal set <topic>` — one focused drafting session (4 stages → taskmd records)
-- `/goal run [<id>...]` — activate (exclusive) + execute; serial queue with multiple ids
+- `/goal run [nl]` — propose goal(s) from natural language; confirm to execute (multiple = serial queue); empty = model recommends
 - `/goal list` — all goals, retained incl. completed/abandoned
 - `/goal status [<id>]` — goal detail
-- `/goal review [<id>]` — active goal → `in-review` + dispatch independent verifier
+- `/goal review [nl]` — propose a goal to send to verification; confirm to execute; empty = model recommends
 - `/goal abandon <id>` — abandon (terminal, stays on the board)
 - `/goal ui` — open the taskmd board for the goals store
 - `/track new` — reset/init the scratchpad (independent of Goals)
@@ -81,6 +81,7 @@ Track never on the board; Goal → Track one-way; lifecycle truth in `phase`.
 
 - `save_goal_draft` — persist draft metadata (stage, open questions, contract sections) into the drafting Goal record
 - `commit_goal` — drafting → ready (validates contract + ≥1 Story + ≥1 Task)
+- `activate_goal` — activate the user-confirmed goal (run-proposal confirmation); exclusive active + serial queue
 - `pause_goal` — active → paused (real blocker)
 - `request_goal_review` — active → in-review; instructs dispatching the verifier
 - `verify_goal_result` — verifier-only; in-review → complete (pass) or active (fail/rework)

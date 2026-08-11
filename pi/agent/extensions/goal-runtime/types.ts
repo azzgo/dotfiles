@@ -11,6 +11,8 @@ export const MESSAGE_TYPE_GOAL_CONTINUATION = "goal-runtime-goal-continuation";
 export const MESSAGE_TYPE_GOAL_REVIEW = "goal-runtime-goal-review";
 export const MESSAGE_TYPE_GOAL_LIST = "goal-runtime-goal-list";
 export const MESSAGE_TYPE_GOAL_STATUS = "goal-runtime-goal-status";
+export const MESSAGE_TYPE_GOAL_RUN_PROPOSE = "goal-runtime-goal-run-propose";
+export const MESSAGE_TYPE_GOAL_REVIEW_PROPOSE = "goal-runtime-goal-review-propose";
 export const MESSAGE_TYPE_TRACK_UPDATE = "goal-runtime-track-update";
 export const MESSAGE_TYPE_TRACK_STATUS = "goal-runtime-track-status";
 
@@ -30,6 +32,7 @@ export const GOAL_TOOL_NAMES = [
 	"pause_goal",
 	"request_goal_review",
 	"verify_goal_result",
+	"activate_goal",
 ] as const;
 
 export const CONTINUATION_DELAY_MS = 50;
@@ -176,4 +179,9 @@ export type VerifyResultParams = {
 	token: string;
 	pass: boolean;
 	evidence?: string[];
+};
+
+export type ActivateGoalParams = {
+	goalId: string;
+	queue?: string[];
 };
