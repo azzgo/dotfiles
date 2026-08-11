@@ -1,6 +1,6 @@
 import type { GoalRecord, GoalSnapshot, StoryRecord, TaskRecord, TaskTier } from "./types";
 import { CHILD_ENV_MARKER, GOALS_DIR, TRACK_DIR } from "./types";
-import { computeTaskTiers, listStories, listTasks, readGoalContract, resolveGoal } from "./taskmd";
+import { computeTaskTiers, listStories, listTasks, readGoalContract, readGoalDetail, resolveGoal } from "./taskmd";
 import { tailLines, truncate } from "./utils";
 
 function goalLine(goal: GoalRecord): string {
@@ -81,12 +81,71 @@ export function buildGoalImplPrompt(snapshot: GoalSnapshot, goalId: string, mode
 		"- Self-check against success criteria while active (this is NOT a state).",
 		"- If you hit a real blocker, call `pause_goal` with a concrete reason and suggested action.",
 		"- When implementation is done (success criteria satisfied, evidence in Track), call `request_goal_review` — it flips the goal to in-review and tells you how to dispatch the independent verifier. Do NOT self-verify.",
+		"- NEVER advance the goal to complete yourself: do NOT call verify_goal_result (verifier-only — it rejects the orchestrator) and do NOT run `taskmd set --phase/--status` (blocked). Your terminal action is request_goal_review → in-review; only the dispatched verifier decides complete vs rework.",
 		"",
 		"Recent findings (tail):",
 		findings || "(empty)",
 		"",
 		"Recent progress (tail):",
 		progress || "(empty)",
+	].join("\n");
+}
+
+function goalMenuLine(goal: GoalRecord, snapshot: GoalSnapshot): string {
+	const detail = readGoalDetail(snapshot.cwd, goal);
+	const contract = readGoalContract(detail);
+	const obj = contract.objective ? ` — ${contract.objective}` : "";
+	const active = goal.id === snapshot.activeGoal?.id ? " ◀ active" : "";
+	const runnable = goal.phase === "ready" || goal.phase === "active" || goal.phase === "paused" ? "" : ` (not runnable: ${goal.phase})`;
+	return `- ${goal.id} [${goal.phase}]${runnable}${active} ${goal.title}${obj}`;
+}
+
+// ---- /goal run (natural-language proposal) ----
+
+export function buildGoalRunProposalPrompt(snapshot: GoalSnapshot, intent: string): string {
+	const cleanIntent = intent.trim();
+	return [
+		"[GOAL RUN]",
+		"The user wants to start or resume a goal. Pick from the menu below. Goals are NEVER run in parallel — multiple goals form a SERIAL queue (one active at a time; the next auto-activates after the current one is verified complete). Say so explicitly if the user asks for parallel.",
+		"",
+		"Goal menu (id [phase] title — objective):",
+		...(snapshot.goals.length === 0
+			? ["- (no goals yet; tell the user to run `/goal set <topic>` first)"]
+			: snapshot.goals.map((g) => goalMenuLine(g, snapshot))),
+		...(snapshot.queue.length > 0 ? ["", `Current serial queue: ${snapshot.queue.join(", ")}`] : []),
+		"",
+		"Rules:",
+		"- Only propose goals whose phase is ready / active / paused. drafting must be finished + committed (`commit_goal`) first; in-review is awaiting the verifier; complete / abandoned are done.",
+		`- User intent: ${cleanIntent ? `\"${cleanIntent}\"` : "(none given — recommend the single best candidate and say why)"}`,
+		"- Match by title / topic / objective. NEVER ask the user for a taskmd id — the id is internal.",
+		"- Present a SHORT proposal: which goal(s), one line why, and (if >1) that they run serially in that order. Then STOP and wait for the user to confirm.",
+		"- On confirmation, call `activate_goal({ goalId, queue })`. goalId = the menu id of the first goal; queue = optional array of further goal ids to enqueue in order.",
+		"- If nothing matches, say so and suggest `/goal set <topic>`.",
+	].join("\n");
+}
+
+// ---- /goal review (natural-language proposal) ----
+
+export function buildGoalReviewProposalPrompt(snapshot: GoalSnapshot, intent: string): string {
+	const cleanIntent = intent.trim();
+	const reviewable = snapshot.goals.filter((g) => g.phase === "active" || g.phase === "paused");
+	return [
+		"[GOAL REVIEW]",
+		"The user wants to send a goal to independent verification (phase active / paused -> in-review). The orchestrator may NOT self-verify; a dispatched read-only verifier resolves it.",
+		"",
+		"Reviewable goals (active or paused):",
+		...(reviewable.length === 0
+			? ["- (none; a goal must be active or paused to enter review)"]
+			: reviewable.map((g) => `- ${g.id} [${g.phase}] ${g.title}`)),
+		"",
+		"All goals for context:",
+		...(snapshot.goals.length === 0 ? ["- (none)"] : snapshot.goals.map((g) => `- ${g.id} [${g.phase}] ${g.title}`)),
+		"",
+		"Rules:",
+		`- User intent: ${cleanIntent ? `\"${cleanIntent}\"` : "(none — recommend the active goal, if any)"}`,
+		"- Match by title / topic. NEVER ask the user for an id.",
+		"- Propose which goal to review, one line why. Then STOP and wait for confirmation.",
+		"- On confirmation, call `request_goal_review({ goalId, summary })`. Do NOT dispatch the verifier yourself unless that tool's response tells you to.",
 	].join("\n");
 }
 

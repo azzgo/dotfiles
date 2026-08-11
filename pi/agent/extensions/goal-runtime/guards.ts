@@ -59,6 +59,23 @@ export function isUnsafeDraftingBash(command: string): boolean {
 	return unsafePatterns.some((pattern) => pattern.test(trimmed));
 }
 
+/**
+ * Block direct taskmd phase/status mutations via bash. Goal lifecycle transitions
+ * (drafting→ready→active→paused→in-review→complete/abandoned) must go through the
+ * goal-runtime tools, which enforce one-active exclusivity, the verifier gate, and
+ * Track side effects. Direct `taskmd set --phase/--status` bypasses all of that
+ * (e.g. an orchestrator jumping active→complete and skipping review).
+ * Note: `taskmd add ... --status pending` (story/task creation during drafting) is
+ * NOT matched — only `set` on existing records is blocked.
+ */
+export function isDirectPhaseMutationBash(command: string): boolean {
+	const trimmed = command.trim();
+	if (!trimmed) return false;
+	if (!/\btaskmd\b/.test(trimmed)) return false;
+	if (!/\bset\b/.test(trimmed)) return false;
+	return /--phase\b/.test(trimmed) || /--status\b/.test(trimmed);
+}
+
 /** Determine whether a tool call represents meaningful progress (continuation eligibility). */
 export function isMeaningfulProgressToolCall(toolName: string, input: Record<string, unknown>): boolean {
 	if (!MEANINGFUL_PROGRESS_TOOLS.has(toolName)) return false;
