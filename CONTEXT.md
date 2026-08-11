@@ -219,3 +219,34 @@ _Avoid_: single mega skill file, methodology inside the prompt
 **Wayfinder Doc Language**:
 Wayfinder skill and prompt documents are written in English for token efficiency and stable terminology. Human conversation may still be Chinese.
 _Avoid_: full Chinese methodology docs, mixed bilingual instruction bodies
+
+## Element Picking（元素拾取）
+
+Chrome 页面元素拾取工作流：`pick-chrome-element.md` prompt + `pick-chrome-element.js` 注入脚本，配合 `open-chrome-pause.md`（先开 Chrome）使用，通过 chrome-devtools MCP 驱动。
+
+**pick**:
+用户在页面上选中并记录的一个元素条目（selector、xpath、文本预览、rect、备注、源码位置等）。
+_Avoid_: annotation、标注（pick-to-edit 的术语，本方案不采用）
+
+**batch**:
+一次"积攒 → 消费"循环中累积的全部 picks（含备注）。每个 batch 由 agent 一次性读取，读取后即清空，无版本号。
+_Avoid_: version、轮询游标
+
+**consume**:
+agent 读取 batch 并开始回复，即视为已接收该批 picks，随后清空 sessionStorage 中的这批数据。
+
+**picker**:
+注入到页面上的元素选择脚本（`pick-chrome-element.js`），Shadow DOM 隔离。
+_Avoid_: pick-to-edit 的 annotation server、本地 daemon
+
+**fab / 悬浮按钮**:
+picker 注入到页面上的唯一形态——一个可拖动的悬浮按钮，点击后进入 pick 模式。无热键。
+
+**inject**:
+确保 fab 在页面上的动作（幂等），仅此一个动作，不进入 pick 模式、不读取存储。
+
+**pick 模式**:
+点击 fab 后进入的选择交互态：hover 高亮、`[`/`]` 切层、Enter 选中+备注、Esc 退出回闲置（fab 常驻）。
+
+**preflight**:
+prompt 执行前的连接预检——通过 `list_pages` 确认 chrome-devtools MCP 有可用页面，否则终止并提示用户先运行 `open-chrome-pause`。

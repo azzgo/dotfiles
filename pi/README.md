@@ -68,6 +68,8 @@
 
 这样仓库里的 prompts（例如 `grill-me.md`、`wayfinder.md`）可以直接作为全局 `/prompt-name` 使用。
 
+`pick-chrome-element.md` 搭配 `open-chrome-pause.md` 使用（先开 Chrome，再做元素拾取），其伴随脚本 `pick-chrome-element.js` 也位于 `pi/agent/prompts/`，随目录一起 link。
+
 ### 8. goal-runtime 已内聚实现 Goals/Stories/Tasks + Track
 
 当前业务侧只保留一个本地维护的 Pi 扩展：`goal-runtime`（前身 planning-files-runtime）。
