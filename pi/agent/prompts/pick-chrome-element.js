@@ -5,11 +5,13 @@
  * 整个文件就是一个函数表达式，原样作为 function 参数传入，执行后返回 true。
  *
  * 交互：
- *   - 悬浮按钮（fab）可拖动，点击进入拾取模式（无热键）
- *   - 拾取模式：hover 高亮 · [ ] 切层 · 1-9 跳层 · Enter / 点击 选中
+ *   - 悬浮按钮（fab）可拖动，点击进入拾取模式；或按热键 ⇧⌥P 直接进入（零点击，不 dismiss 浮层）
+ *   - 拾取模式默认「冻结」：window capture 拦截鼠标事件，页面收不到点击/hover，浮层不会关闭
+ *   - hover 高亮 · [ ] 切层 · 1-9 跳层 · Enter / 点击 选中 · F 冻结⇄实时 · Esc 退出
  *   - 选中后弹备注框（可留空直接回车）· Esc 取消选中 / 退出拾取
  *   - 选中结果写入 sessionStorage['pi.picks']（同 selector 去重，替换更新）
  *   - React fiber / Vue 组件源码位置提取（仅 dev 构建有 _debugSource / __file）
+ *   - 程序化 API：window.__PI_PICK_API__ = { start, stop, toggle, freeze, pickAt, pick, snapshot, refresh }
  *
  * 存储契约：
  *   - sessionStorage['pi.picks'] : 批次数组 [{selector, xpath, tagName, textPreview,
@@ -28,6 +30,7 @@
   const KEY_POS = 'pi.fabPos';
   const HOST_FLAG = 'data-pi-pick-host';
   const MAX_DEPTH = 8;
+  const HOTKEY = { code: 'KeyP', alt: true, shift: true }; // ⇧⌥P 进入/退出拾取（用 e.code 避开 ⌥ 键的字符映射，如 macOS ⌥P=π）
 
   // ---------- 批次存储 ----------
   function loadBatch() {
@@ -94,6 +97,15 @@
       cur = cur.parentElement;
     }
     return '/' + parts.join('/');
+  }
+  function nearestScrollable(el) {
+    let cur = el;
+    while (cur && cur.nodeType === 1) {
+      const cs = getComputedStyle(cur);
+      if (/(auto|scroll|overlay)/.test(cs.overflowY)) return cur;
+      cur = cur.parentElement;
+    }
+    return null;
   }
 
   function selectorPreview(el) {
@@ -190,6 +202,7 @@
         border-radius: 4px; padding: 1px 5px; font: 11px ui-monospace, monospace; color: #d1d5db;
       }
       #bar .muted { color: #9ca3af; }
+      #bar #fz.on { color: #7dd3fc; font-weight: 600; }
       #fab {
         position: fixed; width: 46px; height: 46px; border-radius: 13px;
         border: 1px solid rgba(255,255,255,.14); background: #161a21; color: #fff;
@@ -253,6 +266,7 @@
       <span class="muted"><kbd>[</kbd><kbd>]</kbd>切层</span>
       <span class="muted"><kbd>1</kbd>-<kbd>9</kbd>跳层</span>
       <span class="muted"><kbd>Enter</kbd>选中</span>
+      <span class="muted" id="fz"><kbd>F</kbd>冻结</span>
       <span class="muted"><kbd>Esc</kbd>退出</span>
     </div>
     <div id="card">
@@ -263,7 +277,7 @@
         <button class="ok" id="ok">✓ 确认 Enter</button>
       </div>
     </div>
-    <button id="fab" title="元素拾取">
+    <button id="fab" title="元素拾取 · 点击进入（或按 ⇧⌥P，不产生点击，浮层不会关闭）">
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round">
         <circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
       </svg>
@@ -282,6 +296,7 @@
   let stack = [];
   let idx = 0;
   let pinned = null;
+  let frozen = true; // 冻结：拦截鼠标事件，页面收不到任何 hover/点击（浮层不会 dismiss）
   let pos = { x: window.innerWidth - 68, y: window.innerHeight - 96 };
   try {
     const saved = sessionStorage.getItem(KEY_POS);
@@ -348,21 +363,39 @@
   // ---------- 拾取模式开关 ----------
   function setActive(on) {
     pickMode = on;
-    host.style.pointerEvents = on ? 'auto' : 'none';
+    host.style.pointerEvents = 'none'; // 拦截统一走 window capture，host 永远不挡页面事件
     elBar.style.display = on ? 'flex' : 'none';
     elFab.style.display = on ? 'none' : 'block';
     document.body.style.cursor = on ? 'crosshair' : '';
-    if (!on) { pinned = null; elCard.style.display = 'none'; elHL.style.display = 'none'; elBadge.style.display = 'none'; elInfo.style.display = 'none'; refreshCount(); }
+    if (on) { frozen = true; }
+    else {
+      pinned = null; frozen = false;
+      elCard.style.display = 'none'; elHL.style.display = 'none'; elBadge.style.display = 'none'; elInfo.style.display = 'none';
+    }
+    updateFreezeUI();
+    refreshCount();
   }
 
-  // ---------- fab：拖动 + 点击进入拾取 ----------
+  // ---------- fab：拖动 + 点击进入拾取（window capture 层处理，点击不落到页面） ----------
+  function isOurUI(e) {
+    const path = e.composedPath ? e.composedPath() : [];
+    return path.indexOf(root) >= 0;
+  }
+  function isFabTarget(e) {
+    const path = e.composedPath ? e.composedPath() : [];
+    return path.indexOf(elFab) >= 0;
+  }
   let drag = null;
-  elFab.addEventListener('pointerdown', (e) => {
+  function fabPointerDown(e) {
+    if (!isFabTarget(e)) return;
+    e.stopPropagation(); e.preventDefault();
     if (e.button !== 0) return;
     drag = { sx: e.clientX, sy: e.clientY, ox: pos.x, oy: pos.y, moved: false };
     try { elFab.setPointerCapture(e.pointerId); } catch (err) {}
-  });
-  elFab.addEventListener('pointermove', (e) => {
+  }
+  function fabPointerMove(e) {
+    if (!isFabTarget(e) && !drag) return;
+    e.stopPropagation(); e.preventDefault();
     if (!drag) return;
     const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
     if (Math.abs(dx) + Math.abs(dy) > 4) drag.moved = true;
@@ -370,33 +403,71 @@
     pos.y = Math.max(4, Math.min(window.innerHeight - 50, drag.oy + dy));
     elFab.style.left = pos.x + 'px';
     elFab.style.top = pos.y + 'px';
-  });
-  elFab.addEventListener('pointerup', (e) => {
+  }
+  function fabPointerUp(e) {
     if (!drag) return;
+    e.stopPropagation(); e.preventDefault();
     const wasMoved = drag.moved;
     drag = null;
     try { sessionStorage.setItem(KEY_POS, JSON.stringify(pos)); } catch (err) {}
     if (!wasMoved) setActive(true);
-  });
+  }
+  window.addEventListener('pointerdown', fabPointerDown, true);
+  window.addEventListener('pointermove', fabPointerMove, true);
+  window.addEventListener('pointerup', fabPointerUp, true);
 
-  // ---------- 拾取交互（host 覆盖层） ----------
-  host.addEventListener('mousemove', (e) => {
-    if (!pickMode || pinned) return;
+  // ---------- 拾取交互（window capture 层，覆盖普通元素与 top-layer 浮层） ----------
+  function moveCapture(e) {
+    if (!pickMode) return;
+    if (frozen) { e.stopPropagation(); e.preventDefault(); }
+    if (pinned || isOurUI(e)) return;
     stack = stackAt(e.clientX, e.clientY);
     idx = 0;
     refresh();
-  });
-  host.addEventListener('mouseleave', () => {
-    if (!pinned) { elHL.style.display = 'none'; elBadge.style.display = 'none'; elInfo.style.display = 'none'; }
-  });
-  host.addEventListener('mousedown', (e) => {
-    if (pickMode && !pinned && e.button === 0) pin();
-  });
-  host.addEventListener('wheel', (e) => {
+  }
+  function hoverCapture(e) {
+    if (!pickMode || !frozen) return;
+    e.stopPropagation(); e.preventDefault();
+  }
+  function clickCapture(e) {
+    if (isOurUI(e)) return; // 我们自己的 UI（fab / 备注卡）由宿主层 bubble 拦截保护页面，这里放行
     if (!pickMode) return;
+    const btn0 = e.button === undefined || e.button === 0;
+    if (e.type === 'pointerdown' || e.type === 'mousedown') {
+      e.stopPropagation(); e.preventDefault();
+      if (btn0 && !pinned) pinAt(e.clientX, e.clientY);
+      return;
+    }
+    e.stopPropagation(); e.preventDefault(); // mouseup / click / contextmenu
+  }
+  function wheelCapture(e) {
+    if (!pickMode || pinned || isOurUI(e)) return;
+    // 目标在可滚动容器内（如下拉列表）→ 交给原生滚动；否则滚动页面
+    const sc = nearestScrollable(e.target);
+    if (sc && sc.scrollHeight > sc.clientHeight) return;
     e.preventDefault();
-    if (!pinned) window.scrollBy(0, e.deltaY);
-  }, { passive: false });
+    window.scrollBy(0, e.deltaY);
+  }
+  window.addEventListener('mousemove', moveCapture, true);
+  window.addEventListener('mouseover', hoverCapture, true);
+  window.addEventListener('mouseout', hoverCapture, true);
+  window.addEventListener('mouseenter', hoverCapture, true);
+  window.addEventListener('mouseleave', hoverCapture, true);
+  window.addEventListener('pointermove', hoverCapture, true);
+  window.addEventListener('pointerover', hoverCapture, true);
+  window.addEventListener('pointerout', hoverCapture, true);
+  window.addEventListener('pointerenter', hoverCapture, true);
+  window.addEventListener('pointerleave', hoverCapture, true);
+  window.addEventListener('pointerdown', clickCapture, true);
+  window.addEventListener('mousedown', clickCapture, true);
+  window.addEventListener('mouseup', clickCapture, true);
+  window.addEventListener('click', clickCapture, true);
+  window.addEventListener('contextmenu', clickCapture, true);
+  window.addEventListener('wheel', wheelCapture, { capture: true, passive: false });
+  // 我们自己的 UI（fab / 备注卡）的点击不再冒泡到页面：阻止 click-outside 逻辑收到
+  for (const t of ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click', 'contextmenu']) {
+    host.addEventListener(t, (e) => e.stopPropagation(), false);
+  }
 
   function shiftLayer(delta) {
     if (!stack.length) return;
@@ -422,6 +493,13 @@
     setTimeout(() => elTxt.focus(), 0);
   }
   function unpin() { pinned = null; elCard.style.display = 'none'; refresh(); }
+  function pinAt(x, y) {
+    const st = stackAt(x, y);
+    if (!st.length) return;
+    stack = st;
+    idx = 0;
+    pin();
+  }
 
   function payloadFor(el, note) {
     const r = el.getBoundingClientRect();
@@ -446,7 +524,31 @@
   elOk.addEventListener('click', submit);
   elCancel.addEventListener('click', unpin);
 
-  // ---------- 全局键盘（仅拾取模式生效，无激活热键） ----------
+  // ---------- 冻结状态 UI ----------
+  function updateFreezeUI() {
+    const fz = $('fz');
+    if (!fz) return;
+    fz.classList.toggle('on', frozen);
+    fz.title = frozen ? '冻结：页面交互已屏蔽，浮层不会因点击/hover 关闭' : '实时：hover 可触发页面（展开子菜单等）';
+  }
+  // ---------- 全局热键：⇧⌥P 进入/退出拾取（零点击，不 dismiss 浮层）；拾取中按 F 冻结⇄实时 ----------
+  window.addEventListener('keydown', (e) => {
+    const isHot = e.code === HOTKEY.code && e.altKey === HOTKEY.alt && e.shiftKey === HOTKEY.shift && !e.ctrlKey && !e.metaKey;
+    if (isHot) {
+      e.preventDefault(); e.stopPropagation();
+      if (pickMode) { if (pinned) unpin(); else setActive(false); }
+      else setActive(true);
+      return;
+    }
+    if (pickMode && !pinned && e.code === 'KeyF' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+      e.preventDefault(); e.stopPropagation();
+      frozen = !frozen;
+      updateFreezeUI();
+      toast(frozen ? '冻结：页面交互已屏蔽' : '实时：hover 可触发页面');
+    }
+  }, true);
+
+  // ---------- 全局键盘（拾取模式按键） ----------
   document.addEventListener('keydown', (e) => {
     if (!pickMode) return;
     if (pinned) {
@@ -472,7 +574,37 @@
   window.addEventListener('resize', () => { if (pickMode) refresh(); }, true);
 
   refreshCount();
-  window.__PI_PICKS_API__ = { refresh: refreshCount };
-  console.log('%c[PICKER] ready', 'color:#4f8cff', '点击准星按钮进入拾取模式');
+  // ---------- 程序化 API（agent 通过 evaluate_script / 用户在 DevTools console 调用） ----------
+  function pickAt(x, y) {
+    const st = stackAt(x, y);
+    if (!st.length) return null;
+    const rec = payloadFor(st[0], '');
+    addPick(rec);
+    return rec;
+  }
+  function pickBySel(sel) {
+    const el = typeof sel === 'string'
+      ? document.querySelector(sel)
+      : (sel && sel.nodeType === 1 ? sel : null);
+    if (!el) return null;
+    const rec = payloadFor(el, '');
+    addPick(rec);
+    return rec;
+  }
+  window.__PI_PICK_API__ = {
+    start: () => { setActive(true); return true; },
+    stop: () => { setActive(false); return true; },
+    toggle: () => { setActive(!pickMode); return pickMode; },
+    freeze: (on) => {
+      if (typeof on === 'boolean') { frozen = on; updateFreezeUI(); }
+      return frozen;
+    },
+    pickAt: pickAt,
+    pick: pickBySel,
+    snapshot: loadBatch,
+    refresh: refreshCount,
+  };
+  window.__PI_PICKS_API__ = { refresh: refreshCount }; // 兼容旧契约
+  console.log('%c[PICKER] ready', 'color:#4f8cff', '点击准星按钮或按 ⇧⌥P 进入拾取模式');
   return true;
 }
