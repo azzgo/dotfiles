@@ -1,3 +1,4 @@
+onboarding = false
 [keys]
 prefix = "ctrl+q"
 settings = ""
@@ -10,3 +11,12 @@ split_horizontal = "prefix+\""
 zoom = "prefix+z"       # legacy alias: fullscreen
 navigate_workspace_up = "k"
 navigate_workspace_down = "j"
+
+[ui]
+agent_panel_sort = "spaces"
+
+[ui.toast]
+delivery = "system"
+
+[experimental]
+kitty_graphics = true
