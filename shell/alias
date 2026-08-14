@@ -171,3 +171,8 @@ if [[ -x $(command -v kubectl) ]];then
     fi
   }
 fi
+
+# terminal-browser
+if [[ -x $(command -v terminal-browser) ]];then
+  alias tb="terminal-browser"
+fi
