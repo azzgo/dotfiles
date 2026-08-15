@@ -119,3 +119,18 @@ export function readVerifyToken(cwd: string, goalId: string): string | null {
 	const match = readText(verifyBriefPath(cwd, goalId)).match(/^VERIFY_TOKEN:\s*(\S+)\s*$/m);
 	return match?.[1] ?? null;
 }
+
+/**
+ * Consume the one-time verify token: rewrite the `VERIFY_TOKEN: <token>` line to
+ * `VERIFY_TOKEN(consumed): <token>` in place, keeping the brief file as an audit
+ * record. `readVerifyToken` no longer matches the rewritten line, so a brief can
+ * yield exactly one verdict. No-op when the brief is missing or has no token line.
+ */
+export function consumeVerifyToken(cwd: string, goalId: string): void {
+	const filePath = verifyBriefPath(cwd, goalId);
+	const content = readText(filePath);
+	if (!content) return;
+	const next = content.replace(/^VERIFY_TOKEN:\s*(\S+)\s*$/m, "VERIFY_TOKEN(consumed): $1");
+	if (next === content) return; // no token line -> nothing to consume
+	writeText(filePath, next);
+}

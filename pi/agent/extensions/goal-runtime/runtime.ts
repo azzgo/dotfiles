@@ -35,7 +35,7 @@ import type {
 } from "./types";
 
 import { ensureDir, goalsDir, splitFrontmatter, upsertBodySection } from "./utils";
-import { appendToTrack, initTrack, mintVerifyToken, progressTimeline, readVerifyToken, writeVerifyBrief } from "./track";
+import { appendToTrack, consumeVerifyToken, initTrack, mintVerifyToken, progressTimeline, readVerifyToken, writeVerifyBrief } from "./track";
 import { getSnapshot, readQueueState, storeExists, writeQueueState } from "./state";
 import {
 	GOAL_BODY_TEMPLATE,
@@ -526,13 +526,21 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 				return { content: [{ type: "text", text: `verify_goal_result rejected: goal ${goal.id} is ${goal.phase}, not in-review. Only the verifier may resolve in-review.` }], isError: true, details: {} };
 			}
 			const expected = readVerifyToken(ctx.cwd, goal.id);
-			if (!expected || !params.token || params.token.trim() !== expected) {
+			if (!expected) {
+				return {
+					content: [{ type: "text", text: `verify_goal_result rejected: VERIFY_TOKEN missing or already consumed for goal ${goal.id} — each review entry allows exactly one verdict; if rework is needed a fresh token is minted by the next request_goal_review.` }],
+					isError: true,
+					details: {},
+				};
+			}
+			if (!params.token || params.token.trim() !== expected) {
 				return {
 					content: [{ type: "text", text: `verify_goal_result rejected: VERIFY_TOKEN mismatch for goal ${goal.id}. Read the token from .pi/track/verify-brief-${goal.id}.md — only the dispatched verifier can resolve in-review.` }],
 					isError: true,
 					details: {},
 				};
 			}
+			consumeVerifyToken(ctx.cwd, goal.id);
 			if (params.pass) {
 				transitionPhase(ctx.cwd, goal.id, "complete");
 				progressTimeline(ctx.cwd, `Goal ${goal.id} verified complete (sealed)`);
