@@ -12,6 +12,7 @@ vim/.netrwhist
 temp_dotfiles/
 .local/
 *.tar.gz
+node_modules/
 
 # Local Pi secrets / machine state
 pi/agent/models.json
