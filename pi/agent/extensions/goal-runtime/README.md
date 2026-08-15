@@ -30,7 +30,7 @@ See `docs/adr/0001-goal-runtime-on-taskmd.md` (decision of record) and `CONTEXT.
 - `/goal run [nl]` — propose goal(s) from natural language; confirm to execute (multiple = serial queue); empty = model recommends
 - `/goal list` — all goals, retained incl. completed/abandoned
 - `/goal status [<id>]` — goal detail
-- `/goal review [nl]` — propose a goal to send to verification; confirm to execute; empty = model recommends
+- `/goal review [nl]` — propose a goal to send to verification from natural language (matches titles AND bare ids; routes by phase, incl. reopening a goal that reached complete without review); confirm to execute; empty = model recommends
 - `/goal abandon <id>` — abandon (terminal, stays on the board)
 - `/goal ui` — open the taskmd board for the goals store
 - `/track new` — reset/init the scratchpad (independent of Goals)
@@ -52,6 +52,9 @@ See `docs/adr/0001-goal-runtime-on-taskmd.md` (decision of record) and `CONTEXT.
 Flow: `drafting →(commit_goal)→ ready →(run)→ active →(request_goal_review)→ in-review
 →(verify_goal_result pass)→ complete` (sealed) or `→ active` (fail/rework).
 `active ↔ paused`; any → `abandoned`.
+
+Reopen: `complete →(request_goal_review)→ in-review` — recovers a goal that was marked
+complete without a verifier pass (bypass recovery); mints a fresh VERIFY_TOKEN.
 
 Invariants: one agent one focus; one `active` Goal exclusive (auto-pause);
 Track never on the board; Goal → Track one-way; lifecycle truth in `phase`.
@@ -90,7 +93,7 @@ until the goal reaches a terminal phase.
 - `commit_goal` — drafting → ready (validates contract + ≥1 Story + ≥1 Task)
 - `activate_goal` — activate the user-confirmed goal (run-proposal confirmation); exclusive active + serial queue
 - `pause_goal` — active → paused (real blocker)
-- `request_goal_review` — active → in-review; instructs dispatching the verifier
+- `request_goal_review` — active/paused → in-review; also complete → in-review (reopen without verifier pass, fresh VERIFY_TOKEN); instructs dispatching the verifier
 - `verify_goal_result` — verifier-only; in-review → complete (pass) or active (fail/rework)
 
 ## Notes
@@ -101,6 +104,11 @@ until the goal reaches a terminal phase.
   always queried from taskmd.
 - Drafting guards: while a Goal is drafting, writes are restricted to `.pi/goals/` and bash
   is restricted to read-only recon + taskmd goal-store commands.
+- Lifecycle guards (always on): bash mutations of a **Goal** record's phase/status
+  (`--phase` / `--status` / `--done`, incl. the `--task-id` form) are blocked — they must
+  go through goal-runtime tools. Story/Task status updates via the CLI stay allowed.
+  While a goal is active/in-review (and none is drafting), write/edit into `.pi/goals/`
+  is blocked entirely — no hand-edited frontmatter phase flips.
 
 ## Dotfiles integration
 

@@ -60,20 +60,38 @@ export function isUnsafeDraftingBash(command: string): boolean {
 }
 
 /**
- * Block direct taskmd phase/status mutations via bash. Goal lifecycle transitions
- * (drafting→ready→active→paused→in-review→complete/abandoned) must go through the
- * goal-runtime tools, which enforce one-active exclusivity, the verifier gate, and
- * Track side effects. Direct `taskmd set --phase/--status` bypasses all of that
- * (e.g. an orchestrator jumping active→complete and skipping review).
- * Note: `taskmd add ... --status pending` (story/task creation during drafting) is
- * NOT matched — only `set` on existing records is blocked.
+ * Block direct taskmd phase/status mutations via bash — but only when the target is a
+ * GOAL record. Goal lifecycle transitions (drafting→ready→active→paused→in-review→
+ * complete/abandoned) must go through the goal-runtime tools, which enforce one-active
+ * exclusivity, the verifier gate, and Track side effects. Direct `taskmd set --phase/
+ * --status/--done` on a goal bypasses all of that (e.g. an orchestrator jumping
+ * active→complete and skipping review). Story/Task status updates via the CLI are
+ * legitimate and NOT blocked. `--done` is covered: it aliases `--status completed`.
  */
-export function isDirectPhaseMutationBash(command: string): boolean {
+function extractSetTarget(command: string): string | undefined {
+	const taskId = command.match(/--task-id[=\s]+(\S+)/);
+	if (taskId?.[1]) return taskId[1].replace(/^goal:/, "");
+	const positional = command.match(/\bset\s+(?:-[\w-]+\s+\S+\s+)*(\S+)/);
+	if (positional?.[1] && !positional[1].startsWith("-")) {
+		return positional[1].replace(/^goal:/, "");
+	}
+	return undefined;
+}
+
+export function isDirectPhaseMutationBash(command: string, goalIds?: Set<string>): boolean {
 	const trimmed = command.trim();
 	if (!trimmed) return false;
 	if (!/\btaskmd\b/.test(trimmed)) return false;
 	if (!/\bset\b/.test(trimmed)) return false;
-	return /--phase\b/.test(trimmed) || /--status\b/.test(trimmed);
+	const mutatesLifecycle = /--phase\b/.test(trimmed) || /--status\b/.test(trimmed) || /--done\b/.test(trimmed);
+	if (!mutatesLifecycle) return false;
+	if (goalIds) {
+		const target = extractSetTarget(trimmed);
+		// target resolved and not a goal record -> story/task update, allow it;
+		// unresolved target -> block (safe default: likely a goal).
+		if (target && !goalIds.has(target)) return false;
+	}
+	return true;
 }
 
 /** Determine whether a tool call represents meaningful progress (continuation eligibility). */

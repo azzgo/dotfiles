@@ -41,6 +41,7 @@ import {
 	GOAL_BODY_TEMPLATE,
 	createRecord,
 	getRecord,
+	listGoals,
 	listStories,
 	listTasks,
 	normalizeGoalRecord,
@@ -232,11 +233,13 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 
 	function startGoalReviewProposal(intent: string, ctx: ExtensionContext): void {
 		if (!requireTaskmd(ctx)) return;
-		const reviewable = snapshot.goals.filter((g) => g.phase === "active" || g.phase === "paused");
-		if (reviewable.length === 0) {
-			ctx.ui.notify("No goal can enter review. A goal must be active or paused first.", "warning");
+		if (snapshot.goals.length === 0) {
+			ctx.ui.notify("No goals exist yet. Use /goal set <topic> first.", "warning");
 			return;
 		}
+		// No phase-based pre-gate: the NL proposal prompt always runs so the model can
+		// match user intent (incl. bare ids like '020') against the full goal list and
+		// explain phase routing (e.g. a complete goal reopening for review).
 		send(buildGoalReviewProposalPrompt(snapshot, intent), MESSAGE_TYPE_GOAL_REVIEW_PROPOSE);
 	}
 
@@ -462,10 +465,18 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 			evidence: Type.Optional(Type.Array(Type.String(), { description: "Concrete evidence that the goal is complete" })),
 		}),
 		async execute(_toolCallId, params: RequestReviewParams, _signal, _onUpdate, ctx) {
-			const goal = params.goalId ? resolveGoal(ctx.cwd, params.goalId) : snapshot.activeGoal;
-			if (!goal || goal.phase !== "active") {
-				return { content: [{ type: "text", text: "request_goal_review rejected: no active goal implementation is running." }], isError: true, details: {} };
-			}
+		const goal = params.goalId ? resolveGoal(ctx.cwd, params.goalId) : snapshot.activeGoal;
+		const reviewablePhases: GoalPhase[] = ["active", "paused", "complete"];
+		if (!goal || !reviewablePhases.includes(goal.phase)) {
+			const reason = goal
+				? `goal ${goal.id} is ${goal.phase}`
+				: "no goal resolved (no active goal and no matching id)";
+			return { content: [{ type: "text", text: `request_goal_review rejected: ${reason}. A goal must be active, paused, or complete to enter review.` }], isError: true, details: {} };
+		}
+		const reopened = goal.phase === "complete";
+		if (reopened) {
+			progressTimeline(ctx.cwd, `Goal ${goal.id} reopened for review (was complete without verifier pass); minting a fresh VERIFY_TOKEN`);
+		}
 			if (params.summary) progressTimeline(ctx.cwd, `Goal ${goal.id} implementation done: ${params.summary}`);
 			if (params.evidence && params.evidence.length > 0) {
 				appendToTrack(ctx.cwd, "progress.md", "Completion Evidence", `Goal ${goal.id}: ${params.evidence.join("; ")}`);
@@ -476,11 +487,11 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 					{
 						type: "text",
 						text: [
-							`Goal ${goal.id} (${goal.title}) is now phase=in-review.`,
-							`Brief written to .pi/track/verify-brief-${goal.id}.md (contains the VERIFY_TOKEN).`,
-							"",
-							"Dispatch the independent read-only verifier now, then STOP (do not self-verify):",
-							`interactive_shell({ command: "PI_GOAL_RUNTIME_CHILD=1 pi -p 'You are the independent verifier for goal ${goal.id}. Read .pi/track/verify-brief-${goal.id}.md and follow it exactly. Then call verify_goal_result with your verdict and the VERIFY_TOKEN from the brief.'", mode: "dispatch", background: true, reason: "goal-review-${goal.id}" })`,
+						`Goal ${goal.id} (${goal.title}) is now phase=in-review.${reopened ? " (reopened from complete — fresh VERIFY_TOKEN minted)" : ""}`,
+						`Brief written to .pi/track/verify-brief-${goal.id}.md (contains the VERIFY_TOKEN).`,
+						"",
+						"Dispatch the independent read-only verifier now, then STOP (do not self-verify):",
+						`interactive_shell({ command: "PI_GOAL_RUNTIME_CHILD=1 pi -p 'You are the independent verifier for goal ${goal.id}. Read .pi/track/verify-brief-${goal.id}.md and follow it exactly. Then call verify_goal_result with your verdict and the VERIFY_TOKEN from the brief.'", mode: "dispatch", background: true, reason: "goal-review-${goal.id}" })`,
 						].join("\n"),
 					},
 				],
@@ -677,7 +688,26 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 		if (event.toolName === "bash") {
 			const phaseCommand = typeof event.input.command === "string" ? event.input.command : "";
 			if (isDirectPhaseMutationBash(phaseCommand)) {
-				return { block: true, reason: "Direct taskmd phase/status mutation is blocked. Goal lifecycle transitions must go through the goal-runtime tools (commit_goal / activate_goal / pause_goal / request_goal_review / verify_goal_result / abandon), never `taskmd set --phase/--status`. To finish a goal: call request_goal_review (-> in-review), then dispatch the verifier." };
+				// resolve goal ids lazily: only goal records are lifecycle-gated
+				let goalIds: Set<string> | undefined;
+				try {
+					goalIds = new Set(listGoals(ctx.cwd).map((g) => g.id));
+				} catch {
+					goalIds = undefined; // taskmd unavailable -> keep the strict block
+				}
+				if (isDirectPhaseMutationBash(phaseCommand, goalIds)) {
+					return { block: true, reason: "Direct mutation of a GOAL record's phase/status is blocked (--done included — it aliases --status completed). Goal lifecycle transitions must go through the goal-runtime tools (commit_goal / activate_goal / pause_goal / request_goal_review / verify_goal_result), never `taskmd set --phase/--status/--done` on a goal id. Story/Task status updates via the CLI are fine. To finish a goal: call request_goal_review (-> in-review), then dispatch the verifier." };
+				}
+			}
+		}
+		if (!isChild && snapshot.activeGoal && !snapshot.draftingGoal) {
+			// No hand-edits into the goal store while a run is active/in-review:
+			// frontmatter phase flips here would bypass every lifecycle gate.
+			if (event.toolName === "write" || event.toolName === "edit") {
+				const filePath = typeof event.input.path === "string" ? event.input.path : "";
+				if (isInGoalsDir(filePath, ctx.cwd)) {
+					return { block: true, reason: "While a goal run is active/in-review, direct write/edit to .pi/goals/ records is blocked — lifecycle must go through goal-runtime tools. Use the taskmd CLI for story/task body updates (phase/status/--done on goals stays tool-gated)." };
+				}
 			}
 		}
 		if (!isChild && snapshot.draftingGoal) {

@@ -24,6 +24,7 @@ export function buildGoalSetPrompt(goal: GoalRecord, supplementalInput?: string)
 		"- Stage 3 story: for each vertical slice (end-to-end deliverable), `taskmd -d .pi/goals add \"<Story title>\" --tags goal:story --parent <goal-id> --status pending`, then overwrite the body with the Story template (`## What`, `## Layers`, `## Acceptance Criteria`).",
 		"- Stage 4 task: break Stories into Tasks. `taskmd -d .pi/goals add \"<Task title>\" --tags goal:task --parent <story-id> [--depends-on <ids>] --status pending`, then overwrite the body with the Task template (`## One-Commit Spec`, `## Hard Deps`, `## Soft Deps`, `## TDD Marker`). 1 commit per Task. Mark TDD (unit|component|integration|no).",
 		"- When the contract is complete (all 5 contract sections non-empty) AND at least one Story with at least one Task exists: call `commit_goal`.",
+		"- Closing discipline: NEVER end a /goal set session with the goal still drafting without saying so. Either commit_goal, or explicitly tell the user: goal remains phase=drafting, what is missing (contract sections / stories / tasks), and that /goal run cannot start it until committed. Do not stop silently mid-draft.",
 		"",
 		"Output style: caveman. Drop filler. Tech precision. Arrow for causality.",
 		"",
@@ -115,7 +116,8 @@ export function buildGoalRunProposalPrompt(snapshot: GoalSnapshot, intent: strin
 		...(snapshot.queue.length > 0 ? ["", `Current serial queue: ${snapshot.queue.join(", ")}`] : []),
 		"",
 		"Rules:",
-		"- Only propose goals whose phase is ready / active / paused. drafting must be finished + committed (`commit_goal`) first; in-review is awaiting the verifier; complete / abandoned are done.",
+		"- Only propose to RUN goals whose phase is ready / active / paused. drafting must be finished + committed (`commit_goal`) first; in-review is awaiting the verifier; complete / abandoned are done.",
+		"- If user intent clearly matches a DRAFTING goal, do NOT report 'nothing found': name that goal, say it is still drafting and what is missing, and recommend finishing `/goal set` (same topic — NEVER suggest creating a duplicate goal). Drafting goals stay visible in the menu for exactly this routing.",
 		`- User intent: ${cleanIntent ? `\"${cleanIntent}\"` : "(none given — recommend the single best candidate and say why)"}`,
 		"- Match by title / topic / objective. NEVER ask the user for a taskmd id — the id is internal.",
 		"- Present a SHORT proposal: which goal(s), one line why, and (if >1) that they run serially in that order. Then STOP and wait for the user to confirm.",
@@ -128,22 +130,22 @@ export function buildGoalRunProposalPrompt(snapshot: GoalSnapshot, intent: strin
 
 export function buildGoalReviewProposalPrompt(snapshot: GoalSnapshot, intent: string): string {
 	const cleanIntent = intent.trim();
-	const reviewable = snapshot.goals.filter((g) => g.phase === "active" || g.phase === "paused");
 	return [
 		"[GOAL REVIEW]",
-		"The user wants to send a goal to independent verification (phase active / paused -> in-review). The orchestrator may NOT self-verify; a dispatched read-only verifier resolves it.",
+		"The user wants to send a goal to independent verification (phase -> in-review). The orchestrator may NOT self-verify; a dispatched read-only verifier resolves it.",
 		"",
-		"Reviewable goals (active or paused):",
-		...(reviewable.length === 0
-			? ["- (none; a goal must be active or paused to enter review)"]
-			: reviewable.map((g) => `- ${g.id} [${g.phase}] ${g.title}`)),
-		"",
-		"All goals for context:",
+		"All goals (match user intent against this full list):",
 		...(snapshot.goals.length === 0 ? ["- (none)"] : snapshot.goals.map((g) => `- ${g.id} [${g.phase}] ${g.title}`)),
 		"",
 		"Rules:",
-		`- User intent: ${cleanIntent ? `\"${cleanIntent}\"` : "(none — recommend the active goal, if any)"}`,
-		"- Match by title / topic. NEVER ask the user for an id.",
+		`- User intent: ${cleanIntent ? `\"${cleanIntent}\"` : "(none — recommend the goal most likely ready for review, and say why)"}`,
+		"- Match intent against title / topic / objective, AND against bare ids (e.g. '020' matches goal id 020; 'goal:020' too). Ids ride inside the match — NEVER ask the user for an id they already gave.",
+		"- Then route by phase:",
+		"  - active / paused → directly reviewable: propose sending it to in-review.",
+		"  - complete → the goal was sealed earlier (possibly bypassing review); if the user wants it verified anyway, propose REOPENING it for review (request_goal_review supports complete → in-review). Explain what happened.",
+		"  - in-review → already awaiting the verifier; tell the user the verify brief exists and offer to re-dispatch the verifier.",
+		"  - drafting → not reviewable; say it must be finished (/goal set + commit_goal) first.",
+		"  - ready → not reviewable; it must be run (/goal run) first.",
 		"- Propose which goal to review, one line why. Then STOP and wait for confirmation.",
 		"- On confirmation, call `request_goal_review({ goalId, summary })`. Do NOT dispatch the verifier yourself unless that tool's response tells you to.",
 	].join("\n");
