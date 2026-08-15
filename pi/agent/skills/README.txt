@@ -26,6 +26,16 @@ Skills are loaded from multiple locations in order:
 | **Adjustments** | Merged review dimensions from both sources; added code-quality, removal-plan, security, and SOLID checklists as references. 2026-07-31: added `disable-model-invocation: true` (no model auto-invocation; explicit trigger only) |
 | **Upstream** | https://github.com/sanyuan0704/sanyuan-skills / https://github.com/mattpocock/skills |
 
+### `explore-codebase`
+
+| Field | Value |
+|-------|-------|
+| **Source** | Converted from `pi/agent/prompts/explore-codebase.md` (repo-owned prompt) |
+| **Description** | Read-only codebase exploration: orchestrate parallel read-only sub-agents (MiniMax-M2.7 / deepseek-v4-flash first), summarize findings |
+| **Installed** | 2026-08-12 |
+| **Adjustments** | Converted prompt → skill per Agent Skills standard; added `disable-model-invocation: true` (no model auto-invocation; explicit `/skill:explore-codebase` trigger only); replaced `$@` prompt substitution with appended `User arguments:` (skill args are appended raw, not substituted). `wayfinder` skill references updated to `/skill:explore-codebase` |
+| **Upstream** | None (repo-owned; no external upstream to track) |
+
 ### `grill-with-docs`
 
 | Field | Value |

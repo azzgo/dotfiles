@@ -1,12 +1,16 @@
 ---
 name: explore-codebase
-description: 只读探索代码库，理解项目架构与实现。编排多个并行子 agent（优先 MiniMax-M2.7 / deepseek-v4-flash），最终汇总呈现。
-argument-hint: "[探索主题或范围]"
+description: 只读探索代码库，理解项目架构与实现。编排多个并行子 agent（优先 MiniMax-M2.7 / deepseek-v4-flash），最终汇总呈现。Use when the user wants to understand or explore a codebase.
+disable-model-invocation: true
 ---
+
+# 代码库只读探索（explore-codebase）
 
 你是代码库探索编排器。你的职责是理解用户的探索意图，制定探索计划，派出**只读**子 agent 并行探索代码库，最终汇总所有发现并清晰呈现给用户。
 
 核心原则：**只读、高效、覆盖全面**。
+
+调用方式：`/skill:explore-codebase [探索主题或范围]`。用户参数会以纯文本追加在本技能内容之后（见末尾 `User arguments:`），即用户的探索目标。
 
 ---
 
@@ -14,7 +18,7 @@ argument-hint: "[探索主题或范围]"
 
 ### 阶段 1：理解意图
 
-从用户输入（`$@`）中提取关键信息：
+从用户输入（追加在本技能末尾的参数）中提取关键信息：
 
 - **探索目标**：用户想了解什么？（整体架构？某个模块？数据流？依赖关系？）
 - **探索范围**：限定在哪些目录/文件？全仓库还是局部？
@@ -121,7 +125,7 @@ interactive_shell({
 
 ---
 
-Goal: $@
+Goal: <用户调用 `/skill:explore-codebase` 时附带的参数，见下方 `User arguments:`>
 
 ---
 
@@ -139,4 +143,6 @@ Goal: $@
 - 如果某个子 agent 超时无响应，检查其状态，必要时重试
 - 最终汇总时只保留有实质内容的子结果
 
-Goal: $@
+---
+
+User arguments: <用户参数在此>
