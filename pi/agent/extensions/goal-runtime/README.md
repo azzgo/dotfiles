@@ -78,10 +78,14 @@ until the goal reaches a terminal phase.
 - Completion is gated by an **independent read-only verifier sub-agent** (also dispatched
   overlay-silent with `PI_GOAL_RUNTIME_CHILD=1`), which reads the Goal/Stories/Tasks + Track,
   checks acceptance criteria, and resolves `in-review` via `verify_goal_result`.
-- `verify_goal_result` is **token-governed**: `request_goal_review` / `/goal review` mints a
-  one-time `VERIFY_TOKEN` embedded in the verify brief (`.pi/track/verify-brief-<id>.md`);
-  the verifier must echo it back, so only a caller that read the brief (the dispatched
-  verifier) can resolve `in-review` — the orchestrator cannot self-verify.
+- `verify_goal_result` is **token-governed**: every entry into `in-review` (`request_goal_review`
+  / `/goal review`, incl. the complete → in-review reopen path) mints a **fresh** one-time
+  `VERIFY_TOKEN` embedded in the verify brief (`.pi/track/verify-brief-<id>.md`); the verifier
+  must echo it back and the token is **consumed on first use** — a verdict (pass or fail)
+  rewrites the brief line to `VERIFY_TOKEN(consumed)` (file kept for audit), so each review
+  entry allows exactly one verdict and rework must re-enter review to get a new token. Only a
+  caller that read the brief (the dispatched verifier) can resolve `in-review` — the
+  orchestrator cannot self-verify.
 - If goal records are hand-edited so that more than one goal is `active`, `/goal status`,
   smart entry, and the widget surface a warning (one-active is exclusive; pick one).
 - The continuation mechanism keeps the orchestrator driving while `active` and advances the
