@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: 生成交接文档
+description: Generate a handoff document summarizing the current conversation for a fresh agent to continue the work.
 ---
 Write a handoff document summarising the current conversation so a fresh agent can continue the work. Save to the temporary directory of the user's OS - not the current workspace.
 
