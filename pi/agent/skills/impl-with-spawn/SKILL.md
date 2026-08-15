@@ -10,16 +10,16 @@ Decompose the user's goal into subtasks, then delegate to sub-agents via `intera
 
 ## Agent Selection
 
-每台机器配置的 provider / agent 可能不同（pi、cursor、opencode-go 等随机器而异）。**不要依赖硬编码映射——派发前先探测环境，启发式自主选择：**
+Providers / agents vary by machine (pi, cursor, opencode-go, etc. differ from machine to machine). **Do not rely on a hard-coded mapping — probe the environment before dispatching and choose heuristically:**
 
-1. **用户明确指定 agent** → 直接用。
-2. **用户指定了模型**（如 `deepseek-v4-pro`）→ 用 `pi --list-models`（若存在再 `agent --list-models`）确认哪个 agent 能跑该模型。**pi 能跑所有配置在 pi 上的 provider，是通用兜底**。
-3. **都未指定** → 从**当前机器实际可用**的列表里按成本优先、够用即可选择：
-   - 简单/机械任务 → 最便宜的 flash 级模型（如 minimax、deepseek-v4-flash）→ `pi`
-   - 复杂/长上下文任务 → pro 级模型（如 deepseek-v4-pro、MiniMax-M3）→ `pi`
-   - 需要 Cursor 独占的 Composer 模型 → `cursor`（`agent`），不可用则退回 `pi`
+1. **User explicitly names an agent** → use it directly.
+2. **User names a model** (e.g. `deepseek-v4-pro`) → use `pi --list-models` (then `agent --list-models` if present) to find which agent can run it. **pi runs every provider configured on pi and is the universal fallback.**
+3. **Neither specified** → pick from what is **actually available on this machine**, cheapest-first, good-enough:
+   - simple/mechanical tasks → cheapest flash-class model (e.g. minimax, deepseek-v4-flash) → `pi`
+   - complex/long-context tasks → pro-class model (e.g. deepseek-v4-pro, MiniMax-M3) → `pi`
+   - Cursor-exclusive Composer models → `cursor` (`agent`); fall back to `pi` if unavailable
 
-**规则**：以 `pi --list-models` 实际输出为准；别处提到的 opencode-go / 官方 deepseek 等只是"可能可用"的示例，**永远不要假设它们存在**。不确定时默认用 `pi`（spawn 默认 agent）。
+**Rule**: trust the actual `pi --list-models` output; opencode-go / official deepseek mentioned elsewhere are only "maybe available" examples — **never assume they exist**. When unsure, default to `pi` (the spawn default agent).
 
 ## Mode
 
@@ -27,17 +27,17 @@ Default: **background dispatch** — headless, no overlay, multiple can run conc
 
 ```typescript
 interactive_shell({
-  spawn: { agent: "pi", prompt: "具体任务描述" },
+  spawn: { agent: "pi", prompt: "concrete task description" },
   mode: "dispatch",
   background: true,
-  handsFree: { autoExitOnQuiet: false },  // 防止静默子 agent 被误杀
-  reason: "简短说明"
+  handsFree: { autoExitOnQuiet: false },  // don't let a quiet sub-agent get killed
+  reason: "brief note"
 })
 ```
 
 If the task is open-ended and the user may want to guide, fall back to foreground `dispatch` (user sees overlay, can take over).
 
-**所有 dispatch 一律传 `handsFree: { autoExitOnQuiet: false }`**——dispatch 默认 `autoExitOnQuiet: true`，静默约 8s（思考中、输出间隙）就可能被 kill。配置了 `-p` 后子 agent 会自然退出，关掉它只防误杀、不影响完成通知；若某 agent 不会退出（无 print mode），则必须恢复 `autoExitOnQuiet: true`，否则通知永不触发。
+**Every dispatch must pass `handsFree: { autoExitOnQuiet: false }`** — dispatch defaults to `autoExitOnQuiet: true`, and ~8s of silence (thinking, between outputs) can get the sub-agent killed. With `-p` configured the sub-agent exits naturally, so disabling it only prevents accidental kills and doesn't affect completion notifications; if an agent can't exit (no print mode), you must restore `autoExitOnQuiet: true`, otherwise the notification never fires.
 
 ## Flow
 
@@ -64,11 +64,11 @@ If the task is open-ended and the user may want to guide, fall back to foregroun
 **Single task:**
 ```typescript
 interactive_shell({
-  spawn: { agent: "pi", prompt: "具体任务描述" },
+  spawn: { agent: "pi", prompt: "concrete task description" },
   mode: "dispatch",
   background: true,
   handsFree: { autoExitOnQuiet: false },
-  reason: "简短说明"
+  reason: "brief note"
 })
 ```
 
@@ -95,14 +95,14 @@ interactive_shell({
 
 ### 3. Wait for Results
 
-**Dispatch 是通知驱动、非阻塞的——派发后立即结束当前轮次（停止发任何 tool-call），不要 sleep、不要轮询。** 子 agent 完成时扩展会用 `triggerTurn` 唤醒你，输出已带在上下文里。
+**Dispatch is notification-driven and non-blocking — after dispatching, end the current turn immediately (stop issuing tool calls); no sleep, no polling.** The extension wakes you with `triggerTurn` when a sub-agent finishes; its output is already in context.
 
-**前提：子 agent 必须能自然退出**，完成通知才会触发（pi 需 print mode：`pi -p` 处理完即退出；TUI 形态的 `pi <prompt>` 完成任务后不退出，会永久挂起）。本仓库已在 `pi/agent/interactive-shell.json` 配置 `defaultArgs.pi: ["-p"]`，所有 pi spawn 自动走 print mode。若在未配置的机器/agent 上运行：给该 agent 配等价退出标志；配不了就恢复 `autoExitOnQuiet: true`（接受"完成 = quiet-kill"，通知标注 was killed）或手动 `query` + `kill`。
+**Prerequisite: the sub-agent must be able to exit naturally** or the completion notification won't fire (pi needs print mode: `pi -p` exits when done; TUI-form `pi <prompt>` never exits after finishing and hangs forever). This repo already sets `defaultArgs.pi: ["-p"]` in `pi/agent/interactive-shell.json`, so all pi spawns run in print mode automatically. On an unconfigured machine/agent: give that agent an equivalent exit flag; if impossible, restore `autoExitOnQuiet: true` (accept "done = quiet-kill", notification marked was killed) or manually `query` + `kill`.
 
-- **并行 tier**：全部派出 → 结束轮次 → 每个完成时被唤醒 → 汇总。
-- **串行 tier**（A→B→C）：派 A → **结束轮次** → 被唤醒（A 完成）→ 派 B → 结束轮次 → ……
-- **绝不要用 `sleep N && echo` + 状态查询来等**：持续 busy 只会让 triggerTurn 通知积压，sleep 白等，轮询自强化。
-- 若确实需要轮内进度更新：改用 `mode: "hands-free"`（有周期更新；注意状态查询默认限频 60s/次）。
+- **Parallel tier**: dispatch all → end turn → wake on each completion → synthesize.
+- **Serial tier** (A→B→C): dispatch A → **end turn** → wake (A done) → dispatch B → end turn → …
+- **Never wait with `sleep N && echo` + status queries**: staying busy only piles up triggerTurn notifications, sleep is wasted waiting, and polling self-reinforces.
+- If in-turn progress updates are truly needed: switch to `mode: "hands-free"` (periodic updates; note status queries are rate-limited to 60s by default).
 
 ### 4. Synthesize and Report
 

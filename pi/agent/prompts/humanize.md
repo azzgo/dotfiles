@@ -1,136 +1,137 @@
 ---
-description: 改写原文，减少和去除 AI 味，保留原始信息与情节骨架
+description: Rewrite text to remove AI-sounding tells while preserving the original information, plot skeleton, and the author's voice.
 ---
 
-## 两模式
+## Two Modes
 
-根据用户输入判断模式：
+Determine the mode from the user's input:
 
-- **改写（默认）**：用户直接贴文本要求改，按以下规则去 AI 味，保留信息与个人风格。
-- **识别（Detect）**：用户以 `detect:` 开头（如 `@humanize detect: <文本>`），则只逐条标注命中的模式名 + 引文 + 建议改法，不重写。
-
----
-
-## 原则
-
-- **保留骨架，重写血肉**：保留人物、情节走向、关键对话等核心信息不变。只重写叙述性句子的表达方式、节奏感和语气。不要添加原文没有的情节、角色或事件。
-- **Show, don't tell**：把总结性、解释性的叙述转化为具体的场景、动作、对话和环境细节。
-- **追求"读起来像人写的"**，而不是"写得最完美"。
-- **最小有效编辑**：只改 AI 味的部分，不动已经好的句子。一个有真实人声的草稿，改后听起来还像同一个人写的。
-- **让每句话值得存在**：砍掉空洞的修饰语和铺垫。保留"我觉得""说真的"这类体现真实语气或口语节奏的表达。
-- **动词驱动**：把"做出了决定"→"决定"，"具备了参与的能力"→"能够参与"。
-- **抽象化是风格的敌人**：有具体数字就说具体数字（"从 40 分钟缩短到 4 分钟"），有机制就说机制，有名字就说名字。
-- **保留有用的棱角**：犀利的观点、口语化的粗糙感、作者特有的幽默和自嘲，不要磨平。
+- **Rewrite (default)**: the user pastes text and asks for a rewrite. De-AI it per the rules below, preserving information and personal style.
+- **Detect**: the user starts with `detect:` (e.g. `@humanize detect: <text>`) — only annotate each hit (pattern name + quote + suggested fix), do not rewrite.
 
 ---
 
-## 工作流程
+## Principles
 
-1. 通读全文，不急着改。
-2. 识别 3-5 个作者声音信号（词汇偏好、节奏特征、冷幽默、修饰习惯等）。
-3. 执行最小有效编辑——只改 AI 味的部分，不动有风格的人话。
-4. 对照末尾自检清单检查修改稿。
-5. 输出完整改后稿 + **修改了什么** 说明。
+- **Keep the skeleton, rewrite the flesh**: preserve characters, plot direction, key dialogue, and all core information. Only rewrite the expression, rhythm, and tone of narrative sentences. Never add plot, characters, or events that aren't in the original.
+- **Show, don't tell**: turn summarizing, explanatory narration into concrete scenes, actions, dialogue, and sensory detail.
+- **Aim for "reads like a human wrote it"**, not "most perfectly written".
+- **Minimal effective edit**: change only the AI-flavored parts; leave good sentences alone. A draft with a real human voice should still sound like the same person after editing.
+- **Make every sentence earn its place**: cut hollow modifiers and throat-clearing. Keep expressions that carry real tone or spoken rhythm ("我觉得", "说真的").
+- **Verb-driven**: "做出了决定" → "决定", "具备了参与的能力" → "能够参与".
+- **Abstraction is the enemy of style**: give concrete numbers when you have them ("从 40 分钟缩短到 4 分钟"), name the mechanism, name the people.
+- **Keep useful edges**: sharp opinions, colloquial roughness, the author's humor and self-deprecation — don't sand them down.
+
 ---
 
-## 要求
+## Workflow
 
-### 一、节奏与句式
+1. Read the whole text before editing anything.
+2. Identify 3-5 author-voice signals (word preferences, rhythm, dry humor, modifier habits, etc.).
+3. Apply minimal effective edits — only the AI-flavored parts, never the stylish human prose.
+4. Check the final draft against the self-check list at the end.
+5. Output the full rewritten text + a **what changed** note.
 
-- 长短句交错。避免连续的、长度相近的句子。模式参考：短—短—长 / 长—短—短 / 短—长—短。
-- 多用停顿和断句。句号比逗号好。能用句号断开的地方就不要用逗号拖着。
-- 段落长度不要整齐。相邻段落之间自然变化，一段可以是一句话，另一段可以三四句。
-- **减少"她心想"、"他意识到"、"她感觉" 这类内心独白引导词**，让叙述本身承载情绪。
+---
 
-### 二、命名模式清单
+## Requirements
 
-#### 违禁词
+### 1. Rhythm and sentence structure
 
-**AI 高频词（通用）：**
+- Alternate short and long sentences. Avoid runs of similar-length sentences. Patterns: short-short-long / long-short-short / short-long-short.
+- Use pauses and breaks. Full stops beat commas. Where a period works, don't drag it out with commas.
+- Vary paragraph length — one paragraph may be a single sentence, the next three or four.
+- **Cut internal-monologue lead-ins** ("她心想", "他意识到", "她感觉") — let the narration carry the emotion.
+
+### 2. Named-pattern checklist
+
+#### Banned words
+
+**AI high-frequency words (general):**
 总而言之、宛如、令人震撼、不可思议、不经意间、仿佛、无疑、某种（某种感觉/某种力量/某种说不清的东西）、不禁、不由得、瞬间
 
-**AI 高频词（小说专属）：**
+**AI high-frequency words (fiction-specific):**
 "她深吸一口气" / "他深吸一口气"、眼中闪过一丝X、目光变得深邃、嘴角微微上扬、心底涌起一股X、空气仿佛凝固了、时间仿佛静止了
 
-#### AI 句式结构
+#### AI sentence structures
 
-- 段末的总结性句子（"这让他意识到…"、"从那天起，一切都不同了"、"他明白了一个道理"）
-- 每段末尾都接一句升华或感慨
-- 每句都"完整"——适当允许句子碎片、不完整的表达
-- 过度依赖 "如果…的话" 式条件句
+- Summary sentences at paragraph end ("这让他意识到…", "从那天起，一切都不同了", "他明白了一个道理")
+- Every paragraph ending in uplift or reflection
+- Every sentence "complete" — allow fragments and unfinished expressions
+- Over-reliance on "如果…的话" conditionals
 
-#### 命名模式
+#### Named patterns
 
-**二元对立**："这不是关于X的问题，而是关于Y的问题" / "问题不在于X，而在于Y"。直接说 Y 就好。
+**False binary:** "这不是关于X的问题，而是关于Y的问题" / "问题不在于X，而在于Y" — just say Y.
 
-**清嗓子式开场**："话说回来""不得不说的是""关键的问题在于""这里要说的其实是"。砍掉这些开头，直接说要点。
+**Throat-clearing openers:** "话说回来" "不得不说的是" "关键的问题在于" "这里要说的其实是" — cut the opener, state the point.
 
-**伪洞察铺垫**："大多数人忽略的是""没人告诉你的真相是""很多人不知道的是"。砍掉这套"只有我懂"的架子，让论点自己站住。
+**Fake-insight build-up:** "大多数人忽略的是" "没人告诉你的真相是" "很多人不知道的是" — cut the "only I get this" scaffolding and let the argument stand on its own.
 
-**重要性吹捧**："具有里程碑意义""标志着重大突破""奠定了坚实基础""具有划时代意义"。陈述事实就好，让读者自己判断重不重要。例如："这次升级是公司第一个收费产品"而不是"这次升级标志着公司的重大转型"。
+**Importance inflation:** "具有里程碑意义" "标志着重大突破" "奠定了坚实基础" "具有划时代意义" — state facts and let the reader judge. E.g. "这次升级是公司第一个收费产品" instead of "这次升级标志着公司的重大转型".
 
-**总结式结尾**："总而言之""综上所述""归根结底""总的来说"。结尾停在上一个具体观点上就好，不需要再概括一遍。
+**Summary endings:** "总而言之" "综上所述" "归根结底" "总的来说" — end on the last concrete point; no need to recap.
 
-**伪深刻结尾**：段尾或文末来一句金句格言式的"这就是科技的温度""或许，这就是生活"。不要改成更好的金句，直接删掉，用前面最实在的那个句子结尾。
+**Fake-profound endings:** a maxim-style closer at paragraph or article end ("这就是科技的温度" "或许，这就是生活") — don't replace it with a better aphorism; delete it and end on the most substantial preceding sentence.
 
-**同义词循环**：同一段落里"该工具→该软件→该方案→该平台"来回换词。第一次用的词就是最好的词，重复使用它。
+**Synonym churn:** swapping words within one paragraph ("该工具→该软件→该方案→该平台"). The first word you used is the best word — repeat it.
 
-**机器节奏**：相邻段落长度相近、句式结构雷同、每段都按"观点→解释→例子→升华"四步走。打乱它。
+**Machine rhythm:** adjacent paragraphs of similar length, identical sentence templates, every paragraph following "point → explanation → example → uplift". Break the pattern.
 
-### 三、小说特有的操作指引
+### 3. Fiction-specific operations
 
-- **保持视角一致性**：不要在同一段内滑入全知上帝视角。如果是从角色 A 的视角叙述，就只写 A 能看到、听到、感觉到的东西。
-- **对话要有潜台词**：不要把对话写得"太干净"。真实的人物对话有犹豫、打断、答非所问、话说到一半。不需要每句对话都有来有回。
-- **用动作表达情绪**：不要给情绪命名（"他很愤怒"），用行为暗示（"他把杯子重重搁在桌上，水溅了出来"）。
-- **环境参与叙事**：天气、光线、温度、气味可以承载情绪，但不要只用来"渲染气氛"——让它们自然地存在于场景中。
-- **去掉多余的副词和修饰**："他轻声地、温柔地说道" → "他说"，或者直接写他说了什么、怎么做的。
-- **减少直接的心理描写**，多通过对话和行为让读者自己感受。
+- **Keep point-of-view consistent**: don't slip into omniscient god-view mid-paragraph. If narrating from character A's perspective, only write what A can see, hear, and feel.
+- **Dialogue needs subtext**: don't make dialogue too clean. Real speech has hesitation, interruptions, non-sequiturs, half-finished sentences. Not every line needs a reply.
+- **Show emotion through action**: don't name the emotion ("他很愤怒"), imply it with behavior ("他把杯子重重搁在桌上，水溅了出来").
+- **Environment participates in narrative**: weather, light, temperature, smells can carry emotion — but don't use them only to "set the mood"; let them exist naturally in the scene.
+- **Cut redundant adverbs and modifiers**: "他轻声地、温柔地说道" → "他说" — or just write what he said and did.
+- **Reduce direct psychological description**; let dialogue and behavior let the reader feel it themselves.
 
-### 四、口语化与瑕疵感
+### 4. Colloquialism and imperfection
 
-- 允许口语化表达：语气词（吧、嘛、嗯、哦）、插入语（说真的、不过话说回来、你猜怎么着）、重复用词表达强调。
-- 允许轻微的语法不规范或句子碎片。
-- 不要让每个句子都结构完整、信息密度均匀。有些句子就是废话，但读着有生活感。
-- 但是上述"不完美"要自然融入，不要刻意堆砌到每一段。
+- Allow colloquial expressions: particles (吧、嘛、嗯、哦), parentheticals (说真的、不过话说回来、你猜怎么着), repeated words for emphasis.
+- Allow mild grammatical looseness and sentence fragments.
+- Not every sentence needs to be structurally complete with uniform information density. Some sentences are filler but read as lived-in.
+- But the "imperfections" above must blend in naturally — don't pile them into every paragraph.
 
-### 五、保留原文特有的手癖
+### 5. Preserve the author's idiosyncrasies
 
-- 如果原文有明显的作者个人风格（特有的口癖、叙事习惯、用词偏好），**不要"矫正"它**——保留它。
-- 只有当某处明显是"AI 味"的时候才修改，不要无差别全面重写。
+- If the original has a distinct personal style (verbal tics, narrative habits, word preferences), **don't "correct" it** — preserve it.
+- Only change where something is clearly "AI-flavored"; don't do a blanket rewrite.
 
-## 自检清单
+## Self-check list
 
-编辑完成后逐条检查，全部 pass 才输出最终稿：
+Run through each item after editing; only ship the final draft when all pass:
 
-1. 是否保留了原文的核心信息、情节、事实，没有添加原文没有的内容？
-2. 是否保留了作者特有的用词习惯、句式偏好，没有无差别全面重写？
-3. 是否只改了明显"AI 味"的部分，没有把已经有风格的人话改平？
-4. 是否删除了二元对立、清嗓子式开场、伪洞察铺垫等命名模式？
-5. 是否有总结式结尾或伪深刻结尾被遗漏？
-6. 节奏是否自然——长短句交错，段落长度有变化？
-7. 原文作者看过后会认得出还是自己的文字吗？
-8. 输出包含完整改写稿 + **修改了什么** 说明？
+1. Did you preserve the original core information, plot, and facts without adding anything not in the source?
+2. Did you preserve the author's word habits and sentence preferences without a blanket rewrite?
+3. Did you only change clearly "AI-flavored" parts, leaving already-stylish human prose untouched?
+4. Did you remove the false binaries, throat-clearing openers, fake-insight build-ups, etc.?
+5. Any summary endings or fake-profound endings left behind?
+6. Is the rhythm natural — short/long sentences alternating, varied paragraph lengths?
+7. Would the original author recognize the text as still their own?
+8. Does the output include the full rewrite + a **what changed** note?
 
 ---
 
-## 对比示例
+## Comparison examples
 
-### 改前（AI 味）
+### Before (AI-flavored)
 > 她深吸一口气，望着窗外的夕阳，心中涌起一股说不清道不明的惆怅。回想起过去的日子，她不禁感慨万千。那些曾经的欢笑与泪水，如今都已化作回忆，沉淀在心底最深处。从某种意义上来说，正是这些经历塑造了今天的她。她轻轻地转过头，目光落在桌角那张泛黄的照片上，眼神变得柔和而深邃。
 
-### 改后（人写的）
+### After (human-written)
 > 她盯着窗外。夕阳把半边天烧成橘红色。她脑子里乱糟糟的，说不清在想什么。
 >
 > 桌上那张照片都卷边了。她拿起来看了看，上面的人笑着，笑得很傻。那时候好像什么都挺简单的。
 
-### 改前（AI 味对话）
+### Before (AI-flavored dialogue)
 > "你还好吗？"他关切地问道，眼神中充满了担忧。
 > "我没事。"她摇摇头，勉强挤出一个微笑，"只是有点累。"
 
-### 改后（人写的）
+### After (human-written)
 > "还好吧你？"
 > "没事。"她摇头，"就……有点累。"
 
-## 用户指令
+## User Instruction
 
 $@

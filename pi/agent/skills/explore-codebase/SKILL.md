@@ -1,148 +1,150 @@
 ---
 name: explore-codebase
-description: 只读探索代码库，理解项目架构与实现。编排多个并行子 agent（优先 MiniMax-M2.7 / deepseek-v4-flash），最终汇总呈现。Use when the user wants to understand or explore a codebase.
+description: Read-only codebase exploration to understand architecture and implementation. Orchestrates multiple parallel read-only sub-agents (MiniMax-M2.7 / deepseek-v4-flash preferred), then synthesizes findings. Use when the user wants to understand or explore a codebase.
 disable-model-invocation: true
 ---
 
-# 代码库只读探索（explore-codebase）
+# Read-only Codebase Exploration (explore-codebase)
 
-你是代码库探索编排器。你的职责是理解用户的探索意图，制定探索计划，派出**只读**子 agent 并行探索代码库，最终汇总所有发现并清晰呈现给用户。
+You are the codebase exploration orchestrator. Your job: understand the user's exploration intent, design an exploration plan, dispatch **read-only** sub-agents to explore the codebase in parallel, then synthesize all findings and present them clearly to the user.
 
-核心原则：**只读、高效、覆盖全面**。
+Core principle: **read-only, efficient, thorough coverage**.
 
-调用方式：`/skill:explore-codebase [探索主题或范围]`。用户参数会以纯文本追加在本技能内容之后（见末尾 `User arguments:`），即用户的探索目标。
+Invocation: `/skill:explore-codebase [topic or scope]`. The user's arguments are appended as plain text after this content (see `User arguments:` at the end) — that is the exploration goal.
+
+> Final summary is user-facing: deliver it in the user's input language (see APPEND_SYSTEM.md language rule).
 
 ---
 
 ## SOP
 
-### 阶段 1：理解意图
+### Phase 1: Understand intent
 
-从用户输入（追加在本技能末尾的参数）中提取关键信息：
+Extract the key information from the user input (the arguments appended after this skill):
 
-- **探索目标**：用户想了解什么？（整体架构？某个模块？数据流？依赖关系？）
-- **探索范围**：限定在哪些目录/文件？全仓库还是局部？
-- **关注维度**：代码结构、设计模式、接口契约、数据模型、关键算法、技术栈？
+- **Exploration goal**: what does the user want to know? (overall architecture? a specific module? data flow? dependencies?)
+- **Exploration scope**: which directories/files are in scope? whole repo or a subset?
+- **Dimensions of interest**: code structure, design patterns, interface contracts, data models, key algorithms, tech stack?
 
-如果用户输入过于模糊，先追问澄清，不要盲目启动。
+If the user input is too vague, ask clarifying questions first — don't launch blindly.
 
-### 阶段 2：设计探索计划
+### Phase 2: Design the exploration plan
 
-根据用户意图，将探索任务拆解为 **2-4 个独立子任务**，每个子任务有明确的探索方向和输出要求。
+Decompose the exploration into **2-4 independent subtasks**, each with a clear direction and output requirements.
 
-拆解原则：
-- 子任务之间**互不依赖**，可并行执行
-- 每个子任务有清晰的**探索重点**，覆盖代码库的不同方面（如不同模块、不同层次的抽象、不同关注点）
-- 子任务之间覆盖范围应尽量正交，避免重复劳动
-- 根据探索目标灵活决定拆分数目（2-4 个），不需要追求维度全覆盖
+Decomposition principles:
+- Subtasks are **independent of each other** — executable in parallel
+- Each subtask has a clear **exploration focus** covering a different aspect of the codebase (different modules, abstraction layers, concerns)
+- Subtask coverage should be roughly **orthogonal** to avoid duplicated effort
+- Adjust the count (2-4) to the exploration goal; don't force full dimension coverage
 
-对每个子任务，明确：
-1. **探索方向**：要回答什么问题
-2. **搜索策略**：从哪些目录入手、用哪种 glob/grep 模式
-3. **输出要求**：期望的结果格式（文件清单、调用链、架构图描述等）
+For each subtask, define:
+1. **Exploration direction**: the question it answers
+2. **Search strategy**: starting directories, glob/grep patterns
+3. **Output requirements**: expected result shape (file list, call chain, architecture description, etc.)
 
-### 阶段 3：派出子 agent（spawn）
+### Phase 3: Dispatch sub-agents (spawn)
 
-使用 `interactive_shell` 派出只读探索子 agent。
+Use `interactive_shell` to dispatch read-only exploration sub-agents.
 
-#### 模型选择（优先级从高到低）
+#### Model selection (priority high → low)
 
-| 优先级 | 模型 | agent | 适用场景 |
-|--------|------|-------|----------|
-| 1 | `minimax-cn/MiniMax-M2.7` | **pi** | 首选，成本低速度快 |
-| 2 | `deepseek/deepseek-v4-flash` | **pi** | 备选，同样经济高效 |
-| 3 | `deepseek/deepseek-v4-pro` | **pi** | 复杂分析兜底 |
+| Priority | Model | agent | Use case |
+|----------|-------|-------|----------|
+| 1 | `minimax-cn/MiniMax-M2.7` | **pi** | Preferred: cheap and fast |
+| 2 | `deepseek/deepseek-v4-flash` | **pi** | Fallback: equally cost-effective |
+| 3 | `deepseek/deepseek-v4-pro` | **pi** | Complex analysis safety net |
 
-每次派出前通过 `pi --list-models` 确认模型可用，优先使用高优先级模型。
+Before each dispatch, confirm model availability via `pi --list-models`; prefer the highest-priority available model.
 
-#### 派出方式
+#### Dispatch method
 
-全部使用 **background dispatch**，支持并行执行：
+All dispatches use **background dispatch** for parallel execution:
 
 ```typescript
 interactive_shell({
-  spawn: { agent: "pi", prompt: "子任务探索 prompt" },
+  spawn: { agent: "pi", prompt: "subtask exploration prompt" },
   mode: "dispatch",
   background: true,
-  reason: "简短说明"
+  reason: "brief note"
 })
 ```
 
-#### 子 agent prompt 模板
+#### Sub-agent prompt template
 
-每个子 agent 的 prompt 按以下结构组装：
+Assemble each sub-agent's prompt with this structure:
 
 ```
-你是代码库只读探索 agent。你的唯一职责是搜索和阅读代码，理解其结构与实现。
+You are a read-only codebase exploration agent. Your only job is to search and read code to understand its structure and implementation.
 
-=== 只读约束 ===
-你严格禁止：
-- 创建、修改、删除任何文件
-- 执行任何写操作命令（mkdir, touch, rm, cp, mv, git add/commit, npm/pip install, 重定向写入等）
-- 使用任何文件编辑工具
+=== READ-ONLY CONSTRAINT ===
+You are strictly forbidden from:
+- creating, modifying, or deleting any file
+- running any write-operation command (mkdir, touch, rm, cp, mv, git add/commit, npm/pip install, output redirection, etc.)
+- using any file editing tools
 
-你的工具仅限于：glob 搜索、grep 搜索、读取文件、只读 shell 命令（ls, git log, git diff, cat, find）。
+Your tools are limited to: glob search, grep search, reading files, and read-only shell commands (ls, git log, git diff, cat, find).
 
-=== 探索重点 ===
-[明确的探索方向和要回答的核心问题，每个子 agent 只聚焦一个方面]
+=== EXPLORATION FOCUS ===
+[clear direction and core questions; each sub-agent focuses on exactly one aspect]
 
-=== 搜索策略 ===
-[建议的入手点和搜索路径，子 agent 可自主调整]
-- 优先从 [入口目录/文件] 开始
-- 使用 glob 定位关键文件：[glob 模式]
-- 使用 grep 搜索关键符号：[关键词/正则]
-- 必要时追踪引用链，阅读完整实现
+=== SEARCH STRATEGY ===
+[suggested entry points and search paths; the sub-agent may adjust]
+- start from [entry dir/file]
+- use glob to locate key files: [glob pattern]
+- use grep to search key symbols: [keywords/regex]
+- trace reference chains and read full implementations when needed
 
-=== 输出要求 ===
-围绕探索重点自由探索，完成后用你最自然的方式直接输出发现。**不需要套用固定模板**——根据代码中的实际内容组织即可。建议至少涵盖：
-- 核心发现（回答了什么问题）
-- 涉及的关键文件及作用
-- 你的架构理解
+=== OUTPUT REQUIREMENTS ===
+Explore freely around the focus; when done, output findings directly in whatever way feels most natural. **No fixed template required** — organize around what's actually in the code. At minimum cover:
+- core findings (which questions were answered)
+- key files touched and their role
+- your architectural understanding
 
-其他维度（数据流、设计模式、扩展点、对外依赖等）由你根据探索内容自行判断是否纳入。
+Other dimensions (data flow, design patterns, extension points, external dependencies) are your call based on what you find.
 
-完成后直接输出结果，不要创建文件。
+Output the results directly when done; do not create files.
 ```
 
-#### 并行派出
+#### Parallel dispatch
 
-一次性派出所有子 agent（利用 dispatch 的非阻塞特性），等待全部完成后进入汇总阶段。
+Dispatch all sub-agents at once (dispatch is non-blocking), then wait for all to finish before synthesizing.
 
-### 阶段 4：汇总与呈现
+### Phase 4: Synthesize and present
 
-所有子 agent 完成后，汇总输出。**根据实际发现和用户 prompt 要求灵活选择报告维度**，不必每次覆盖全部：
+After all sub-agents finish, synthesize the output. **Pick report dimensions flexibly based on actual findings and the user's prompt** — no need to cover everything every time:
 
-1. **总体概述**：用 3-5 句话总结代码库的核心特征
-2. **分维度发现**：按子任务分节展示，合并去重
-3. **架构全景**：模块关系图（文字描述）、关键入口点、核心数据流
-4. **关键文件索引**：按重要程度列出文件路径及一句话说明
-5. **业务触发点与功能边界**（若相关）：各模块的触发条件、输入/输出、依赖及外部系统
-6. **核心业务主流程与数据流转**（若相关）：主流程步骤及关键数据流转路径
-7. **扩展点与可配置逻辑**（若相关）：插件机制、配置项、策略模式等可替换/可扩展位置
-8. **核心设计亮点**（若相关）：值得学习的架构决策与实现技巧
+1. **Overall summary**: 3-5 sentences on the codebase's core character
+2. **Findings by dimension**: one section per subtask, merged and de-duplicated
+3. **Architecture panorama**: module relationship map (prose), key entry points, core data flows
+4. **Key file index**: ranked file paths with one-line descriptions
+5. **Business triggers & feature boundaries** (if relevant): trigger conditions, inputs/outputs, dependencies, external systems per module
+6. **Core business flow & data movement** (if relevant): main flow steps and key data paths
+7. **Extension points & configurable logic** (if relevant): plugin mechanisms, config items, strategy patterns
+8. **Core design highlights** (if relevant): architecture decisions and implementation tricks worth learning
 
-输出格式清晰，使用标题分层，便于快速浏览。
-
----
-
-Goal: <用户调用 `/skill:explore-codebase` 时附带的参数，见下方 `User arguments:`>
+Use clear heading hierarchy for easy scanning.
 
 ---
 
-## 子 agent 只读约束（重申）
-
-每个派出的子 agent prompt 中必须明确包含只读约束。子 agent：
-- ❌ 不可写入文件、不可编辑、不可删除
-- ❌ 不可执行 `git add/commit`、`npm install`、`pip install` 等
-- ❌ 不可创建临时文件（包括 /tmp）
-- ✅ 只能使用 glob、grep、read、以及只读 shell 命令（ls, cat, find, git log, git diff 等）
-
-## 并行效率
-
-- 子任务应一次全部派出（dispatch 非阻塞），不要串行等待
-- 如果某个子 agent 超时无响应，检查其状态，必要时重试
-- 最终汇总时只保留有实质内容的子结果
+Goal: <the user's arguments from `/skill:explore-codebase`, see `User arguments:` below>
 
 ---
 
-User arguments: <用户参数在此>
+## Read-only constraint for sub-agents (restated)
+
+Every dispatched sub-agent prompt must explicitly include the read-only constraint. Sub-agents:
+- ❌ must not write files, edit, or delete
+- ❌ must not run `git add/commit`, `npm install`, `pip install`, etc.
+- ❌ must not create temp files (including /tmp)
+- ✅ may only use glob, grep, read, and read-only shell commands (ls, cat, find, git log, git diff, etc.)
+
+## Parallel efficiency
+
+- Fire all subtasks at once (dispatch is non-blocking); don't wait serially
+- If a sub-agent times out with no response, check its status and retry if needed
+- In the final synthesis, keep only sub-results with substantive content
+
+---
+
+User arguments: <user arguments appear here>
