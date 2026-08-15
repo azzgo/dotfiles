@@ -51,7 +51,7 @@ export function trimEmptyLines(text: string): string {
 
 export function extractSection(text: string, heading: string): string | undefined {
 	const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-	const match = text.match(new RegExp(`^## ${escaped}\\s*\\n+([\\s\\S]*?)(?:\\n## |$)`, "m"));
+	const match = text.match(new RegExp(`^## ${escaped}\\s*\\n+([\\s\\S]*?)(?=\\n## |(?![\\s\\S]))`, "m"));
 	return match?.[1]?.trim() || undefined;
 }
 
