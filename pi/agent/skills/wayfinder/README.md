@@ -170,7 +170,7 @@ Work   →  在已有 Map 上前进
 
 | 类型 | 默认 channel | 用途 | 常见本地能力 |
 |---|---|---|---|
-| `research` | AFK | 查清事实 | `/skill:explore-codebase` 等 |
+| `research` | AFK | 查清事实 | `/skill:explore-codebase`（仓库内）或 web fetch（`web_search` / `fetch_content`） |
 | `research` + HITL | HITL | 事实只有人能取到（同事/需求方/拿不到的架构文档） | 无 — 写 intake brief 后 `waiting-human` |
 | `grilling` | HITL（固定） | 和你对决策 | `grill-with-docs` |
 | `prototype` | HITL（固定） | 廉价验证手感 | `prototype` |
