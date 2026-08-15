@@ -157,7 +157,7 @@ Work   →  在已有 Map 上前进
 3. Frontier 上不再有「还得先决策」的 Ticket（剩下的是 `waiting-human` 或已 graduation）  
 4. 剩下主要是「怎么实现」  
 
-→ 关掉/完成这张 Map，**按当前环境实际可用的路径**交给实现侧（capability-aware：探测 `/goal set`+`/goal run`、cursor/pi spawn、直接写代码等，推荐合适的，不写死单一路径）。
+→ 关掉/完成这张 Map，agent 会**建议你**按当前环境实际可用的路径进入实现侧（capability-aware：`/goal set` + `/goal run`、cursor/pi spawn、直接写代码等；由**你**决定并执行，agent 不会替你触发）。
 
 ---
 
@@ -194,7 +194,7 @@ Work   →  在已有 Map 上前进
 6. 结论 **三写**：填 `## Resolution`、在 Ticket 顶部插一段 `## Decision` 摘要（结掉的 Ticket 一眼读起来是决策记录而非探索日志）、并在 Map Decisions So Far 加一行摘要  
 7. 雾和范围外要写正式区块，别装成已经想清楚或假装没看见  
 8. **HITL 不自动结** — HITL 通道 Ticket 永远不被 agent 替人解决，只给 intake brief + `waiting-human`  
-9. **成熟即毕业** — Ticket 一旦"没有决策、只剩怎么实现"，以 **graduation** 方式 `completed`：Resolution 写 handoff 指针，不在 Wayfinder 里实现  
+9. **成熟即毕业** — Ticket 一旦"没有决策、只剩怎么实现"，以 **graduation** 方式 `completed`：Resolution 写 handoff 指针，不在 Wayfinder 里实现；建议**用户**另开会话实现，agent 不代为触发 `/goal`
 
 ---
 

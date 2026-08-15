@@ -21,6 +21,7 @@ This prompt is a **thin shortcut only**. Do **not** invent a second methodology 
 - Parent = membership; dependency = ordering
 - Refer by name, not bare ids
 - Tickets are Wayfinder decision units, not Goal Runtime Tasks
+- Goal Runtime 是 user-trigger：绝不调用 `/goal` 命令或 goal-runtime 工具（save_goal_draft / commit_goal / activate_goal 等）。Graduate / Exit 时只能**建议用户自己执行** `/goal set`、`/goal run` 等合适能力（capability-aware，也可建议其它覆盖同类能力的本地技能）
 - Workspace: `.pi/wayfinder/tickets/`
 
 ## Command routing for $@
@@ -54,7 +55,7 @@ Parse the user arguments (`$@`) as follows:
   - HITL (`wayfinder:hitl` / `prototype` / `grilling`): do **not** auto-resolve — for `research`+HITL write intake brief + set `waiting-human` + stop; for `grilling`/`prototype` start the live exchange
   - AFK (`research` / `setup`): resolve with matching capability
 - **single-Ticket directional**: downward exploration OK; sideways questions → new Ticket for a new session, never inline
-- mature "ready to build, no decision left" Tickets → **graduate** (Resolution = handoff pointer, `completed`), do not implement here
+- mature "ready to build, no decision left" Tickets → **graduate** (Resolution = handoff pointer, `completed`), do not implement here; **suggest the user** start the implementation path (`/goal run` / spawn / direct coding) — never invoke it yourself
 
 ### `status`
 - report state only
