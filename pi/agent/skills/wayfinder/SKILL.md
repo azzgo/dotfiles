@@ -163,7 +163,7 @@ Channel defaults by type; only `research` and `setup` are genuinely dual-mode:
 
 | Type | Intent | Default channel | Local capability |
 |---|---|---|---|
-| `research` | Gather facts needed for a decision | AFK | `/skill:explore-codebase` (in-repo) or web research |
+| `research` | Gather facts needed for a decision | AFK | `/skill:explore-codebase` (in-repo) or web fetch (`web_search` + `fetch_content`) |
 | `research` + HITL | Facts only obtainable via a human (a colleague, the requirement owner, an architecture doc the agent can't reach) | HITL | none the agent runs itself — see [HITL research](#hitl-research) |
 | `prototype` | Cheap concrete artifact to react to | HITL (fixed) | `prototype` skill |
 | `grilling` | Live decision interview | HITL (fixed) | `grill-with-docs` (fallback `/grill-me`) |
