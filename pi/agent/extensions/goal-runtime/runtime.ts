@@ -60,7 +60,6 @@ import {
 	buildGoalSetPrompt,
 	buildGoalSmartEntryPrompt,
 	buildGoalStatusText,
-	buildInjectedContext,
 	buildReviewBrief,
 	buildGoalReviewProposalPrompt,
 	buildTrackStatusText,
@@ -323,9 +322,7 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 	pi.registerTool({
 		name: "save_goal_draft",
 		label: "Save Goal Draft",
-		description: "Persist a partially clarified goal draft for later continuation (writes into the drafting Goal record).",
-		promptSnippet: "Persist partial goal clarification for /goal set.",
-		promptGuidelines: ["Use save_goal_draft to persist partially clarified goal information during /goal set drafting."],
+		description: "Persist a partially clarified goal draft for later continuation (writes into the drafting Goal record). USER-TRIGGERED ONLY: use exclusively inside a /goal set session the user explicitly initiated; never start goal work on your own.",
 		parameters: Type.Object({
 			goalId: Type.Optional(Type.String({ description: "Goal record id (defaults to the drafting goal)" })),
 			sourceTopic: Type.Optional(Type.String({ description: "Original goal topic, if being set or corrected" })),
@@ -379,9 +376,7 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 	pi.registerTool({
 		name: "commit_goal",
 		label: "Commit Goal",
-		description: "Commit a clarified goal (phase drafting -> ready) so /goal run can execute it.",
-		promptSnippet: "Commit a fully clarified goal contract for later implementation.",
-		promptGuidelines: ["Use commit_goal only when the goal contract is concrete enough to start implementation later with /goal run."],
+		description: "Commit a clarified goal (phase drafting -> ready) so /goal run can execute it. USER-TRIGGERED ONLY: use exclusively inside a /goal set session the user explicitly initiated.",
 		parameters: Type.Object({
 			goalId: Type.Optional(Type.String({ description: "Goal record id (defaults to the drafting goal)" })),
 		}),
@@ -431,9 +426,7 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 	pi.registerTool({
 		name: "pause_goal",
 		label: "Pause Goal",
-		description: "Pause the active goal implementation because of a real blocker (phase active -> paused).",
-		promptSnippet: "Pause the active goal run when a real blocker prevents the next reasonable step.",
-		promptGuidelines: ["Use pause_goal instead of just chatting when a real blocker stops goal implementation."],
+		description: "Pause the active goal implementation because of a real blocker (phase active -> paused). USER-TRIGGERED ONLY: use exclusively inside a /goal run session the user explicitly initiated.",
 		parameters: Type.Object({
 			goalId: Type.Optional(Type.String({ description: "Goal record id (defaults to the active goal)" })),
 			reason: Type.String({ description: "Concrete blocker reason" }),
@@ -462,9 +455,7 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 	pi.registerTool({
 		name: "request_goal_review",
 		label: "Request Goal Review",
-		description: "Mark the active goal implementation done and move it to in-review for an independent verifier (phase active -> in-review).",
-		promptSnippet: "Send the finished goal to the independent verifier.",
-		promptGuidelines: ["Use request_goal_review when implementation is done; an independent read-only verifier sub-agent resolves in-review via verify_goal_result."],
+		description: "Mark the active goal implementation done and move it to in-review for an independent verifier (phase active -> in-review). USER-TRIGGERED ONLY: use exclusively inside a /goal run or /goal review flow the user explicitly initiated.",
 		parameters: Type.Object({
 			goalId: Type.Optional(Type.String({ description: "Goal record id (defaults to the active goal)" })),
 			summary: Type.Optional(Type.String({ description: "Completion summary (recorded in Track)" })),
@@ -502,8 +493,6 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 		name: "verify_goal_result",
 		label: "Verify Goal Result",
 		description: "Resolve a goal's in-review phase: pass -> complete (sealed), fail -> back to active (rework). VERIFIER-ONLY: only the dispatched verifier sub-agent (PI_GOAL_RUNTIME_CHILD=1) may call this; the orchestrator must not self-verify.",
-		promptSnippet: "Record the independent verifier's verdict.",
-		promptGuidelines: ["Use verify_goal_result only as the independent read-only verifier, only on an in-review goal."],
 		parameters: Type.Object({
 			goalId: Type.String({ description: "Goal record id (must be phase=in-review)" }),
 			token: Type.String({ description: "One-time VERIFY_TOKEN read from the verify brief (.pi/track/verify-brief-<id>.md) — proves the caller is the dispatched verifier" }),
@@ -558,13 +547,7 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 	pi.registerTool({
 		name: "activate_goal",
 		label: "Activate Goal",
-		description: "Activate a goal for execution after the user confirmed the proposal (exclusive active: auto-pauses any other active goal; serial queue if `queue` ids given). Emits the orchestrator prompt.",
-		promptSnippet: "Activate the user-confirmed goal to start/resume implementation.",
-		promptGuidelines: [
-			"Use activate_goal only AFTER the user confirmed the proposal in chat.",
-			"Pass the goal id exactly as it appears in the goal menu. Use `queue` to enqueue further goals to run serially after this one (not parallel).",
-			"After calling activate_goal, stop — the orchestrator turn takes over.",
-		],
+		description: "Activate a goal for execution after the user confirmed the proposal (exclusive active: auto-pauses any other active goal; serial queue if `queue` ids given). Emits the orchestrator prompt. USER-TRIGGERED ONLY: call only after the user confirmed a /goal run or /goal review proposal in chat.",
 		parameters: Type.Object({
 			goalId: Type.String({ description: "Goal id (from the goal menu) to activate" }),
 			queue: Type.Optional(Type.Array(Type.String(), { description: "Additional goal ids to run serially after goalId, in order" })),
@@ -674,17 +657,11 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 	});
 
 	pi.on("before_agent_start", async (_event, ctx) => {
+		// User-trigger-only design: NO goal context is injected into ordinary
+		// sessions. The model learns goal state only from prompts emitted by
+		// explicit /goal (or /track) commands, and from continuation messages
+		// while a user-started goal run is active. Only refresh the widget here.
 		refresh(ctx, snapshot.resumedFromPreviousSession);
-		if (isChild) return;
-		const injected = buildInjectedContext(snapshot);
-		if (!injected) return;
-		return {
-			message: {
-				customType: "goal-runtime-context",
-				content: injected,
-				display: false,
-			},
-		};
 	});
 
 	pi.on("turn_start", async () => {

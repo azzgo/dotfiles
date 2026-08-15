@@ -58,6 +58,13 @@ Track never on the board; Goal → Track one-way; lifecycle truth in `phase`.
 
 ## Execution model
 
+**User-trigger-only**: the runtime injects **no** context into ordinary sessions and its
+tools carry no proactive model guidance. Every goal flow starts from an explicit `/goal`
+(or `/track`) command typed by the user. Agents (including Wayfinder) may only **suggest
+the user run** a `/goal ...` command — they never invoke goal tools on their own. Once a
+user-started run is active, the continuation mechanism keeps driving the orchestrator
+until the goal reaches a terminal phase.
+
 - `/goal run` activates the goal (auto-pauses any other active goal), auto-resets Track,
   and sends the orchestrator prompt with the task dependency graph + tiers injected.
 - The orchestrator is the **sole Track writer**. Independent Tasks (same tier, no hard dep)

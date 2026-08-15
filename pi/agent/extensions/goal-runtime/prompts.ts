@@ -318,40 +318,6 @@ export function buildGoalSmartEntryPrompt(snapshot: GoalSnapshot): string {
 	].join("\n");
 }
 
-// ---- injected context (before_agent_start) ----
-
-export function buildInjectedContext(snapshot: GoalSnapshot): string | undefined {
-	const active = snapshot.activeGoal;
-	const drafting = snapshot.draftingGoal;
-	if (!active && !drafting && snapshot.goals.length === 0) return undefined;
-	const lines: string[] = [];
-	lines.push("[GOAL RUNTIME]");
-	lines.push(`Goal store: ${GOALS_DIR} (taskmd; use the taskmd CLI, never a fallback tracker). Track: ${TRACK_DIR}/{findings,progress}.md (flat working memory; orchestrator-only writes while a goal is active).`);
-	if (active) {
-		lines.push(`active goal: ${active.id} [${active.phase}] ${active.title}`);
-		const contract = readGoalContract(active);
-		if (contract.objective) lines.push(`objective: ${contract.objective}`);
-		if (snapshot.queue.length > 0) lines.push(`serial queue: ${snapshot.queue.join(", ")}`);
-	}
-	if (drafting) {
-		lines.push(`drafting goal: ${drafting.id} [stage ${drafting.draftingStage ?? "as-is"}] ${drafting.title}`);
-		if (drafting.openQuestions && drafting.openQuestions.length > 0) {
-			lines.push(`drafting open questions (${drafting.openQuestions.length}): ${drafting.openQuestions.join("; ")}`);
-		}
-		if (drafting.nextRecommendedQuestion) lines.push(`next drafting question: ${drafting.nextRecommendedQuestion}`);
-	}
-	if (active) {
-		lines.push("");
-		lines.push("Track progress tail:");
-		lines.push(truncate(tailLines(snapshot.track.progress, 8), 800) || "(empty)");
-	}
-	const resumeNote = snapshot.resumedFromPreviousSession
-		? "- This session continues from a previous Pi session. Reconcile your next actions against the goal records + Track before changing code."
-		: "";
-	if (resumeNote) lines.push(resumeNote);
-	return lines.join("\n");
-}
-
 // ---- helper export for tests ----
 
 export const _test = { computeTaskTiers, CHILD_ENV_MARKER };
