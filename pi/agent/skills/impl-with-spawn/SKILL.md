@@ -18,8 +18,10 @@ Providers / agents vary by machine (pi, cursor, opencode-go, etc. differ from ma
    - simple/mechanical tasks → cheapest flash-class model (e.g. minimax, deepseek-v4-flash) → `pi`
    - complex/long-context tasks → pro-class model (e.g. deepseek-v4-pro, MiniMax-M3) → `pi`
    - Cursor-exclusive Composer models → `cursor` (`agent`); fall back to `pi` if unavailable
+4. **Model runs on local ollama** → it shares this machine's GPU/CPU with the main agent. **Cap concurrent dispatches at 2** (see below).
 
 **Rule**: trust the actual `pi --list-models` output; opencode-go / official deepseek mentioned elsewhere are only "maybe available" examples — **never assume they exist**. When unsure, default to `pi` (the spawn default agent).
+**Concurrency limit (local ollama):** when the selected model is served by local ollama, never keep more than **2 sub-agents running concurrently** — parallel work beyond that thrashes local GPU/CPU and memory, slowing every agent, including yourself. Dispatch at most 2 at a time, wait for completions, then dispatch the next batch.
 
 ## Mode
 
@@ -58,6 +60,7 @@ If the task is open-ended and the user may want to guide, fall back to foregroun
 | Multiple independent subtasks | **Parallel dispatch** — fire all at once |
 | Sequential subtasks (A→B→C) | Dispatch A → end turn → wake → dispatch B → end turn → … |
 | Mixed | Group into tiers, parallelize within each tier |
+| **Local ollama model** | Parallel, **max 2 concurrent** — queue the rest |
 
 ### 2. Dispatch
 
@@ -74,6 +77,8 @@ interactive_shell({
 
 **Parallel dispatch (multiple independent subtasks):**
 Fire all dispatches back-to-back in a single tool-call batch. Each `prompt` must be **self-contained** — include all context (file paths, expected behavior, constraints). Use distinct `reason` values to match results back to tasks.
+
+If the active model is local ollama, **fire at most 2 dispatches per batch** (hard cap of 2 concurrent sub-agents); wait for their completions before dispatching the next batch.
 
 ```typescript
 // Batch: fire all independent subtasks at once
