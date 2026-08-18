@@ -13,7 +13,7 @@
 - `pi/agent/extensions/goal-runtime/`
 - `pi/agent/extensions/readonly-mode/`
 - `pi/agent/extensions/agent-timer/`
-- `pi/agent/extensions/xfer.ts`
+- `pi/agent/extensions/xfer/`
 
 ## 保持本地，不入库
 
