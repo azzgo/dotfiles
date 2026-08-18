@@ -1,8 +1,10 @@
 /*
  * pick-chrome-element.js — 元素拾取悬浮按钮注入器
  *
- * 使用方式：由 prompt 通过 chrome-devtools MCP 的 evaluate_script 注入。
+ * 使用方式：由 chrome-picker skill 通过 chrome-devtools CLI 的 evaluate_script 注入：
+ *   chrome-devtools evaluate_script "$(cat picker.js)"
  * 整个文件就是一个函数表达式，原样作为 function 参数传入，执行后返回 true。
+ * 注意：末尾不能带分号——服务端以 (fnString) 括号包裹求值，尾分号会造成语法错误。
  *
  * 交互：
  *   - 悬浮按钮（fab）可拖动，点击进入拾取模式；或按热键 ⇧⌥P 直接进入（零点击，不 dismiss 浮层）
