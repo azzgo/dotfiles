@@ -1,6 +1,7 @@
 ---
 name: chrome-picker
 description: CLI-driven Chrome debugging — manages a dedicated headed Chrome via the experimental chrome-devtools CLI daemon (Unix socket, persistent profile, separate from the MCP browser). Three cases — open the browser, inject the element-picker floating button into the user's active tab, read picked elements and run a command on them. Script payloads travel through shell "$(cat …)", never through model-generated tool args. Use when the user wants to pick/inspect page elements or wants a debug Chrome managed outside the chrome-devtools MCP.
+disable-model-invocation: true
 ---
 
 # Chrome Picker — chrome-devtools CLI session
