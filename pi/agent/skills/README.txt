@@ -97,3 +97,13 @@ Skills are loaded from multiple locations in order:
 | **Installed** | 2026-08-18 |
 | **Adjustments** | `picker.js` moved in unchanged (header updated: CLI injection + no-trailing-semicolon note — server evaluates `(${fnString})`). Requires global `npm i -g chrome-devtools-mcp@latest`. Thin `/pick` prompt shortcut (prompts/pick.md) routes into the skill's three cases (open / inject / read & consume); old `/pick-chrome-element` prompt retired. `/open-chrome-pause` prompt kept untouched for the MCP path |
 | **Upstream** | CLI mechanism: https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/cli.md (picker.js itself repo-owned) |
+
+### `chrome-devtools-cli`
+
+| Field | Value |
+|-------|-------|
+| **Source** | Forked from [ChromeDevTools/chrome-devtools-mcp](https://github.com/ChromeDevTools/chrome-devtools-mcp/tree/main/skills/chrome-devtools-cli) `skills/chrome-devtools-cli/` |
+| **Description** | Chrome DevTools CLI skill: project-scoped profiles (each `PWD` gets its own isolated Chrome instance via sha256 hash), headed mode by default, no auto-invocation. Replaces the chrome-devtools MCP for browser automation via CLI |
+| **Installed** | 2026-08-19 |
+| **Adjustments** | `disable-model-invocation: true` (prompt-routed only); default `--headless=false`; project-scoped profile via `~/.cache/chrome-devtools-mcp/profiles/<pwd-hash>` with `.mapping.json` for human readability; multi-profile suffix support for clean/separate contexts; removed PWA, Memory Debugging, experimental features sections; `open-chrome-pause.md` prompt adapted to route through this skill |
+| **Upstream** | https://github.com/ChromeDevTools/chrome-devtools-mcp/tree/main/skills/chrome-devtools-cli |
