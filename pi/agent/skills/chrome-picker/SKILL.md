@@ -120,9 +120,64 @@ Tell the user in their language:
 - 程序化 API：`window.__PI_PICK_API__` = `{ start, stop, toggle, freeze, pickAt(x, y), pick(sel), snapshot, refresh }` — when the user points at an element/position, prefer `pickAt` / `pick` over waiting for manual interaction
 - `source` 字段（React `_debugSource` / Vue `__file`）仅 dev 构建存在，生产构建为 null — 不要编造
 
+## CLI Command Quick Reference
+
+All commands below are from the `chrome-devtools` CLI. **Do not run `--help`** — use this reference.
+
+```bash
+# --- Lifecycle ---
+chrome-devtools start --headless=false --userDataDir <path>   # start daemon (see Daemon rules)
+chrome-devtools stop                                            # kill daemon + browser
+chrome-devtools status                                         # check if running (read text, not exit code)
+
+# --- Pages ---
+chrome-devtools list_pages                                     # list tabs; [selected] = daemon context
+chrome-devtools new_page "https://…"                           # new tab + auto-select
+chrome-devtools select_page <pageId> --bringToFront            # switch tab + bring to front
+chrome-devtools close_page <pageId>                            # close a tab
+chrome-devtools navigate_page --type url --url "https://…"     # navigate selected tab
+chrome-devtools navigate_page --type reload [--ignoreCache]    # reload
+
+# --- Evaluate ---
+chrome-devtools evaluate_script "() => …"                      # run JS on selected tab
+chrome-devtools evaluate_script "() => …" --args <uid>         # pass snapshot uid as argument
+chrome-devtools evaluate_script "() => …" --output-format=json # JSON output
+
+# --- Snapshot & Inspect ---
+chrome-devtools take_snapshot                                   # a11y-tree text snapshot (returns <uid>)
+chrome-devtools take_snapshot --verbose true                    # more detail
+chrome-devtools take_screenshot                                 # viewport screenshot
+chrome-devtools take_screenshot --fullPage true                 # full-page screenshot
+chrome-devtools take_screenshot --uid "<uid>" --filePath s.png # element screenshot
+
+# --- Input ---
+chrome-devtools click "<uid>"                                  # click element
+chrome-devtools fill "<uid>" "text"                            # fill input
+chrome-devtools hover "<uid>"                                  # hover element
+chrome-devtools press_key "Enter"                              # press key ("Control+A", "Escape")
+chrome-devtools type_text "hello"                              # type into focused input
+chrome-devtools drag "<src>" "<dst>"                           # drag element
+chrome-devtools handle_dialog accept|dismiss                   # handle browser dialog
+
+# --- Console & Network ---
+chrome-devtools list_console_messages [--types error] [--pageSize 20]
+chrome-devtools get_console_message <id>
+chrome-devtools list_network_requests [--resourceTypes Fetch]
+chrome-devtools get_network_request --reqid <id>
+
+# --- Emulation ---
+chrome-devtools emulate --colorScheme dark --viewport "1920x1080"
+chrome-devtools emulate --userAgent "Mozilla/5.0…"
+chrome-devtools emulate --networkConditions "Offline"
+chrome-devtools resize_page <width> <height>
+```
+
+Add `--includeSnapshot true` to any input command to auto-return a fresh snapshot.
+Add `--output-format=json` to any command for machine-readable output.
+
 ## Notes
 
-- CLI daemon browser and MCP browser are **separate instances** (different profiles); logins don't carry over.
+- CLI daemon browser and chrome-devtools-cli skill browser are **separate instances** (different profiles); logins don't carry over.
 - picker.js storage contract: `sessionStorage['pi.picks']` (batch), `sessionStorage['pi.fabPos']` (fab position), `window.__PI_PICKER__` (injection flag).
 - Thin prompt shortcut: `/pick` (see `prompts/pick.md`) — routing only, methodology lives here.
-- This skill replaces the old `pick-chrome-element` prompt; `/open-chrome-pause` (MCP path) remains for MCP-managed browsers.
+- `/open-chrome-pause` now routes to the `chrome-devtools-cli` skill (CLI path, project-scoped profile); this skill's `cli-profile` remains separate.
