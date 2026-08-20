@@ -1,6 +1,6 @@
 ---
 name: explore-codebase
-description: Read-only codebase exploration to understand architecture and implementation. Orchestrates multiple parallel read-only sub-agents (MiniMax-M2.7 / deepseek-v4-flash preferred), then synthesizes findings. Use when the user wants to understand or explore a codebase.
+description: Read-only codebase exploration to understand architecture and implementation. Orchestrates multiple parallel read-only sub-agents (model chosen via the shared spawn-model-selection skill), then synthesizes findings. Use when the user wants to understand or explore a codebase.
 disable-model-invocation: true
 ---
 
@@ -47,15 +47,9 @@ For each subtask, define:
 
 Use `interactive_shell` to dispatch read-only exploration sub-agents.
 
-#### Model selection (priority high → low)
+#### Model selection
 
-| Priority | Model | agent | Use case |
-|----------|-------|-------|----------|
-| 1 | `minimax-cn/MiniMax-M2.7` | **pi** | Preferred: cheap and fast |
-| 2 | `deepseek/deepseek-v4-flash` | **pi** | Fallback: equally cost-effective |
-| 3 | `deepseek/deepseek-v4-pro` | **pi** | Complex analysis safety net |
-
-Before each dispatch, confirm model availability via `pi --list-models`; prefer the highest-priority available model.
+Use the shared skill **`spawn-model-selection`** — the single source of truth for sub-agent model priority. For read-only exploration, use the **simple / mechanical** tier (cheapest-first): prefer `minimax-m2.7`, then `opencode/hy3`, `opencode/mimo-v2.5`, `deepseek-v4-flash`. Confirm availability via `pi --list-models` before each dispatch.
 
 #### Dispatch method
 
