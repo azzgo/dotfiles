@@ -33,7 +33,7 @@ Skills are loaded from multiple locations in order:
 | **Source** | Converted from `pi/agent/prompts/explore-codebase.md` (repo-owned prompt) |
 | **Description** | Read-only codebase exploration: orchestrate parallel read-only sub-agents (MiniMax-M2.7 / deepseek-v4-flash first), summarize findings |
 | **Installed** | 2026-08-12 |
-| **Adjustments** | Converted prompt → skill per Agent Skills standard; added `disable-model-invocation: true` (no model auto-invocation; explicit `/skill:explore-codebase` trigger only); replaced `$@` prompt substitution with appended `User arguments:` (skill args are appended raw, not substituted). `wayfinder` skill references updated to `/skill:explore-codebase` |
+| **Adjustments** | Converted prompt → skill per Agent Skills standard; added `disable-model-invocation: true` (no model auto-invocation; explicit `/skill:explore-codebase` trigger only); replaced `$@` prompt substitution with appended `User arguments:` (skill args are appended raw, not substituted). `wayfinder` skill references updated to `/skill:explore-codebase`. 2026-08-20: root-cause fix after a live exploration session blocked on `sleep 90` — dispatch template was missing `handsFree: { autoExitOnQuiet: false }` (sub-agents quiet-killed at 16s mid-flight) and the skill had no "end turn after dispatch" instruction (2026-08-09 fix only covered impl-with-spawn). Template now requires `autoExitOnQuiet: false`; added Wait discipline section (end turn immediately, triggerTurn wake-up, never sleep/poll); removed the status-check-and-retry bullet that invited polling | 
 | **Upstream** | None (repo-owned; no external upstream to track) |
 
 ### `grill-with-docs`
