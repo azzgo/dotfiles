@@ -128,6 +128,22 @@ install-pi:
     rm -rf ~/.pi/agent/skills
     ln -s {{ dotfiles_dir }}/pi/agent/skills ~/.pi/agent/skills
 
+    # Link each skill folder (by folder) into ~/.agents/skills, one by one,
+    # skipping any that already exist so we never clobber skills installed there.
+    mkdir -p ~/.agents/skills
+    for skill_dir in ~/.pi/agent/skills/*/; do
+        [ -d "$skill_dir" ] || continue
+        skill_name="$(basename "$skill_dir")"
+        target=~/.agents/skills/"$skill_name"
+        if [ -e "$target" ] || [ -L "$target" ]; then
+            echo "  ⏭️  ~/.agents/skills/$skill_name already exists, skipping (preserve existing)"
+        else
+            ln -s "$skill_dir" "$target"
+            echo "  🔗 Linked skill: $skill_name -> ~/.agents/skills/$skill_name"
+        fi
+    done
+
+
     echo "⚠️  Keep local only: ~/.pi/agent/models.json ~/.pi/agent/auth.json ~/.pi/agent/settings.json"
     echo "✅ Pi shared configuration linked"
 
