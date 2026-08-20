@@ -60,9 +60,12 @@ interactive_shell({
   spawn: { agent: "pi", prompt: "subtask exploration prompt" },
   mode: "dispatch",
   background: true,
+  handsFree: { autoExitOnQuiet: false },  // REQUIRED — see note below
   reason: "brief note"
 })
 ```
+
+**Every dispatch must pass `handsFree: { autoExitOnQuiet: false }`.** Dispatch defaults to `autoExitOnQuiet: true`, and a sub-agent that works silently for >8s (normal for exploration — long grep/read runs produce no terminal output) gets quiet-killed mid-flight: the completion notification reports `cancelled`, and the session is already gone by the time you look. With `pi -p` (print mode, set repo-wide via `defaultArgs`) the sub-agent exits naturally when done, so disabling auto-exit only prevents accidental kills and does not delay the completion notification.
 
 #### Sub-agent prompt template
 
@@ -102,7 +105,13 @@ Output the results directly when done; do not create files.
 
 #### Parallel dispatch
 
-Dispatch all sub-agents at once (dispatch is non-blocking), then wait for all to finish before synthesizing.
+Fire all sub-agents in one batch (dispatch is non-blocking), then **immediately end the current turn** — stop issuing tool calls, write a one-line status note to the user, and stop. Dispatch is notification-driven: when each sub-agent finishes, the extension wakes you via `triggerTurn` with its output already in context. Collect results as notifications arrive; once all subtasks have reported, synthesize.
+
+Wait discipline (same as **`impl-with-spawn`** § Wait for Results):
+- **Never block the turn with `sleep N && echo`, `sleep N; check status`, or any polling loop.** Sleep only buries the completion notifications that are already arriving; status queries are rate-limited (60s) anyway.
+- Do not query session status "just to check" — the notification is the status.
+- Re-dispatch on failure also starts from a wake-up (next turn), never from inside the same turn.
+- If you truly need in-turn progress visibility, redesign the subtasks instead of polling.
 
 ### Phase 4: Synthesize and present
 
@@ -135,8 +144,9 @@ Every dispatched sub-agent prompt must explicitly include the read-only constrai
 
 ## Parallel efficiency
 
-- Fire all subtasks at once (dispatch is non-blocking); don't wait serially
-- If a sub-agent times out with no response, check its status and retry if needed
+- Fire all subtasks at once (dispatch is non-blocking), then end the turn and let notifications drive the rest
+- Do not sleep, wait, or poll after dispatch — completion notifications arrive on their own
+- If a completion notification reports the sub-agent was killed / exited early / produced no substantive output, re-dispatch that subtask with a sharper prompt (in the next turn, from the notification)
 - In the final synthesis, keep only sub-results with substantive content
 
 ---
