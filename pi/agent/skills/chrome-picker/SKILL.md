@@ -110,14 +110,15 @@ Append `--output-format=json` to any command for machine-readable output.
 ### After-injection message
 
 Tell the user in their language:
-"已注入准星悬浮按钮（右下角，可拖动），点击即进入拾取模式；或直接按 `⇧⌥P` 进入（零点击，已打开的下拉/浮层不会被关闭）。拾取默认**冻结**页面交互：hover 高亮、`[`/`]` 切层、Enter 选中、可写备注、`F` 冻结⇄实时、Esc 退出。"
+"已注入准星悬浮按钮（右下角，可拖动），点击即进入拾取模式；或直接按 `⇧⌥P` 进入（零点击，已打开的下拉/浮层不会被关闭）。拾取默认**冻结**页面交互：hover 高亮、`[`/`]` 切层、Enter 选中、可写备注、`F` 冻结⇄实时、Esc 退出。按 `⇧⌥L` 或点击角标可打开备注面板，查看/修改/删除已选条目。"
 
 ### Picker interaction (reference)
 
 - fab 可拖动，点击进入拾取；热键 `⇧⌥P` 进入/退出（零点击，浮层不 dismiss）
 - 默认**冻结**（页面收不到 hover/点击，浮层不会关闭）；`F` 切实时（hover 展开子菜单等）
-- `[` `]` 切层、`1`-`9` 跳层、Enter 选中 → 备注卡（可留空直接回车）、Esc 取消/退出
-- 程序化 API：`window.__PI_PICK_API__` = `{ start, stop, toggle, freeze, pickAt(x, y), pick(sel), snapshot, refresh }` — when the user points at an element/position, prefer `pickAt` / `pick` over waiting for manual interaction
+- `[` `]` 切层、`1`-`9` 跳层、Enter 选中 → 备注卡（可留空直接回车；拼音等输入法组词中 Enter/Esc 不上屏提交）、Esc 取消/退出
+- 备注面板：`⇧⌥L` 或点击 fab 角标打开，查看/修改（失焦自动保存）/删除已选条目，Esc 关闭
+- 程序化 API：`window.__PI_PICK_API__` = `{ start, stop, toggle, freeze, pickAt(x, y), pick(sel), snapshot, refresh, panel }` — when the user points at an element/position, prefer `pickAt` / `pick` over waiting for manual interaction
 - `source` 字段（React `_debugSource` / Vue `__file`）仅 dev 构建存在，生产构建为 null — 不要编造
 
 ## CLI Command Quick Reference

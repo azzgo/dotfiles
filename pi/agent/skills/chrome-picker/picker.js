@@ -10,10 +10,11 @@
  *   - 悬浮按钮（fab）可拖动，点击进入拾取模式；或按热键 ⇧⌥P 直接进入（零点击，不 dismiss 浮层）
  *   - 拾取模式默认「冻结」：window capture 拦截鼠标事件，页面收不到点击/hover，浮层不会关闭
  *   - hover 高亮 · [ ] 切层 · 1-9 跳层 · Enter / 点击 选中 · F 冻结⇄实时 · Esc 退出
- *   - 选中后弹备注框（可留空直接回车）· Esc 取消选中 / 退出拾取
+ *   - 选中后弹备注框（可留空直接回车）· Esc 取消选中 / 退出拾取（输入法组词中 Enter/Esc 不触发）
+ *   - 备注面板：⇧⌥L 或点击 fab 角标打开，可查看/修改/删除已选条目
  *   - 选中结果写入 sessionStorage['pi.picks']（同 selector 去重，替换更新）
  *   - React fiber / Vue 组件源码位置提取（仅 dev 构建有 _debugSource / __file）
- *   - 程序化 API：window.__PI_PICK_API__ = { start, stop, toggle, freeze, pickAt, pick, snapshot, refresh }
+ *   - 程序化 API：window.__PI_PICK_API__ = { start, stop, toggle, freeze, pickAt, pick, snapshot, refresh, panel }
  *
  * 存储契约：
  *   - sessionStorage['pi.picks'] : 批次数组 [{selector, xpath, tagName, textPreview,
@@ -252,6 +253,48 @@
       }
       #card .ok { background: #111827; color: #fff; }
       #card .no { background: #f3f4f6; color: #6b7280; }
+      #panel {
+        position: fixed; top: 60px; right: 16px; width: 340px; max-height: 70vh;
+        background: #fff; border-radius: 10px; box-shadow: 0 12px 40px rgba(0,0,0,.3);
+        font: 13px/1.4 -apple-system, system-ui, sans-serif; color: #111827;
+        display: none; z-index: 2147483647; pointer-events: auto;
+        flex-direction: column; overflow: hidden;
+      }
+      #panel .ph {
+        display: flex; align-items: center; gap: 8px;
+        padding: 10px 12px; border-bottom: 1px solid #e5e7eb; user-select: none;
+      }
+      #panel .ph b { flex: 1; font-size: 13px; }
+      #panel .ph .cnt2 { color: #9ca3af; font-size: 11px; }
+      #panel .ph button {
+        border: none; background: #f3f4f6; border-radius: 5px;
+        padding: 3px 8px; cursor: pointer; color: #6b7280; font: inherit;
+      }
+      #panel .ph button:hover { background: #e5e7eb; }
+      #plist { overflow-y: auto; padding: 8px; }
+      #plist .empty { color: #9ca3af; text-align: center; padding: 24px 0; }
+      #plist .item { border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px; margin-bottom: 8px; }
+      #plist .item .psel {
+        font: 11px/1.4 ui-monospace, Menlo, monospace; color: #374151;
+        background: #f3f4f6; padding: 4px 6px; border-radius: 4px;
+        word-break: break-all; max-height: 44px; overflow: auto;
+      }
+      #plist .item .pprev {
+        color: #9ca3af; font-size: 11px; margin: 4px 0;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      }
+      #plist .item textarea {
+        width: 100%; min-height: 36px; border: 1px solid #d1d5db; border-radius: 5px;
+        padding: 5px 6px; font: inherit; font-size: 12px; resize: vertical; outline: none;
+      }
+      #plist .item textarea:focus { border-color: #4f8cff; }
+      #plist .item .prow { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
+      #plist .item .pts { color: #9ca3af; font-size: 10px; }
+      #plist .item .del {
+        border: none; background: none; color: #ef4444; font-size: 11px;
+        cursor: pointer; padding: 2px 6px; border-radius: 4px;
+      }
+      #plist .item .del:hover { background: #fef2f2; }
       #toast {
         position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
         background: #111827; color: #fff; font: 13px -apple-system, system-ui, sans-serif;
@@ -279,6 +322,10 @@
         <button class="ok" id="ok">✓ 确认 Enter</button>
       </div>
     </div>
+    <div id="panel">
+      <div class="ph"><b>已选备注</b><span class="cnt2" id="pcount"></span><button id="pclose" title="关闭 Esc">✕</button></div>
+      <div id="plist"></div>
+    </div>
     <button id="fab" title="元素拾取 · 点击进入（或按 ⇧⌥P，不产生点击，浮层不会关闭）">
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round">
         <circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
@@ -291,7 +338,8 @@
   const $ = (id) => root.getElementById(id);
   const elHL = $('hl'), elBadge = $('badge'), elInfo = $('info'), elBar = $('bar'),
         elFab = $('fab'), elCnt = $('cnt'), elCard = $('card'), elSel = $('sel'),
-        elTxt = $('txt'), elOk = $('ok'), elCancel = $('cancel'), elToast = $('toast');
+        elTxt = $('txt'), elOk = $('ok'), elCancel = $('cancel'), elToast = $('toast'),
+        elPanel = $('panel'), elPlist = $('plist'), elPcount = $('pcount'), elPclose = $('pclose');
 
   // ---------- 状态 ----------
   let pickMode = false;
@@ -321,6 +369,7 @@
     const n = loadBatch().length;
     elCnt.textContent = n;
     elCnt.style.display = n > 0 ? 'block' : 'none';
+    if (panelOpen) renderPanel();
   }
 
   function stackAt(clientX, clientY) {
@@ -369,7 +418,7 @@
     elBar.style.display = on ? 'flex' : 'none';
     elFab.style.display = on ? 'none' : 'block';
     document.body.style.cursor = on ? 'crosshair' : '';
-    if (on) { frozen = true; }
+    if (on) { frozen = true; closePanel(); }
     else {
       pinned = null; frozen = false;
       elCard.style.display = 'none'; elHL.style.display = 'none'; elBadge.style.display = 'none'; elInfo.style.display = 'none';
@@ -412,7 +461,8 @@
     const wasMoved = drag.moved;
     drag = null;
     try { sessionStorage.setItem(KEY_POS, JSON.stringify(pos)); } catch (err) {}
-    if (!wasMoved) setActive(true);
+    const onCnt = (e.composedPath ? e.composedPath() : []).indexOf(elCnt) >= 0;
+    if (!wasMoved) { if (onCnt) togglePanel(); else setActive(true); }
   }
   window.addEventListener('pointerdown', fabPointerDown, true);
   window.addEventListener('pointermove', fabPointerMove, true);
@@ -523,6 +573,54 @@
     unpin();
   }
 
+  // ---------- 备注面板：查看 / 修改 / 删除已选条目 ----------
+  let panelOpen = false;
+  function renderPanel() {
+    const b = loadBatch();
+    elPcount.textContent = b.length ? b.length + ' 条' : '';
+    if (!b.length) { elPlist.innerHTML = '<div class="empty">还没有选中任何元素</div>'; return; }
+    elPlist.innerHTML = b.map((r, i) =>
+      '<div class="item" data-i="' + i + '">' +
+        '<div class="psel">' + escapeHtml(r.selector) + '</div>' +
+        (r.textPreview ? '<div class="pprev">' + escapeHtml(r.textPreview) + '</div>' : '') +
+        '<textarea placeholder="备注…（失焦自动保存）">' + escapeHtml(r.note || '') + '</textarea>' +
+        '<div class="prow"><span class="pts">' + new Date(r.ts).toLocaleTimeString() + '</span>' +
+        '<button class="del">删除</button></div>' +
+      '</div>'
+    ).join('');
+  }
+  function openPanel() { panelOpen = true; renderPanel(); elPanel.style.display = 'flex'; }
+  function closePanel() { panelOpen = false; elPanel.style.display = 'none'; }
+  function togglePanel() { if (panelOpen) closePanel(); else openPanel(); }
+  elPclose.addEventListener('click', closePanel);
+  // 备注编辑：change（失焦/回车后）自动保存
+  elPlist.addEventListener('change', (e) => {
+    const t = e.target;
+    if (!t || t.tagName !== 'TEXTAREA') return;
+    const item = t.closest('.item');
+    if (!item) return;
+    const b = loadBatch();
+    const i = +item.getAttribute('data-i');
+    if (!b[i]) return;
+    b[i].note = t.value.trim();
+    saveBatch(b);
+    toast('备注已保存');
+  });
+  elPlist.addEventListener('click', (e) => {
+    const del = e.target && e.target.closest ? e.target.closest('.del') : null;
+    if (!del) return;
+    const item = del.closest('.item');
+    const b = loadBatch();
+    const i = +item.getAttribute('data-i');
+    if (!b[i]) return;
+    const sel = b[i].selector;
+    b.splice(i, 1);
+    saveBatch(b);
+    refreshCount();
+    renderPanel();
+    toast('已删除 ' + sel);
+  });
+
   elOk.addEventListener('click', submit);
   elCancel.addEventListener('click', unpin);
 
@@ -536,6 +634,12 @@
   // ---------- 全局热键：⇧⌥P 进入/退出拾取（零点击，不 dismiss 浮层）；拾取中按 F 冻结⇄实时 ----------
   window.addEventListener('keydown', (e) => {
     const isHot = e.code === HOTKEY.code && e.altKey === HOTKEY.alt && e.shiftKey === HOTKEY.shift && !e.ctrlKey && !e.metaKey;
+    const isList = e.code === 'KeyL' && e.altKey && e.shiftKey && !e.ctrlKey && !e.metaKey;
+    if (isList) {
+      e.preventDefault(); e.stopPropagation();
+      togglePanel();
+      return;
+    }
     if (isHot) {
       e.preventDefault(); e.stopPropagation();
       if (pickMode) { if (pinned) unpin(); else setActive(false); }
@@ -552,8 +656,13 @@
 
   // ---------- 全局键盘（拾取模式按键） ----------
   document.addEventListener('keydown', (e) => {
+    if (panelOpen && e.key === 'Escape' && !e.isComposing && e.keyCode !== 229) {
+      e.preventDefault(); closePanel(); return;
+    }
     if (!pickMode) return;
     if (pinned) {
+      // 输入法（拼音等）组词期间：Enter/Esc 用于上屏/取消候选，不触发提交或取消
+      if (e.isComposing || e.keyCode === 229) return;
       const firstTarget = (e.composedPath && e.composedPath()[0]) || e.target;
       if (e.key === 'Enter' && firstTarget === elTxt && !e.shiftKey) {
         e.preventDefault(); submit();
@@ -605,6 +714,10 @@
     pick: pickBySel,
     snapshot: loadBatch,
     refresh: refreshCount,
+    panel: (on) => {
+      if (typeof on === 'boolean') { on ? openPanel() : closePanel(); } else togglePanel();
+      return panelOpen;
+    },
   };
   window.__PI_PICKS_API__ = { refresh: refreshCount }; // 兼容旧契约
   console.log('%c[PICKER] ready', 'color:#4f8cff', '点击准星按钮或按 ⇧⌥P 进入拾取模式');
