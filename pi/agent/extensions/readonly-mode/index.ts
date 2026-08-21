@@ -31,16 +31,19 @@ export default function readonlyMode(pi: ExtensionAPI): void {
   pi.registerCommand(READONLY_CMD, {
     description: 'Toggle read-only mode',
     handler: async (args, ctx) => {
-      if (readonlyCtrl.isEnabled()) {
-        readonlyCtrl.exit(ctx);
-        return;
+      readonlyCtrl.toggle(ctx);
+      if (args?.trim()) {
+        pi.sendUserMessage(args.trim());
       }
+    },
+  });
 
-      readonlyCtrl.enter(ctx);
-      const prompt = args?.trim();
-      if (prompt) {
-        pi.sendUserMessage(prompt);
-      }
+  // ── Keyboard shortcut (also toggle) ───────────────────────────
+  // Fires when the editor is focused. To change the key, edit this line.
+  pi.registerShortcut('ctrl+shift+r', {
+    description: 'Toggle read-only mode',
+    handler: async (ctx) => {
+      readonlyCtrl.toggle(ctx);
     },
   });
 
