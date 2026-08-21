@@ -491,7 +491,7 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 						`Brief written to .pi/track/verify-brief-${goal.id}.md (contains the VERIFY_TOKEN).`,
 						"",
 						"Dispatch the independent read-only verifier now, then STOP (do not self-verify):",
-					`dispatch({ agent: "pi", prompt: "You are the independent verifier for goal ${goal.id} (child marker: PI_GOAL_RUNTIME_CHILD=1). Read .pi/track/verify-brief-${goal.id}.md and follow it exactly. Then call verify_goal_result with your verdict and the VERIFY_TOKEN from the brief.", background: true, reason: "goal-review-${goal.id}" })`,
+					`dispatch({ agent: "pi", prompt: "You are the independent verifier for goal ${goal.id}. Read .pi/track/verify-brief-${goal.id}.md and follow it exactly. Then call verify_goal_result with your verdict and the VERIFY_TOKEN from the brief.", env: { PI_GOAL_RUNTIME_CHILD: "1" }, background: true, reason: "goal-review-${goal.id}" })`,
 						].join("\n"),
 					},
 				],
