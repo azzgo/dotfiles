@@ -10,7 +10,8 @@
 - 其它工具：tmux、starship、Pi 相关共享配置
 
 Pi 相关约定补充：
-- 当前优先使用 `pi-interactive-shell` 统一承载外部 agent 调用与可观察子 agent 能力。
+- 外部 agent 派发与子 agent 能力由本仓库维护的 `sub-dispatch` 扩展承载（`pi/agent/extensions/sub-dispatch/`，从 pi-interactive-shell 剪裁，仅保留 dispatch 模式）。
+- Code Mode（工具目录折叠为 `run_code` + TS SDK 注入）由 `code-mode` 扩展提供（`pi/agent/extensions/code-mode/`，设计见 `docs/adr/0001-code-mode-extension.md`）。
 - 在这个仓库的默认共享配置里，实际可依赖的外部 agent 以 `pi` 和 Cursor 的 `agent` 命令为主。
 
 仓库以“可单独安装、可组合安装”为目标，安装入口主要由 `justfile` 提供。
@@ -67,7 +68,7 @@ Skills 定义文件位于多个搜索路径，按优先级加载：
 | 优先级 | 路径 | 说明 |
 |--------|------|------|
 | 1 | `~/.pi/agent/skills/` | 手动安装/精炼的 skill（本仓库相关 skill 安装在此） |
-| 2 | `~/.pi/agent/npm/node_modules/*/skills/` | npm 包自带 skill（如 pi-interactive-shell、librarian），不要直接修改 |
+| 2 | `~/.pi/agent/npm/node_modules/*/skills/` | npm 包自带 skill（如 pi-web-access 的 librarian），不要直接修改 |
 | 3 | `~/.agents/skills/` | 其他 agent skill（browser-bridge、pixso、skill-creator） |
 
 本仓库维护的 skills（`grill-with-docs`、`prototype` 等）统一安装在 `~/.pi/agent/skills/` 下。
