@@ -19,7 +19,7 @@ just install-pi    # links ~/.pi/agent/extensions/sub-dispatch -> pi/agent/exten
 ```
 
 Requires Node >= 23.6 (native TS type-stripping, same as `code-mode`).
-`pi-interactive-shell` is **not** uninstalled; swap when ready.
+pi-interactive-shell has been **removed** (replaced by this extension).
 
 ## Usage
 
@@ -75,7 +75,7 @@ self-contained, mirrors `code-mode`). Fields:
 {
   "defaultAgent": "pi",
   "commands": { "pi": "pi", "codex": "codex", "claude": "claude", "cursor": "agent" },
-  "defaultArgs": { "pi": [], "codex": [], "claude": ["-p"], "cursor": ["--model", "composer-2-fast"] },
+  "defaultArgs": { "pi": ["-p"], "codex": [], "claude": ["-p"], "cursor": ["--model", "composer-2-fast"] },
   "maxOutputChars": 20000,
   "defaultTimeoutSec": 600
 }
@@ -106,7 +106,7 @@ self-contained, mirrors `code-mode`). Fields:
 ## Known limitations
 
 - No interactive input, overlay, hands-free updates, or monitor triggers — by
-  design (use pi-interactive-shell if you need them).
+  design (reinstall npm:pi-interactive-shell if you ever need them).
 - Foreground runs are one-shot; there is no way to type into a running
   foreground sub-agent.
 - Background sessions die on `/reload` (module state reset).

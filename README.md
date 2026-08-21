@@ -134,8 +134,8 @@ Terminal multiplexer configuration with:
 
 #### Pi
 Shared Pi setup with:
-- Version-controlled `settings.json`, `keybindings.json`, `interactive-shell.json`, `mcp.json`, `prompts/`, `skills/`, `extensions/`
-- `pi/agent/APPEND_SYSTEM.md` — appended to pi's system prompt globally, instructing the agent to use `interactive_shell` for blocking commands
+- Version-controlled `settings.json`, `keybindings.json`, `mcp.json`, `prompts/`, `skills/`, `extensions/`
+- `pi/agent/APPEND_SYSTEM.md` — appended to pi's system prompt globally (language rule + blocking-command guidance)
 - `pi/agent/prompts/` is linked to Pi's global prompt templates directory: `~/.pi/agent/prompts/`
 - `models.json` and `auth.json` remain local on each machine
 - Only cross-device-safe Pi config is linked by dotfiles
@@ -173,7 +173,7 @@ The installation scripts create symbolic links to configuration files in this re
 - **IDEAVim**: Links `.ideavimrc` to home directory
 - **Terminals**: Links config directories to `~/.config/`
 - **Shells**: Sources shell configs in respective rc files, links tmux and starship configs
-- **Pi**: Links shared Pi config into `~/.pi/agent/`, including `goal-runtime`, `code-mode`, `sub-dispatch`, `interactive-shell.json`, and global prompt templates under `~/.pi/agent/prompts/`, while `models.json` and `auth.json` stay local per machine
+- **Pi**: Links shared Pi config into `~/.pi/agent/`, including `goal-runtime`, `code-mode`, `sub-dispatch`, and global prompt templates under `~/.pi/agent/prompts/`, while `models.json` and `auth.json` stay local per machine
 
 ## Customization
 

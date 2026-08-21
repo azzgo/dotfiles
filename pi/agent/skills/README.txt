@@ -9,7 +9,7 @@ Skills are loaded from multiple locations in order:
 | Priority | Path | Scope | Description |
 |----------|------|-------|-------------|
 | 1 | `~/.pi/agent/skills/` | User-level | **This directory** — manually installed / refined skills |
-| 2 | `~/.pi/agent/npm/node_modules/*/skills/` | User-level, npm packages | Skills from npm packages (pi-interactive-shell, pi-web-access/librarian) |
+| 2 | `~/.pi/agent/npm/node_modules/*/skills/` | User-level, npm packages | Skills from npm packages (pi-web-access/librarian) |
 | 3 | `~/.agents/skills/` | User-level, manual install | Other agent skills (browser-bridge, pixso, skill-creator) |
 
 ---
@@ -51,7 +51,7 @@ Skills are loaded from multiple locations in order:
 | Field | Value |
 |-------|-------|
 | **Source** | Pi npm package |
-| **Description** | Delegate implementation tasks to sub-agents (pi/cursor) via interactive_shell |
+| **Description** | Delegate implementation tasks to sub-agents (pi/cursor) via dispatch (sub-dispatch ext) |
 | **Installed** | 2026-07-02 |
 | **Adjustments** | None (tracked via Pi npm updates). 2026-07-31: added `disable-model-invocation: true` (no model auto-invocation; explicit trigger only). 2026-08-09: revised per root-cause analysis (notification-driven dispatch, heuristic agent selection, `handsFree.autoExitOnQuiet: false` on all examples). Root cause found + fixed (2026-08-09): `pi <prompt>` never exits in the extension PTY (interactive TUI), so completion notification never fires with `autoExitOnQuiet:false` — fixed via `defaultArgs.pi: ["-p"]` in `pi/agent/interactive-shell.json` (pi spawns run print mode, exit on completion); skill now documents the "sub-agent must exit" premise. End-to-end verified (spawn form 3s exit + notification). |
 | **Upstream** | Pi npm package |

@@ -359,7 +359,7 @@ Never confuse:
 
 - keep fog and out-of-scope explicit
 - operate through taskmd CLI as agent backend
-- open Web UI when the human wants inspection/manual override (default: `interactive_shell` dispatch + background)
+- open Web UI when the human wants inspection/manual override (default: `bash` background launch)
 - recommend only locally available skills on handoff — as **suggestions for the user to run**, never as actions the Wayfinder agent executes
 - keep one Current Ticket focus
 

@@ -1,7 +1,7 @@
-# Blocking Commands — Use Interactive Shell
-Commands that may block (editor popup, prompt, interactive process) must use `interactive_shell` instead of `bash`.
-- `interactive_shell({ command: "...", mode: "hands-free" })` — user can watch/take over
-- `interactive_shell({ command: "...", mode: "dispatch" })` — fire-and-forget
+# Blocking Commands — Use Dispatch
+Commands that may block (editor popup, prompt, interactive process) should be handled with `bash` timeouts or non-interactive flags, or delegated to a sub-agent via the `dispatch` tool (sub-dispatch extension):
+- `dispatch({ agent: "pi", prompt: "..." })` — foreground: waits and returns the sub-agent's output
+- `dispatch({ agent: "pi", prompt: "...", background: true })` — returns a sessionId immediately; query later with `dispatch({ sessionId })`
 - Set `GIT_EDITOR=true` / `GIT_SEQUENCE_EDITOR=true` to suppress unwanted editor popups.
 
 # Language: Reply in the User's Language

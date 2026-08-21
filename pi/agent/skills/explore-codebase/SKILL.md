@@ -43,9 +43,9 @@ For each subtask, define:
 2. **Search strategy**: starting directories, glob/grep patterns
 3. **Output requirements**: expected result shape (file list, call chain, architecture description, etc.)
 
-### Phase 3: Dispatch sub-agents (spawn)
+### Phase 3: Dispatch sub-agents
 
-Use `interactive_shell` to dispatch read-only exploration sub-agents.
+Use the `dispatch` tool (from the **sub-dispatch** extension) to dispatch read-only exploration sub-agents.
 
 #### Model selection
 
@@ -53,19 +53,18 @@ Use the shared skill **`spawn-model-selection`** — the single source of truth 
 
 #### Dispatch method
 
-All dispatches use **background dispatch** for parallel execution:
+Fire all sub-agents in a **single parallel tool-call batch**, each with `background: true`:
 
 ```typescript
-interactive_shell({
-  spawn: { agent: "pi", prompt: "subtask exploration prompt" },
-  mode: "dispatch",
-  background: true,
-  handsFree: { autoExitOnQuiet: false },  // REQUIRED — see note below
-  reason: "brief note"
-})
+dispatch({ agent: "pi", prompt: "<subtask exploration prompt (template below)>", background: true, reason: "subtask-N: <focus>" })
 ```
 
-**Every dispatch must pass `handsFree: { autoExitOnQuiet: false }`.** Dispatch defaults to `autoExitOnQuiet: true`, and a sub-agent that works silently for >8s (normal for exploration — long grep/read runs produce no terminal output) gets quiet-killed mid-flight: the completion notification reports `cancelled`, and the session is already gone by the time you look. With `pi -p` (print mode, set repo-wide via `defaultArgs`) the sub-agent exits naturally when done, so disabling auto-exit only prevents accidental kills and does not delay the completion notification.
+Dispatch returns a `sessionId` immediately per call. After the batch, query each session in follow-up tool calls (`dispatch({ sessionId })`) — status + output come back in the query result. `pi` sub-agents run in print mode (`-p` set in the extension config) and exit naturally when done. Exploration typically takes 1-5 minutes per subtask; default timeout is 600s (override with `timeout` seconds per dispatch if needed).
+
+Query discipline:
+- Query each sessionId once after the batch; if still `running`, do other synthesis prep work (or query again after the others finish) — queries return the accumulated output either way.
+- No sleep loops; a query is cheap and idempotent, but don't spam it — batch your queries.
+- If a session finished with an error or empty output, re-dispatch that subtask with a sharper prompt.
 
 #### Sub-agent prompt template
 
@@ -103,19 +102,9 @@ Other dimensions (data flow, design patterns, extension points, external depende
 Output the results directly when done; do not create files.
 ```
 
-#### Parallel dispatch
-
-Fire all sub-agents in one batch (dispatch is non-blocking), then **immediately end the current turn** — stop issuing tool calls, write a one-line status note to the user, and stop. Dispatch is notification-driven: when each sub-agent finishes, the extension wakes you via `triggerTurn` with its output already in context. Collect results as notifications arrive; once all subtasks have reported, synthesize.
-
-Wait discipline (same as **`impl-with-spawn`** § Wait for Results):
-- **Never block the turn with `sleep N && echo`, `sleep N; check status`, or any polling loop.** Sleep only buries the completion notifications that are already arriving; status queries are rate-limited (60s) anyway.
-- Do not query session status "just to check" — the notification is the status.
-- Re-dispatch on failure also starts from a wake-up (next turn), never from inside the same turn.
-- If you truly need in-turn progress visibility, redesign the subtasks instead of polling.
-
 ### Phase 4: Synthesize and present
 
-After all sub-agents finish, synthesize the output. **Pick report dimensions flexibly based on actual findings and the user's prompt** — no need to cover everything every time:
+After all sub-agents finish (all queries report done), synthesize the output. **Pick report dimensions flexibly based on actual findings and the user's prompt** — no need to cover everything every time:
 
 1. **Overall summary**: 3-5 sentences on the codebase's core character
 2. **Findings by dimension**: one section per subtask, merged and de-duplicated
@@ -130,7 +119,7 @@ Use clear heading hierarchy for easy scanning.
 
 ---
 
-Goal: <the user's arguments from `/skill:explore-codebase`, see `User arguments:` below>
+Goal: <the user's arguments from `/skill:explore-codebase`, see User arguments: below>
 
 ---
 
@@ -144,9 +133,8 @@ Every dispatched sub-agent prompt must explicitly include the read-only constrai
 
 ## Parallel efficiency
 
-- Fire all subtasks at once (dispatch is non-blocking), then end the turn and let notifications drive the rest
-- Do not sleep, wait, or poll after dispatch — completion notifications arrive on their own
-- If a completion notification reports the sub-agent was killed / exited early / produced no substantive output, re-dispatch that subtask with a sharper prompt (in the next turn, from the notification)
+- Fire all subtasks at once in one batch (`background: true`), then query sessionIds to collect results
+- If a query reports the sub-agent errored / exited early / produced no substantive output, re-dispatch that subtask with a sharper prompt
 - In the final synthesis, keep only sub-results with substantive content
 
 ---

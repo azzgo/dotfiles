@@ -1,12 +1,12 @@
 ---
 name: impl-with-spawn
-description: Delegate goal tasks to pi or cursor sub-agents via interactive_shell. Defaults to headless background dispatch. Supports parallel multi-agent delegation when subtasks are independent. Use when the user wants to "implement this", "build X", "fix Y", "add feature Z", or run multi-step coding tasks by dispatching to sub-agents.
+description: Delegate goal tasks to pi or cursor sub-agents via dispatch (sub-dispatch extension). Defaults to parallel background dispatch. Supports multi-agent delegation when subtasks are independent. Use when the user wants to "implement this", "build X", "fix Y", "add feature Z", or run multi-step coding tasks by dispatching to sub-agents.
 disable-model-invocation: true
 ---
 
 # Impl with Spawn
 
-Decompose the user's goal into subtasks, then delegate to sub-agents via `interactive_shell`. Parallel dispatch when subtasks are independent; serial dispatch otherwise.
+Decompose the user's goal into subtasks, then delegate to sub-agents via the `dispatch` tool (from the **sub-dispatch** extension). Parallel background dispatch when subtasks are independent; foreground dispatch for a single blocking task.
 
 ## Agent Selection
 
@@ -17,25 +17,13 @@ Consult the shared skill **`spawn-model-selection`** for the model-choice priori
 - Local Ollama small models → commit messages / cleanup only; **cap at 2 concurrent dispatches**.
 - When unsure, default to `pi` (the spawn default agent).
 
-Full priority list — simple vs. complex/long-context tiers, multimodal choices, and excluded models (`deepseek-v4-pro`, `MiniMax-M3`): see the `spawn-model-selection` skill.
+## Dispatch semantics (sub-dispatch)
 
-## Mode
-
-Default: **background dispatch** — headless, no overlay, multiple can run concurrently (essential for parallel delegation).
-
-```typescript
-interactive_shell({
-  spawn: { agent: "pi", prompt: "concrete task description" },
-  mode: "dispatch",
-  background: true,
-  handsFree: { autoExitOnQuiet: false },  // don't let a quiet sub-agent get killed
-  reason: "brief note"
-})
-```
-
-If the task is open-ended and the user may want to guide, fall back to foreground `dispatch` (user sees overlay, can take over).
-
-**Every dispatch must pass `handsFree: { autoExitOnQuiet: false }`** — dispatch defaults to `autoExitOnQuiet: true`, and ~8s of silence (thinking, between outputs) can get the sub-agent killed. With `-p` configured the sub-agent exits naturally, so disabling it only prevents accidental kills and doesn't affect completion notifications; if an agent can't exit (no print mode), you must restore `autoExitOnQuiet: true`, otherwise the notification never fires.
+- `dispatch({ agent, prompt })` — **foreground**: waits for the sub-agent to finish, returns `{ exitCode, durationMs, output }`. Blocks this turn until done (default timeout 600s, override with `timeout` seconds).
+- `dispatch({ agent, prompt, background: true })` — returns a `sessionId` immediately. Query later with `dispatch({ sessionId })`, kill with `dispatch({ sessionId, kill: true })`.
+- Agents: `pi` / `codex` / `claude` / `cursor` + any key added to the extension's `config.json` `commands`.
+- `pi` runs in print mode (`defaultArgs` already sets `-p`), so sub-agents exit naturally when done — no quiet-kill risk, no exit-flag troubleshooting.
+- No overlay / no interactive takeover: sub-agents run headless as subprocesses. If a task needs interactive guidance, do it yourself instead of dispatching.
 
 ## Flow
 
@@ -52,68 +40,48 @@ If the task is open-ended and the user may want to guide, fall back to foregroun
 
 | Scenario | Strategy |
 |---|---|
-| Simple, single-focus task | Single dispatch |
-| Multiple independent subtasks | **Parallel dispatch** — fire all at once |
-| Sequential subtasks (A→B→C) | Dispatch A → end turn → wake → dispatch B → end turn → … |
+| Simple, single-focus task | Single foreground dispatch |
+| Multiple independent subtasks | **Parallel background dispatch** — fire all at once |
+| Sequential subtasks (A→B→C) | Foreground dispatch A → wait → dispatch B → … (or background + query) |
 | Mixed | Group into tiers, parallelize within each tier |
 | **Local ollama model** | Parallel, **max 2 concurrent** — queue the rest |
 
 ### 2. Dispatch
 
-**Single task:**
+**Single task (foreground, simplest):**
 ```typescript
-interactive_shell({
-  spawn: { agent: "pi", prompt: "concrete task description" },
-  mode: "dispatch",
-  background: true,
-  handsFree: { autoExitOnQuiet: false },
-  reason: "brief note"
-})
+dispatch({ agent: "pi", prompt: "concrete task description", reason: "brief note" })
 ```
+The turn blocks until it finishes; the result (exitCode + output) is the return value.
 
 **Parallel dispatch (multiple independent subtasks):**
-Fire all dispatches back-to-back in a single tool-call batch. Each `prompt` must be **self-contained** — include all context (file paths, expected behavior, constraints). Use distinct `reason` values to match results back to tasks.
+Fire all dispatches in a single tool-call batch with `background: true`, then query each session. Each `prompt` must be **self-contained** — include all context (file paths, expected behavior, constraints). Use distinct `reason` values to match results back to tasks.
 
 If the active model is local ollama, **fire at most 2 dispatches per batch** (hard cap of 2 concurrent sub-agents); wait for their completions before dispatching the next batch.
 
 ```typescript
-// Batch: fire all independent subtasks at once
-interactive_shell({
-  spawn: { agent: "pi", prompt: "Add dark mode to SettingsPage.tsx. Toggle in header, persist to localStorage." },
-  mode: "dispatch", background: true,
-  handsFree: { autoExitOnQuiet: false },
-  reason: "subtask-1: dark-mode"
-})
-interactive_shell({
-  spawn: { agent: "pi", prompt: "Fix login redirect bug in auth.ts — redirect to original URL, not /dashboard." },
-  mode: "dispatch", background: true,
-  handsFree: { autoExitOnQuiet: false },
-  reason: "subtask-2: login-redirect"
-})
+// Batch: fire all independent subtasks at once (parallel tool calls)
+dispatch({ agent: "pi", prompt: "Add dark mode to SettingsPage.tsx. Toggle in header, persist to localStorage.", background: true, reason: "subtask-1: dark-mode" })
+dispatch({ agent: "pi", prompt: "Fix login redirect bug in auth.ts — redirect to original URL, not /dashboard.", background: true, reason: "subtask-2: login-redirect" })
 ```
 
 **IMPORTANT:** Do NOT parallelize if a subtask produces output another subtask needs (e.g., "generate types first, then implement"). Run those sequentially.
 
-### 3. Wait for Results
+### 3. Collect Results
 
-**Dispatch is notification-driven and non-blocking — after dispatching, end the current turn immediately (stop issuing tool calls); no sleep, no polling.** The extension wakes you with `triggerTurn` when a sub-agent finishes; its output is already in context.
-
-**Prerequisite: the sub-agent must be able to exit naturally** or the completion notification won't fire (pi needs print mode: `pi -p` exits when done; TUI-form `pi <prompt>` never exits after finishing and hangs forever). This repo already sets `defaultArgs.pi: ["-p"]` in `pi/agent/interactive-shell.json`, so all pi spawns run in print mode automatically. On an unconfigured machine/agent: give that agent an equivalent exit flag; if impossible, restore `autoExitOnQuiet: true` (accept "done = quiet-kill", notification marked was killed) or manually `query` + `kill`.
-
-- **Parallel tier**: dispatch all → end turn → wake on each completion → synthesize.
-- **Serial tier** (A→B→C): dispatch A → **end turn** → wake (A done) → dispatch B → end turn → …
-- **Never wait with `sleep N && echo` + status queries**: staying busy only piles up triggerTurn notifications, sleep is wasted waiting, and polling self-reinforces.
-- If in-turn progress updates are truly needed: switch to `mode: "hands-free"` (periodic updates; note status queries are rate-limited to 60s by default).
+- **Foreground**: results are the tool return values — synthesize directly.
+- **Background**: after firing, query each sessionId in a follow-up tool call (`dispatch({ sessionId })`). Queries return current status + output tail. Sessions also print streaming output if you stay in-turn.
+- **Failure**: re-dispatch with more specific instructions, or fix it yourself.
 
 ### 4. Synthesize and Report
 
 1. Review each sub-agent's output
-2. Verify all subtasks completed
+2. Verify all subtasks completed (exitCode 0 + substantive output)
 3. If any failed, re-dispatch with more specific instructions or fix it yourself
 4. Summarize what was done to the user
 
 ## Examples
 
-- **Single task**: "Fix broken pagination on search results" → single dispatch
-- **Parallel**: "Implement user avatars, email notifications, and search filters" → 3 parallel dispatches
-- **Mixed**: "Set up project structure, then implement auth, then add protected routes" → Tier 1: structure (1 dispatch) → Tier 2: auth + routes (2 parallel dispatches)
+- **Single task**: "Fix broken pagination on search results" → single foreground dispatch
+- **Parallel**: "Implement user avatars, email notifications, and search filters" → 3 parallel background dispatches, then query all
+- **Mixed**: "Set up project structure, then implement auth, then add protected routes" → Tier 1: structure (1 foreground dispatch) → Tier 2: auth + routes (2 parallel background dispatches)

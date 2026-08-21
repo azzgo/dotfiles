@@ -491,7 +491,7 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 						`Brief written to .pi/track/verify-brief-${goal.id}.md (contains the VERIFY_TOKEN).`,
 						"",
 						"Dispatch the independent read-only verifier now, then STOP (do not self-verify):",
-						`interactive_shell({ command: "PI_GOAL_RUNTIME_CHILD=1 pi -p 'You are the independent verifier for goal ${goal.id}. Read .pi/track/verify-brief-${goal.id}.md and follow it exactly. Then call verify_goal_result with your verdict and the VERIFY_TOKEN from the brief.'", mode: "dispatch", background: true, reason: "goal-review-${goal.id}" })`,
+					`dispatch({ agent: "pi", prompt: "You are the independent verifier for goal ${goal.id} (child marker: PI_GOAL_RUNTIME_CHILD=1). Read .pi/track/verify-brief-${goal.id}.md and follow it exactly. Then call verify_goal_result with your verdict and the VERIFY_TOKEN from the brief.", background: true, reason: "goal-review-${goal.id}" })`,
 						].join("\n"),
 					},
 				],
@@ -513,7 +513,7 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 		async execute(_toolCallId, params: VerifyResultParams, _signal, _onUpdate, ctx) {
 			if (!isChild) {
 				return {
-					content: [{ type: "text", text: "verify_goal_result rejected: this tool is reserved for the dispatched verifier sub-agent (PI_GOAL_RUNTIME_CHILD=1). The orchestrator must NOT self-verify — when implementation is done call request_goal_review (-> in-review), then dispatch the verifier via interactive_shell as that tool instructs, then stop." }],
+					content: [{ type: "text", text: "verify_goal_result rejected: this tool is reserved for the dispatched verifier sub-agent (PI_GOAL_RUNTIME_CHILD=1). The orchestrator must NOT self-verify — when implementation is done call request_goal_review (-> in-review), then dispatch the verifier via the dispatch tool as that tool instructs, then stop." }],
 					isError: true,
 					details: {},
 				};

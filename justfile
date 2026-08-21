@@ -108,7 +108,6 @@ install-pi:
         echo "  ⏭️  settings.json already exists, skipping (preserve local copy)"
     fi
     ln -sf {{ dotfiles_dir }}/pi/agent/keybindings.json ~/.pi/agent/keybindings.json
-    ln -sf {{ dotfiles_dir }}/pi/agent/interactive-shell.json ~/.pi/agent/interactive-shell.json
     ln -sf {{ dotfiles_dir }}/pi/agent/APPEND_SYSTEM.md ~/.pi/agent/APPEND_SYSTEM.md
     ln -sf {{ dotfiles_dir }}/pi/mcp.json ~/.pi/agent/mcp.json
 
