@@ -19,7 +19,15 @@ The extension auto-discovers from `~/.pi/agent/extensions/readonly-mode/` (symli
 |---------|-----|-------|
 | Flag | `--readonly` | Start pi in read-only mode |
 | Command | `/readonly` | Toggle read-only mode on/off |
-| Shortcut | `Ctrl+Alt+R` | Toggle read-only mode |
+| Shortcut | `Ctrl+Shift+R` | Toggle (rebindable in `keybindings.json`) |
+
+**Customize the shortcut** in `~/.pi/agent/keybindings.json`:
+
+```json
+{
+  "readonly-mode.toggle": "ctrl+r"
+}
+```
 
 ### Examples
 
@@ -59,10 +67,11 @@ Run `/readonly` again to exit.
 
 ## How it Works
 
-Two layers of protection:
+Three layers of protection:
 
-1. **Tool whitelist** — `setActiveTools()` restricts the LLM to only read-only tools.
-2. **Defense-in-depth** — A `tool_call` handler blocks `edit`, `write`, and destructive bash commands even if the LLM somehow attempts them.
+1. **Tool call interceptor** — `tool_call` event handler blocks `edit`, `write`, and unsafe `bash` commands at runtime.
+2. **Bash safety checker** — `isSafeCommand()` blocks redirects (`>`, `>>`), pipes into destructive commands, and non-whitelisted commands.
+3. **System prompt injection** — `before_agent_start` injects instructions reminding the LLM it's in read-only mode every turn.
 
 State persists across session restarts and tree navigation.
 
