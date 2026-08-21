@@ -59,11 +59,11 @@ Fire all sub-agents in a **single parallel tool-call batch**, each with `backgro
 dispatch({ agent: "pi", prompt: "<subtask exploration prompt (template below)>", background: true, reason: "subtask-N: <focus>" })
 ```
 
-Dispatch returns a `sessionId` immediately per call. After the batch, query each session in follow-up tool calls (`dispatch({ sessionId })`) — status + output come back in the query result. `pi` sub-agents run in print mode (`-p` set in the extension config) and exit naturally when done. Exploration typically takes 1-5 minutes per subtask; default timeout is 600s (override with `timeout` seconds per dispatch if needed).
+Dispatch returns a `sessionId` immediately per call. After the batch, **end your turn** — each session **auto-notifies on completion** (sub-dispatch sends a triggerTurn wake with status + output tail). `pi` sub-agents run in print mode (`-p` set in the extension config) and exit naturally when done. Exploration typically takes 1-5 minutes per subtask; default timeout is 600s (override with `timeout` seconds per dispatch if needed).
 
-Query discipline:
-- Query each sessionId once after the batch; if still `running`, do other synthesis prep work (or query again after the others finish) — queries return the accumulated output either way.
-- No sleep loops; a query is cheap and idempotent, but don't spam it — batch your queries.
+Wait discipline (no polling):
+- Fire all, end your turn, and wait for the completion notifications to arrive — never `sleep N && dispatch({ sessionId })` poll.
+- Use `dispatch({ sessionId })` only as a diagnostic/recovery path: e.g. a notification is missing, a subtask errored / exited early / produced no output, or you need mid-run status. Queries return the accumulated output either way.
 - If a session finished with an error or empty output, re-dispatch that subtask with a sharper prompt.
 
 #### Sub-agent prompt template
@@ -157,7 +157,7 @@ return { ui, data, backend };
 
 ## Parallel efficiency
 
-- Fire all subtasks at once in one batch (`background: true`), then query sessionIds to collect results
+- Fire all subtasks at once in one batch (`background: true`), end your turn, and collect results from the auto-notifications (no sleep+query polling)
 - If a query reports the sub-agent errored / exited early / produced no substantive output, re-dispatch that subtask with a sharper prompt
 - In the final synthesis, keep only sub-results with substantive content
 

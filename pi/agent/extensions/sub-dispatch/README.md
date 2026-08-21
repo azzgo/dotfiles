@@ -40,8 +40,14 @@ pi-interactive-shell has been **removed** (replaced by this extension).
   (stdout+stderr merged, tail-truncated to `maxOutputChars`, default 20000).
   Footer status shows `dispatch <agent> — running…` while waiting; Esc (abort
   signal) kills the process group.
-- **Background**: returns immediately with `{ sessionId }`; query via
-  `dispatch({ sessionId })`, kill via `dispatch({ sessionId, kill: true })`.
+- **Background**: returns immediately with `{ sessionId }`; the host is
+  **auto-notified when the session settles** — a `sendMessage` with
+  `customType: "sub-dispatch"` and `{ triggerTurn: true, deliverAs: "followUp" }`
+  wakes the agent (if idle) or queues behind an in-flight turn, carrying status,
+  exit code, the output tail, and how to fetch full details. So the caller can
+  fire-and-end-turn with no polling. `dispatch({ sessionId })` remains for
+  mid-run status / diagnostics; `dispatch({ sessionId, kill: true })` kills the
+  group and sends a `killed` notification.
 - **Abort**: subprocess is spawned with `detached: true` (own process group);
   abort/timeout signal `SIGTERM` then `SIGKILL` the whole group.
 
