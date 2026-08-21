@@ -100,6 +100,10 @@ const SDK_HEADER = `/**
  *   emit(listing);
  *   return { entryCount: listing.split("\\n").length };
  *
+ * Multi-agent orchestration (sub-dispatch):
+ *   const impl = await tools.dispatch({ agent: "pi", prompt: "implement X" });
+ *   const review = await tools.dispatch({ agent: "codex", prompt: "review the diff" });
+ *   return { impl, review };
  * Rules:
  * - The program body is async; top-level \`await\` works.
  * - End with \`return <value>;\`, or let a final simple expression be returned.
@@ -112,9 +116,17 @@ const SDK_HEADER = `/**
  */`;
 
 /** Render the full SDK block for a set of tools. */
+/** Dedicated declaration for the `dispatch` sub-agent bridge (sub-dispatch). */
+const DISPATCH_DECL = `  /** dispatch — spawn a sub-agent as a subprocess and await its completion (foreground).
+   * Returns a JSON text string: { ok: boolean, exitCode: number|null, output: string }
+   * (output is tail-truncated by the sub-dispatch engine).
+   * Each dispatch has its own internal timeout (default 600s) and the run's
+   * wall-clock cap is paused while a dispatch is in flight.
+   * Example: const r = await tools.dispatch({ agent: "pi", prompt: "review the diff" }); */
+  dispatch(args: { agent: string; prompt: string; timeout?: number }): Promise<string>;`;
 export function generateSdk(tools: ToolSdkInfo[]): string {
 	const sorted = [...tools].sort((a, b) => a.name.localeCompare(b.name));
-	const decls = sorted.map((t) => toolDecl(t)).join("\n");
+	const decls = sorted.map((t) => (t.name === "dispatch" ? DISPATCH_DECL : toolDecl(t))).join("\n");
 	return [
 		SDK_HEADER,
 		"",

@@ -33,6 +33,29 @@ Requires Node >= 23.6 (native TS type-stripping for the worker).
   - Sub-calls: `await tools.bash({ command: "..." })` — runs the real tool
     host-side (real execute, shared `withFileMutationQueue`), returns text output.
 
+
+### Dispatch (sub-agent bridge)
+
+`tools.dispatch` is bridged to the sibling **sub-dispatch** extension's
+`runDispatch` (`../sub-dispatch/runner.ts`). It spawns a sub-agent (pi/codex/
+claude/cursor or a custom key) as a foreground subprocess and awaits its exit:
+
+```ts
+const impl = await tools.dispatch({ agent: "pi", prompt: "implement X" });
+const review = await tools.dispatch({ agent: "codex", prompt: "review the diff" });
+return { impl, review };
+```
+
+- Returns a JSON text string `{ ok, exitCode, output }` (`output` is already
+  tail-truncated by sub-dispatch). Parallel dispatch via `Promise.all([...])`
+  overlaps under `maxConcurrent` (TaskPool).
+- **Timeout exemption**: while any dispatch is in flight the run's wall-clock
+  cap (`timeoutMs`, default 60s) is paused — so minute-scale sub-agents aren't
+  killed by the run cap. Each dispatch still has its own internal timeout
+  (default 600s) enforced by `runDispatch`/`spawnCommand`. Non-dispatch code
+  (e.g. a pure infinite loop) still accrues toward `timeoutMs` and is killed.
+- Esc / outer signal abort propagates to the child process group via
+  `runAbort.signal` → `runDispatch`.
 ## Design
 
 - **Presentation ≠ permission**: folding only hides tools; sub-calls execute the
