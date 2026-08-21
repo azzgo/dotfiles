@@ -147,8 +147,9 @@ emit(ui); emit(data); emit(backend);
 return { ui, data, backend };
 ```
 
-- Each `tools.dispatch` returns a JSON text string `{ ok, exitCode, output }`;
-  sub-agents run concurrently (up to code-mode's `maxConcurrent`, default 10).
+- Each `tools.dispatch` resolves to a structured object `{ ok, exitCode, output }`
+  (read `r.output` directly — no JSON.parse); sub-agents run concurrently (up to
+  code-mode's `maxConcurrent`, default 10).
 - Each dispatch has its own internal timeout (default 600s; pass `timeout` to
   override); exploration sub-agents finish naturally and return their findings
   as output — no `dispatch({ sessionId })` queries needed in this shape.

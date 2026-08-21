@@ -46,9 +46,9 @@ const review = await tools.dispatch({ agent: "codex", prompt: "review the diff" 
 return { impl, review };
 ```
 
-- Returns a JSON text string `{ ok, exitCode, output }` (`output` is already
-  tail-truncated by sub-dispatch). Parallel dispatch via `Promise.all([...])`
-  overlaps under `maxConcurrent` (TaskPool).
+- Resolves to a structured object `{ ok, exitCode, output }` (NOT a string —
+  read fields directly; `output` is already tail-truncated by sub-dispatch).
+  Parallel dispatch via `Promise.all([...])` overlaps under `maxConcurrent` (TaskPool).
 - **Timeout exemption**: while any dispatch is in flight the run's wall-clock
   cap (`timeoutMs`, default 60s) is paused — so minute-scale sub-agents aren't
   killed by the run cap. Each dispatch still has its own internal timeout

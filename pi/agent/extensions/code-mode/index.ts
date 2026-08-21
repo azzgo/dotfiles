@@ -198,7 +198,7 @@ export default function (pi: ExtensionAPI) {
 		sdkInfos.push({
 			name: "dispatch",
 			description:
-				"Spawn a sub-agent (pi/codex/claude/cursor/custom) as a subprocess and await its completion (foreground). Returns JSON text { ok, exitCode, output } (output tail-truncated).",
+				"Spawn a sub-agent (pi/codex/claude/cursor/custom) as a subprocess and await its completion (foreground). Resolves to a structured object { ok, exitCode, output } (output tail-truncated).",
 			parameters: {
 				type: "object",
 				required: ["agent", "prompt"],
@@ -291,12 +291,14 @@ export default function (pi: ExtensionAPI) {
 			signal?.addEventListener("abort", onSignalAbort, { once: true });
 
 			const execSubCall = (name: string, args: unknown) =>
-				pool.run(async (): Promise<string> => {
+				pool.run(async (): Promise<unknown> => {
 					const subId = `${callId}.${++seq}`;
 					let result: any;
 					let error: unknown = null;
 					try {
 						if (name === "dispatch") {
+							// dispatch resolves to a structured object {ok, exitCode, output} so the
+							// model can read fields directly without JSON.parse.
 							result = await execDispatch(args);
 						} else {
 							const def = defs[name];
@@ -308,21 +310,26 @@ export default function (pi: ExtensionAPI) {
 					} catch (e) {
 						error = e;
 					}
-					const textContent = (result?.content ?? [])
-						.filter((c: any) => c.type === "text")
-						.map((c: any) => c.text ?? "")
-						.join("\n");
+					const isDispatch = name === "dispatch";
+					// dispatch: result is the structured value; built-ins: a tool-result
+					// { content, isError, details }. Normalize to a record string for audit.
+					const textContent = isDispatch
+						? safeStringify(result)
+						: (result?.content ?? [])
+							.filter((c: any) => c.type === "text")
+							.map((c: any) => c.text ?? "")
+							.join("\n");
 					calls.push({
 						id: subId,
 						name,
 						args,
 						content: truncateStr(textContent, cfg.maxRecordBytes),
-						isError: error ? true : !!result?.isError,
-						hasImage: (result?.content ?? []).some((c: any) => c.type === "image"),
-						details: result?.details ?? undefined,
+						isError: error ? true : isDispatch ? !result?.ok : !!result?.isError,
+						hasImage: !isDispatch && (result?.content ?? []).some((c: any) => c.type === "image"),
+						details: isDispatch ? (result ?? undefined) : (result?.details ?? undefined),
 					});
 					if (error) throw error;
-					return textContent;
+					return isDispatch ? result : textContent;
 				});
 
 			const workerPath = path.join(EXT_DIR, "worker.ts");
@@ -431,12 +438,7 @@ export default function (pi: ExtensionAPI) {
 						cwd,
 						signal: runAbort.signal,
 					});
-					const text = JSON.stringify({ ok: result.ok, exitCode: result.exitCode, output: result.output });
-					return {
-						content: [{ type: "text", text }],
-						isError: !result.ok,
-						details: { ok: result.ok, exitCode: result.exitCode, output: result.output },
-					};
+					return { ok: result.ok, exitCode: result.exitCode, output: result.output };
 				} finally {
 					inFlightDispatches = Math.max(0, inFlightDispatches - 1);
 					if (inFlightDispatches === 0) resumeTimer();
