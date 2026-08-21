@@ -20,7 +20,7 @@ Consult the shared skill **`spawn-model-selection`** for the model-choice priori
 ## Dispatch semantics (sub-dispatch)
 
 - `dispatch({ agent, prompt })` — **foreground**: waits for the sub-agent to finish, returns `{ exitCode, durationMs, output }`. Blocks this turn until done (default timeout 600s, override with `timeout` seconds).
-- `dispatch({ agent, prompt, background: true })` — returns a `sessionId` immediately. Query later with `dispatch({ sessionId })`, kill with `dispatch({ sessionId, kill: true })`.
+- `dispatch({ agent, prompt, background: true })` — returns a `sessionId` immediately. The host is **auto-notified when the session completes** (sub-dispatch sends a `triggerTurn` message with status + output tail), so no polling is needed. Kill with `dispatch({ sessionId, kill: true })`; query with `dispatch({ sessionId })` only for diagnostics/recovery.
 - Agents: `pi` / `codex` / `claude` / `cursor` + any key added to the extension's `config.json` `commands`.
 - `pi` runs in print mode (`defaultArgs` already sets `-p`), so sub-agents exit naturally when done — no quiet-kill risk, no exit-flag troubleshooting.
 - No overlay / no interactive takeover: sub-agents run headless as subprocesses. If a task needs interactive guidance, do it yourself instead of dispatching.
@@ -42,7 +42,7 @@ Consult the shared skill **`spawn-model-selection`** for the model-choice priori
 |---|---|
 | Simple, single-focus task | Single foreground dispatch |
 | Multiple independent subtasks | **Parallel background dispatch** — fire all at once |
-| Sequential subtasks (A→B→C) | Foreground dispatch A → wait → dispatch B → … (or background + query) |
+| Sequential subtasks (A→B→C) | Foreground dispatch A → wait → dispatch B → … (or background, completion auto-notifies) |
 | Mixed | Group into tiers, parallelize within each tier |
 | **Local ollama model** | Parallel, **max 2 concurrent** — queue the rest |
 
@@ -55,7 +55,7 @@ dispatch({ agent: "pi", prompt: "concrete task description", reason: "brief note
 The turn blocks until it finishes; the result (exitCode + output) is the return value.
 
 **Parallel dispatch (multiple independent subtasks):**
-Fire all dispatches in a single tool-call batch with `background: true`, then query each session. Each `prompt` must be **self-contained** — include all context (file paths, expected behavior, constraints). Use distinct `reason` values to match results back to tasks.
+Fire all dispatches in a single tool-call batch with `background: true`, then **end your turn** — each completion auto-notifies via triggerTurn and wakes you with its output. Do NOT sleep+query poll. Each `prompt` must be **self-contained** — include all context (file paths, expected behavior, constraints). Use distinct `reason` values to match results back to tasks.
 
 If the active model is local ollama, **fire at most 2 dispatches per batch** (hard cap of 2 concurrent sub-agents); wait for their completions before dispatching the next batch.
 
@@ -70,7 +70,7 @@ dispatch({ agent: "pi", prompt: "Fix login redirect bug in auth.ts — redirect 
 ### 3. Collect Results
 
 - **Foreground**: results are the tool return values — synthesize directly.
-- **Background**: after firing, query each sessionId in a follow-up tool call (`dispatch({ sessionId })`). Queries return current status + output tail. Sessions also print streaming output if you stay in-turn.
+- **Background**: each session **auto-notifies on completion** (triggerTurn wake with status + output tail). Fire all, end your turn, and the notifications arrive on their own — never `sleep N && dispatch({ sessionId })` poll. Use `dispatch({ sessionId })` only as a diagnostic/recovery path (e.g. a notification is missing or you need mid-run status).
 - **Failure**: re-dispatch with more specific instructions, or fix it yourself.
 
 ### 4. Synthesize and Report
@@ -113,5 +113,5 @@ return { a, b, c };
 ## Examples
 
 - **Single task**: "Fix broken pagination on search results" → single foreground dispatch
-- **Parallel**: "Implement user avatars, email notifications, and search filters" → 3 parallel background dispatches, then query all
+- **Parallel**: "Implement user avatars, email notifications, and search filters" → 3 parallel background dispatches, fire and end turn (each completion auto-notifies)
 - **Mixed**: "Set up project structure, then implement auth, then add protected routes" → Tier 1: structure (1 foreground dispatch) → Tier 2: auth + routes (2 parallel background dispatches)

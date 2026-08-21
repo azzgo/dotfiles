@@ -37,6 +37,10 @@ interface BgSession {
 	status: "running" | "done" | "error" | "killed" | "timeout";
 	startedAt: number;
 	doneAt?: number;
+	/** Output truncation cap applied to completion notifications. */
+	maxOutputChars: number;
+	/** Guard so completion is notified exactly once (close+error can both fire). */
+	notified?: boolean;
 }
 
 /** Module-level background session table (cleared on /reload — expected). */
@@ -64,6 +68,26 @@ function formatDurationMs(ms: number): string {
 }
 
 export default function (pi: ExtensionAPI) {
+	// Notify the host when a background session settles. `triggerTurn` wakes the
+	// agent if idle; `deliverAs: "followUp"` queues behind an in-flight turn so it
+	// is never lost. The content is self-contained (status + output tail + how to
+	// fetch full details) so the model needs no history to act on it.
+	const notifyBackgroundDone = (session: BgSession): void => {
+		if (session.notified) return;
+		session.notified = true;
+		const durMs = (session.doneAt ?? Date.now()) - session.startedAt;
+		const out = tailTruncate(session.output, session.maxOutputChars);
+		const content =
+			`Background session ${session.id} — ${session.status}${session.exitCode != null ? ` (exit ${session.exitCode})` : ""} — ${formatDurationMs(durMs)}\n` +
+			`agent: ${session.agent}\n` +
+			(out.trim() ? `── output ──\n${out}\n` : "") +
+			`\nQuery for full details: dispatch({ sessionId: "${session.id}" })`;
+		pi.sendMessage(
+			{ customType: "sub-dispatch", content, display: true, details: { sessionId: session.id, status: session.status, exitCode: session.exitCode } },
+			{ triggerTurn: true, deliverAs: "followUp" },
+		);
+	};
+
 	const runBackground = (opts: {
 		agent: string;
 		executable: string;
@@ -83,6 +107,7 @@ export default function (pi: ExtensionAPI) {
 			exitCode: null,
 			status: "running",
 			startedAt: Date.now(),
+			maxOutputChars: opts.maxOutputChars,
 		};
 		child.stdout?.on("data", (d) => {
 			session.output += d.toString("utf-8");
@@ -100,12 +125,14 @@ export default function (pi: ExtensionAPI) {
 			session.output += `\n[spawn error] ${err.message}`;
 			session.status = "error";
 			session.doneAt = Date.now();
+			notifyBackgroundDone(session);
 		});
 		child.on("close", (code) => {
 			session.exitCode = code;
 			// Keep an explicit kill status; only derive done/error for natural exits.
 			if (session.status !== "killed") session.status = code === 0 ? "done" : "error";
 			session.doneAt = Date.now();
+			notifyBackgroundDone(session);
 		});
 		bgSessions.set(id, session);
 		return session;
