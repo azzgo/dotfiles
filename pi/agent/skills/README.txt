@@ -106,6 +106,18 @@ Skills are loaded from multiple locations in order:
 | **Description** | Chrome DevTools CLI skill: project-scoped profiles (each `PWD` gets its own isolated Chrome instance via sha256 hash), headed mode by default, no auto-invocation. Replaces the chrome-devtools MCP for browser automation via CLI |
 | **Installed** | 2026-08-19 |
 | **Adjustments** | `disable-model-invocation: true` (prompt-routed only); default `--headless=false`; project-scoped profile via `~/.cache/chrome-devtools-mcp/profiles/<pwd-hash>` with `.mapping.json` for human readability; multi-profile suffix support for clean/separate contexts; removed PWA, Memory Debugging, experimental features sections; `open-chrome-pause.md` prompt adapted to route through this skill |
+| **Upstream** | https://github.com/ChromeDevTools/chrome-devtools-mcp/tree/main/skills/chrome-devtools-cli |
+
+
+### `handoff`
+
+| Field | Value |
+|-------|-------|
+| **Source** | Converted from `pi/agent/prompts/handoff.md` (repo-owned prompt) |
+| **Description** | Generate a handoff document summarizing the current conversation for a fresh agent to continue the work |
+| **Installed** | 2026-08-25 |
+| **Adjustments** | Converted prompt → skill per Agent Skills standard; added `disable-model-invocation: true` (no model auto-invocation; explicit trigger only); replaced `$@` prompt substitution with appended instruction (skill args are appended raw, not substituted) |
+| **Upstream** | None (repo-owned; no external upstream to track) |
 
 ### `spawn-model-selection`
 
@@ -116,4 +128,3 @@ Skills are loaded from multiple locations in order:
 | **Installed** | 2026-08-20 |
 | **Adjustments** | Extracted model-selection priority from impl-with-spawn's Agent Selection section. Simple/mechanical tier: minimax-m2.7 → opencode/hy3 → opencode/mimo-v2.5 → deepseek-v4-flash → local Ollama (commit/cleanup only, max 2 concurrent). Complex/long-context tier: deepseek-v4-flash → opencode/mimo-v2.5 → opencode/hy3. Notes: deepseek-v4-pro excluded by default after price hike (explicit request only); MiniMax-M3 excluded (unstable instruction following); hy3 preferred for multimodal, mimo-v2.5 when 1M context needed |
 | **Upstream** | None (repo-owned; no external upstream to track) |
-| **Upstream** | https://github.com/ChromeDevTools/chrome-devtools-mcp/tree/main/skills/chrome-devtools-cli |
