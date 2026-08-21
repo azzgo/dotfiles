@@ -45,11 +45,11 @@
 
 执行 `just install-pi` 时会把仓库中的扩展目录 link 到本机 Pi 扩展目录。
 
-### 4. pi-interactive-shell 默认配置已纳入 dotfiles
+### 4. 自研扩展：sub-dispatch 与 code-mode
 
-`~/.pi/agent/interactive-shell.json` 现在由 dotfiles 管理。
+`pi/agent/extensions/sub-dispatch/` — 子 agent 派发扩展（从 pi-interactive-shell 剪裁，仅保留 dispatch 模式，非 PTY 子进程）。配置在扩展目录 `config.json`（内置 pi/codex/claude/cursor，可加自定义 agent）。pi-interactive-shell 已整体移除。
 
-当前共享默认配置以 `pi` 为默认 agent，并保留 Cursor CLI 的 `agent` 命令映射，便于通过 `pi-interactive-shell` 统一做外部 agent / 可观察子 agent 调度。
+`pi/agent/extensions/code-mode/` — Code Mode 扩展（工具目录折叠为 `run_code` + TS SDK 注入，`/code` 切换）。设计见 `docs/adr/0001-code-mode-extension.md`。
 
 ### 5. skills 已纳入 dotfiles
 
@@ -83,4 +83,4 @@
 
 `planning-with-files` skill 与 `plan-mode` 已移除，不再单独管理。
 
-另外，当前共享 `settings.json` 里也已移除 `pi-subagents` 与 `pi-intercom`，统一优先走 `pi-interactive-shell` 提供的外部 agent / 子 agent 能力。
+另外，当前共享 `settings.json` 里也已移除 `pi-subagents`、`pi-intercom` 与 `pi-interactive-shell`，外部 agent / 子 agent 能力统一由 `sub-dispatch` 扩展承载。

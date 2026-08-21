@@ -9,8 +9,7 @@
   },
   "packages": [
     "npm:pi-web-access",
-    "npm:pi-mcp-adapter",
-    "npm:pi-interactive-shell"
+    "npm:pi-mcp-adapter"
   ],
   "enabledModels": [
     "minimax-cn/MiniMax-M2.7",

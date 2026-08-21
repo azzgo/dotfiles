@@ -64,7 +64,7 @@ Parse the user arguments (`$@`) as follows:
 ### `ui`
 - ensure workspace exists (or explain that init/chart is required)
 - start taskmd Web UI for human inspection with:
-  `interactive_shell({ command: "taskmd -d .pi/wayfinder/tickets web start --port 8080 --open", mode: "dispatch", background: true })`
+  `bash` with nohup/background: `taskmd -d .pi/wayfinder/tickets web start --port 8080 --open &` (or `dispatch({ agent: "pi", ... })` when a sub-agent should own it)
 - report URL (`http://localhost:8080`) and session id; user can `/attach` if needed
 - agent keeps using CLI for mutations
 

@@ -1,6 +1,6 @@
 ---
 name: spawn-model-selection
-description: Shared single-source-of-truth for choosing which model to run a sub-agent on when dispatching via interactive_shell. Referenced by impl-with-spawn and explore-codebase to avoid maintaining the model-priority list in multiple places. Not meant to be invoked standalone.
+description: Shared single-source-of-truth for choosing which model to run a sub-agent on when dispatching via the dispatch tool (sub-dispatch extension). Referenced by impl-with-spawn and explore-codebase to avoid maintaining the model-priority list in multiple places. Not meant to be invoked standalone.
 disable-model-invocation: true
 ---
 
@@ -34,5 +34,5 @@ Single source of truth for picking which model to run a spawned sub-agent on. Pr
 
 ## Hard rules
 
-- **Trust the actual `pi --list-models` output**; opencode-go / official deepseek mentioned elsewhere are only "maybe available" examples — **never assume they exist**. When unsure, default to `pi` (the spawn default agent).
+- **Trust the actual `pi --list-models` output**; opencode-go / official deepseek mentioned elsewhere are only "maybe available" examples — **never assume they exist**. When unsure, default to `pi` (the dispatch default agent).
 - **Concurrency limit (local ollama):** never keep more than **2 sub-agents running concurrently** — parallel work beyond that thrashes local GPU/CPU and memory. Dispatch at most 2 at a time, wait for completions, then dispatch the next batch.

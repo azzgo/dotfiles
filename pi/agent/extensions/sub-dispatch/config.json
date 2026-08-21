@@ -7,7 +7,7 @@
     "cursor": "agent"
   },
   "defaultArgs": {
-    "pi": [],
+    "pi": ["-p"],
     "codex": [],
     "claude": ["-p"],
     "cursor": ["--model", "composer-2-fast"]

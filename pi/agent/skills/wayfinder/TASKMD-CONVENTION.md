@@ -292,7 +292,7 @@ taskmd -d .pi/wayfinder/tickets web start --port 8080 --open
 
 How the agent should start it:
 
-1. Prefer `interactive_shell` with:
+1. Prefer `bash` background launch with:
    - `mode: "dispatch"`
    - `background: true`
 2. Report:
