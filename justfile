@@ -113,8 +113,6 @@ install-pi:
 
     rm -rf ~/.pi/agent/extensions/goal-runtime
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/goal-runtime ~/.pi/agent/extensions/goal-runtime
-    rm -rf ~/.pi/agent/extensions/agent-timer
-    ln -s {{ dotfiles_dir }}/pi/agent/extensions/agent-timer ~/.pi/agent/extensions/agent-timer
     rm -rf ~/.pi/agent/extensions/readonly-mode
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/readonly-mode ~/.pi/agent/extensions/readonly-mode
 
