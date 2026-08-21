@@ -29,7 +29,6 @@ Requires Node >= 23.6 (native TS type-stripping, same as `code-mode`).
 |--------------|---------|---------|--------------------------------------------------------------|
 | `agent`      | string  | —       | required for a new dispatch; `pi`/`codex`/`claude`/`cursor` or any key in `config.commands` |
 | `prompt`     | string  | —       | required for a new dispatch; task prompt for the sub-agent   |
-| `worktree`   | boolean | false   | run in a fresh git worktree (`git worktree add --detach HEAD`) |
 | `background` | boolean | false   | true → return `{ sessionId }` immediately; query/kill later   |
 | `timeout`    | number  | 600     | seconds; kills the whole process group on expiry              |
 | `reason`     | string  | —       | UI label shown in the footer status while foreground-running  |
@@ -56,11 +55,9 @@ notifies the result. E.g. `/dispatch pi "review the diffs"`.
 export async function runDispatch(opts: {
   agent: string;
   prompt: string;
-  worktree?: boolean;
   timeoutSec?: number;
   cwd?: string;
   signal?: AbortSignal;
-}): Promise<{ ok: boolean; exitCode: number | null; output: string; worktreePath?: string }>
 ```
 
 Re-exported from `index.ts` and defined in `runner.ts`. code-mode (same
@@ -79,8 +76,6 @@ self-contained, mirrors `code-mode`). Fields:
   "defaultAgent": "pi",
   "commands": { "pi": "pi", "codex": "codex", "claude": "claude", "cursor": "agent" },
   "defaultArgs": { "pi": [], "codex": [], "claude": ["-p"], "cursor": ["--model", "composer-2-fast"] },
-  "worktree": false,
-  "worktreeBaseDir": null,
   "maxOutputChars": 20000,
   "defaultTimeoutSec": 600
 }
@@ -98,7 +93,6 @@ self-contained, mirrors `code-mode`). Fields:
 - **No shared mutable state across calls**: each dispatch is its own subprocess.
   Background sessions live in a module-level `Map` (index.ts) — cleared on
   `/reload` (expected; README-accepted). Killed on `session_shutdown`.
-- **Worktree** creation copies upstream `spawn.ts`; the worktree is left in place
   and its path returned to the caller (v2a scope — cleanup deferred to v2b).
 - **Agent resolution** is own-property-only (`Object.hasOwn`) so names like
   `constructor` don't resolve through `Object.prototype`.
@@ -106,9 +100,7 @@ self-contained, mirrors `code-mode`). Fields:
 ## Files
 
 - `index.ts` — entry: `dispatch` tool, `/dispatch` command, background table.
-- `runner.ts` — core engine: config, resolveCommand, worktree, non-PTY spawn,
   `runDispatch` (shared bridge).
-- `config.json` — commands / defaultArgs / worktree / caps.
 - `package.json` / `README.md`.
 
 ## Known limitations
@@ -118,6 +110,5 @@ self-contained, mirrors `code-mode`). Fields:
 - Foreground runs are one-shot; there is no way to type into a running
   foreground sub-agent.
 - Background sessions die on `/reload` (module state reset).
-- Worktrees are created but not cleaned up automatically.
 - `claude -p` / `codex exec` assume the CLI is on PATH and accepts a prompt
   positional arg; non-standard agents may need `defaultArgs` tweaks.

@@ -6,8 +6,8 @@
  *
  * Files:
  *   index.ts   entry: `dispatch` tool, `/dispatch` command, background session table
- *   runner.ts  core engine: config, agent resolution, worktree, non-PTY spawn
- *   config.json  commands / defaultArgs / worktree / caps
+ *   runner.ts  core engine: config, agent resolution, non-PTY spawn
+ *   config.json  commands / defaultArgs / caps
  *
  * Bridge hook (v2b, reserved): code-mode imports `runDispatch` programmatically
  * from `../sub-dispatch/runner.ts` for its own execute.
@@ -17,7 +17,6 @@ import { spawn } from "node:child_process";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 import {
-	createWorktree,
 	generateSessionId,
 	killProcessGroup,
 	loadConfig,
@@ -32,7 +31,6 @@ interface BgSession {
 	id: string;
 	agent: string;
 	cwd: string;
-	worktreePath?: string;
 	child: ChildProcess;
 	output: string;
 	exitCode: number | null;
@@ -50,7 +48,6 @@ function formatSessionStatus(s: BgSession): string {
 		`Session ${s.id} — ${s.status}${s.exitCode != null ? ` (exit ${s.exitCode})` : ""} — ${formatDurationMs(durMs)}`,
 		`agent: ${s.agent}`,
 	];
-	if (s.worktreePath) lines.push(`worktree: ${s.worktreePath}`);
 	const out = tailTruncate(s.output, 20000);
 	if (out.trim()) lines.push("── output ──\n" + out);
 	return lines.join("\n");
@@ -72,8 +69,7 @@ export default function (pi: ExtensionAPI) {
 		executable: string;
 		args: string[];
 		cwd: string;
-		worktreePath?: string;
-		maxOutputChars: number;
+			maxOutputChars: number;
 	}): BgSession => {
 		const id = generateSessionId(opts.agent);
 		const child = spawnDetached(opts.executable, opts.args, opts.cwd);
@@ -81,7 +77,6 @@ export default function (pi: ExtensionAPI) {
 			id,
 			agent: opts.agent,
 			cwd: opts.cwd,
-			worktreePath: opts.worktreePath,
 			child,
 			output: "",
 			exitCode: null,
@@ -135,7 +130,6 @@ export default function (pi: ExtensionAPI) {
 				Type.String({ description: "Existing background session id to query, or kill with kill:true." }),
 			),
 			kill: Type.Optional(Type.Boolean({ description: "With sessionId: terminate the background session." })),
-			worktree: Type.Optional(Type.Boolean({ description: "Run in a fresh git worktree (default false)." })),
 			background: Type.Optional(Type.Boolean({ description: "Return immediately with a sessionId (default false)." })),
 			timeout: Type.Optional(Type.Number({ description: "Timeout in seconds (default 600)." })),
 			reason: Type.Optional(Type.String({ description: "UI label / reason." })),
@@ -149,7 +143,6 @@ export default function (pi: ExtensionAPI) {
 				prompt?: string;
 				sessionId?: string;
 				kill?: boolean;
-				worktree?: boolean;
 				background?: boolean;
 				timeout?: number;
 				reason?: string;
@@ -205,24 +198,15 @@ export default function (pi: ExtensionAPI) {
 				return { content: [{ type: "text", text: resolved.error }], isError: true, details: {} };
 			}
 
-			const useWorktree = p.worktree ?? config.worktree;
 			const timeoutSec = p.timeout ?? config.defaultTimeoutSec;
 
 			if (p.background) {
-				let effectiveCwd = cwd;
-				let worktreePath: string | undefined;
-				if (useWorktree) {
-					const wt = createWorktree(config, cwd, p.agent);
-					if (!wt.ok) return { content: [{ type: "text", text: wt.error }], isError: true, details: {} };
-					effectiveCwd = wt.cwd;
-					worktreePath = wt.path;
-				}
+				const effectiveCwd = cwd;
 				const session = runBackground({
 					agent: p.agent,
 					executable: resolved.executable,
 					args: resolved.args,
 					cwd: effectiveCwd,
-					worktreePath,
 					maxOutputChars: config.maxOutputChars,
 				});
 				return {
@@ -232,23 +216,15 @@ export default function (pi: ExtensionAPI) {
 							text:
 								`Dispatched in background (id: ${session.id}).\n` +
 								`Query: dispatch({ sessionId: "${session.id}" })\n` +
-								`Kill: dispatch({ sessionId: "${session.id}", kill: true })` +
-								(worktreePath ? `\nWorktree: ${worktreePath}` : ""),
+								`Kill: dispatch({ sessionId: "${session.id}", kill: true })`,
 						},
 					],
-					details: { sessionId: session.id, status: "running", agent: p.agent, background: true, worktreePath },
+					details: { sessionId: session.id, status: "running", agent: p.agent, background: true },
 				};
 			}
 
 			// ── Foreground (default): wait and return output ──
-			let effectiveCwd = cwd;
-			let worktreePath: string | undefined;
-			if (useWorktree) {
-				const wt = createWorktree(config, cwd, p.agent);
-				if (!wt.ok) return { content: [{ type: "text", text: wt.error }], isError: true, details: {} };
-				effectiveCwd = wt.cwd;
-				worktreePath = wt.path;
-			}
+		const effectiveCwd = cwd;
 
 			const startedAt = Date.now();
 			if (ctx.hasUI) ctx.ui.setStatus("sub-dispatch", `${p.reason ? p.reason + " — " : ""}dispatch ${p.agent} — running…`);
@@ -261,19 +237,17 @@ export default function (pi: ExtensionAPI) {
 					onOutput: (chunk) => onUpdate?.({ content: [{ type: "text", text: chunk }], details: {} }),
 				});
 				const durationMs = Date.now() - startedAt;
-				const worktreeNote = worktreePath ? `\nWorktree: ${worktreePath}` : "";
-				return {
+								return {
 					content: [
 						{
 							type: "text",
 							text:
 								`exitCode: ${result.exitCode ?? "null"} — ${result.ok ? "ok" : "failed"} — ${formatDurationMs(durationMs)}` +
-								worktreeNote +
 								`\n── output ──\n${result.output}`,
 						},
 					],
 					isError: !result.ok,
-					details: { exitCode: result.exitCode, ok: result.ok, durationMs, output: result.output, worktreePath },
+					details: { exitCode: result.exitCode, ok: result.ok, durationMs, output: result.output },
 				};
 			} finally {
 				if (ctx.hasUI) ctx.ui.setStatus("sub-dispatch", undefined);

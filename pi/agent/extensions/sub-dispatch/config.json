@@ -12,8 +12,6 @@
     "claude": ["-p"],
     "cursor": ["--model", "composer-2-fast"]
   },
-  "worktree": false,
-  "worktreeBaseDir": null,
   "maxOutputChars": 20000,
   "defaultTimeoutSec": 600
 }
