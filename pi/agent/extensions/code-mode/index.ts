@@ -131,6 +131,10 @@ export default function (pi: ExtensionAPI) {
 			codeModeOn = true;
 			ctx.ui.notify("Code mode ON (default from config) — /code to toggle off.", "info");
 			updateFooter(ctx);
+		} else if (!codeModeOn && pi.getActiveTools().includes("run_code")) {
+			// Mode is OFF at session start (fresh / resume / reload / fork) — keep
+			// run_code out of the prompt so the model never sees or calls it.
+			pi.setActiveTools(pi.getActiveTools().filter((t) => t !== "run_code"));
 		}
 	});
 
@@ -160,11 +164,12 @@ export default function (pi: ExtensionAPI) {
 					codeModeOn = true;
 					ctx.ui.notify("Code mode ON — only run_code is callable; SDK injected.", "info");
 				} else if (!on && codeModeOn) {
-					pi.setActiveTools(
-						savedActiveTools && savedActiveTools.length
-							? savedActiveTools
-							: pi.getAllTools().map((t) => t.name),
-					);
+					const restore = savedActiveTools && savedActiveTools.length
+						? savedActiveTools
+						: pi.getAllTools().map((t) => t.name);
+					// savedActiveTools was captured while run_code was registered/active, so
+					// drop it from the restored set — run_code must only exist while ON.
+					pi.setActiveTools(restore.filter((t) => t !== "run_code"));
 					savedActiveTools = null;
 					codeModeOn = false;
 					ctx.ui.notify("Code mode OFF — native tools restored.", "info");
