@@ -14,6 +14,7 @@
 - `pi/agent/extensions/readonly-mode/`
 - `pi/agent/extensions/agent-timer/`
 - `pi/agent/extensions/xfer/`
+- `pi/agent/extensions/code-mode/`
 
 ## 保持本地，不入库
 
