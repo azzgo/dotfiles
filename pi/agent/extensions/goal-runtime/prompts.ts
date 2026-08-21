@@ -77,7 +77,7 @@ export function buildGoalImplPrompt(snapshot: GoalSnapshot, goalId: string, mode
 		"- Re-read the Goal/Story/Task records before major decisions (`taskmd -d .pi/goals get <id>`).",
 		"- **You (orchestrator) are the sole Track writer.** Update findings.md / progress.md at .pi/track/ after meaningful work, verification, blockers, completion evidence.",
 		"- **Parallel execution:** independent Tasks (no hard dep within the same tier) fan out to leaf sub-agents via the `impl-with-spawn` skill — `dispatch` background dispatch (`background: true`).",
-		"- **Leaf agent dispatch**: use `dispatch({ agent: \"pi\", prompt: \"PI_GOAL_RUNTIME_CHILD=1 child context: <self-contained task prompt>\", background: true, reason: \"goal-<id>-task-<taskId>\" })`. The PI_GOAL_RUNTIME_CHILD=1 marker travels in the prompt text (dispatch spawns agents, not raw commands). Child agents must NOT write Track and must NOT touch goal state — they only do code work and return a summary.",
+		"- **Leaf agent dispatch**: use `dispatch({ agent: \"pi\", prompt: \"child context: <self-contained task prompt>\", env: { PI_GOAL_RUNTIME_CHILD: \"1\" }, background: true, reason: \"goal-<id>-task-<taskId>\" })`. The PI_GOAL_RUNTIME_CHILD=1 marker is set via the dispatch env parameter (not prompt text). Child agents must NOT write Track and must NOT touch goal state — they only do code work and return a summary.",
 		"- Consolidate results into Track serially between tiers. Never start tier N+1 before tier N is consolidated.",
 		"- Self-check against success criteria while active (this is NOT a state).",
 		"- If you hit a real blocker, call `pause_goal` with a concrete reason and suggested action.",

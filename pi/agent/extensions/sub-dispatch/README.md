@@ -32,6 +32,7 @@ pi-interactive-shell has been **removed** (replaced by this extension).
 | `background` | boolean | false   | true → return `{ sessionId }` immediately; query/kill later   |
 | `timeout`    | number  | 600     | seconds; kills the whole process group on expiry              |
 | `reason`     | string  | —       | UI label shown in the footer status while foreground-running  |
+| `env`        | object  | —       | environment variables for the sub-agent process (merged on top of process.env) |
 | `sessionId`  | string  | —       | existing background session to query (or `kill: true`)        |
 | `kill`       | boolean | —       | with `sessionId`, terminate the background session group      |
 
@@ -58,6 +59,7 @@ export async function runDispatch(opts: {
   timeoutSec?: number;
   cwd?: string;
   signal?: AbortSignal;
+  env?: Record<string, string>;
 ```
 
 Re-exported from `index.ts` and defined in `runner.ts`. code-mode (same
