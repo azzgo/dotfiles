@@ -121,6 +121,8 @@ install-pi:
 
     rm -rf ~/.pi/agent/extensions/xfer
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/xfer ~/.pi/agent/extensions/xfer
+    rm -rf ~/.pi/agent/extensions/code-mode
+    ln -s {{ dotfiles_dir }}/pi/agent/extensions/code-mode ~/.pi/agent/extensions/code-mode
 
     rm -rf ~/.pi/agent/prompts
     ln -s {{ dotfiles_dir }}/pi/agent/prompts ~/.pi/agent/prompts

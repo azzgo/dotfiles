@@ -173,7 +173,7 @@ The installation scripts create symbolic links to configuration files in this re
 - **IDEAVim**: Links `.ideavimrc` to home directory
 - **Terminals**: Links config directories to `~/.config/`
 - **Shells**: Sources shell configs in respective rc files, links tmux and starship configs
-- **Pi**: Links shared Pi config into `~/.pi/agent/`, including `goal-runtime`, `interactive-shell.json`, and global prompt templates under `~/.pi/agent/prompts/`, while `models.json` and `auth.json` stay local per machine
+- **Pi**: Links shared Pi config into `~/.pi/agent/`, including `goal-runtime`, `code-mode`, `interactive-shell.json`, and global prompt templates under `~/.pi/agent/prompts/`, while `models.json` and `auth.json` stay local per machine
 
 ## Customization
 
