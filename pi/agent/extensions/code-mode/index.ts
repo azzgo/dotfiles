@@ -31,12 +31,13 @@ import {
   createReadToolDefinition,
   createWriteToolDefinition,
 } from "@earendil-works/pi-coding-agent";
+import { runDispatch } from "../sub-dispatch/runner.js";
 
 
 const EXT_DIR = path.dirname(fileURLToPath(import.meta.url));
 
 /** Built-in tools bridged to real execute (shared withFileMutationQueue). */
-const BRIDGED = ["read", "bash", "edit", "write", "grep", "find", "ls"];
+const BRIDGED = ["read", "bash", "edit", "write", "grep", "find", "ls", "dispatch"];
 
 interface CodeModeConfig {
 	defaultOn: boolean;
@@ -160,13 +161,30 @@ export default function (pi: ExtensionAPI) {
 	pi.on("before_agent_start", async (event) => {
 		if (!codeModeOn) return;
 		const infos = getBridgedToolInfos();
+		const sdkInfos: Array<{ name: string; description: string; parameters: unknown }> = infos.map((t) => ({
+			name: t.name,
+			description: t.description,
+			parameters: t.parameters,
+		}));
+		// dispatch is not a pi built-in tool, so it never appears in getBridgedToolInfos();
+		// inject it into the SDK manually (wired to runDispatch in execute).
+		sdkInfos.push({
+			name: "dispatch",
+			description:
+				"Spawn a sub-agent (pi/codex/claude/cursor/custom) as a subprocess and await its completion (foreground). Returns JSON text { ok, exitCode, output } (output tail-truncated).",
+			parameters: {
+				type: "object",
+				required: ["agent", "prompt"],
+				properties: {
+					agent: { type: "string", description: "Spawning agent: pi/codex/claude/cursor or a custom key from sub-dispatch config.commands." },
+					prompt: { type: "string", description: "Task prompt passed to the sub-agent." },
+					timeout: { type: "number", description: "Timeout in seconds (default 600)." },
+				},
+			},
+		});
 		let sdk = "";
-		if (infos.length > 0) {
-			sdk =
-				"\n\n" +
-				generateSdk(
-					infos.map((t) => ({ name: t.name, description: t.description, parameters: t.parameters })),
-				);
+		if (sdkInfos.length > 0) {
+			sdk = "\n\n" + generateSdk(sdkInfos);
 		}
 		return { systemPrompt: event.systemPrompt + sdk + "\n\n" + COLLAPSE };
 	});
@@ -247,15 +265,19 @@ export default function (pi: ExtensionAPI) {
 
 			const execSubCall = (name: string, args: unknown) =>
 				pool.run(async (): Promise<string> => {
-					const def = defs[name];
-					if (!def || blacklist.has(name)) {
-						throw new Error(`Tool "${name}" is not callable inside code mode.`);
-					}
 					const subId = `${callId}.${++seq}`;
 					let result: any;
 					let error: unknown = null;
 					try {
-						result = await def.execute(subId, args, runAbort.signal, undefined, ctx);
+						if (name === "dispatch") {
+							result = await execDispatch(args);
+						} else {
+							const def = defs[name];
+							if (!def || blacklist.has(name)) {
+								throw new Error(`Tool "${name}" is not callable inside code mode.`);
+							}
+							result = await def.execute(subId, args, runAbort.signal, undefined, ctx);
+						}
 					} catch (e) {
 						error = e;
 					}
@@ -325,13 +347,76 @@ export default function (pi: ExtensionAPI) {
 				}
 			});
 
-			const timer = setTimeout(() => {
+			// ── wall-clock timeout with dispatch exemption ──
+			// Non-dispatch code accrues toward cfg.timeoutMs (kills a pure infinite
+			// loop at the default 60s). The clock pauses while dispatch sub-calls are
+			// in flight, so a minute-scale sub-agent (each dispatch has its own
+			// internal timeout via runDispatch/spawnCommand) isn't killed by the
+			// run-level cap. Esc (signal abort) still propagates to the child group.
+			let timer: ReturnType<typeof setTimeout> | undefined;
+			let timerRunning = false;
+			let timerStartedAt = 0;
+			let nonDispatchElapsed = 0;
+
+			const fireTimeout = () => {
 				if (settled) return;
 				settled = true;
 				runAbort.abort();
 				worker.terminate();
 				rejectDone(Object.assign(new Error("Code run timed out"), { kind: "timeout" }));
-			}, cfg.timeoutMs);
+			};
+
+			const pauseTimer = () => {
+				if (!timerRunning) return;
+				nonDispatchElapsed += Date.now() - timerStartedAt;
+				clearTimeout(timer);
+				timer = undefined;
+				timerRunning = false;
+			};
+
+			const resumeTimer = () => {
+				if (timerRunning) return;
+				const remaining = cfg.timeoutMs - nonDispatchElapsed;
+				if (remaining <= 0) {
+					fireTimeout();
+					return;
+				}
+				timerStartedAt = Date.now();
+				timerRunning = true;
+				timer = setTimeout(fireTimeout, remaining);
+			};
+
+			// ── dispatch bridge (sub-dispatch runDispatch) ──
+			// Foreground sub-agent spawn; pauses the run clock for its duration.
+			let inFlightDispatches = 0;
+			const execDispatch = async (args: unknown) => {
+				const p = (args ?? {}) as { agent?: string; prompt?: string; timeout?: number };
+				if (typeof p.agent !== "string" || !p.agent.trim()) throw new Error("dispatch: 'agent' is required");
+				if (typeof p.prompt !== "string" || !p.prompt.trim()) throw new Error("dispatch: 'prompt' is required");
+				const timeoutSec = typeof p.timeout === "number" && p.timeout > 0 ? p.timeout : undefined;
+				if (inFlightDispatches === 0) pauseTimer();
+				inFlightDispatches++;
+				try {
+					const result = await runDispatch({
+						agent: p.agent,
+						prompt: p.prompt,
+						timeoutSec,
+						cwd,
+						signal: runAbort.signal,
+					});
+					const text = JSON.stringify({ ok: result.ok, exitCode: result.exitCode, output: result.output });
+					return {
+						content: [{ type: "text", text }],
+						isError: !result.ok,
+						details: { ok: result.ok, exitCode: result.exitCode, output: result.output },
+					};
+				} finally {
+					inFlightDispatches = Math.max(0, inFlightDispatches - 1);
+					if (inFlightDispatches === 0) resumeTimer();
+				}
+			};
+
+			resumeTimer();
 
 			try {
 				const { value, logs: outLogs } = await done;

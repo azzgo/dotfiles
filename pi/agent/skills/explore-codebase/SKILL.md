@@ -131,6 +131,30 @@ Every dispatched sub-agent prompt must explicitly include the read-only constrai
 - ❌ must not create temp files (including /tmp)
 - ✅ may only use glob, grep, read, and read-only shell commands (ls, cat, find, git log, git diff, etc.)
 
+## Code Mode shape (when `/code` is ON)
+
+If code mode is enabled (`/code`), skip background+query. Write ONE `run_code`
+program that dispatches the exploration sub-agents and awaits them inline
+(foreground promises — no polling):
+
+```ts
+const [ui, data, backend] = await Promise.all([
+  tools.dispatch({ agent: "pi", prompt: `<subtask 1 prompt incl. read-only constraint>` }),
+  tools.dispatch({ agent: "pi", prompt: `<subtask 2 prompt incl. read-only constraint>` }),
+  tools.dispatch({ agent: "pi", prompt: `<subtask 3 prompt incl. read-only constraint>` }),
+]);
+emit(ui); emit(data); emit(backend);
+return { ui, data, backend };
+```
+
+- Each `tools.dispatch` returns a JSON text string `{ ok, exitCode, output }`;
+  sub-agents run concurrently (up to code-mode's `maxConcurrent`, default 10).
+- Each dispatch has its own internal timeout (default 600s; pass `timeout` to
+  override); exploration sub-agents finish naturally and return their findings
+  as output — no `dispatch({ sessionId })` queries needed in this shape.
+- Include the read-only constraint in every sub-agent prompt (same as the
+  native shape above).
+
 ## Parallel efficiency
 
 - Fire all subtasks at once in one batch (`background: true`), then query sessionIds to collect results

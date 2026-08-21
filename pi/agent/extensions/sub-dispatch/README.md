@@ -68,6 +68,25 @@ Re-exported from `index.ts` and defined in `runner.ts`. code-mode (same
 an `onOutput` stream callback (that lives on `spawnCommand`); it collects merged
 output and returns it.
 
+## code-mode integration
+
+When the **code-mode** extension is enabled (`/code`), `dispatch` is exposed in
+the run_code SDK as `tools.dispatch({ agent, prompt, timeout? })`. code-mode
+imports `runDispatch` directly from this package (`../sub-dispatch/runner.ts`).
+The two extensions are sibling dirs under `~/.pi/agent/extensions/` and both are
+symlinked by `just install-pi`; code-mode assumes sub-dispatch is installed.
+
+- **Foreground semantics**: inside a run_code program `await tools.dispatch(...)`
+  blocks until the sub-agent exits and returns the JSON text `{ ok, exitCode,
+  output }` — no background session, no polling.
+- **Timeout**: each dispatch inherits `defaultTimeoutSec` (600) unless a
+  `timeout` (seconds) is passed; `spawnCommand` kills the process group on
+  expiry. The run_code wall-clock cap is paused while a dispatch is in flight.
+- **Concurrency**: `Promise.all` over dispatches overlaps up to code-mode's
+  `maxConcurrent` (TaskPool).
+- **Abort**: `runAbort.signal` is forwarded as the spawn `signal`, so Esc/abort
+  at the run_code level kills the child process group.
+
 ## Config
 
 Chosen location: **extension-dir `config.json`** (symlinked with the extension,

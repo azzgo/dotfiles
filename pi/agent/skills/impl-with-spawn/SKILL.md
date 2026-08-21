@@ -80,6 +80,36 @@ dispatch({ agent: "pi", prompt: "Fix login redirect bug in auth.ts — redirect 
 3. If any failed, re-dispatch with more specific instructions or fix it yourself
 4. Summarize what was done to the user
 
+## Code Mode shape (when `/code` is ON)
+
+If code mode is enabled (`/code`), do **not** use background+query. Instead write
+ONE `run_code` program that orchestrates sub-agents with `await tools.dispatch(...)`
+(foreground promise — completes when the sub-agent exits, no polling):
+
+```ts
+const impl = await tools.dispatch({ agent: "pi", prompt: "concrete task", timeout: 300 });
+emit(impl);
+return { impl };
+```
+
+- Parallel independent subtasks with `Promise.all`:
+
+```ts
+const [a, b, c] = await Promise.all([
+  tools.dispatch({ agent: "pi", prompt: "dark mode in SettingsPage.tsx", timeout: 300 }),
+  tools.dispatch({ agent: "pi", prompt: "fix login redirect in auth.ts", timeout: 300 }),
+  tools.dispatch({ agent: "pi", prompt: "add search filters", timeout: 300 }),
+]);
+return { a, b, c };
+```
+
+- `tools.dispatch` returns a JSON text string `{ ok, exitCode, output }`. Each
+  dispatch has its own internal timeout (pass `timeout` seconds; default 600);
+  the run's wall-clock cap is paused while dispatches are in flight.
+  Concurrency overlaps under code-mode's `maxConcurrent` (default 10).
+- Still respect dependency tiers: run sequential subtasks as sequential `await`s;
+  never parallelize when one subtask's output feeds another.
+
 ## Examples
 
 - **Single task**: "Fix broken pagination on search results" → single foreground dispatch
