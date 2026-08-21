@@ -1,0 +1,5 @@
+{
+	"name": "pi-code-mode-extension",
+	"private": true,
+	"type": "module"
+}
