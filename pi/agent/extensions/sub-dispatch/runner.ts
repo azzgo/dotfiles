@@ -3,13 +3,11 @@
  * `/dispatch` command, and the programmatic `runDispatch` bridge for code-mode).
  *
  * Trimmed from pi-interactive-shell (v0.15.0) `spawn.ts` + `config.ts`:
- * only the spawn-agent resolution, worktree creation, and (non-PTY) subprocess
+ * only the spawn-agent resolution and (non-PTY) subprocess
  * execution survive. No overlay / pty / interactive input / monitor machinery.
  */
 import { spawn, type ChildProcess } from "node:child_process";
-import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
-import { basename, dirname, join, relative, resolve } from "node:path";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import * as path from "node:path";
 
@@ -23,8 +21,6 @@ export interface DispatchConfig {
 	commands: Record<string, string>;
 	/** Per-agent argument prefix inserted before the prompt (e.g. claude -p). */
 	defaultArgs: Record<string, string[]>;
-	worktree: boolean;
-	worktreeBaseDir?: string;
 	/** Output truncation cap (tail). */
 	maxOutputChars: number;
 	defaultTimeoutSec: number;
@@ -34,7 +30,6 @@ const DEFAULT_CONFIG: DispatchConfig = {
 	defaultAgent: "pi",
 	commands: { pi: "pi", codex: "codex", claude: "claude", cursor: "agent" },
 	defaultArgs: { pi: [], codex: [], claude: ["-p"], cursor: ["--model", "composer-2-fast"] },
-	worktree: false,
 	maxOutputChars: 20000,
 	defaultTimeoutSec: 600,
 };
@@ -51,7 +46,6 @@ export function loadConfig(): DispatchConfig {
 				: DEFAULT_CONFIG.defaultArgs,
 			maxOutputChars: clampInt(raw.maxOutputChars, DEFAULT_CONFIG.maxOutputChars, 1000, 1_000_000),
 			defaultTimeoutSec: clampInt(raw.defaultTimeoutSec, DEFAULT_CONFIG.defaultTimeoutSec, 1, 86400),
-			worktree: typeof raw.worktree === "boolean" ? raw.worktree : DEFAULT_CONFIG.worktree,
 		};
 	} catch {
 		return DEFAULT_CONFIG;
@@ -86,46 +80,6 @@ export function resolveCommand(config: DispatchConfig, agent: string, prompt: st
 	return { ok: true, executable, args: [...defaultArgs, prompt] };
 }
 
-/* ── Worktree ───────────────────────────────────────────────────────────── */
-
-export type WorktreeResult = { ok: true; cwd: string; path: string } | { ok: false; error: string };
-
-export function createWorktree(config: DispatchConfig, cwd: string, agent: string): WorktreeResult {
-	const workingDir = resolve(cwd);
-	const repoRoot = runGit(["-C", workingDir, "rev-parse", "--show-toplevel"], workingDir);
-	if (!repoRoot.ok) {
-		return { ok: false, error: "Cannot create a worktree here because the current directory is not inside a git repository." };
-	}
-	const baseDir = config.worktreeBaseDir
-		? resolve(repoRoot.stdout, config.worktreeBaseDir)
-		: join(dirname(repoRoot.stdout), `${basename(repoRoot.stdout)}-worktrees`);
-	mkdirSync(baseDir, { recursive: true });
-
-	const timestamp = new Date().toISOString().replace(/[-:.]/g, "").replace("T", "-").replace("Z", "");
-	const suffix = Math.random().toString(36).slice(2, 7);
-	const worktreePath = join(baseDir, `${basename(repoRoot.stdout)}-${agent}-${timestamp}-${suffix}`);
-	const addWorktree = runGit(["-C", repoRoot.stdout, "worktree", "add", "--detach", worktreePath, "HEAD"], repoRoot.stdout);
-	if (!addWorktree.ok) return { ok: false, error: addWorktree.error };
-
-	const relativeCwd = relative(repoRoot.stdout, workingDir);
-	if (relativeCwd.length === 0 || relativeCwd.startsWith("..")) {
-		return { ok: true, cwd: worktreePath, path: worktreePath };
-	}
-	const nestedCwd = join(worktreePath, relativeCwd);
-	return { ok: true, cwd: existsSync(nestedCwd) ? nestedCwd : worktreePath, path: worktreePath };
-}
-
-function runGit(args: string[], cwd: string): { ok: true; stdout: string } | { ok: false; error: string } {
-	try {
-		return { ok: true, stdout: execFileSync("git", args, { cwd, encoding: "utf-8", stdio: ["ignore", "pipe", "pipe"] }).trim() };
-	} catch (error) {
-		const stderr =
-			error instanceof Error && "stderr" in error && typeof error.stderr === "string" ? error.stderr.trim() : "";
-		const message = error instanceof Error ? error.message : String(error);
-		return { ok: false, error: stderr ? `${message}\n${stderr}` : message };
-	}
-}
-
 /* ── Spawn ──────────────────────────────────────────────────────────────── */
 
 export interface SpawnCommandOptions {
@@ -141,7 +95,6 @@ export interface RunDispatchResult {
 	ok: boolean;
 	exitCode: number | null;
 	output: string;
-	worktreePath?: string;
 }
 
 /**
@@ -221,7 +174,6 @@ export function spawnCommand(
 export async function runDispatch(opts: {
 	agent: string;
 	prompt: string;
-	worktree?: boolean;
 	timeoutSec?: number;
 	cwd?: string;
 	signal?: AbortSignal;
@@ -231,24 +183,14 @@ export async function runDispatch(opts: {
 	const resolved = resolveCommand(config, opts.agent, opts.prompt);
 	if (!resolved.ok) return { ok: false, exitCode: null, output: resolved.error };
 
-	let effectiveCwd = cwd;
-	let worktreePath: string | undefined;
-	if (opts.worktree ?? config.worktree) {
-		const wt = createWorktree(config, cwd, opts.agent);
-		if (!wt.ok) return { ok: false, exitCode: null, output: wt.error };
-		effectiveCwd = wt.cwd;
-		worktreePath = wt.path;
-	}
-
+	const effectiveCwd = cwd;
 	const timeoutSec = opts.timeoutSec ?? config.defaultTimeoutSec;
 	const result = await spawnCommand(resolved.executable, resolved.args, {
 		cwd: effectiveCwd,
 		timeoutMs: timeoutSec * 1000,
 		signal: opts.signal,
 		maxOutputChars: config.maxOutputChars,
-	});
-	if (worktreePath) result.worktreePath = worktreePath;
-	return result;
+	});	return result;
 }
 
 /* ── Helpers ────────────────────────────────────────────────────────────── */
