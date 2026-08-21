@@ -59,6 +59,7 @@ Requires Node >= 23.6 (native TS type-stripping for the worker).
 
 ```jsonc
 {
+  "defaultOn": false,          // auto-enable code mode at session start
   "blacklist": ["mcpScript"],   // tools never exposed in SDK nor callable
   "timeoutMs": 60000,           // wall-clock cap per run (kills infinite loops)
   "maxConcurrent": 10,          // in-flight sub-call cap

@@ -1,7 +1,8 @@
 {
-	"blacklist": ["mcpScript"],
-	"timeoutMs": 60000,
-	"maxConcurrent": 10,
-	"maxResultBytes": 8192,
-	"maxRecordBytes": 50000
+  "defaultOn": false,
+  "blacklist": ["mcpScript"],
+  "timeoutMs": 60000,
+  "maxConcurrent": 10,
+  "maxResultBytes": 8192,
+  "maxRecordBytes": 50000
 }

@@ -39,6 +39,7 @@ const EXT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const BRIDGED = ["read", "bash", "edit", "write", "grep", "find", "ls"];
 
 interface CodeModeConfig {
+	defaultOn: boolean;
 	blacklist: string[];
 	timeoutMs: number;
 	maxConcurrent: number;
@@ -47,6 +48,7 @@ interface CodeModeConfig {
 }
 
 const DEFAULT_CONFIG: CodeModeConfig = {
+	defaultOn: false,
 	blacklist: ["mcpScript"],
 	timeoutMs: 60000,
 	maxConcurrent: 10,
@@ -61,6 +63,7 @@ function loadConfig(): CodeModeConfig {
 		return {
 			...DEFAULT_CONFIG,
 			...parsed,
+			defaultOn: typeof parsed.defaultOn === "boolean" ? parsed.defaultOn : DEFAULT_CONFIG.defaultOn,
 			blacklist: Array.isArray(parsed.blacklist) ? parsed.blacklist : DEFAULT_CONFIG.blacklist,
 		};
 	} catch {
@@ -107,6 +110,16 @@ export default function (pi: ExtensionAPI) {
 	let seq = 0;
 
 	const getBlacklistSet = () => new Set([...loadConfig().blacklist, "run_code"]);
+	// Apply defaultOn at session start (startup / new / resume / reload / fork).
+	pi.on("session_start", async (_event, ctx) => {
+		if (loadConfig().defaultOn && !codeModeOn) {
+			savedActiveTools = pi.getActiveTools();
+			pi.setActiveTools(["run_code"]);
+			codeModeOn = true;
+			ctx.ui.notify("Code mode ON (default from config) — /code to toggle off.", "info");
+		}
+	});
+
 
 	/** Tools the run_code bridge can actually execute (SDK + bridge stay in sync). */
 	function getBridgedToolInfos(): ToolInfo[] {
