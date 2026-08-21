@@ -8,6 +8,8 @@ alias gca='git commit -v --amend --no-edit'
 alias gup='git pull --rebase'
 alias gp='git push'
 alias gpn='git push --no-verify'
+function gpo() { git push -u origin "${1:-$(git branch --show-current)}"; }
+function gpno() { git push -u --no-verify origin "${1:-$(git branch --show-current)}"; }
 alias gst='git status'
 alias grb="git rebase"
 alias grbc="git rebase --continue"
