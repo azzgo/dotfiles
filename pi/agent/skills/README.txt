@@ -53,7 +53,7 @@ Skills are loaded from multiple locations in order:
 | **Source** | Pi npm package |
 | **Description** | Delegate implementation tasks to sub-agents (pi/cursor) via dispatch (sub-dispatch ext) |
 | **Installed** | 2026-07-02 |
-| **Adjustments** | None (tracked via Pi npm updates). 2026-07-31: added `disable-model-invocation: true` (no model auto-invocation; explicit trigger only). 2026-08-09: revised per root-cause analysis (notification-driven dispatch, heuristic agent selection, `handsFree.autoExitOnQuiet: false` on all examples). Root cause found + fixed (2026-08-09): `pi <prompt>` never exits in the extension PTY (interactive TUI), so completion notification never fires with `autoExitOnQuiet:false` — fixed via `defaultArgs.pi: ["-p"]` in `pi/agent/interactive-shell.json` (pi spawns run print mode, exit on completion); skill now documents the "sub-agent must exit" premise. End-to-end verified (spawn form 3s exit + notification). |
+| **Adjustments** | None (tracked via Pi npm updates). 2026-07-31: added `disable-model-invocation: true` (no model auto-invocation; explicit trigger only). 2026-08-09: revised per root-cause analysis (notification-driven dispatch, heuristic agent selection, `handsFree.autoExitOnQuiet: false` on all examples). Root cause found + fixed (2026-08-09): `pi <prompt>` never exits in the extension PTY (interactive TUI), so completion notification never fires with `autoExitOnQuiet:false` — fixed via `defaultArgs.pi: ["-p"]` (pi spawns run print mode, exit on completion; now lives in the sub-dispatch extension config); skill now documents the "sub-agent must exit" premise. End-to-end verified (spawn form 3s exit + notification). |
 | **Upstream** | Pi npm package |
 
 ### `improve-codebase-architecture`

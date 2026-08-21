@@ -301,7 +301,7 @@ How the agent should start it:
 3. Do **not** use plain `bash`/nohup as the primary path — long-lived web servers are unreliable there.
 4. Agent still mutates state via CLI, never by driving the web UI.
 
-Foreground overlay (`hands-free` / interactive) is optional when the user wants to watch the process. Background dispatch is the default.
+Web UI can also be opened in the foreground for manual inspection when the user wants to watch. Background launch is the default.
 
 
 ## Status report fields

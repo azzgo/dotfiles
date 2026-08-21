@@ -6,7 +6,6 @@
 
 - `pi/agent/settings.json`
 - `pi/agent/keybindings.json`
-- `pi/agent/interactive-shell.json`
 - `pi/agent/prompts/`
 - `pi/agent/skills/`
 - `pi/mcp.json`
@@ -15,6 +14,7 @@
 - `pi/agent/extensions/agent-timer/`
 - `pi/agent/extensions/xfer/`
 - `pi/agent/extensions/code-mode/`
+- `pi/agent/extensions/sub-dispatch/`
 
 ## 保持本地，不入库
 
