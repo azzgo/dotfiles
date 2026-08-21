@@ -70,9 +70,10 @@ export default function (pi: ExtensionAPI) {
 		args: string[];
 		cwd: string;
 			maxOutputChars: number;
+		env?: Record<string, string>;
 	}): BgSession => {
 		const id = generateSessionId(opts.agent);
-		const child = spawnDetached(opts.executable, opts.args, opts.cwd);
+		const child = spawnDetached(opts.executable, opts.args, opts.cwd, opts.env);
 		const session: BgSession = {
 			id,
 			agent: opts.agent,
@@ -133,6 +134,7 @@ export default function (pi: ExtensionAPI) {
 			background: Type.Optional(Type.Boolean({ description: "Return immediately with a sessionId (default false)." })),
 			timeout: Type.Optional(Type.Number({ description: "Timeout in seconds (default 600)." })),
 			reason: Type.Optional(Type.String({ description: "UI label / reason." })),
+			env: Type.Optional(Type.Record(Type.String(), Type.String({ description: "Environment variables for the sub-agent process." }))),
 		}),
 
 		async execute(_toolCallId, params, signal, onUpdate, ctx) {
@@ -146,6 +148,7 @@ export default function (pi: ExtensionAPI) {
 				background?: boolean;
 				timeout?: number;
 				reason?: string;
+				env?: Record<string, string>;
 			};
 
 			// ── Query / kill an existing background session ──
@@ -235,6 +238,7 @@ export default function (pi: ExtensionAPI) {
 					signal,
 					maxOutputChars: config.maxOutputChars,
 					onOutput: (chunk) => onUpdate?.({ content: [{ type: "text", text: chunk }], details: {} }),
+					env: p.env,
 				});
 				const durationMs = Date.now() - startedAt;
 								return {
@@ -296,6 +300,6 @@ export default function (pi: ExtensionAPI) {
 	});
 }
 
-function spawnDetached(executable: string, args: string[], cwd: string): ChildProcess {
-	return spawn(executable, args, { cwd, stdio: ["ignore", "pipe", "pipe"], detached: true });
+function spawnDetached(executable: string, args: string[], cwd: string, env?: Record<string, string>): ChildProcess {
+	return spawn(executable, args, { cwd, stdio: ["ignore", "pipe", "pipe"], detached: true, env: env ? { ...process.env, ...env } : undefined });
 }

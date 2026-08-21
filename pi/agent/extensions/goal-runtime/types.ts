@@ -41,8 +41,8 @@ export const MEANINGFUL_PROGRESS_TOOLS = new Set(["bash", "edit", "write", "grep
 /**
  * Overlay-silent marker: dispatched sub-agents (impl-with-spawn leaves and the
  * verifier) must run with this env var set so their goal-runtime instance skips
- * continuation, auto-pause-on-abort, and drafting guards. Set via the raw
- * command form: `PI_GOAL_RUNTIME_CHILD=1 pi -p "..."`.
+ * continuation, auto-pause-on-abort, and drafting guards. Set via the dispatch
+ * tool's env parameter (not prompt text): dispatch({ env: { PI_GOAL_RUNTIME_CHILD: "1" } }).
  */
 export const CHILD_ENV_MARKER = "PI_GOAL_RUNTIME_CHILD";
 
