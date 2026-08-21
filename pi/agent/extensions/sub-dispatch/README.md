@@ -120,7 +120,6 @@ self-contained, mirrors `code-mode`). Fields:
 - **No shared mutable state across calls**: each dispatch is its own subprocess.
   Background sessions live in a module-level `Map` (index.ts) — cleared on
   `/reload` (expected; README-accepted). Killed on `session_shutdown`.
-  and its path returned to the caller (v2a scope — cleanup deferred to v2b).
 - **Agent resolution** is own-property-only (`Object.hasOwn`) so names like
   `constructor` don't resolve through `Object.prototype`.
 
