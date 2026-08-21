@@ -89,7 +89,10 @@ export interface SpawnCommandOptions {
 	maxOutputChars?: number;
 	/** Called with each new chunk of merged output as it arrives (for streaming). */
 	onOutput?: (chunk: string) => void;
-}
+	/** Environment variables merged into the subprocess (on top of process.env). */
+	env?: Record<string, string>;
+	}
+
 
 export interface RunDispatchResult {
 	ok: boolean;
@@ -117,6 +120,7 @@ export function spawnCommand(
 			cwd: opts.cwd,
 			stdio: ["ignore", "pipe", "pipe"],
 			detached: true,
+			env: opts.env ? { ...process.env, ...opts.env } : undefined,
 		});
 
 		const append = (chunk: Buffer | string) => {
@@ -177,7 +181,8 @@ export async function runDispatch(opts: {
 	timeoutSec?: number;
 	cwd?: string;
 	signal?: AbortSignal;
-}): Promise<RunDispatchResult> {
+	env?: Record<string, string>;
+	}): Promise<RunDispatchResult> { 
 	const config = loadConfig();
 	const cwd = opts.cwd ?? process.cwd();
 	const resolved = resolveCommand(config, opts.agent, opts.prompt);
@@ -190,6 +195,7 @@ export async function runDispatch(opts: {
 		timeoutMs: timeoutSec * 1000,
 		signal: opts.signal,
 		maxOutputChars: config.maxOutputChars,
+		env: opts.env,
 	});	return result;
 }
 
