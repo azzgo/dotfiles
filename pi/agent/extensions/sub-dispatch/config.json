@@ -1,0 +1,19 @@
+{
+  "defaultAgent": "pi",
+  "commands": {
+    "pi": "pi",
+    "codex": "codex",
+    "claude": "claude",
+    "cursor": "agent"
+  },
+  "defaultArgs": {
+    "pi": [],
+    "codex": [],
+    "claude": ["-p"],
+    "cursor": ["--model", "composer-2-fast"]
+  },
+  "worktree": false,
+  "worktreeBaseDir": null,
+  "maxOutputChars": 20000,
+  "defaultTimeoutSec": 600
+}
