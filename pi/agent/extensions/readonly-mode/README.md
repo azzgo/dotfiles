@@ -19,15 +19,7 @@ The extension auto-discovers from `~/.pi/agent/extensions/readonly-mode/` (symli
 |---------|-----|-------|
 | Flag | `--readonly` | Start pi in read-only mode |
 | Command | `/readonly` | Toggle read-only mode on/off |
-| Shortcut | `Ctrl+Shift+R` | Toggle (rebindable in `keybindings.json`) |
-
-**Customize the shortcut** in `~/.pi/agent/keybindings.json`:
-
-```json
-{
-  "readonly-mode.toggle": "ctrl+r"
-}
-```
+| Shortcut | `Ctrl+Shift+R` | Toggle (key is hardcoded; change in index.ts) |
 
 ### Examples
 
