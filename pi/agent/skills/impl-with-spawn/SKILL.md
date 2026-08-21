@@ -103,10 +103,11 @@ const [a, b, c] = await Promise.all([
 return { a, b, c };
 ```
 
-- `tools.dispatch` returns a JSON text string `{ ok, exitCode, output }`. Each
-  dispatch has its own internal timeout (pass `timeout` seconds; default 600);
-  the run's wall-clock cap is paused while dispatches are in flight.
-  Concurrency overlaps under code-mode's `maxConcurrent` (default 10).
+- `tools.dispatch` resolves to a structured object `{ ok, exitCode, output }`
+  (read fields directly, e.g. `r.output` — no JSON.parse). Each dispatch has
+  its own internal timeout (pass `timeout` seconds; default 600); the run's
+  wall-clock cap is paused while dispatches are in flight. Concurrency
+  overlaps under code-mode's `maxConcurrent` (default 10).
 - Still respect dependency tiers: run sequential subtasks as sequential `await`s;
   never parallelize when one subtask's output feeds another.
 

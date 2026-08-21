@@ -83,8 +83,8 @@ The two extensions are sibling dirs under `~/.pi/agent/extensions/` and both are
 symlinked by `just install-pi`; code-mode assumes sub-dispatch is installed.
 
 - **Foreground semantics**: inside a run_code program `await tools.dispatch(...)`
-  blocks until the sub-agent exits and returns the JSON text `{ ok, exitCode,
-  output }` — no background session, no polling.
+  blocks until the sub-agent exits and resolves to a structured object
+  `{ ok, exitCode, output }` (not a string) — no background session, no polling.
 - **Timeout**: each dispatch inherits `defaultTimeoutSec` (600) unless a
   `timeout` (seconds) is passed; `spawnCommand` kills the process group on
   expiry. The run_code wall-clock cap is paused while a dispatch is in flight.
