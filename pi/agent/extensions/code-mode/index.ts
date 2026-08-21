@@ -14,7 +14,7 @@
  *   scheduler.ts bounded-concurrency sub-call pool
  *   config.json  blacklist / timeout / concurrency / size caps
  */
-import type { ExtensionAPI, ToolInfo } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext, ToolInfo } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 import { Worker } from "node:worker_threads";
 import { fileURLToPath } from "node:url";
@@ -111,6 +111,18 @@ export default function (pi: ExtensionAPI) {
 	let seq = 0;
 
 	const getBlacklistSet = () => new Set([...loadConfig().blacklist, "run_code"]);
+	// ── footer indicator + status text ──
+	const updateFooter = (ctx: ExtensionContext): void => {
+		if (!ctx.hasUI) return;
+		ctx.ui.setStatus("code-mode", codeModeOn ? ctx.ui.theme.fg("warning", "⚙ code") : undefined);
+	};
+	const statusText = (): string => {
+		const bridged = BRIDGED.filter((t) => t !== "dispatch").join(", ");
+		return codeModeOn
+			? `Code mode: ON — only run_code is callable; SDK injected (bridged: ${bridged} + dispatch).`
+			: "Code mode: OFF — native tools.";
+	};
+
 	// Apply defaultOn at session start (startup / new / resume / reload / fork).
 	pi.on("session_start", async (_event, ctx) => {
 		if (loadConfig().defaultOn && !codeModeOn) {
@@ -118,6 +130,7 @@ export default function (pi: ExtensionAPI) {
 			pi.setActiveTools(["run_code"]);
 			codeModeOn = true;
 			ctx.ui.notify("Code mode ON (default from config) — /code to toggle off.", "info");
+			updateFooter(ctx);
 		}
 	});
 
@@ -135,25 +148,39 @@ export default function (pi: ExtensionAPI) {
 		);
 	}
 
-	// ── /code toggle ──
+	// ── /code status + toggle ──
 	pi.registerCommand("code", {
-		description: "Toggle code mode (fold the tool catalog into run_code + injected SDK)",
-		handler: async (_args, ctx) => {
-			if (!codeModeOn) {
-				savedActiveTools = pi.getActiveTools();
-				pi.setActiveTools(["run_code"]);
-				codeModeOn = true;
-				ctx.ui.notify("Code mode ON — only run_code is callable; SDK injected.", "info");
-			} else {
-				pi.setActiveTools(
-					savedActiveTools && savedActiveTools.length
-						? savedActiveTools
-						: pi.getAllTools().map((t) => t.name),
-				);
-				savedActiveTools = null;
-				codeModeOn = false;
-				ctx.ui.notify("Code mode OFF — native tools restored.", "info");
+		description: "Code mode status/toggle. Usage: /code (print status) | on | off | toggle",
+		handler: async (args, ctx) => {
+			const arg = (args ?? "").trim().toLowerCase();
+			const setMode = (on: boolean) => {
+				if (on && !codeModeOn) {
+					savedActiveTools = pi.getActiveTools();
+					pi.setActiveTools(["run_code"]);
+					codeModeOn = true;
+					ctx.ui.notify("Code mode ON — only run_code is callable; SDK injected.", "info");
+				} else if (!on && codeModeOn) {
+					pi.setActiveTools(
+						savedActiveTools && savedActiveTools.length
+							? savedActiveTools
+							: pi.getAllTools().map((t) => t.name),
+					);
+					savedActiveTools = null;
+					codeModeOn = false;
+					ctx.ui.notify("Code mode OFF — native tools restored.", "info");
+				}
+				updateFooter(ctx);
+			};
+
+			if (arg === "") {
+				// no args → print current status, do NOT change state
+				ctx.ui.notify(statusText(), codeModeOn ? "info" : "warning");
+				return;
 			}
+			if (arg === "on") setMode(true);
+			else if (arg === "off") setMode(false);
+			else if (arg === "toggle") setMode(!codeModeOn);
+			else ctx.ui.notify(`Unknown /code arg "${arg}". Usage: /code [on|off|toggle] (no args prints status).`, "error");
 		},
 	});
 
