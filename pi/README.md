@@ -11,7 +11,6 @@
 - `pi/mcp.json`
 - `pi/agent/extensions/goal-runtime/`
 - `pi/agent/extensions/readonly-mode/`
-- `pi/agent/extensions/agent-timer/`
 - `pi/agent/extensions/xfer/`
 - `pi/agent/extensions/code-mode/`
 - `pi/agent/extensions/sub-dispatch/`
