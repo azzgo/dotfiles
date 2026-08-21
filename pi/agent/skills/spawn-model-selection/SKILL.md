@@ -16,20 +16,18 @@ Single source of truth for picking which model to run a spawned sub-agent on. Pr
 
    - **Simple / mechanical tasks** (refactor, add tests, fix typo, commit messages, cleanup):
      1. `minimax-m2.7` — generous quota, first choice for light tasks (~200K context)
-     2. `opencode/hy3` — stronger than mimo2.5, currently 8x quota, 256K context
-     3. `opencode/mimo-v2.5` — 1M context multimodal ($0.14/$0.28 per 1M)
-     4. `deepseek-v4-flash` — 1M context, for mid-weight tasks
-     5. Local Ollama small models — commit messages, cleanup only; **max 2 concurrent**
+     2. `opencode/mimo-v2.5` — 1M context multimodal ($0.14/$0.28 per 1M)
+     3. `deepseek-v4-flash` — 1M context, for mid-weight tasks
+     4. Local Ollama small models — commit messages, cleanup only; **max 2 concurrent**
 
    - **Complex / long-context tasks** (multi-file design, large refactor, architecture):
      1. `deepseek-v4-flash` — 1M context, best value for long-context scenarios
      2. `opencode/mimo-v2.5` — 1M context multimodal fallback
-     3. `opencode/hy3` — stronger than mimo-v2.5, but 256K context limit
 
    - **Notes**:
      - `deepseek-v4-pro` is no longer recommended by default after the price hike — use only when the user explicitly requests it.
      - `MiniMax-M3` is excluded — unstable instruction following.
-     - Prefer `mimo-v2.5` for multimodal; use `hy3` (non-multimodal, stronger reasoning) when multimodal capability is not needed.
+     - Prefer `mimo-v2.5` for multimodal; it's the default fallback when no multimodal capability is needed either.
    - Cursor-exclusive Composer models → `cursor` (`agent`); fall back to `pi` if unavailable.
 
 4. **Model runs on local ollama** → it shares this machine's GPU/CPU with the main agent. **Cap concurrent dispatches at 2.**
