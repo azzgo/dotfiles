@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: Multi-axis code review: Standards, Spec, Documentation Consistency. Three sub-agents run as parallel background dispatches (fire-and-forget). Review-only.
+description: Multi-axis code review — Standards, Spec, Documentation Consistency. Three sub-agents run as parallel background dispatches (fire-and-forget). Review-only.
 disable-model-invocation: true
 ---
 
