@@ -112,10 +112,19 @@ const SDK_HEADER = `/**
  * - \`tools.<name>(args)\` returns the tool's text output (Promise<string>);
  *   \`tools.dispatch(...)\` is the exception — it resolves to a structured object
  *   \`{ ok, exitCode, output }\` (read fields directly, no JSON.parse).
+ * - Node builtins are available via \`require(...)\` (e.g.
+ *   \`const fs = require("node:fs")\`, \`const path = require("node:path")\`);
+ *   require resolves from the session cwd. \`import\` statements are NOT
+ *   supported inside the program body — use require instead.
+ * - \`__dirname\` / \`__filename\` are set to the session cwd; prefer relative
+ *   paths in Node API calls.
  * - Only what you \`emit()\` / \`console.log\` and your return value are shown
  *   to the model. Intermediate tool results are NOT echoed back.
  * - Independent read-only calls may overlap under \`Promise.all([...])\`.
  * - A rejected tool call throws inside the program; wrap with try/catch to handle.
+ * - Escape hatch: a dispatched agent (\`tools.dispatch\`) runs in NATIVE mode
+ *   with every tool callable — hand a stuck task to it instead of retrying
+ *   a failing program forever.
  */`;
 
 /** Render the full SDK block for a set of tools. */

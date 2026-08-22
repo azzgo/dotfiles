@@ -5,11 +5,16 @@
  * The `tools` global proxies every sub-call back to the host over the message
  * port (pure event-driven: post {id,name,args} and await the matching reply —
  * no polling, no sleep). `emit` and a `console` shim stream lines to the host.
+ * `require` (rooted at the host cwd), `__dirname`, and `__filename` are
+ * injected into the program scope so Node builtins work inside the ESM
+ * worker (a bare `new Function` would have no `require` at all).
  *
  * This file must stay "erasable TypeScript": it is executed via Node's native
  * type-stripping (requires Node >= 23.6, or --experimental-strip-types).
  */
 import { parentPort, workerData } from "node:worker_threads";
+import { createRequire } from "node:module";
+import * as path from "node:path";
 
 const port = parentPort;
 if (!port) {
@@ -17,6 +22,14 @@ if (!port) {
 }
 
 const code: string = (workerData as { code: string }).code ?? "";
+const cwd: string = (workerData as { cwd?: string }).cwd ?? process.cwd();
+
+/** Injected into every program: require resolves from the host cwd (so
+ * `require("fs")` / `require("node:fs")` and project-local packages work),
+ * and __dirname/__filename point at the session cwd. */
+const nodeRequire = createRequire(path.join(cwd, "__run_code__.cjs"));
+const programDirname = cwd;
+const programFilename = path.join(cwd, "__run_code__.ts");
 
 interface PendingCall {
 	resolve: (value: unknown) => void;
@@ -165,8 +178,8 @@ function withLastExpressionReturn(code: string): string {
 async function run(): Promise<void> {
 	const body = "return (async () => {\n" + withLastExpressionReturn(code) + "\n})();";
 	// eslint-disable-next-line no-new-func
-	const fn = new Function("tools", "emit", "console", body);
-	const value = await fn(tools, emit, consoleShim);
+	const fn = new Function("tools", "emit", "console", "require", "__dirname", "__filename", body);
+	const value = await fn(tools, emit, consoleShim, nodeRequire, programDirname, programFilename);
 	port.postMessage({ kind: "done", value: value === undefined ? null : value });
 }
 

@@ -32,6 +32,13 @@ Requires Node >= 23.6 (native TS type-stripping for the worker).
   - Stream intermediate output with `emit(value)` / `console.log`.
   - Sub-calls: `await tools.bash({ command: "..." })` — runs the real tool
     host-side (real execute, shared `withFileMutationQueue`), returns text output.
+  - Node builtins: `require(...)` is injected into the program (rooted at the
+    session cwd), e.g. `const fs = require("node:fs")` — `import` statements
+    are NOT supported in the program body.
+  - No directly-callable `dispatch` tool in code mode: sub-agents are spawned
+    via `await tools.dispatch({ agent, prompt })` inside the program. They run
+    in NATIVE mode with every tool callable — the escape hatch when a program
+    keeps failing.
 
 
 ### Dispatch (sub-agent bridge)

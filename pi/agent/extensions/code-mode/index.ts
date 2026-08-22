@@ -72,7 +72,7 @@ function loadConfig(): CodeModeConfig {
 	}
 }
 
-const COLLAPSE = `You are in CODE MODE. run_code is the ONLY tool you may call directly. To perform any other action (read files, run commands, edit files, search, list directories, etc.), write a single TypeScript program and pass it to run_code using the injected SDK above. Compose multiple steps into one program to save round-trips. Do NOT call individual tools like read/bash/edit/write/grep/ls/find directly — they are not available in this mode.`;
+const COLLAPSE = `You are in CODE MODE. run_code is the ONLY tool you may call directly. To perform any other action (read files, run commands, edit files, search, list directories, etc.), write a single TypeScript program and pass it to run_code using the injected SDK above. Compose multiple steps into one program to save round-trips. Do NOT call individual tools like read/bash/edit/write/grep/ls/find/dispatch directly — they are not available in this mode. Inside a run_code program you may use Node builtins via require(...) (e.g. const fs = require("node:fs")) and spawn a native-mode sub-agent (which CAN call every tool) via await tools.dispatch({ agent, prompt }). If a program fails, fix it and retry via run_code — do not fall back to direct tool calls.`;
 
 function truncateStr(s: string, maxBytes: number): string {
 	if (!s) return s;
@@ -338,7 +338,7 @@ export default function (pi: ExtensionAPI) {
 				});
 
 			const workerPath = path.join(EXT_DIR, "worker.ts");
-			const worker = new Worker(workerPath, { workerData: { code } });
+			const worker = new Worker(workerPath, { workerData: { code, cwd } });
 
 			const logs: string[] = [];
 			let settled = false;
@@ -464,7 +464,9 @@ export default function (pi: ExtensionAPI) {
 				};
 			} catch (err) {
 				const message = err instanceof Error ? err.message : String(err);
-				const contentText = buildResultText(logs, null, message);
+				const contentText =
+					buildResultText(logs, null, message) +
+					"\n\n[recovery] Fix the program and retry via run_code (Node builtins work with require, e.g. const fs = require(\"node:fs\")); to hand the task to a native-mode sub-agent instead: await tools.dispatch({ agent: \"pi\", prompt: \"...\" })";
 				return {
 					content: [{ type: "text", text: contentText }],
 					isError: true,
