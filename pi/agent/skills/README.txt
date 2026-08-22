@@ -21,9 +21,9 @@ Skills are loaded from multiple locations in order:
 | Field | Value |
 |-------|-------|
 | **Source** | Refined from [sanyuan0704/sanyuan-skills](https://github.com/sanyuan0704/sanyuan-skills) + [mattpocock/skills](https://github.com/mattpocock/skills) code-review |
-| **Description** | Two-axis structured code review (Standards + Spec), combining both sources' review axes and further refined |
+| **Description** | Multi-axis structured code review (Standards + Spec + Documentation Consistency), combining both sources' review axes and further refined |
 | **Installed** | 2026-07-10 |
-| **Adjustments** | Merged review dimensions from both sources; added code-quality, removal-plan, security, and SOLID checklists as references. 2026-07-31: added `disable-model-invocation: true` (no model auto-invocation; explicit trigger only) |
+| **Adjustments** | Merged review dimensions from both sources; added code-quality, removal-plan, security, and SOLID checklists as references. 2026-07-31: added `disable-model-invocation: true` (no model auto-invocation; explicit trigger only). 2026-08-22: extended from two-axis to multi-axis — added Documentation Consistency as a third independent sub-agent (user-facing docs vs diff / vs each other / vs manifests); rewrote spawn as parallel background dispatch via the `dispatch` tool (fire-and-forget, no sleep-and-poll, timeout/retry belong to the dispatch tool); added a bounded trigger (default diff-signal gate + user "force doc check" override); main agent is the sole dispatcher; sub-agents are static workflows (no nested dispatch). Standards / Spec sub-agent prompts kept unchanged (extension, not refactor) |
 | **Upstream** | https://github.com/sanyuan0704/sanyuan-skills / https://github.com/mattpocock/skills |
 
 ### `explore-codebase`
