@@ -161,6 +161,7 @@ export default function (pi: ExtensionAPI) {
 			background: Type.Optional(Type.Boolean({ description: "Return immediately with a sessionId (default false)." })),
 			timeout: Type.Optional(Type.Number({ description: "Timeout in seconds (default 600)." })),
 			reason: Type.Optional(Type.String({ description: "UI label / reason." })),
+			model: Type.Optional(Type.String({ description: "Model override injected as --model <value> before the prompt (e.g. deepseek-v4-flash)." })),
 			env: Type.Optional(Type.Record(Type.String(), Type.String({ description: "Environment variables for the sub-agent process." }))),
 		}),
 
@@ -170,6 +171,7 @@ export default function (pi: ExtensionAPI) {
 			const p = params as {
 				agent?: string;
 				prompt?: string;
+				model?: string;
 				sessionId?: string;
 				kill?: boolean;
 				background?: boolean;
@@ -223,7 +225,7 @@ export default function (pi: ExtensionAPI) {
 				};
 			}
 
-			const resolved = resolveCommand(config, p.agent, p.prompt);
+			const resolved = resolveCommand(config, p.agent, p.prompt, p.model);
 			if (!resolved.ok) {
 				return { content: [{ type: "text", text: resolved.error }], isError: true, details: {} };
 			}

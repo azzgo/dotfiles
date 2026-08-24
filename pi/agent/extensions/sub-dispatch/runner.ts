@@ -68,7 +68,7 @@ export type ResolvedCommand =
 	| { ok: true; executable: string; args: string[] }
 	| { ok: false; error: string };
 
-export function resolveCommand(config: DispatchConfig, agent: string, prompt: string): ResolvedCommand {
+export function resolveCommand(config: DispatchConfig, agent: string, prompt: string, model?: string): ResolvedCommand {
 	if (!prompt || !prompt.trim()) return { ok: false, error: "Dispatch prompt cannot be empty." };
 	// Own-property lookups only: an agent name like "constructor" must not resolve through Object.prototype.
 	const executable = Object.hasOwn(config.commands, agent) ? config.commands[agent] : undefined;
@@ -77,7 +77,8 @@ export function resolveCommand(config: DispatchConfig, agent: string, prompt: st
 		return { ok: false, error: `Unknown dispatch agent: ${agent}. Configured agents: ${configured}.` };
 	}
 	const defaultArgs = Object.hasOwn(config.defaultArgs, agent) ? [...config.defaultArgs[agent]] : [];
-	return { ok: true, executable, args: [...defaultArgs, prompt] };
+	const modelArgs: string[] = model ? ["--model", model] : [];
+	return { ok: true, executable, args: [...defaultArgs, ...modelArgs, prompt] };
 }
 
 /* ── Spawn ──────────────────────────────────────────────────────────────── */
@@ -178,14 +179,15 @@ export function spawnCommand(
 export async function runDispatch(opts: {
 	agent: string;
 	prompt: string;
+	model?: string;
 	timeoutSec?: number;
 	cwd?: string;
 	signal?: AbortSignal;
 	env?: Record<string, string>;
-	}): Promise<RunDispatchResult> { 
+}): Promise<RunDispatchResult> {
 	const config = loadConfig();
 	const cwd = opts.cwd ?? process.cwd();
-	const resolved = resolveCommand(config, opts.agent, opts.prompt);
+	const resolved = resolveCommand(config, opts.agent, opts.prompt, opts.model);
 	if (!resolved.ok) return { ok: false, exitCode: null, output: resolved.error };
 
 	const effectiveCwd = cwd;

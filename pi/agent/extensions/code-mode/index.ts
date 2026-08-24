@@ -210,6 +210,7 @@ export default function (pi: ExtensionAPI) {
 				properties: {
 					agent: { type: "string", description: "Spawning agent: pi/codex/claude/cursor or a custom key from sub-dispatch config.commands." },
 					prompt: { type: "string", description: "Task prompt passed to the sub-agent." },
+					model: { type: "string", description: "Optional model override injected as --model <value> before the prompt (e.g. \"deepseek-v4-flash\")." },
 					timeout: { type: "number", description: "Timeout in seconds (default 600)." },
 				},
 			},
@@ -429,7 +430,7 @@ export default function (pi: ExtensionAPI) {
 			// Foreground sub-agent spawn; pauses the run clock for its duration.
 			let inFlightDispatches = 0;
 			const execDispatch = async (args: unknown) => {
-				const p = (args ?? {}) as { agent?: string; prompt?: string; timeout?: number };
+				const p = (args ?? {}) as { agent?: string; prompt?: string; model?: string; timeout?: number };
 				if (typeof p.agent !== "string" || !p.agent.trim()) throw new Error("dispatch: 'agent' is required");
 				if (typeof p.prompt !== "string" || !p.prompt.trim()) throw new Error("dispatch: 'prompt' is required");
 				const timeoutSec = typeof p.timeout === "number" && p.timeout > 0 ? p.timeout : undefined;
@@ -439,6 +440,7 @@ export default function (pi: ExtensionAPI) {
 					const result = await runDispatch({
 						agent: p.agent,
 						prompt: p.prompt,
+						model: p.model,
 						timeoutSec,
 						cwd,
 						signal: runAbort.signal,
