@@ -5,6 +5,8 @@ font-size = 16
 macos-option-as-alt=true
 font-feature=-calt
 quick-terminal-size = 50%
+# theme = Rose Pine Dawn
+theme = Catppuccin Macchiato
 
 # Global Keybinds
 keybind = super+v=unbind
