@@ -74,6 +74,21 @@ function emit(value: unknown): void {
 	port.postMessage({ kind: "emit", value });
 }
 
+/** Re-fetch a byte slice of a past run_code call's persisted return value
+ * (ADR 0003). Handled host-side as a pure session read — bypasses the
+ * sub-call scheduler and the details.calls audit. */
+function fetchResult(
+	toolCallId: string,
+	offset: number,
+	size?: number,
+): Promise<{ totalBytes: number; content: string; nextOffset: number | null }> {
+	const id = nextId++;
+	return new Promise((resolve, reject) => {
+		pending.set(id, { resolve, reject, name: "fetchResult" });
+		port.postMessage({ kind: "fetch", id, toolCallId, offset, size });
+	});
+}
+
 function fmt(v: unknown): string {
 	if (v === undefined) return "undefined";
 	if (typeof v === "string") return v;
@@ -178,8 +193,8 @@ function withLastExpressionReturn(code: string): string {
 async function run(): Promise<void> {
 	const body = "return (async () => {\n" + withLastExpressionReturn(code) + "\n})();";
 	// eslint-disable-next-line no-new-func
-	const fn = new Function("tools", "emit", "console", "require", "__dirname", "__filename", body);
-	const value = await fn(tools, emit, consoleShim, nodeRequire, programDirname, programFilename);
+	const fn = new Function("tools", "emit", "fetchResult", "console", "require", "__dirname", "__filename", body);
+	const value = await fn(tools, emit, fetchResult, consoleShim, nodeRequire, programDirname, programFilename);
 	port.postMessage({ kind: "done", value: value === undefined ? null : value });
 }
 

@@ -85,6 +85,43 @@ function truncateStr(s: string, maxBytes: number): string {
 	return out + `\n… [truncated at ${maxBytes} bytes]`;
 }
 
+/** Truncate the serialized return value, embedding a re-fetch address (ADR 0003).
+ * The visible content is exactly bytes [0, maxBytes) — the marker points the
+ * model at fetchResult with the continuation offset and the total size. */
+function truncateValueStr(s: string, maxBytes: number, toolCallId: string): string {
+	if (!s) return s;
+	if (Buffer.byteLength(s, "utf-8") <= maxBytes) return s;
+	let out = "";
+	for (const ch of s) {
+		if (Buffer.byteLength(out + ch, "utf-8") > maxBytes) break;
+		out += ch;
+	}
+	const total = Buffer.byteLength(s, "utf-8");
+	return (
+		out +
+			`\n… [truncated at ${maxBytes} of ${total} bytes — continue with fetchResult(${JSON.stringify(toolCallId)}, ${maxBytes})]`
+	);
+}
+
+/** Byte-accurate slice that never splits a UTF-8 sequence — keeps offsets
+ * aligned with truncateValueStr's byte semantics. */
+function byteSlice(
+	s: string,
+	offset: number,
+	size: number,
+): { totalBytes: number; content: string; nextOffset: number | null } {
+	const buf = Buffer.from(s, "utf-8");
+	const totalBytes = buf.length;
+	if (offset >= totalBytes) return { totalBytes, content: "", nextOffset: null };
+	let end = Math.min(offset + size, totalBytes);
+	while (end > offset && (buf[end] & 0xc0) === 0x80) end--;
+	return {
+		totalBytes,
+		content: buf.subarray(offset, end).toString("utf-8"),
+		nextOffset: end < totalBytes ? end : null,
+	};
+}
+
 function safeStringify(value: unknown): string {
 	try {
 		return JSON.stringify(value, null, 2);
@@ -217,7 +254,7 @@ export default function (pi: ExtensionAPI) {
 		});
 		let sdk = "";
 		if (sdkInfos.length > 0) {
-			sdk = "\n\n" + generateSdk(sdkInfos);
+				sdk = "\n\n" + generateSdk(sdkInfos, loadConfig().maxResultBytes);
 		}
 		return { systemPrompt: event.systemPrompt + sdk + "\n\n" + COLLAPSE };
 	});
@@ -244,7 +281,7 @@ export default function (pi: ExtensionAPI) {
 			),
 		}),
 
-		async execute(_toolCallId, params, signal, onUpdate, ctx) {
+		async execute(toolCallId, params, signal, onUpdate, ctx) {
 			const { code, description } = params as { code: string; description?: string };
 
 			if (!codeModeOn) {
@@ -338,7 +375,45 @@ export default function (pi: ExtensionAPI) {
 					return isDispatch ? result : textContent;
 				});
 
-			const workerPath = path.join(EXT_DIR, "worker.ts");
+
+		// ── result re-fetch (ADR 0003) ──
+		// Byte-slice the persisted (untruncated) return value of a past run_code call
+		// straight out of the session store (ctx.sessionManager). Pure read: no
+		// re-execution, no TaskPool slot, no details.calls audit entry.
+		const handleFetch = async (msg: any): Promise<unknown> => {
+			const toolCallId = msg?.toolCallId;
+			const offset = msg?.offset;
+			const size = msg?.size;
+			if (typeof toolCallId !== "string" || !toolCallId.trim()) {
+				throw new Error("fetchResult: 'toolCallId' is required");
+			}
+			if (typeof offset !== "number" || !Number.isInteger(offset) || offset < 0) {
+				throw new Error("fetchResult: 'offset' must be a non-negative integer");
+			}
+			const requested = size === undefined ? cfg.maxResultBytes : size;
+			if (typeof requested !== "number" || !Number.isInteger(requested) || requested <= 0) {
+				throw new Error("fetchResult: 'size' must be a positive integer");
+			}
+			// getEntries() returns the whole entry tree — fetch keeps working across
+			// compaction and reload, since the JSONL only ever appends.
+			const entries: any[] = ctx.sessionManager?.getEntries?.() ?? [];
+			const entry = entries.find(
+				(e) =>
+					e?.type === "message" &&
+					e?.message?.role === "toolResult" &&
+					e?.message?.toolName === "run_code" &&
+					e?.message?.toolCallId === toolCallId,
+			);
+			const details = entry?.message?.details;
+			if (!details || !("value" in details)) {
+				throw new Error(
+					`fetchResult: no run_code result retained for ${toolCallId} (not found in session, or the run errored before producing a value)`,
+				);
+			}
+			return byteSlice(safeStringify(details.value), offset, Math.min(requested, cfg.maxResultBytes));
+		};
+
+		const workerPath = path.join(EXT_DIR, "worker.ts");
 			const worker = new Worker(workerPath, { workerData: { code, cwd } });
 
 			const logs: string[] = [];
@@ -353,16 +428,28 @@ export default function (pi: ExtensionAPI) {
 			worker.on("message", (msg: any) => {
 				if (settled || !msg) return;
 				if (msg.kind === "call") {
-					const p = execSubCall(msg.name, msg.args)
-						.then((value) => {
-							if (!worker.terminated) worker.postMessage({ kind: "reply", id: msg.id, ok: true, value });
-						})
-						.catch((e: any) => {
-							if (!worker.terminated)
-								worker.postMessage({ kind: "reply", id: msg.id, ok: false, message: e?.message ?? String(e) });
-						});
-					activeSubCalls.push(p);
-				} else if (msg.kind === "emit") {
+				const p = execSubCall(msg.name, msg.args)
+					.then((value) => {
+						if (!worker.terminated) worker.postMessage({ kind: "reply", id: msg.id, ok: true, value });
+					})
+					.catch((e: any) => {
+						if (!worker.terminated)
+							worker.postMessage({ kind: "reply", id: msg.id, ok: false, message: e?.message ?? String(e) });
+					});
+				activeSubCalls.push(p);
+			} else if (msg.kind === "fetch") {
+				// Result re-fetch (ADR 0003): pure session read — bypasses the TaskPool
+				// and the details.calls audit; it is not a side-effecting tool call.
+				handleFetch(msg).then(
+					(value) => {
+						if (!worker.terminated) worker.postMessage({ kind: "reply", id: msg.id, ok: true, value });
+					},
+					(e: any) => {
+						if (!worker.terminated)
+							worker.postMessage({ kind: "reply", id: msg.id, ok: false, message: e?.message ?? String(e) });
+					},
+				);
+			} else if (msg.kind === "emit") {
 					const line = fmtEmit(msg.value);
 					logs.push(line);
 					onUpdate?.({ content: [{ type: "text", text: line }] });
@@ -458,7 +545,7 @@ export default function (pi: ExtensionAPI) {
 				const { value, logs: outLogs } = await done;
 				// Drain any fire-and-forget sub-calls so file mutations settle before we return.
 				await Promise.allSettled(activeSubCalls);
-				const valueStr = truncateStr(safeStringify(value), cfg.maxResultBytes);
+				const valueStr = truncateValueStr(safeStringify(value), cfg.maxResultBytes, toolCallId);
 				const contentText = buildResultText(outLogs, valueStr, null);
 				return {
 					content: [{ type: "text", text: contentText }],
