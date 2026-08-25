@@ -282,3 +282,11 @@ _Avoid_: 在 skill 内硬编码 pi 的 spawn 参数、重复配置
 **Dispatch-oriented Skill（派发型 skill）**:
 通过后台派发编排子代理的 skill（如 `impl-with-spawn`、`explore-codebase`）。它必须内嵌等待纪律与 `autoExitOnQuiet: false` 要求，而非假定读者已知。
 _Avoid_: 半套 dispatch 模板、缺失等待纪律小节
+
+## Code Mode（工具折叠模式）
+
+pi 的 code-mode 扩展把工具目录折叠为单一 `run_code` 工具时的工作约定。
+
+**Result Re-fetch（结果续读）**:
+从 session 持久化的工具结果中按需取回被截断的 run_code 返回值分段。恢复路径无副作用重放——取段是纯读，区别于重跑程序。
+_Avoid_: result pagination（暗示主动分页源）、re-run（重放副作用）、cache（无缓存语义）

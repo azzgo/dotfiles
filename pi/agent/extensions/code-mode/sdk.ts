@@ -88,7 +88,8 @@ function toolDecl(info: ToolSdkInfo): string {
 	return lines.join("\n");
 }
 
-const SDK_HEADER = `/**
+function sdkHeader(maxResultBytes: number): string {
+	return `/**
  * CODE MODE SDK — TypeScript bindings for tools callable inside run_code.
  *
  * Write ONE async TypeScript program and pass it as \`code\` to run_code
@@ -120,12 +121,24 @@ const SDK_HEADER = `/**
  *   paths in Node API calls.
  * - Only what you \`emit()\` / \`console.log\` and your return value are shown
  *   to the model. Intermediate tool results are NOT echoed back.
+ * - The return value is byte-capped (maxResultBytes = ${maxResultBytes}). When
+ *   truncated, the marker carries the total size and this call's toolCallId —
+ *   resume inside a later program with fetchResult(toolCallId, offset, size?),
+ *   which returns { totalBytes, content, nextOffset }: each slice is at most
+ *   ${maxResultBytes} bytes, nextOffset === null marks the end, and
+ *   offset >= totalBytes yields an empty slice (not an error). Slices are pure
+ *   reads of the persisted result — no side-effect replay. Deliver slices via
+ *   emit(); a slice returned as the program value can itself be truncated again.
+ * - For large results (multi-file aggregates, grep summaries) plan ahead:
+ *   self-check the size with Buffer.byteLength(JSON.stringify(v)) and emit()
+ *   in chunks of <= ${maxResultBytes} bytes instead of returning everything.
  * - Independent read-only calls may overlap under \`Promise.all([...])\`.
  * - A rejected tool call throws inside the program; wrap with try/catch to handle.
  * - Escape hatch: a dispatched agent (\`tools.dispatch\`) runs in NATIVE mode
  *   with every tool callable — hand a stuck task to it instead of retrying
  *   a failing program forever.
  */`;
+}
 
 /** Render the full SDK block for a set of tools. */
 /** Dedicated declaration for the `dispatch` sub-agent bridge (sub-dispatch). */
@@ -140,17 +153,26 @@ const DISPATCH_DECL = `  /** dispatch — spawn a sub-agent as a subprocess and 
    *   if (!r.ok) { emit("dispatch failed: " + r.output); return; }
    *   emit(r.output); // or extract/summarize from r.output */
   dispatch(args: { agent: string; prompt: string; timeout?: number }): Promise<{ ok: boolean; exitCode: number | null; output: string }>;`;
-export function generateSdk(tools: ToolSdkInfo[]): string {
+export function generateSdk(tools: ToolSdkInfo[], maxResultBytes: number): string {
 	const sorted = [...tools].sort((a, b) => a.name.localeCompare(b.name));
 	const decls = sorted.map((t) => (t.name === "dispatch" ? DISPATCH_DECL : toolDecl(t))).join("\n");
 	return [
-		SDK_HEADER,
+		sdkHeader(maxResultBytes),
 		"",
 		"declare const tools: {",
 		decls,
 		"};",
 		"",
 		"declare function emit(value: unknown): void;",
+		"",
+		"/** Byte-slice the persisted (possibly truncated) return value of a past run_code call.",
+		" * Pure read of the session store — does NOT re-run the program. size is clamped",
+		" * to the result byte cap; nextOffset === null marks the end. */",
+		"declare function fetchResult(",
+		"  toolCallId: string,",
+		"  offset: number,",
+		"  size?: number,",
+		"): Promise<{ totalBytes: number; content: string; nextOffset: number | null }>;",
 		"",
 	].join("\n");
 }

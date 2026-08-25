@@ -30,6 +30,10 @@ Requires Node >= 23.6 (native TS type-stripping for the worker).
   - End with `return <value>;` (use `return { ... };` for object results), or
     let a final simple expression be returned.
   - Stream intermediate output with `emit(value)` / `console.log`.
+  - `fetchResult(toolCallId, offset, size?)` (host function, like `emit`): byte-slice
+    the persisted full return value of a past `run_code` call whose result was
+    truncated — `{ totalBytes, content, nextOffset }`; pure read from the session
+    store, no side-effect replay (ADR 0003).
   - Sub-calls: `await tools.bash({ command: "..." })` — runs the real tool
     host-side (real execute, shared `withFileMutationQueue`), returns text output.
   - Node builtins: `require(...)` is injected into the program (rooted at the
@@ -73,7 +77,8 @@ return { impl, review };
   event-driven, no polling). Wall-clock timeout + signal abort terminate the worker.
 - **Result selectivity**: only `emit`/`console.log` output + the return value go
   to the model; every sub-call's full result is recorded in `details.calls`.
-  Image-bearing sub-results are kept host-side only.
+  Image-bearing sub-results are kept host-side only. Truncated return values are
+  re-fetchable in-program via the `fetchResult()` host function (ADR 0003).
 - **Bounded concurrency**: `Promise.all` over independent calls overlaps up to
   `maxConcurrent` (default 10) via a FIFO task pool (`scheduler.ts`).
 
@@ -93,7 +98,7 @@ return { impl, review };
   "blacklist": ["mcpScript"],   // tools never exposed in SDK nor callable
   "timeoutMs": 60000,           // wall-clock cap per run (kills infinite loops)
   "maxConcurrent": 10,          // in-flight sub-call cap
-  "maxResultBytes": 8192,       // return value shown to the model (byte cap)
+  "maxResultBytes": 8192,       // return value shown to the model (byte cap; also the fetchResult slice cap)
   "maxRecordBytes": 50000       // per-sub-call content kept in details.calls
 }
 ```
