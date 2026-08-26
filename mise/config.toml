@@ -1,0 +1,22 @@
+# Dev tools managed by mise (https://mise.jdx.dev)
+# Usage: mise install
+
+[tools]
+node = "26"
+python = "3.14"
+uv = "latest"
+pnpm = "latest"
+
+ripgrep = "latest"
+fzf = "latest"
+neovim = "stable"
+delta = "latest"
+fx = "latest"
+jq = "latest"
+lazygit = "latest"
+starship = "latest"
+tmux = "latest"
+
+# npm global packages (mise npm backend uses --ignore-scripts by default)
+"npm:@tailwindcss/language-server" = "latest"
+"npm:@earendil-works/pi-coding-agent" = "latest"

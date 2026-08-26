@@ -178,12 +178,26 @@ install-herdr:
     mkdir -p ~/.config/herdr
     ln -sf {{ dotfiles_dir }}/herdr/config.toml ~/.config/herdr/config.toml
     echo "✅ herdr configuration linked (logs/session state stays local)"
+# Install mise (dev tool version manager) configuration
+# Link config.toml and install all declared tools
+install-mise:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "🚀 Linking mise configuration..."
+
+    mkdir -p ~/.config/mise
+    ln -sf {{ dotfiles_dir }}/mise/config.toml ~/.config/mise/config.toml
+
+    echo "📦 Installing tools via mise (this may take a while)..."
+    mise install
+
+    echo "✅ mise configuration linked and tools installed"
 
 # Alias for install-pi (link Pi shared config)
 link: install-pi
 
 # Install all configurations
-install-all: install-neovim install-vim install-shell install-terminals install-herdr
+install-all: install-mise install-neovim install-vim install-shell install-terminals install-herdr
     echo "🎉 All configurations installed!"
 
 # Development helpers
@@ -221,4 +235,4 @@ info:
     [ -d {{ dotfiles_dir }}/alacritty ] && echo "  ✓ Alacritty"
     [ -d {{ dotfiles_dir }}/ghostty ] && echo "  ✓ Ghostty"
     [ -d {{ dotfiles_dir }}/herdr ] && echo "  ✓ herdr"
-    [ -d {{ dotfiles_dir }}/pi ] && echo "  ✓ Pi shared config"
+    [ -d {{ dotfiles_dir }}/mise ] && echo "  ✓ mise"
