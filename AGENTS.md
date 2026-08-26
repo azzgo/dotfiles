@@ -53,7 +53,7 @@ Pi 相关约定补充：
 - `shell/`：Shell 配置
 - `alacritty/` / `ghostty/`：终端配置
 - `pi/`：Pi 共享配置
-- `scripts/`：辅助脚本
+- `mise/`：mise 工具版本管理配置（全局 CLI 工具、node/python/uv、npm 全局包）
 
 ## 给后续代理的提醒
 
