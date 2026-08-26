@@ -67,6 +67,19 @@ return { impl, review };
   (e.g. a pure infinite loop) still accrues toward `timeoutMs` and is killed.
 - Esc / outer signal abort propagates to the child process group via
   `runAbort.signal` → `runDispatch`.
+
+### Readonly-mode collaboration
+
+When the sibling `readonly-mode` extension is enabled, every `tools.*`
+sub-call is first authorized through its shared guard
+(`../readonly-mode/guard.ts` — a `Symbol.for` + `globalThis`
+cross-extension singleton); blocked calls throw inside the run_code
+program with the readonly reason. Scope: the guard constrains `tools.*`
+sub-calls only — direct Node builtins inside a program (e.g.
+`require("node:fs")` writes) and `tools.dispatch` sub-agents
+(independent sessions) are NOT restricted, matching code mode's
+trusted-escape-hatch semantics (`docs/adr/0004-readonly-guard-cross-extension.md`).
+
 ## Design
 
 - **Presentation ≠ permission**: folding only hides tools; sub-calls execute the
@@ -88,14 +101,13 @@ return { impl, review };
 - `worker.ts` — worker bootstrap (event-driven message bridge, no polling).
 - `sdk.ts` — JSON-Schema → TS type projection + SDK text generation.
 - `scheduler.ts` — bounded-concurrency sub-call pool.
-- `config.json` — blacklist / timeout / concurrency / size caps.
+- `config.json` — timeout / concurrency / size caps.
 
 ## Config (`config.json`)
 
 ```jsonc
 {
   "defaultOn": false,          // auto-enable code mode at session start
-  "blacklist": ["mcpScript"],   // tools never exposed in SDK nor callable
   "timeoutMs": 60000,           // wall-clock cap per run (kills infinite loops)
   "maxConcurrent": 10,          // in-flight sub-call cap
   "maxResultBytes": 8192,       // return value shown to the model (byte cap; also the fetchResult slice cap)

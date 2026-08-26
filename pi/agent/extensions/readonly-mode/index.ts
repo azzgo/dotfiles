@@ -13,9 +13,9 @@
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { CONTEXT_ENTRY, READONLY_CMD, READONLY_FLAG } from './constants.js';
 import { ReadonlyController } from './controller.js';
+import { readonlyGuard } from './guard.js';
 import { getReadonlyInstructions } from './prompt.js';
 import type { StateEntry } from './state.js';
-import { isSafeCommand } from './utils.js';
 
 export default function readonlyMode(pi: ExtensionAPI): void {
   const readonlyCtrl = new ReadonlyController(pi);
@@ -49,25 +49,7 @@ export default function readonlyMode(pi: ExtensionAPI): void {
 
   // ── Block destructive tool calls ──────────────────────────────
   pi.on('tool_call', async (event) => {
-    if (!readonlyCtrl.isEnabled()) return;
-
-    if (event.toolName === 'edit' || event.toolName === 'write') {
-      return {
-        block: true,
-        reason:
-          'Read-only mode: file modifications are not allowed. Use /readonly to exit read-only mode first.',
-      };
-    }
-
-    if (event.toolName === 'bash') {
-      const command = event.input.command as string;
-      if (!isSafeCommand(command)) {
-        return {
-          block: true,
-          reason: `Read-only mode: command blocked. Only read-only commands are allowed.\nCommand: ${command}\nUse /readonly to exit read-only mode first.`,
-        };
-      }
-    }
+    return readonlyGuard.authorize(event.toolName, (event.input ?? {}) as Record<string, unknown>) ?? undefined;
   });
 
   // ── Inject context message on each turn ───────────────────────

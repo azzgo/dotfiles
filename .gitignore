@@ -19,3 +19,6 @@ pi/agent/models.json
 pi/agent/auth.json
 pi/**/*.local.json
 .pi/
+
+# misc
+.workbuddy/
