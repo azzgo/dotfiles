@@ -12,7 +12,7 @@
  *   worker.ts    worker bootstrap (event-driven message bridge, no polling)
  *   sdk.ts       JSON-Schema -> TS type projection + SDK text
  *   scheduler.ts bounded-concurrency sub-call pool
- *   config.json  blacklist / timeout / concurrency / size caps
+ *   config.json  timeout / concurrency / size caps
  */
 import type { ExtensionAPI, ExtensionContext, ToolInfo } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
@@ -32,6 +32,7 @@ import {
   createWriteToolDefinition,
 } from "@earendil-works/pi-coding-agent";
 import { runDispatch } from "../sub-dispatch/runner.js";
+import { readonlyGuard } from "../readonly-mode/guard.js";
 
 
 const EXT_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -41,7 +42,6 @@ const BRIDGED = ["read", "bash", "edit", "write", "grep", "find", "ls", "dispatc
 
 interface CodeModeConfig {
 	defaultOn: boolean;
-	blacklist: string[];
 	timeoutMs: number;
 	maxConcurrent: number;
 	maxResultBytes: number;
@@ -50,7 +50,6 @@ interface CodeModeConfig {
 
 const DEFAULT_CONFIG: CodeModeConfig = {
 	defaultOn: false,
-	blacklist: ["mcpScript"],
 	timeoutMs: 60000,
 	maxConcurrent: 10,
 	maxResultBytes: 8192,
@@ -65,7 +64,6 @@ function loadConfig(): CodeModeConfig {
 			...DEFAULT_CONFIG,
 			...parsed,
 			defaultOn: typeof parsed.defaultOn === "boolean" ? parsed.defaultOn : DEFAULT_CONFIG.defaultOn,
-			blacklist: Array.isArray(parsed.blacklist) ? parsed.blacklist : DEFAULT_CONFIG.blacklist,
 		};
 	} catch {
 		return DEFAULT_CONFIG;
@@ -147,7 +145,6 @@ export default function (pi: ExtensionAPI) {
 	let savedActiveTools: string[] | null = null;
 	let seq = 0;
 
-	const getBlacklistSet = () => new Set([...loadConfig().blacklist, "run_code"]);
 	// ── footer indicator + status text ──
 	const updateFooter = (ctx: ExtensionContext): void => {
 		if (!ctx.hasUI) return;
@@ -179,13 +176,9 @@ export default function (pi: ExtensionAPI) {
 	/** Tools the run_code bridge can actually execute (SDK + bridge stay in sync). */
 	function getBridgedToolInfos(): ToolInfo[] {
 		const all = pi.getAllTools();
-		const blacklist = getBlacklistSet();
 		const universe = savedActiveTools && savedActiveTools.length ? new Set(savedActiveTools) : null;
 		return all.filter(
-			(t) =>
-				BRIDGED.includes(t.name) &&
-				!blacklist.has(t.name) &&
-				(!universe || universe.has(t.name)),
+			(t) => BRIDGED.includes(t.name) && (!universe || universe.has(t.name)),
 		);
 	}
 
@@ -235,23 +228,25 @@ export default function (pi: ExtensionAPI) {
 			description: t.description,
 			parameters: t.parameters,
 		}));
-		// dispatch is not a pi built-in tool, so it never appears in getBridgedToolInfos();
-		// inject it into the SDK manually (wired to runDispatch in execute).
-		sdkInfos.push({
-			name: "dispatch",
-			description:
-				"Spawn a sub-agent (pi/codex/claude/cursor/custom) as a subprocess and await its completion (foreground). Resolves to a structured object { ok, exitCode, output } (output tail-truncated).",
-			parameters: {
-				type: "object",
-				required: ["agent", "prompt"],
-				properties: {
-					agent: { type: "string", description: "Spawning agent: pi/codex/claude/cursor or a custom key from sub-dispatch config.commands." },
-					prompt: { type: "string", description: "Task prompt passed to the sub-agent." },
-					model: { type: "string", description: "Optional model override injected as --model <value> before the prompt (e.g. \"deepseek-v4-flash\")." },
-					timeout: { type: "number", description: "Timeout in seconds (default 600)." },
+		// dispatch is registered by sub-dispatch, so it DOES appear in getAllTools()
+		// when sub-dispatch is loaded; inject the manual schema only as a fallback.
+		if (!sdkInfos.some((t) => t.name === "dispatch")) {
+			sdkInfos.push({
+				name: "dispatch",
+				description:
+					"Spawn a sub-agent (pi/codex/claude/cursor/custom) as a subprocess and await its completion (foreground). Resolves to a structured object { ok, exitCode, output } (output tail-truncated).",
+				parameters: {
+					type: "object",
+					required: ["agent", "prompt"],
+					properties: {
+						agent: { type: "string", description: "Spawning agent: pi/codex/claude/cursor or a custom key from sub-dispatch config.commands." },
+						prompt: { type: "string", description: "Task prompt passed to the sub-agent." },
+						model: { type: "string", description: "Optional model override injected as --model <value> before the prompt (e.g. \"deepseek-v4-flash\")." },
+						timeout: { type: "number", description: "Timeout in seconds (default 600)." },
+					},
 				},
-			},
-		});
+			});
+		}
 		let sdk = "";
 		if (sdkInfos.length > 0) {
 				sdk = "\n\n" + generateSdk(sdkInfos, loadConfig().maxResultBytes);
@@ -322,7 +317,6 @@ export default function (pi: ExtensionAPI) {
 				find: createFindToolDefinition(cwd),
 				ls: createLsToolDefinition(cwd),
 			};
-			const blacklist = getBlacklistSet();
 
 			const pool = new TaskPool(cfg.maxConcurrent);
 			const calls: Array<Record<string, unknown>> = [];
@@ -339,13 +333,17 @@ export default function (pi: ExtensionAPI) {
 					let result: any;
 					let error: unknown = null;
 					try {
+						const verdict = readonlyGuard.authorize(name, (args ?? {}) as Record<string, unknown>);
+						if (verdict) {
+							throw new Error(verdict.reason);
+						}
 						if (name === "dispatch") {
 							// dispatch resolves to a structured object {ok, exitCode, output} so the
 							// model can read fields directly without JSON.parse.
 							result = await execDispatch(args);
 						} else {
 							const def = defs[name];
-							if (!def || blacklist.has(name)) {
+							if (!def) {
 								throw new Error(`Tool "${name}" is not callable inside code mode.`);
 							}
 							result = await def.execute(subId, args, runAbort.signal, undefined, ctx);
