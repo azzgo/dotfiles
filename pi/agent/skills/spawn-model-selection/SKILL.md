@@ -11,7 +11,7 @@ Single source of truth for picking which model to run a spawned sub-agent on. Pr
 ## Decision rules
 
 1. **User explicitly names an agent** → use it directly.
-2. **User names a model** (e.g. `deepseek-v4-pro`) → use `pi --list-models` (then `agent --list-models` if present) to find which agent can run it. **pi runs every provider configured on pi and is the universal fallback.**
+2. **User names a model** (e.g. `deepseek-v4-pro`) → use `pi --list-models`  to find which agent can run it. **pi runs every provider configured on pi and is the universal fallback.**
 3. **Neither specified** → pick from what is **actually available on this machine**, cheapest-first, good-enough:
 
    - **Simple / mechanical tasks** (refactor, add tests, fix typo, commit messages, cleanup):
@@ -28,7 +28,6 @@ Single source of truth for picking which model to run a spawned sub-agent on. Pr
      - `deepseek-v4-pro` is no longer recommended by default after the price hike — use only when the user explicitly requests it.
      - `MiniMax-M3` is excluded — unstable instruction following.
      - Prefer `mimo-v2.5` for multimodal; it's the default fallback when no multimodal capability is needed either.
-   - Cursor-exclusive Composer models → `cursor` (`agent`); fall back to `pi` if unavailable.
 
 4. **Model runs on local ollama** → it shares this machine's GPU/CPU with the main agent. **Cap concurrent dispatches at 2.**
 
