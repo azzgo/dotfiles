@@ -78,7 +78,7 @@
 
 - Goals/Stories/Tasks 存 taskmd（`.pi/goals/`，tag 族 `goal` / `goal:story` / `goal:task`），Track 工作记忆存 `.pi/track/`（findings.md + progress.md）
 - 生命周期：phase 为准，status 为派生投影；one active 互斥
-- 命令族：`/goal`（set / run / list / status / review / abandon / ui）+ `/track`（new / update / status）
+- 命令族：`/goal`（set / commit / run / activate / list / status / review / pause / abandon / ui）+ `/track`（new / update / status；update 亦按 `PI_TRACK_UPDATE_EVERY` 周期自动执行）
 
 `planning-with-files` skill 与 `plan-mode` 已移除，不再单独管理。
 

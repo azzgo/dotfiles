@@ -7,8 +7,9 @@ separate from Wayfinder's (`.pi/goals/`, tag family `goal` / `goal:story` / `goa
 **Track** (`.pi/track/findings.md` + `progress.md`) is flat, non-taskmd working memory —
 never on the taskmd board.
 
-See `docs/adr/0001-goal-runtime-on-taskmd.md` (decision of record) and `CONTEXT.md`
-(glossary).
+See `docs/adr/0001-goal-runtime-on-taskmd.md` (taskmd decision of record),
+`docs/adr/0005-goal-runtime-command-driven-lifecycle.md` (command-driven lifecycle + auto Track)
+and `CONTEXT.md` (glossary).
 
 ## Prerequisites
 
@@ -26,16 +27,20 @@ See `docs/adr/0001-goal-runtime-on-taskmd.md` (decision of record) and `CONTEXT.
 ## Public commands
 
 - `/goal` — smart entry: inspect state and route
-- `/goal set <topic>` — one focused drafting session (4 stages → taskmd records)
-- `/goal run [nl]` — propose goal(s) from natural language; confirm to execute (multiple = serial queue); empty = model recommends
+- `/goal set <topic>` — one focused drafting session (4 stages → taskmd records; the model edits goal record files directly and hands off with `/goal commit`)
+- `/goal commit [<id>]` — validate contract + ≥1 Story + ≥1 Task, drafting → ready (default: the drafting goal)
+- `/goal run [nl]` — propose goal(s) from natural language; confirm by running `/goal activate` (empty = model recommends)
+- `/goal activate <id> [ids]` — activate a goal (exclusive active; extra ids form the serial queue)
 - `/goal list` — all goals, retained incl. completed/abandoned
 - `/goal status [<id>]` — goal detail
-- `/goal review [nl]` — propose a goal to send to verification from natural language (matches titles AND bare ids; routes by phase, incl. reopening a goal that reached complete without review); confirm to execute; empty = model recommends
+- `/goal review [<id>|nl]` — with an exact goal id: send straight to in-review and prompt the verifier dispatch; with natural language: propose which goal (matches titles AND bare ids; routes by phase, incl. reopening a goal that reached complete without review)
+- `/goal pause <reason>` — pause the active goal (real blocker)
 - `/goal abandon <id>` — abandon (terminal, stays on the board)
 - `/goal ui` — open the taskmd board for the goals store
-- `/track new` — reset/init the scratchpad (independent of Goals)
-- `/track update` — reconcile Track with current state
+- `/track new` — reset/init the scratchpad (independent of Goals; also runs **automatically** at the first conversation of a session when the track files are missing)
+- `/track update` — reconcile Track with current state; **also auto-runs every N turn ends** (`PI_TRACK_UPDATE_EVERY`, default 20, 0 = off), skipped while drafting or while a verifier is pending in-review
 - `/track status` — report Track state (no mutation)
+- *(automatic)* Track context — at the **first conversation of every session** the runtime injects the current Track (findings/progress tails + goal state) as persistent context, so working memory is always in play even when the user never types a `/track` command
 
 ## Model
 
@@ -49,11 +54,11 @@ See `docs/adr/0001-goal-runtime-on-taskmd.md` (decision of record) and `CONTEXT.
 (`drafting|ready → pending`, `active|paused → in-progress`, `in-review → in-review`,
 `complete → completed`, `abandoned → cancelled`).
 
-Flow: `drafting →(commit_goal)→ ready →(run)→ active →(request_goal_review)→ in-review
-→(verify_goal_result pass)→ complete` (sealed) or `→ active` (fail/rework).
-`active ↔ paused`; any → `abandoned`.
+Flow: `drafting →(/goal commit)→ ready →(/goal activate)→ active →(/goal review)→ in-review
+→(verifier pass)→ complete` (sealed) or `→ active` (fail/rework).
+`active ↔ paused` (`/goal pause` / interrupt); any → `abandoned`.
 
-Reopen: `complete →(request_goal_review)→ in-review` — recovers a goal that was marked
+Reopen: `complete →(/goal review)→ in-review` — recovers a goal that was marked
 complete without a verifier pass (bypass recovery); mints a fresh VERIFY_TOKEN.
 
 Invariants: one agent one focus; one `active` Goal exclusive (auto-pause);
@@ -61,18 +66,24 @@ Track never on the board; Goal → Track one-way; lifecycle truth in `phase`.
 
 ## Execution model
 
-**User-trigger-only**: the runtime injects **no** context into ordinary sessions and its
-tools carry no proactive model guidance. Every goal flow starts from an explicit `/goal`
-(or `/track`) command typed by the user. Agents (including Wayfinder) may only **suggest
-the user run** a `/goal ...` command — they never invoke goal tools on their own. Once a
-user-started run is active, wake-up is **event-driven**: after a turn that made progress
-and launched no background sub-agents the orchestrator is immediately re-triggered to keep
-driving; while leaf sub-agents are in flight the runtime stays silent — their **sub-dispatch
-completion notifications** (`triggerTurn`) are the wake-ups (no sleep/poll). This continues
-until the goal reaches a terminal phase.
+**Command-driven lifecycle, auto-loaded Track**: goal lifecycle stays strictly user-triggered —
+the orchestrating session registers **no goal tools at all** (the model cannot see or call
+them), every goal flow starts from an explicit `/goal` command typed by the user, and every
+lifecycle transition runs inside a command handler (deterministic validation + Track side
+effects). Agents (including Wayfinder) may only **suggest the user run** a `/goal ...`
+command. **Track is the one auto surface**: at the first conversation of a session it is
+auto-initialized when missing and injected as persistent context, and `/track update`
+re-runs every N turn ends (see above).
+run is active, wake-up is **event-driven**: after a turn that made progress and launched
+no background sub-agents the orchestrator is immediately re-triggered to keep driving;
+while leaf sub-agents are in flight the runtime stays silent — their **sub-dispatch
+completion notifications** (`triggerTurn`) are the wake-ups (no sleep/poll). This
+continues until the goal reaches a terminal phase.
 
-- `/goal run` activates the goal (auto-pauses any other active goal), auto-resets Track,
-  and sends the orchestrator prompt with the task dependency graph + tiers injected.
+- `/goal activate <id>` activates the goal (auto-pauses any other active goal), auto-resets
+  Track, and sends the orchestrator prompt with the task dependency graph + tiers injected.
+- When the orchestrator finishes (or hits a blocker), it stops and tells the user to run
+  `/goal review <id>` (or `/goal pause <reason>`) — the transition itself is the command's job.
 - The orchestrator is the **sole Track writer**. Independent Tasks (same tier, no hard dep)
   fan out via `impl-with-spawn` leaf agents — `dispatch` background dispatch (`background: true`)
   with the child marker set via the dispatch env parameter:
@@ -80,9 +91,11 @@ until the goal reaches a terminal phase.
   Child agents must be **overlay-silent**, never write Track and never touch goal state.
 - Completion is gated by an **independent read-only verifier sub-agent** (also dispatched
   overlay-silent with `PI_GOAL_RUNTIME_CHILD=1`), which reads the Goal/Stories/Tasks + Track,
-  checks acceptance criteria, and resolves `in-review` via `verify_goal_result`.
-- `verify_goal_result` is **token-governed**: every entry into `in-review` (`request_goal_review`
-  / `/goal review`, incl. the complete → in-review reopen path) mints a **fresh** one-time
+  checks acceptance criteria, and resolves `in-review` via `verify_goal_result` — the only
+  goal-runtime tool, registered exclusively in the verifier child process, so the
+  orchestrator never sees it in its tool list.
+- `verify_goal_result` is **token-governed**: every entry into `in-review` (`/goal review <id>`,
+  incl. the complete → in-review reopen path) mints a **fresh** one-time
   `VERIFY_TOKEN` embedded in the verify brief (`.pi/track/verify-brief-<id>.md`); the verifier
   must echo it back and the token is **consumed on first use** — a verdict (pass or fail)
   rewrites the brief line to `VERIFY_TOKEN(consumed)` (file kept for audit), so each review
@@ -99,12 +112,12 @@ until the goal reaches a terminal phase.
 
 ## Tools
 
-- `save_goal_draft` — persist draft metadata (stage, open questions, contract sections) into the drafting Goal record
-- `commit_goal` — drafting → ready (validates contract + ≥1 Story + ≥1 Task)
-- `activate_goal` — activate the user-confirmed goal (run-proposal confirmation); exclusive active + serial queue
-- `pause_goal` — active → paused (real blocker)
-- `request_goal_review` — active/paused → in-review; also complete → in-review (reopen without verifier pass, fresh VERIFY_TOKEN); instructs dispatching the verifier
-- `verify_goal_result` — verifier-only; in-review → complete (pass) or active (fail/rework)
+The orchestrating session registers **no goal tools** — lifecycle is command-driven
+(`set` / `commit` / `run` / `activate` / `pause` / `review` / `abandon`).
+
+- `verify_goal_result` — **verifier-child-only** (registered only when
+  `PI_GOAL_RUNTIME_CHILD=1`, so the orchestrator never sees it); in-review → complete
+  (pass) or active (fail/rework), gated by the one-time VERIFY_TOKEN from the verify brief
 
 ## Notes
 
@@ -112,11 +125,12 @@ until the goal reaches a terminal phase.
   archive it manually if you want it gone. New state lives in `.pi/goals/` + `.pi/track/`.
 - `.pi/goals/.queue.json` holds transient serial-queue state only — goals themselves are
   always queried from taskmd.
-- Drafting guards: while a Goal is drafting, writes are restricted to `.pi/goals/` and bash
-  is restricted to read-only recon + taskmd goal-store commands.
+- Drafting guards: while a Goal is drafting, writes are restricted to `.pi/goals/` (goal
+  records) and `.pi/track/` (working memory), and bash is restricted to read-only recon +
+  taskmd goal-store commands.
 - Lifecycle guards (always on): bash mutations of a **Goal** record's phase/status
   (`--phase` / `--status` / `--done`, incl. the `--task-id` form) are blocked — they must
-  go through goal-runtime tools. Story/Task status updates via the CLI stay allowed.
+  go through `/goal` commands. Story/Task status updates via the CLI stay allowed.
   While a goal is active/in-review (and none is drafting), write/edit into `.pi/goals/`
   is blocked entirely — no hand-edited frontmatter phase flips.
 
