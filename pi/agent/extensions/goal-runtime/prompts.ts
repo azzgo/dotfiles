@@ -16,20 +16,21 @@ export function buildGoalSetPrompt(goal: GoalRecord, supplementalInput?: string)
 	return [
 		"[GOAL SET]",
 		"Focused drafting session for ONE goal. Output is taskmd records in .pi/goals/ (store is `.pi/goals`, tag family `goal` / `goal:story` / `goal:task`).",
-		"Work through 4 stages. Track the current stage in the Goal record frontmatter (`drafting_stage`) — use the save_goal_draft tool or edit the frontmatter directly.",
+		"Work through 4 stages. Track the current stage in the Goal record frontmatter (`drafting_stage`) — edit the Goal record file directly with write/edit (frontmatter fields + body sections). No goal-runtime tools exist in this session.",
 		"Ask the user only when key info is missing. Keep notes in the Goal record `## Drafting Notes` / frontmatter.",
 		"",
 		"- Stage 1 as-is: read code. Map real paths, APIs, DB schema, components. Fill the Goal body contract sections (Objective / Success Criteria / Constraints / Out of Scope / Blocker Rule) and `## Design / As-Is Analysis`.",
 		"- Stage 2 design: recommend 1 approach; note alternatives + why rejected. Write into `## Design / Recommended Approach` + `## Design / Rejected Alternatives`. Cover compat, rollback, test strategy.",
 		"- Stage 3 story: for each vertical slice (end-to-end deliverable), `taskmd -d .pi/goals add \"<Story title>\" --tags goal:story --parent <goal-id> --status pending`, then overwrite the body with the Story template (`## What`, `## Layers`, `## Acceptance Criteria`).",
 		"- Stage 4 task: break Stories into Tasks. `taskmd -d .pi/goals add \"<Task title>\" --tags goal:task --parent <story-id> [--depends-on <ids>] --status pending`, then overwrite the body with the Task template (`## One-Commit Spec`, `## Hard Deps`, `## Soft Deps`, `## TDD Marker`). 1 commit per Task. Mark TDD (unit|component|integration|no).",
-		"- When the contract is complete (all 5 contract sections non-empty) AND at least one Story with at least one Task exists: call `commit_goal`.",
-		"- Closing discipline: NEVER end a /goal set session with the goal still drafting without saying so. Either commit_goal, or explicitly tell the user: goal remains phase=drafting, what is missing (contract sections / stories / tasks), and that /goal run cannot start it until committed. Do not stop silently mid-draft.",
+		"- When the contract is complete (all 5 contract sections non-empty) AND at least one Story with at least one Task exists: STOP and tell the user to run `/goal commit` (the runtime validates and flips drafting → ready).",
+		"- Closing discipline: NEVER end a /goal set session with the goal still drafting without saying so. Either hand off with `/goal commit`, or explicitly tell the user: goal remains phase=drafting, what is missing (contract sections / stories / tasks), and that `/goal activate` cannot start it until committed. Do not stop silently mid-draft.",
 		"",
 		"Output style: caveman. Drop filler. Tech precision. Arrow for causality.",
 		"",
 		`Current stage: ${stage}`,
 		`Goal: ${goalLine(goal)}`,
+		`Goal record file: ${GOALS_DIR}/${goal.file_path}`,
 		...(goal.sourceTopic ? [`Source topic: ${goal.sourceTopic}`] : []),
 		...(goal.openQuestions && goal.openQuestions.length > 0 ? [`Open questions (${goal.openQuestions.length}): ${goal.openQuestions.join("; ")}`] : []),
 		...(goal.nextRecommendedQuestion ? [`Recommended next question: ${goal.nextRecommendedQuestion}`] : []),
@@ -81,9 +82,9 @@ export function buildGoalImplPrompt(snapshot: GoalSnapshot, goalId: string, mode
 		"- **Leaf agent dispatch**: use `dispatch({ agent: \"pi\", prompt: \"child context: <self-contained task prompt>\", env: { PI_GOAL_RUNTIME_CHILD: \"1\" }, background: true, reason: \"goal-<id>-task-<taskId>\" })`. The PI_GOAL_RUNTIME_CHILD=1 marker is set via the dispatch env parameter (not prompt text). Child agents must NOT write Track and must NOT touch goal state — they only do code work and return a summary.",
 		"- Consolidate results into Track serially between tiers. Never start tier N+1 before tier N is consolidated.",
 		"- Self-check against success criteria while active (this is NOT a state).",
-		"- If you hit a real blocker, call `pause_goal` with a concrete reason and suggested action.",
-		"- When implementation is done (success criteria satisfied, evidence in Track), call `request_goal_review` — it flips the goal to in-review and tells you how to dispatch the independent verifier. Do NOT self-verify.",
-		"- NEVER advance the goal to complete yourself: do NOT call verify_goal_result (verifier-only — it rejects the orchestrator) and do NOT run `taskmd set --phase/--status` (blocked). Your terminal action is request_goal_review → in-review; only the dispatched verifier decides complete vs rework.",
+		"- If you hit a real blocker: record it in Track, STOP, and tell the user to run `/goal pause <reason>` (interrupting with Esc also auto-pauses).",
+		"- When implementation is done (success criteria satisfied): write the completion summary + evidence into Track, then STOP and tell the user to run `/goal review <id>` — that flips the goal to in-review and you will be told how to dispatch the independent verifier. Do NOT self-verify.",
+		"- NEVER advance the goal lifecycle yourself: no goal-runtime tools are exposed to you, and `taskmd set --phase/--status/--done` on the goal id is blocked. Lifecycle transitions happen through `/goal` commands run by the user (or the runtime); only the dispatched verifier decides complete vs rework.",
 		"",
 		"Recent findings (tail):",
 		findings || "(empty)",
@@ -117,12 +118,12 @@ export function buildGoalRunProposalPrompt(snapshot: GoalSnapshot, intent: strin
 		...(snapshot.queue.length > 0 ? ["", `Current serial queue: ${snapshot.queue.join(", ")}`] : []),
 		"",
 		"Rules:",
-		"- Only propose to RUN goals whose phase is ready / active / paused. drafting must be finished + committed (`commit_goal`) first; in-review is awaiting the verifier; complete / abandoned are done.",
+		"- Only propose to RUN goals whose phase is ready / active / paused. drafting must be finished + committed (`/goal commit`) first; in-review is awaiting the verifier; complete / abandoned are done.",
 		"- If user intent clearly matches a DRAFTING goal, do NOT report 'nothing found': name that goal, say it is still drafting and what is missing, and recommend finishing `/goal set` (same topic — NEVER suggest creating a duplicate goal). Drafting goals stay visible in the menu for exactly this routing.",
 		`- User intent: ${cleanIntent ? `\"${cleanIntent}\"` : "(none given — recommend the single best candidate and say why)"}`,
 		"- Match by title / topic / objective. NEVER ask the user for a taskmd id — the id is internal.",
 		"- Present a SHORT proposal: which goal(s), one line why, and (if >1) that they run serially in that order. Then STOP and wait for the user to confirm.",
-		"- On confirmation, call `activate_goal({ goalId, queue })`. goalId = the menu id of the first goal; queue = optional array of further goal ids to enqueue in order.",
+		"- On confirmation the USER activates by running `/goal activate <id> [<queue ids...>]` (extra ids join the serial queue in order). End your proposal with the exact command for the user to run, then STOP.",
 		"- If nothing matches, say so and suggest `/goal set <topic>`.",
 	].join("\n");
 }
@@ -143,12 +144,12 @@ export function buildGoalReviewProposalPrompt(snapshot: GoalSnapshot, intent: st
 		"- Match intent against title / topic / objective, AND against bare ids (e.g. '020' matches goal id 020; 'goal:020' too). Ids ride inside the match — NEVER ask the user for an id they already gave.",
 		"- Then route by phase:",
 		"  - active / paused → directly reviewable: propose sending it to in-review.",
-		"  - complete → the goal was sealed earlier (possibly bypassing review); if the user wants it verified anyway, propose REOPENING it for review (request_goal_review supports complete → in-review). Explain what happened.",
+		"  - complete → the goal was sealed earlier (possibly bypassing review); if the user wants it verified anyway, propose REOPENING it for review (`/goal review` supports complete → in-review). Explain what happened.",
 		"  - in-review → already awaiting the verifier; tell the user the verify brief exists and offer to re-dispatch the verifier.",
-		"  - drafting → not reviewable; say it must be finished (/goal set + commit_goal) first.",
+		"  - drafting → not reviewable; say it must be finished (`/goal set` + `/goal commit`) first.",
 		"  - ready → not reviewable; it must be run (/goal run) first.",
 		"- Propose which goal to review, one line why. Then STOP and wait for confirmation.",
-		"- On confirmation, call `request_goal_review({ goalId, summary })`. Do NOT dispatch the verifier yourself unless that tool's response tells you to.",
+		"- On confirmation the USER runs `/goal review <id>`. End with the exact command, then STOP. Do NOT dispatch the verifier yourself unless the runtime's review prompt tells you to.",
 	].join("\n");
 }
 
@@ -193,6 +194,22 @@ export function buildReviewBrief(snapshot: GoalSnapshot, goalId: string): string
 		"- PASS (all success criteria verifiably met): call `verify_goal_result({ goalId: \"" + goal.id + "\", token: <VERIFY_TOKEN below>, pass: true, evidence: [...] })`.",
 		"- FAIL (something is missing or broken): call `verify_goal_result({ goalId: \"" + goal.id + "\", token: <VERIFY_TOKEN below>, pass: false, evidence: [...] })` — this sends the goal back to active for rework.",
 		"- Then stop; report a one-line verdict.",
+	].join("\n");
+}
+
+/**
+ * Prompt sent right after `/goal review <id>` flips a goal to in-review: hands the
+ * orchestrator the exact verifier dispatch call. The orchestrator never resolves
+ * in-review itself — verify_goal_result exists only inside the dispatched child.
+ */
+export function buildVerifierDispatchPrompt(goalId: string): string {
+	const briefPath = `${TRACK_DIR}/verify-brief-${goalId}.md`;
+	return [
+		`[GOAL REVIEW] Goal ${goalId} is now phase=in-review.`,
+		`Verify brief: ${briefPath} (contains the VERIFY_TOKEN).`,
+		"",
+		"Dispatch the independent read-only verifier now, then STOP — its completion auto-notifies via triggerTurn and wakes you; never sleep+poll; do not self-verify:",
+		`dispatch({ agent: "pi", prompt: "You are the independent verifier for goal ${goalId}. Read ${briefPath} and follow it exactly. Then call verify_goal_result with your verdict and the VERIFY_TOKEN from the brief.", env: { PI_GOAL_RUNTIME_CHILD: "1" }, background: true, reason: "goal-review-${goalId}" })`,
 	].join("\n");
 }
 
@@ -257,7 +274,7 @@ export function buildGoalListText(snapshot: GoalSnapshot): string {
 export function multiActiveWarn(snapshot: GoalSnapshot): string | undefined {
 	const actives = snapshot.goals.filter((g) => g.phase === "active");
 	if (actives.length <= 1) return undefined;
-	return `⚠ ${actives.length} goals are active (${actives.map((g) => g.id).join(", ")}) — one-active is exclusive. Pick one: e.g. /goal run <id> to activate only it, or /goal abandon <id> for the others.`;
+	return `⚠ ${actives.length} goals are active (${actives.map((g) => g.id).join(", ")}) — one-active is exclusive. Pick one: e.g. /goal activate <id> to run only it, or /goal abandon <id> for the others.`;
 }
 
 export function buildGoalStatusText(snapshot: GoalSnapshot, goalId?: string): string {
@@ -312,12 +329,44 @@ export function buildGoalSmartEntryPrompt(snapshot: GoalSnapshot): string {
 		"Inspect the goal state below and route to the right next action:",
 		"- drafting goal exists → continue that drafting session (`/goal set <topic>` semantics).",
 		"- active goal exists → continue implementation (`/goal run` semantics; resume the active goal).",
-		"- ready goal exists, nothing active → recommend `/goal run <id>`.",
+		"- ready goal exists, nothing active → recommend `/goal activate <id>`.",
 		"- nothing exists → ask the user for a topic to run `/goal set <topic>`.",
 		...(snapshot.queue.length > 0 ? [`- serial queue pending: ${snapshot.queue.join(", ")}`] : []),
 		"",
 		"Goals:",
 		...(snapshot.goals.length === 0 ? ["- (none)"] : snapshot.goals.map((g) => `- ${goalLine(g)}`)),
+	].join("\n");
+}
+
+// ---- track context (auto-injected at session start) ----
+
+/**
+ * Compact Track context injected once at the first conversation of a session
+ * (before_agent_start). Closes the loop: the model starts with working memory
+ * in context even when the user never types a /track command.
+ */
+export function buildTrackContextPrompt(snapshot: GoalSnapshot, opts: { justInitialized?: boolean } = {}): string {
+	const active = snapshot.activeGoal;
+	return [
+		"[TRACK CONTEXT] (auto-loaded at session start)",
+		"Track is your flat working memory — NOT taskmd, never on the board. Keep it current as you work:",
+		`- ${snapshot.trackDir}/findings.md — confirmed constraints, repo/system findings, design decisions, notes.`,
+		`- ${snapshot.trackDir}/progress.md — timeline, work completed, verification, blockers, completion evidence.`,
+		"- Commands: `/track new` (reset), `/track update` (reconcile; also auto-runs every N turn ends, PI_TRACK_UPDATE_EVERY default 20), `/track status` (report).",
+		...(opts.justInitialized ? ["- Track was just auto-initialized this session (equivalent of /track new) — it was missing."] : []),
+		"",
+		"## Current Goal State",
+		...(active
+			? [`Active: ${active.id} [${active.phase}] ${active.title}`, `Run count: ${active.runCount ?? 0}`]
+			: ["No active goal."]),
+		...(snapshot.draftingGoal ? [`Drafting: ${snapshot.draftingGoal.id} [stage ${snapshot.draftingGoal.draftingStage ?? "as-is"}] ${snapshot.draftingGoal.title}`] : []),
+		...(snapshot.queue.length > 0 ? [`Queue: ${snapshot.queue.join(", ")}`] : []),
+		"",
+		"## findings.md (tail)",
+		tailLines(snapshot.track.findings, 30) || "(empty)",
+		"",
+		"## progress.md (tail)",
+		tailLines(snapshot.track.progress, 30) || "(empty)",
 	].join("\n");
 }
 

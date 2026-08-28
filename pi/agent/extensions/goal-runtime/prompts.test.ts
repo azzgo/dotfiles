@@ -5,6 +5,7 @@ import {
 	buildGoalReviewProposalPrompt,
 	buildGoalRunProposalPrompt,
 	buildGoalSetPrompt,
+	buildTrackContextPrompt,
 } from "./prompts";
 
 // Pure-function tests: fake snapshots only, no taskmd subprocess and no FS
@@ -69,6 +70,13 @@ describe("buildGoalRunProposalPrompt", () => {
 		const out = buildGoalRunProposalPrompt(mkSnapshot([]), "start a goal");
 		expect(out).toContain("no goals yet");
 	});
+
+	it("hands off confirmation to the /goal activate command, never a tool call", () => {
+		const goals = [mkGoal({ id: "021", title: "Ship feature", phase: "ready" })];
+		const out = buildGoalRunProposalPrompt(mkSnapshot(goals), "run the shipping goal");
+		expect(out).toContain("/goal activate");
+		expect(out).not.toContain("activate_goal");
+	});
 });
 
 describe("buildGoalReviewProposalPrompt", () => {
@@ -91,6 +99,15 @@ describe("buildGoalReviewProposalPrompt", () => {
 		expect(out).toContain("REOPENING");
 		expect(out).toContain("complete → in-review");
 	});
+
+	it("hands off confirmation to the /goal review command, never a tool call", () => {
+		const out = buildGoalReviewProposalPrompt(
+			mkSnapshot([mkGoal({ id: "020", title: "Sealed", phase: "complete" })]),
+			"verify 020",
+		);
+		expect(out).toContain("`/goal review`");
+		expect(out).not.toContain("request_goal_review");
+	});
 });
 
 describe("buildGoalSetPrompt", () => {
@@ -98,11 +115,37 @@ describe("buildGoalSetPrompt", () => {
 		const out = buildGoalSetPrompt(mkGoal({ id: "030", title: "Explore idea", phase: "drafting" }));
 		expect(out).toContain("Closing discipline");
 	});
+
+	it("directs drafting edits at the goal record file and /goal commit, never a tool", () => {
+		const out = buildGoalSetPrompt(mkGoal({ id: "030", title: "Explore idea", phase: "drafting", file_path: "030-explore-idea.md" }));
+		expect(out).toContain("Goal record file: .pi/goals/030-explore-idea.md");
+		expect(out).toContain("/goal commit");
+		expect(out).not.toContain("save_goal_draft");
+	});
 });
 
 describe("buildGoalImplPrompt", () => {
 	it("returns Goal not found when the id does not resolve", () => {
 		const out = buildGoalImplPrompt(mkSnapshot([]), "999", "start");
 		expect(out).toContain("Goal not found");
+	});
+});
+
+describe("buildTrackContextPrompt", () => {
+	it("injects working memory context with goal state and tails", () => {
+		const goals = [mkGoal({ id: "021", title: "Ship feature", phase: "active", runCount: 2 })];
+		const out = buildTrackContextPrompt(mkSnapshot(goals, { track: { findings: "- constraint A", progress: "- [t] did X", exists: true } }));
+		expect(out).toContain("[TRACK CONTEXT]");
+		expect(out).toContain("Active: 021 [active] Ship feature");
+		expect(out).toContain("- constraint A");
+		expect(out).toContain("- [t] did X");
+		expect(out).toContain("PI_TRACK_UPDATE_EVERY");
+		expect(out).not.toContain("just auto-initialized");
+	});
+
+	it("marks auto-initialization when track files were missing", () => {
+		const out = buildTrackContextPrompt(mkSnapshot([]), { justInitialized: true });
+		expect(out).toContain("auto-initialized this session");
+		expect(out).toContain("No active goal.");
 	});
 });

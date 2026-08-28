@@ -45,8 +45,7 @@
 | **Goal Runtime** | 实现期进度（Goals/Stories/Tasks 存 taskmd + Track 工作记忆） | `.pi/goals/` + `.pi/track/` |
 
 ```text
-雾里选路  →  Wayfinder（decide）
-路清了    →  /goal set · /goal run 或直接写代码（build）
+路清了    →  /goal set → /goal commit → /goal activate 或直接写代码（build）
 ```
 
 不要把 Wayfinder Ticket 和 Goal Runtime Task 混叫「task」。
@@ -157,7 +156,7 @@ Work   →  在已有 Map 上前进
 3. Frontier 上不再有「还得先决策」的 Ticket（剩下的是 `waiting-human` 或已 graduation）  
 4. 剩下主要是「怎么实现」  
 
-→ 关掉/完成这张 Map，agent 会**建议你**按当前环境实际可用的路径进入实现侧（capability-aware：`/goal set` + `/goal run`、cursor/pi spawn、直接写代码等；由**你**决定并执行，agent 不会替你触发）。
+→ 关掉/完成这张 Map，agent 会**建议你**按当前环境实际可用的路径进入实现侧（capability-aware：`/goal set` → `/goal commit` → `/goal activate`、cursor/pi spawn、直接写代码等；由**你**决定并执行，agent 不会替你触发）。
 
 ---
 

@@ -21,7 +21,7 @@ This prompt is a **thin shortcut only**. Do **not** invent a second methodology 
 - Parent = membership; dependency = ordering
 - Refer by name, not bare ids
 - Tickets are Wayfinder decision units, not Goal Runtime Tasks
-- Goal Runtime 是 user-trigger：绝不调用 `/goal` 命令或 goal-runtime 工具（save_goal_draft / commit_goal / activate_goal 等）。Graduate / Exit 时只能**建议用户自己执行** `/goal set`、`/goal run` 等合适能力（capability-aware，也可建议其它覆盖同类能力的本地技能）
+- Goal Runtime 是 user-trigger：goal-runtime 没有暴露给模型的 goal 工具，生命周期全部走 `/goal` 命令——绝不代替用户执行 `/goal` 命令。Graduate / Exit 时只能**建议用户自己执行** `/goal set`、`/goal activate` 等合适能力（capability-aware，也可建议其它覆盖同类能力的本地技能）
 - Workspace: `.pi/wayfinder/tickets/`
 
 ## Command routing for $@

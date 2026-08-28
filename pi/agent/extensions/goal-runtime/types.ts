@@ -13,6 +13,7 @@ export const MESSAGE_TYPE_GOAL_LIST = "goal-runtime-goal-list";
 export const MESSAGE_TYPE_GOAL_STATUS = "goal-runtime-goal-status";
 export const MESSAGE_TYPE_GOAL_RUN_PROPOSE = "goal-runtime-goal-run-propose";
 export const MESSAGE_TYPE_GOAL_REVIEW_PROPOSE = "goal-runtime-goal-review-propose";
+export const MESSAGE_TYPE_TRACK_CONTEXT = "goal-runtime-track-context";
 export const MESSAGE_TYPE_TRACK_UPDATE = "goal-runtime-track-update";
 export const MESSAGE_TYPE_TRACK_STATUS = "goal-runtime-track-status";
 
@@ -25,15 +26,6 @@ export const GOAL_TAG = "goal";
 export const STORY_TAG = "goal:story";
 export const TASK_TAG = "goal:task";
 export const GOAL_TAG_FAMILY = [GOAL_TAG, STORY_TAG, TASK_TAG] as const;
-
-export const GOAL_TOOL_NAMES = [
-	"save_goal_draft",
-	"commit_goal",
-	"pause_goal",
-	"request_goal_review",
-	"verify_goal_result",
-	"activate_goal",
-] as const;
 
 export const MEANINGFUL_PROGRESS_TOOLS = new Set(["bash", "edit", "write", "grep", "find"]);
 
@@ -143,44 +135,14 @@ export type GoalSnapshot = {
 
 // ---- tool params ----
 
-export type SaveGoalDraftParams = {
-	goalId?: string;
-	sourceTopic?: string;
-	clarificationSummary?: string[];
-	openQuestions?: string[];
-	nextRecommendedQuestion?: string;
-	draftingStage?: DraftingStage;
-	objective?: string;
-	successCriteria?: string[];
-	constraints?: string[];
-	outOfScope?: string[];
-	blockerRule?: string;
-};
-
-export type CommitGoalParams = {
-	goalId?: string;
-};
-
-export type PauseGoalParams = {
-	goalId?: string;
-	reason: string;
-	suggestedAction?: string;
-};
-
-export type RequestReviewParams = {
-	goalId?: string;
-	summary?: string;
-	evidence?: string[];
-};
-
+/**
+ * verify_goal_result is the ONLY goal-runtime tool, registered exclusively in
+ * dispatched verifier child processes (PI_GOAL_RUNTIME_CHILD=1); the orchestrator
+ * never sees it in its tool list.
+ */
 export type VerifyResultParams = {
 	goalId: string;
 	token: string;
 	pass: boolean;
 	evidence?: string[];
-};
-
-export type ActivateGoalParams = {
-	goalId: string;
-	queue?: string[];
 };
