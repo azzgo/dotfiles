@@ -16,18 +16,16 @@ Single source of truth for picking which model to run a spawned sub-agent on. Pr
 
    - **Simple / mechanical tasks** (refactor, add tests, fix typo, commit messages, cleanup):
      1. `minimax-m2.7` — generous quota, first choice for light tasks (~200K context)
-     2. `opencode/mimo-v2.5` — 1M context multimodal ($0.14/$0.28 per 1M)
      3. `deepseek-v4-flash` — 1M context, for mid-weight tasks
      4. Local Ollama small models — commit messages, cleanup only; **max 2 concurrent**
 
    - **Complex / long-context tasks** (multi-file design, large refactor, architecture):
      1. `deepseek-v4-flash` — 1M context, best value for long-context scenarios
-     2. `opencode/mimo-v2.5` — 1M context multimodal fallback
 
    - **Notes**:
      - `deepseek-v4-pro` is no longer recommended by default after the price hike — use only when the user explicitly requests it.
      - `MiniMax-M3` is excluded — unstable instruction following.
-     - Prefer `mimo-v2.5` for multimodal; it's the default fallback when no multimodal capability is needed either.
+     - Prefer `glm-5.3-flash` or `deepseek-v4-flash-vision-exp` for multimodal; it's the default fallback when no multimodal capability is needed either.
 
 4. **Model runs on local ollama** → it shares this machine's GPU/CPU with the main agent. **Cap concurrent dispatches at 2.**
 
