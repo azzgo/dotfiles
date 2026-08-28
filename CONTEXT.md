@@ -253,34 +253,30 @@ prompt 执行前的连接预检——通过 `list_pages` 确认 chrome-devtools 
 
 ## 子代理调度（Sub-agent Dispatch via Pi）
 
-通过 `interactive_shell` 后台派发 pi 子代理的本地约定：非阻塞、通知驱动、子代理完成后自动回传，主进程不阻塞等待。
+通过 `sub-dispatch` 扩展后台派发 pi 子代理的本地约定：非阻塞、通知驱动、子代理完成后自动回传，主进程不阻塞等待。
 
 **Sub-agent Dispatch（后台派发）**:
-通过 `interactive_shell` 以 `mode: "dispatch"` + `background: true` 对子代理做的非阻塞调用。子代理完成后由扩展以 `triggerTurn` 唤醒主代理，输出已在上下文中。
+通过 `sub-dispatch` 扩展的 `dispatch` 工具以 `background: true` 对子代理做的非阻塞调用。子代理完成后由扩展以 `triggerTurn` 唤醒主代理，输出已在上下文中。
 _Avoid_: 前台 dispatch 做并行、sleep 轮询等待、阻塞式等待
 
 **Trigger Wake-up（triggerTurn 唤醒）**:
-后台子代理完成时，interactive-shell 扩展发出的通知事件。它恢复主代理的 turn，且子代理输出已载入上下文，主代理只需收集并综合。
+后台子代理完成时，sub-dispatch 扩展发出的通知事件（customType `sub-dispatch`，携带状态、退出码与输出尾部）。它恢复主代理的 turn，且子代理输出已载入上下文，主代理只需收集并综合。
 _Avoid_: 状态轮询、sleep 循环、手动查询会话状态来“检查”
 
-**Quiet-kill（静默误杀）**:
-dispatch 默认在终端静默达到 `handsFreeQuietThreshold` 毫秒后自动关闭子代理的行为。每次派发必须以 `handsFree: { autoExitOnQuiet: false }` 关闭，否则子代理在静默探索/思考期间会被杀。
-_Avoid_: 沿用默认 `autoExitOnQuiet: true`
-
 **Print Mode（pi -p 打印模式）**:
-pi 子代理唯一受支持的 spawn 形式：pi 以非交互打印模式运行，完成后自动退出，正是它让完成通知得以触发。由 `interactive-shell.json` 的 `defaultArgs.pi: ["-p"]` 在仓库级强制。
+pi 子代理的 spawn 形式：pi 以非交互打印模式运行（由 `sub-dispatch` 扩展 `config.json` 的 `defaultArgs.pi: ["-p"]` 强制），完成后自然退出，正是它让完成通知得以触发。无 quiet-kill 误杀风险。
 _Avoid_: 交互式 TUI 形式 `pi <prompt>`（永不退出，通知永不触发）
 
 **End-turn Wait Discipline（结束 turn 等待纪律）**:
 派发子代理后，主代理立即结束当前 turn，交由 triggerTurn 通知驱动后续。绝不许发出 `sleep N && echo`、sleep 后查询循环或轮询会话状态。
 _Avoid_: sleep、轮询循环、在 turn 内手动查状态
 
-**Interactive-shell Config（interactive-shell.json）**:
-仓库级 Pi 配置（`pi/agent/interactive-shell.json`），统一设置 spawn 默认值（pi 以打印模式运行）与静默阈值，是派发行为的唯一事实来源。skill 不应重复声明它已拥有的配置。
+**Sub-dispatch Config（sub-dispatch config.json）**:
+仓库级 Pi 配置（`pi/agent/extensions/sub-dispatch/config.json`），统一设置 spawn 默认值（pi 以打印模式 `-p` 运行）与默认超时，是派发行为的唯一事实来源。skill 不应重复声明它已拥有的配置。
 _Avoid_: 在 skill 内硬编码 pi 的 spawn 参数、重复配置
 
 **Dispatch-oriented Skill（派发型 skill）**:
-通过后台派发编排子代理的 skill（如 `impl-with-spawn`、`explore-codebase`）。它必须内嵌等待纪律与 `autoExitOnQuiet: false` 要求，而非假定读者已知。
+通过后台派发编排子代理的 skill（如 `impl-with-spawn`、`explore-codebase`）。它必须内嵌等待纪律，而非假定读者已知。
 _Avoid_: 半套 dispatch 模板、缺失等待纪律小节
 
 ## Code Mode（工具折叠模式）

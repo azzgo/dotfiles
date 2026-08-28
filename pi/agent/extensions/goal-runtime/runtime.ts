@@ -5,7 +5,6 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 
 import {
 	CHILD_ENV_MARKER,
-	CONTINUATION_DELAY_MS,
 	GOALS_DIR,
 	GOAL_TAG,
 	GOAL_TOOL_NAMES,
@@ -91,6 +90,7 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 	const isChild = process.env[CHILD_ENV_MARKER] === "1";
 	let snapshot = getSnapshot(process.cwd());
 	let goalProgressToolCalledThisTurn = false;
+	let bgDispatchFiredThisTurn = false;
 	let turnStoppedFor: string | null = null;
 	let continuationQueuedFor: string | null = null;
 	let continuationTimer: ReturnType<typeof setTimeout> | null = null;
@@ -105,13 +105,20 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 		}
 	}
 
-	/** While a goal is active, keep nudging the orchestrator after progress turns. */
-	function queueContinuation(ctx: ExtensionContext, force = false): void {
+	/**
+	 * Keep driving the orchestrator while a goal is active: after a turn that made
+	 * progress (and launched NO background sub-agents), immediately re-trigger it.
+	 * Event-driven wake: when the orchestrator just fired background dispatches this
+	 * is NOT queued — sub-dispatch auto-notifies every completion via triggerTurn,
+	 * and those notifications ARE the wake-ups (see the impl-with-spawn skill;
+	 * never sleep+query poll).
+	 */
+	function queueContinuation(ctx: ExtensionContext): void {
 		if (isChild) return;
 		const active = snapshot.activeGoal;
 		if (!active || active.phase !== "active") return;
 		const key = active.id;
-		if (!force && continuationQueuedFor === key) return;
+		if (continuationQueuedFor === key) return;
 		clearContinuation();
 		continuationQueuedFor = key;
 		continuationTimer = setTimeout(() => {
@@ -131,7 +138,7 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 				},
 				{ triggerTurn: true, deliverAs: "followUp" },
 			);
-		}, force ? 0 : CONTINUATION_DELAY_MS);
+		}, 0);
 	}
 
 	// ---- refresh ----
@@ -490,7 +497,7 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 						`Goal ${goal.id} (${goal.title}) is now phase=in-review.${reopened ? " (reopened from complete — fresh VERIFY_TOKEN minted)" : ""}`,
 						`Brief written to .pi/track/verify-brief-${goal.id}.md (contains the VERIFY_TOKEN).`,
 						"",
-						"Dispatch the independent read-only verifier now, then STOP (do not self-verify):",
+						"Dispatch the independent read-only verifier now (background: true), then STOP — its completion auto-notifies via triggerTurn and will wake you; never sleep+poll; do not self-verify:",
 					`dispatch({ agent: "pi", prompt: "You are the independent verifier for goal ${goal.id}. Read .pi/track/verify-brief-${goal.id}.md and follow it exactly. Then call verify_goal_result with your verdict and the VERIFY_TOKEN from the brief.", env: { PI_GOAL_RUNTIME_CHILD: "1" }, background: true, reason: "goal-review-${goal.id}" })`,
 						].join("\n"),
 					},
@@ -685,6 +692,7 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 
 	pi.on("turn_start", async () => {
 		goalProgressToolCalledThisTurn = false;
+		bgDispatchFiredThisTurn = false;
 		turnStoppedFor = null;
 	});
 
@@ -692,7 +700,13 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 		if (turnStoppedFor) {
 			return { block: true, reason: `${turnStoppedFor} already completed in this turn. Stop and summarize instead of calling more tools.` };
 		}
-		redirectTrackPath(event as { toolName: string; input: Record<string, unknown> }, ctx.cwd);
+		// Event-driven wake: while leaf sub-agents are in flight the turn-end
+		// continuation is suppressed — their completion notifications (sub-dispatch
+		// triggerTurn) are the wake-ups, never sleep+query poll.
+		if (!isChild && event.toolName === "dispatch") {
+			const dInput = event.input as Record<string, unknown> | undefined;
+			if (dInput && dInput.background === true) bgDispatchFiredThisTurn = true;
+		}
 		if (event.toolName === "bash") {
 			const phaseCommand = typeof event.input.command === "string" ? event.input.command : "";
 			if (isDirectPhaseMutationBash(phaseCommand)) {
@@ -757,7 +771,11 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 		// serial queue: current goal reached a terminal phase -> activate next
 		if (maybeAdvanceQueue(ctx)) return;
 		if (snapshot.activeGoal && goalProgressToolCalledThisTurn) {
-			queueContinuation(ctx);
+			// Event-driven wake: no continuation while background sub-agents are in
+			// flight — sub-dispatch completion notifications (triggerTurn) wake the
+			// orchestrator (see impl-with-spawn; never sleep+query poll).
+			if (bgDispatchFiredThisTurn) clearContinuation();
+			else queueContinuation(ctx);
 		} else {
 			clearContinuation();
 		}

@@ -35,7 +35,6 @@ export const GOAL_TOOL_NAMES = [
 	"activate_goal",
 ] as const;
 
-export const CONTINUATION_DELAY_MS = 50;
 export const MEANINGFUL_PROGRESS_TOOLS = new Set(["bash", "edit", "write", "grep", "find"]);
 
 /**
