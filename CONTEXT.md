@@ -222,7 +222,7 @@ _Avoid_: full Chinese methodology docs, mixed bilingual instruction bodies
 
 ## Element Picking（元素拾取）
 
-Chrome 页面元素拾取工作流：`pick-chrome-element.md` prompt + `pick-chrome-element.js` 注入脚本，配合 `open-chrome-pause.md`（先开 Chrome）使用，通过 chrome-devtools MCP 驱动。
+Chrome 页面元素拾取工作流：Tampermonkey userscript（`web-picker.user.js`）手动连接 `/xfer broker`（本地 WS daemon，`broker-main.ts`），页面标注 + prompt 经 `annotation.submit` 帧以 xfer handoff 推入目标 pi session；反向为 session 侧经 broker 提问（页面 ask modal）。安装与排障见 `pi/agent/extensions/xfer/docs/web-picker.md`。
 
 **pick**:
 用户在页面上选中并记录的一个元素条目（selector、xpath、文本预览、rect、备注、源码位置等）。
@@ -233,23 +233,28 @@ _Avoid_: annotation、标注（pick-to-edit 的术语，本方案不采用）
 _Avoid_: version、轮询游标
 
 **consume**:
-agent 读取 batch 并开始回复，即视为已接收该批 picks，随后清空 sessionStorage 中的这批数据。
+发送（submit）该批 picks 后即清空本地 batch（sessionStorage）——提交即消费，无版本号。
 
 **picker**:
-注入到页面上的元素选择脚本（`pick-chrome-element.js`），Shadow DOM 隔离。
-_Avoid_: pick-to-edit 的 annotation server、本地 daemon
+userscript 在页面上的全部能力（`web-picker.user.js`）：shadow-DOM 隔离的 fab、hover 拾取、备注面板、send-to-agent 表单。无 CDP 注入——脚本由 Tampermonkey 安装，页面加载即挂载。
+_Avoid_: CDP evaluate_script 注入、annotation server、本地 daemon
 
 **fab / 悬浮按钮**:
-picker 注入到页面上的唯一形态——一个可拖动的悬浮按钮，点击后进入 pick 模式。无热键。
+picker 在页面上的唯一常驻形态——一个可拖动的悬浮按钮，点击后进入 pick 模式；顶部圆点显示 broker 连接状态（灰=未连接、琥珀=连接中、绿=已连接）。另有 ⇧⌥P / ⇧⌥L 快捷键。
 
 **inject**:
-确保 fab 在页面上的动作（幂等），仅此一个动作，不进入 pick 模式、不读取存储。
+userscript 页面加载时把 fab 挂上 shadow DOM 的动作（幂等），仅此一个动作，不进入 pick 模式、不读取存储。不再是 CDP `evaluate_script` 注入。
 
 **pick 模式**:
 点击 fab 后进入的选择交互态：hover 高亮、`[`/`]` 切层、Enter 选中+备注、Esc 退出回闲置（fab 常驻）。
 
-**preflight**:
-prompt 执行前的连接预检——通过 `list_pages` 确认 chrome-devtools MCP 有可用页面，否则终止并提示用户先运行 `open-chrome-pause`。
+**send-to-agent**:
+向 broker 提交标注 + prompt 的动作：选择目标 session（`targets.list` → `~/.pi/xfer/*.sock`），以 `annotation.submit` 帧发送，broker 转成 xfer handoff 推入目标 session。
+_Avoid_: chrome-devtools 驱动、直接写 session 存储
+
+**ask-page（反向通道）**:
+session 侧经 broker 向页面提问：`page.request` 帧 → 页面 ask modal（问题卡片）→ 回答以 `page.response` 帧回 broker，broker 再以 notify 推回提问 session。
+_Avoid_: 轮询页面、页面主动拉取
 
 ## 子代理调度（Sub-agent Dispatch via Pi）
 
