@@ -1,22 +1,25 @@
 /**
- * broker.test.ts — integration tests for the xfer broker daemon (goal 014 task 024).
+ * broker-delivery.test.ts — integration tests for the xfer broker's delivery
+ * handlers (goal 014 task 029): annotation.submit → handoff doc + xfer-notify
+ * push + ack, and targets.list.
  *
- * Spawns the REAL daemon (broker-main.ts) with the same `--import` resolve hook as
- * `npm test` (read from package.json so the two can never drift), on ephemeral
- * ports with an isolated os.tmpdir() xfer dir, so tests never touch ~/.pi/xfer.
- * The WS client is a raw net.Socket speaking RFC 6455 by hand (masked frames,
- * like a browser). Every spawned daemon is SIGTERM'd (then SIGKILL'd if needed)
- * in afterEach, and every tmpdir is removed, so the suite leaks nothing.
+ * Same harness as broker.test.ts: spawns the REAL daemon (broker-main.ts) on an
+ * ephemeral port with an isolated os.tmpdir() xfer dir, and speaks RFC 6455 by
+ * hand over a raw net.Socket. The session side is a fake unix-socket server
+ * bound INSIDE that xfer dir — it reads the xfer-notify JSON line and replies
+ * ack with the matching msg_id, exactly like a real pi session socket would.
+ *
+ * Every spawned daemon is SIGTERM'd (then SIGKILL'd if needed) in afterEach;
+ * tmpdirs, fake socket servers, and handoff docs are all cleaned up so the
+ * suite never touches ~/.pi/xfer and leaks nothing.
  */
 import assert from "node:assert/strict";
 import { spawn, type ChildProcess } from "node:child_process";
 import * as fs from "node:fs";
-import * as http from "node:http";
 import * as net from "node:net";
 import * as os from "node:os";
 import * as path from "node:path";
 import { afterEach, describe, it } from "node:test";
-import { VERSION } from "./broker-main.js";
 import { decodeFrame, OPCODE_CLOSE, OPCODE_TEXT, type DecodedFrame } from "./ws-server.js";
 
 // ---------- resolve hook (same as `npm test`) ----------
@@ -56,9 +59,12 @@ interface Daemon extends RawSpawn {
 /** Every spawned child; afterEach SIGTERMs any that are still running. */
 const liveChildren: ChildProcess[] = [];
 const tmpDirs: string[] = [];
+const socketServers: net.Server[] = [];
+/** Handoff docs written by daemons into os.tmpdir(); afterEach unlinks them. */
+const docFiles: string[] = [];
 
 function freshXferDir(): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "xfer-broker-test-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "xfer-broker-delivery-"));
   tmpDirs.push(dir);
   return dir;
 }
@@ -120,45 +126,11 @@ async function spawnDaemon(xferDir: string, port = 0): Promise<Daemon> {
   }
 }
 
-function readBrokerJson(xferDir: string): { port: number; pid: number; startedAt: string; version: string } {
-  const data = JSON.parse(fs.readFileSync(path.join(xferDir, "broker.json"), "utf-8"));
-  assert.equal(typeof data.port, "number");
-  assert.equal(typeof data.pid, "number");
-  assert.equal(typeof data.startedAt, "string");
-  assert.equal(typeof data.version, "string");
-  return data;
-}
-
-async function waitFor(predicate: () => boolean | Promise<boolean>, what: string, timeoutMs = 3_000): Promise<void> {
-  const deadline = Date.now() + timeoutMs;
-  for (;;) {
-    if (await predicate()) return;
-    if (Date.now() > deadline) throw new Error(`timed out waiting for ${what}`);
-    await new Promise((resolve) => setTimeout(resolve, 25));
-  }
-}
-
-/** A port that is free right now (bind :0, note it, close). */
-async function freePort(): Promise<number> {
-  const server = net.createServer();
-  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", () => resolve()));
-  const address = server.address();
-  assert.ok(address !== null && typeof address === "object");
-  const port = address.port;
-  await new Promise<void>((resolve) => server.close(() => resolve()));
-  return port;
-}
-
-/** pid of a process that has already exited (kill(pid, 0) will ESRCH). */
-async function reapedPid(): Promise<number> {
-  const child = spawn(process.execPath, ["-e", "process.exit(0)"], { stdio: "ignore" });
-  const pid = child.pid;
-  assert.ok(pid !== undefined);
-  await new Promise<void>((resolve) => child.once("exit", () => resolve()));
-  return pid;
-}
-
 afterEach(async () => {
+  for (const server of socketServers.splice(0)) {
+    server.closeAllConnections?.();
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
   const drained = liveChildren.splice(0);
   for (const child of drained) {
     if (child.exitCode === null && child.signalCode === null) child.kill("SIGTERM");
@@ -179,13 +151,18 @@ afterEach(async () => {
             child.kill("SIGKILL");
             finish();
           }, 2_000);
-          // 'close' always follows 'exit' once stdio drains; listening to both
-          // means a lost event can never leave a daemon behind.
           child.once("exit", finish);
           child.once("close", finish);
         }),
     ),
   );
+  for (const doc of docFiles.splice(0)) {
+    try {
+      fs.unlinkSync(doc);
+    } catch {
+      /* already gone */
+    }
+  }
   for (const dir of tmpDirs.splice(0)) {
     fs.rmSync(dir, { recursive: true, force: true });
   }
@@ -327,222 +304,246 @@ class RawWs {
   }
 }
 
-// ---------- HTTP helpers ----------
+// ---------- fake session socket ----------
 
-function httpGet(port: number, pathname = "/status"): Promise<{ statusCode: number; body: string }> {
-  return new Promise((resolve, reject) => {
-    const request = http.get({ host: "127.0.0.1", port, path: pathname }, (response) => {
-      let body = "";
-      response.on("data", (chunk: Buffer) => {
-        body += chunk.toString();
-      });
-      response.on("end", () => resolve({ statusCode: response.statusCode ?? 0, body }));
-    });
-    request.on("error", reject);
-  });
+interface FakeSession {
+  server: net.Server;
+  /** Every xfer-notify frame the fake session received (JSON-lines). */
+  received: Array<Record<string, unknown>>;
 }
 
-async function getStatus(port: number): Promise<{
-  ok: boolean;
-  port: number;
-  version: string;
-  clients: number;
-  startedAt: string;
-}> {
-  const response = await httpGet(port, "/status");
-  assert.equal(response.statusCode, 200, `GET /status failed: ${response.body}`);
-  return JSON.parse(response.body);
+/** Bind a fake session socket at <xferDir>/<name>.sock; acks every frame. */
+async function fakeSession(xferDir: string, name: string): Promise<FakeSession> {
+  const received: Array<Record<string, unknown>> = [];
+  const server = net.createServer((sock) => {
+    let buffer = "";
+    sock.on("data", (chunk: Buffer) => {
+      buffer += chunk.toString();
+      let newline = buffer.indexOf("\n");
+      while (newline >= 0) {
+        const line = buffer.slice(0, newline);
+        buffer = buffer.slice(newline + 1);
+        newline = buffer.indexOf("\n");
+        if (!line.trim()) continue;
+        let msg: unknown;
+        try {
+          msg = JSON.parse(line);
+        } catch {
+          continue; // non-JSON line: ignore, keep listening
+        }
+        if (!msg || typeof msg !== "object" || Array.isArray(msg)) continue;
+        const record = msg as Record<string, unknown>;
+        received.push(record);
+        if (typeof record.msg_id === "string") {
+          sock.write(`${JSON.stringify({ type: "ack", msg_id: record.msg_id })}\n`);
+        }
+      }
+    });
+    sock.on("error", () => {});
+  });
+  socketServers.push(server);
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(path.join(xferDir, `${name}.sock`), () => {
+      server.off("error", reject);
+      resolve();
+    });
+  });
+  return { server, received };
+}
+
+// ---------- handoff doc helpers ----------
+
+function handoffDocsInTmpdir(): string[] {
+  return fs
+    .readdirSync(os.tmpdir())
+    .filter((file) => /^pi-xfer-.*\.md$/.test(file))
+    .map((file) => path.join(os.tmpdir(), file));
+}
+
+/** Docs that appeared in os.tmpdir() since the `before` snapshot. */
+function newHandoffDocs(before: Set<string>): string[] {
+  return handoffDocsInTmpdir().filter((file) => !before.has(file));
+}
+
+/** Parse a text frame's JSON payload into a plain record. */
+function parseFrame(frame: DecodedFrame): Record<string, unknown> {
+  assert.equal(frame.opcode, OPCODE_TEXT);
+  return JSON.parse(frame.payload.toString("utf-8")) as Record<string, unknown>;
+}
+
+async function welcome(ws: RawWs): Promise<void> {
+  ws.sendText(JSON.stringify({ v: 0, type: "hello" }));
+  const frame = await ws.next();
+  assert.equal(frame.opcode, OPCODE_TEXT);
+  const parsed = parseFrame(frame);
+  assert.equal(parsed.type, "welcome");
 }
 
 // ---------- tests ----------
 
-describe("broker daemon (integration)", () => {
-  it("greets hello with welcome{broker:{version}}, serves /status, and tracks tab close", async () => {
+describe("broker delivery (integration)", () => {
+  it("annotation.submit round trip: pushes xfer-notify, acks {handoff_id, doc}, doc mode 0600", async () => {
     const daemon = await spawnDaemon(freshXferDir());
-
+    const session = await fakeSession(daemon.xferDir, "alpha");
     const ws = await RawWs.connect(daemon.port);
-    ws.sendText(
-      JSON.stringify({
-        v: 0,
-        type: "hello",
-        client: { tab: { id: "t1", url: "https://example.com", title: "Example" } },
-      }),
-    );
-    const welcome = await ws.next();
-    assert.equal(welcome.opcode, OPCODE_TEXT);
-    assert.deepEqual(JSON.parse(welcome.payload.toString("utf-8")), {
-      v: 0,
-      type: "welcome",
-      broker: { version: VERSION },
-    });
+    await welcome(ws);
 
-    // /status mirrors the daemon state: one welcomed tab, real bound port.
-    const status = await getStatus(daemon.port);
-    assert.equal(status.ok, true);
-    assert.equal(status.port, daemon.port);
-    assert.equal(status.version, VERSION);
-    assert.equal(status.clients, 1);
-    assert.equal(typeof status.startedAt, "string");
-
-    // broker.json carries the actual (ephemeral) port and this daemon's pid.
-    const state = readBrokerJson(daemon.xferDir);
-    assert.equal(state.port, daemon.port);
-    assert.equal(state.pid, daemon.child.pid);
-    assert.equal(state.version, VERSION);
-
-    // Closing the tab drops the registry back to zero.
-    ws.sendClose();
-    ws.destroy();
-    await waitFor(
-      async () => (await getStatus(daemon.port)).clients === 0,
-      "clients to drop to 0 after tab close",
-    );
-  });
-
-  it("replies error{auth_failed} to any frame sent before hello", async () => {
-    const daemon = await spawnDaemon(freshXferDir());
-    const ws = await RawWs.connect(daemon.port);
-
-    ws.sendText(JSON.stringify({ v: 0, type: "targets.list", id: "r1" }));
-    const reply = await ws.next();
-    assert.equal(reply.opcode, OPCODE_TEXT);
-    const parsed = JSON.parse(reply.payload.toString("utf-8")) as {
-      type: string;
-      code: string;
-      id: string;
-    };
-    assert.equal(parsed.type, "error");
-    assert.equal(parsed.code, "auth_failed");
-    assert.equal(parsed.id, "r1");
-    ws.destroy();
-  });
-
-  it("replies error{unsupported_version} to an unknown frame type after hello", async () => {
-    const daemon = await spawnDaemon(freshXferDir());
-    const ws = await RawWs.connect(daemon.port);
-
-    ws.sendText(JSON.stringify({ v: 0, type: "hello" }));
-    await ws.next(); // welcome
-
-    ws.sendText(JSON.stringify({ v: 0, type: "totally.unknown", id: "q1" }));
-    const reply = await ws.next();
-    const parsed = JSON.parse(reply.payload.toString("utf-8")) as {
-      type: string;
-      code: string;
-      id: string;
-    };
-    assert.equal(parsed.type, "error");
-    assert.equal(parsed.code, "unsupported_version");
-    assert.equal(parsed.id, "q1");
-    ws.destroy();
-  });
-
-  it("routes known protocol frames through the dispatch table", async () => {
-    const daemon = await spawnDaemon(freshXferDir());
-    const ws = await RawWs.connect(daemon.port);
-
-    ws.sendText(JSON.stringify({ v: 0, type: "hello" }));
-    await ws.next(); // welcome
-
-    // annotation.submit: no "someone" socket in the xfer dir → target_not_found
-    // (proves the handler is wired and fails fast instead of bouncing unsupported).
+    const prompt = "collect the highlights and send them over";
+    const picks = [
+      {
+        selector: ".note",
+        xpath: "/html[1]/body[1]/main[1]",
+        rect: { x: 1, y: 2, w: 3, h: 4 },
+        textPreview: "hi",
+        note: "n",
+      },
+    ];
     ws.sendText(
       JSON.stringify({
         v: 0,
         type: "annotation.submit",
         id: "a1",
-        prompt: "collect",
-        picks: [],
-        target: { name: "someone" },
+        prompt,
+        picks,
+        target: { name: "alpha" },
+        page: { url: "https://example.com/page", title: "Example", ts: 1_720_000_000_000 },
       }),
     );
-    const submit = JSON.parse((await ws.next(5000)).payload.toString("utf-8")) as {
-      type: string;
-      code: string;
-      id: string;
-    };
-    assert.equal(submit.type, "error");
-    assert.equal(submit.code, "target_not_found");
-    assert.equal(submit.id, "a1");
 
-    // targets.list → targets.result (empty dir).
-    ws.sendText(JSON.stringify({ v: 0, type: "targets.list", id: "t1" }));
-    const targets = JSON.parse((await ws.next(5000)).payload.toString("utf-8")) as {
-      type: string;
-      id: string;
-      targets: unknown[];
-    };
-    assert.equal(targets.type, "targets.result");
-    assert.equal(targets.id, "t1");
-    assert.deepEqual(targets.targets, []);
+    const ack = parseFrame(await ws.next());
+    assert.equal(ack.v, 0);
+    assert.equal(ack.type, "ack");
+    assert.equal(ack.id, "a1");
+    const result = ack.result as { handoff_id?: unknown; doc?: unknown };
+    assert.equal(typeof result.handoff_id, "string");
+    assert.match(result.handoff_id as string, /^m[0-9a-z]+$/);
+    assert.equal(typeof result.doc, "string");
+    const doc = result.doc as string;
+    assert.equal(doc, path.join(os.tmpdir(), `pi-xfer-${result.handoff_id}.md`));
+    docFiles.push(doc);
 
-    // page.request / page.response are still silent stubs until task 030
-    // registers their routing handlers — neither may bounce unsupported.
-    ws.sendText(JSON.stringify({ v: 0, type: "page.request", id: "p1", text: "hi" }));
-    ws.sendText(JSON.stringify({ v: 0, type: "page.response", id: "p2", ok: true, text: "yo" }));
-    await assert.rejects(ws.next(300), /no frame/);
+    // The fake session saw exactly one xfer-notify, matching the ack's id.
+    assert.equal(session.received.length, 1);
+    const notify = session.received[0]!;
+    assert.equal(notify.type, "xfer-notify");
+    assert.equal(notify.msg_id, result.handoff_id);
+    assert.equal(notify.from, "web-picker");
+    assert.equal(notify.file, doc);
+    assert.equal(notify.summary, prompt.slice(0, 120));
+
+    // Doc on disk, mode 0600, content carries the prompt + handoff id.
+    const stat = fs.statSync(doc);
+    assert.equal(stat.mode & 0o777, 0o600);
+    const content = fs.readFileSync(doc, "utf-8");
+    assert.ok(content.includes(prompt), "doc renders the prompt");
+    assert.ok(content.includes(`handoff_id: ${result.handoff_id}`), "doc carries handoff_id");
+    assert.ok(content.includes("from: web-picker"), "doc carries from: web-picker");
     ws.destroy();
   });
 
-  it("removes broker.pid and broker.json on SIGTERM and exits 0", async () => {
-    const xferDir = freshXferDir();
-    const daemon = await spawnDaemon(xferDir);
-    const pidFile = path.join(xferDir, "broker.pid");
-    const jsonFile = path.join(xferDir, "broker.json");
-    assert.ok(fs.existsSync(pidFile), "broker.pid exists while running");
-    assert.ok(fs.existsSync(jsonFile), "broker.json exists while running");
+  it("annotation.submit with a missing target socket → error{target_not_found}, doc kept on disk", async () => {
+    const daemon = await spawnDaemon(freshXferDir());
+    const ws = await RawWs.connect(daemon.port);
+    await welcome(ws);
 
-    daemon.child.kill("SIGTERM");
-    const { code } = await daemon.exited;
-    assert.equal(code, 0);
-    assert.ok(!fs.existsSync(pidFile), "broker.pid removed on clean exit");
-    assert.ok(!fs.existsSync(jsonFile), "broker.json removed on clean exit");
-  });
-
-  it("second daemon on a live broker prints 'already running' and exits 0", async () => {
-    const xferDir = freshXferDir();
-    const first = await spawnDaemon(xferDir);
-
-    // Same xferDir + same port: second spawn must see broker.pid, find the pid
-    // alive, and bow out without touching the running daemon's state.
-    const second = spawnRaw(xferDir, first.port);
-    const { code } = await second.exited;
-    assert.equal(code, 0);
-    assert.match(second.stdout(), /already running/);
-
-    const state = readBrokerJson(xferDir);
-    assert.equal(state.pid, first.child.pid, "first daemon's state untouched");
-    assert.equal(state.port, first.port);
-    assert.ok(fs.existsSync(path.join(xferDir, "broker.pid")));
-  });
-
-  it("recovers from a stale broker.pid (dead process) and rebinds on the same port", async () => {
-    const xferDir = freshXferDir();
-    const port = await freePort();
-    const deadPid = await reapedPid();
-
-    // Simulate a crashed previous daemon: pid file names a dead process,
-    // json file carries stale state.
-    fs.writeFileSync(path.join(xferDir, "broker.pid"), `${deadPid}\n`);
-    fs.writeFileSync(
-      path.join(xferDir, "broker.json"),
-      JSON.stringify({ port, pid: deadPid, startedAt: "stale", version: "0.0.0" }),
+    const before = new Set(handoffDocsInTmpdir());
+    ws.sendText(
+      JSON.stringify({
+        v: 0,
+        type: "annotation.submit",
+        id: "a1",
+        prompt: "hand this off",
+        picks: [],
+        target: { name: "ghost" },
+      }),
     );
 
-    const daemon = await spawnDaemon(xferDir, port);
-    assert.equal(daemon.port, port, "recovery bind keeps the requested port");
+    const reply = parseFrame(await ws.next());
+    assert.equal(reply.type, "error");
+    assert.equal(reply.id, "a1");
+    assert.equal(reply.code, "target_not_found");
 
-    // State rewritten with the new live pid, and the daemon actually serves.
-    const state = readBrokerJson(xferDir);
-    assert.notEqual(state.pid, deadPid);
-    assert.equal(state.pid, daemon.child.pid);
-    const status = await getStatus(daemon.port);
-    assert.equal(status.ok, true);
+    // The doc stays on disk even though delivery failed.
+    const created = newHandoffDocs(before);
+    assert.equal(created.length, 1, "the handoff doc was still written");
+    docFiles.push(created[0]!);
+    ws.destroy();
   });
 
-  it("returns 404 for paths other than /status", async () => {
+  it("annotation.submit with target.namespace != local → error{bad_target}", async () => {
     const daemon = await spawnDaemon(freshXferDir());
-    const response = await httpGet(daemon.port, "/other");
-    assert.equal(response.statusCode, 404);
+    const ws = await RawWs.connect(daemon.port);
+    await welcome(ws);
+
+    ws.sendText(
+      JSON.stringify({
+        v: 0,
+        type: "annotation.submit",
+        id: "a1",
+        prompt: "x",
+        picks: [],
+        target: { name: "remote", namespace: "peer" },
+      }),
+    );
+    const reply = parseFrame(await ws.next());
+    assert.equal(reply.type, "error");
+    assert.equal(reply.id, "a1");
+    assert.equal(reply.code, "bad_target");
+    ws.destroy();
+  });
+
+  it("annotation.submit with a malformed payload → error{invalid_payload} naming what's missing", async () => {
+    const daemon = await spawnDaemon(freshXferDir());
+    const ws = await RawWs.connect(daemon.port);
+    await welcome(ws);
+
+    const cases: Array<{ id: string; frame: Record<string, unknown>; missing: string }> = [
+      { id: "m1", frame: { picks: [], target: { name: "alpha" } }, missing: "prompt" },
+      { id: "m2", frame: { prompt: "x", target: { name: "alpha" } }, missing: "picks" },
+      { id: "m3", frame: { prompt: "x", picks: [] }, missing: "target.name" },
+    ];
+    for (const { id, frame, missing } of cases) {
+      ws.sendText(JSON.stringify({ v: 0, type: "annotation.submit", id, ...frame }));
+      const reply = parseFrame(await ws.next());
+      assert.equal(reply.type, "error");
+      assert.equal(reply.id, id);
+      assert.equal(reply.code, "invalid_payload");
+      assert.ok(
+        String(reply.message).includes(missing),
+        `message ${JSON.stringify(reply.message)} should name the missing field ${missing}`,
+      );
+    }
+    ws.destroy();
+  });
+
+  it("unknown frame type after hello → error{unsupported_version}", async () => {
+    const daemon = await spawnDaemon(freshXferDir());
+    const ws = await RawWs.connect(daemon.port);
+    await welcome(ws);
+
+    ws.sendText(JSON.stringify({ v: 0, type: "totally.unknown", id: "q1" }));
+    const reply = parseFrame(await ws.next());
+    assert.equal(reply.type, "error");
+    assert.equal(reply.id, "q1");
+    assert.equal(reply.code, "unsupported_version");
+    ws.destroy();
+  });
+
+  it("targets.list → targets.result listing the fake session socket", async () => {
+    const daemon = await spawnDaemon(freshXferDir());
+    await fakeSession(daemon.xferDir, "alpha");
+    const ws = await RawWs.connect(daemon.port);
+    await welcome(ws);
+
+    ws.sendText(JSON.stringify({ v: 0, type: "targets.list", id: "t1" }));
+    const reply = parseFrame(await ws.next());
+    assert.equal(reply.v, 0);
+    assert.equal(reply.type, "targets.result");
+    assert.equal(reply.id, "t1");
+    assert.deepEqual(reply.targets, [
+      { name: "alpha", sessionName: null, cwd: null, status: null },
+    ]);
+    ws.destroy();
   });
 });
