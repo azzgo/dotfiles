@@ -76,30 +76,18 @@ const GOAL_HELP = [
 	"  /goal ui                   open the taskmd board for the goals store",
 	"  /goal help                 this help",
 	"",
-	"/track — flat working memory (findings.md + progress.md at .pi/track/; auto-initialized + injected as context at session start)",
+	"/track — flat working memory (findings.md + progress.md at .pi/track/; auto-initialized once when missing, otherwise fully manual)",
 	"  /track new                 reset/init the scratchpad",
-	"  /track update              reconcile track with current state (also auto-runs every N turn ends; PI_TRACK_UPDATE_EVERY, default 20, 0 = off)",
+	"  /track update              reconcile track with current state",
+	"  /track context             inject track context (goal state + findings/progress tails) as a user message",
 	"  /track status              report track state (no mutation)",
 ].join("\n");
-
-/** `/track update` auto-run cadence, in turn ends (0 disables; env override). */
-const DEFAULT_TRACK_UPDATE_EVERY = 20;
-
-function autoTrackUpdateEvery(): number {
-	const env = process.env.PI_TRACK_UPDATE_EVERY;
-	// Unset and empty-string both fall back to the default — only an explicit
-	// numeric value counts, so a stray empty env var doesn't silently disable.
-	const raw = env === undefined || env.trim() === "" ? NaN : Number(env);
-	return Number.isFinite(raw) && raw >= 0 ? Math.floor(raw) : DEFAULT_TRACK_UPDATE_EVERY;
-}
 
 export default function goalRuntime(pi: ExtensionAPI): void {
 	const isChild = process.env[CHILD_ENV_MARKER] === "1";
 	let snapshot = getSnapshot(process.cwd());
 	let goalProgressToolCalledThisTurn = false;
 	let bgDispatchFiredThisTurn = false;
-	let turnCount = 0;
-	let trackContextInjected = false;
 	let continuationQueuedFor: string | null = null;
 	let continuationTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -582,7 +570,7 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 	});
 
 	pi.registerCommand("track", {
-		description: "Track: flat working memory (.pi/track/findings.md + progress.md). Commands: new / update / status. update also auto-runs every N turn ends.",
+		description: "Track: flat working memory (.pi/track/findings.md + progress.md). Commands: new / update / context / status.",
 		handler: async (args, ctx) => {
 			refresh(ctx, false);
 			const [sub, ...rest] = args.trim().split(/\s+/);
@@ -599,8 +587,11 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 				case "update":
 					send(buildTrackUpdatePrompt(snapshot), MESSAGE_TYPE_TRACK_UPDATE);
 					break;
+				case "context":
+					send(buildTrackContextPrompt(snapshot), MESSAGE_TYPE_TRACK_CONTEXT);
+					break;
 				default:
-					ctx.ui.notify(`Unknown /track subcommand "${sub}".\n/track new | update | status`, "warning");
+					ctx.ui.notify(`Unknown /track subcommand "${sub}".\n/track new | update | context | status`, "warning");
 					break;
 			}
 		},
@@ -618,27 +609,17 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 
 	pi.on("before_agent_start", async (_event, ctx) => {
 		refresh(ctx, snapshot.resumedFromPreviousSession);
-		// Track context closes the loop: at the FIRST conversation of a session the
-		// runtime auto-initializes Track when missing (equivalent of /track new) and
-		// injects it as persistent context, so working memory exists even when the
-		// user never types a /track command. Goal lifecycle stays user-trigger-only:
-		// beyond this, the model learns goal state only from explicit /goal prompts
-		// and from continuation messages while a user-started run is active.
-		if (isChild || trackContextInjected) return;
-		trackContextInjected = true;
-		const justInitialized = !snapshot.track.exists;
-		if (justInitialized) {
-			initTrack(ctx.cwd);
-			refresh(ctx, snapshot.resumedFromPreviousSession);
-			ctx.ui.notify("Track initialized: .pi/track/findings.md + progress.md (auto /track new).", "info");
-		}
-		return {
-			message: {
-				customType: MESSAGE_TYPE_TRACK_CONTEXT,
-				content: buildTrackContextPrompt(snapshot, { justInitialized }),
-				display: false,
-			},
-		};
+		// Auto /track new only: at the FIRST conversation of a session the runtime
+		// initializes Track when missing, so working memory exists on disk. Nothing
+		// is auto-injected into the conversation — the model gets Track context
+		// only when the user runs `/track context`, and reconciliation only via
+		// `/track update`. Goal lifecycle stays user-trigger-only: beyond this, the
+		// model learns goal state from explicit /goal prompts and from continuation
+		// messages while a user-started run is active.
+		if (isChild || snapshot.track.exists) return;
+		initTrack(ctx.cwd);
+		refresh(ctx, snapshot.resumedFromPreviousSession);
+		ctx.ui.notify("Track initialized: .pi/track/findings.md + progress.md (auto /track new).", "info");
 	});
 
 	pi.on("turn_start", async () => {
@@ -717,35 +698,14 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 		refresh(ctx, false);
 		// serial queue: current goal reached a terminal phase -> activate next
 		if (maybeAdvanceQueue(ctx)) return;
-		let continuationQueued = false;
 		if (snapshot.activeGoal && goalProgressToolCalledThisTurn) {
 			// Event-driven wake: no continuation while background sub-agents are in
 			// flight — sub-dispatch completion notifications (triggerTurn) wake the
 			// orchestrator (see impl-with-spawn; never sleep+query poll).
 			if (bgDispatchFiredThisTurn) clearContinuation();
-			else {
-				queueContinuation(ctx);
-				continuationQueued = true;
-			}
+			else queueContinuation(ctx);
 		} else {
 			clearContinuation();
-		}
-		// Auto Track hygiene: periodically re-run `/track update` so working memory
-		// stays fresh even when the user never drives it manually. Skipped while a
-		// drafting session owns the turn, while a verifier is pending in-review, on
-		// turns where a goal continuation just took over, and when there is nothing
-		// to reconcile yet.
-		turnCount += 1;
-		const every = autoTrackUpdateEvery();
-		if (
-			every > 0 &&
-			!continuationQueued &&
-			turnCount % every === 0 &&
-			!snapshot.draftingGoal &&
-			!snapshot.goals.some((g) => g.phase === "in-review") &&
-			(snapshot.track.exists || snapshot.goals.length > 0)
-		) {
-			send(buildTrackUpdatePrompt(snapshot), MESSAGE_TYPE_TRACK_UPDATE, { deliverAs: "followUp" });
 		}
 	});
 }
