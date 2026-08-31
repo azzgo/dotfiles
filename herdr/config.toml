@@ -14,6 +14,7 @@ navigate_workspace_down = "j"
 
 [ui]
 agent_panel_sort = "spaces"
+status_indicators = "symbols"
 
 [ui.toast]
 delivery = "system"
