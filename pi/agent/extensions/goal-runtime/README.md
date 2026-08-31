@@ -8,7 +8,7 @@ separate from Wayfinder's (`.pi/goals/`, tag family `goal` / `goal:story` / `goa
 never on the taskmd board.
 
 See `docs/adr/0001-goal-runtime-on-taskmd.md` (taskmd decision of record),
-`docs/adr/0005-goal-runtime-command-driven-lifecycle.md` (command-driven lifecycle + auto Track)
+`docs/adr/0005-goal-runtime-command-driven-lifecycle.md` (command-driven lifecycle + Track auto-init)
 and `CONTEXT.md` (glossary).
 
 ## Prerequisites
@@ -38,9 +38,9 @@ and `CONTEXT.md` (glossary).
 - `/goal abandon <id>` — abandon (terminal, stays on the board)
 - `/goal ui` — open the taskmd board for the goals store
 - `/track new` — reset/init the scratchpad (independent of Goals; also runs **automatically** at the first conversation of a session when the track files are missing)
-- `/track update` — reconcile Track with current state; **also auto-runs every N turn ends** (`PI_TRACK_UPDATE_EVERY`, default 20, 0 = off), skipped while drafting or while a verifier is pending in-review
+- `/track update` — reconcile Track with current state (manual)
+- `/track context` — inject the current Track (goal state + findings/progress tails) as a user message (manual; nothing is auto-injected)
 - `/track status` — report Track state (no mutation)
-- *(automatic)* Track context — at the **first conversation of every session** the runtime injects the current Track (findings/progress tails + goal state) as persistent context, so working memory is always in play even when the user never types a `/track` command
 
 ## Model
 
@@ -66,15 +66,16 @@ Track never on the board; Goal → Track one-way; lifecycle truth in `phase`.
 
 ## Execution model
 
-**Command-driven lifecycle, auto-loaded Track**: goal lifecycle stays strictly user-triggered —
+**Command-driven lifecycle, manual Track**: goal lifecycle stays strictly user-triggered —
 the orchestrating session registers **no goal tools at all** (the model cannot see or call
 them), every goal flow starts from an explicit `/goal` command typed by the user, and every
 lifecycle transition runs inside a command handler (deterministic validation + Track side
 effects). Agents (including Wayfinder) may only **suggest the user run** a `/goal ...`
-command. **Track is the one auto surface**: at the first conversation of a session it is
-auto-initialized when missing and injected as persistent context, and `/track update`
-re-runs every N turn ends (see above).
-run is active, wake-up is **event-driven**: after a turn that made progress and launched
+command. **Track initializes itself once** (auto `/track new` when the files are missing at
+the first conversation of a session) and is otherwise fully manual: `/track context` injects
+working memory into the conversation on demand, `/track update` reconciles it. Nothing is
+auto-injected and there is no periodic auto-run.
+While a goal run is active, wake-up is **event-driven**: after a turn that made progress and launched
 no background sub-agents the orchestrator is immediately re-triggered to keep driving;
 while leaf sub-agents are in flight the runtime stays silent — their **sub-dispatch
 completion notifications** (`triggerTurn`) are the wake-ups (no sleep/poll). This

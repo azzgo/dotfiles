@@ -139,13 +139,13 @@ describe("buildTrackContextPrompt", () => {
 		expect(out).toContain("Active: 021 [active] Ship feature");
 		expect(out).toContain("- constraint A");
 		expect(out).toContain("- [t] did X");
-		expect(out).toContain("PI_TRACK_UPDATE_EVERY");
-		expect(out).not.toContain("just auto-initialized");
+		expect(out).toContain("`/track update`");
+		expect(out).toContain("(loaded via /track context)");
 	});
 
-	it("marks auto-initialization when track files were missing", () => {
-		const out = buildTrackContextPrompt(mkSnapshot([]), { justInitialized: true });
-		expect(out).toContain("auto-initialized this session");
+	it("advertises manual commands only — no auto-run, no auto-injection", () => {
+		const out = buildTrackContextPrompt(mkSnapshot([]));
+		expect(out).not.toContain("auto");
 		expect(out).toContain("No active goal.");
 	});
 });

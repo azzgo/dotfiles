@@ -338,22 +338,21 @@ export function buildGoalSmartEntryPrompt(snapshot: GoalSnapshot): string {
 	].join("\n");
 }
 
-// ---- track context (auto-injected at session start) ----
+// ---- track context (/track context) ----
 
 /**
- * Compact Track context injected once at the first conversation of a session
- * (before_agent_start). Closes the loop: the model starts with working memory
- * in context even when the user never types a /track command.
+ * Compact Track context injected on demand via `/track context` (no auto-run):
+ * goal state + findings/progress tails, so a session can pull working memory
+ * into context when the user asks for it.
  */
-export function buildTrackContextPrompt(snapshot: GoalSnapshot, opts: { justInitialized?: boolean } = {}): string {
+export function buildTrackContextPrompt(snapshot: GoalSnapshot): string {
 	const active = snapshot.activeGoal;
 	return [
-		"[TRACK CONTEXT] (auto-loaded at session start)",
+		"[TRACK CONTEXT] (loaded via /track context)",
 		"Track is your flat working memory — NOT taskmd, never on the board. Keep it current as you work:",
 		`- ${snapshot.trackDir}/findings.md — confirmed constraints, repo/system findings, design decisions, notes.`,
 		`- ${snapshot.trackDir}/progress.md — timeline, work completed, verification, blockers, completion evidence.`,
-		"- Commands: `/track new` (reset), `/track update` (reconcile; also auto-runs every N turn ends, PI_TRACK_UPDATE_EVERY default 20), `/track status` (report).",
-		...(opts.justInitialized ? ["- Track was just auto-initialized this session (equivalent of /track new) — it was missing."] : []),
+		"- Commands: `/track new` (reset), `/track update` (reconcile), `/track status` (report).",
 		"",
 		"## Current Goal State",
 		...(active
