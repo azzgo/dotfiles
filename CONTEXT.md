@@ -246,10 +246,10 @@ picker 在页面上的唯一常驻形态——一个可拖动的悬浮按钮，�
 userscript 页面加载时把 fab 挂上 shadow DOM 的动作（幂等），仅此一个动作，不进入 pick 模式、不读取存储。不再是 CDP `evaluate_script` 注入。
 
 **pick 模式**:
-点击 fab 后进入的选择交互态：hover 高亮、`[`/`]` 切层、Enter 选中+备注、Esc 退出回闲置（fab 常驻）。
+点击 fab 后进入的选择交互态：hover 高亮、`[`/`]` 切层、Enter 选中+备注、⇧Enter/⇧click 把元素聚合成组（amber 虚线 mark，整组共用一条组备注）、Esc 退出回闲置（fab 常驻）。
 
 **send-to-agent**:
-向 broker 提交标注 + prompt 的动作：选择目标 session（`targets.list` → `~/.pi/xfer/*.sock`），以 `annotation.submit` 帧发送，broker 转成 xfer handoff 推入目标 session。
+向 broker 提交标注 + prompt 的动作：选择目标 session（`targets.list` → `~/.pi/xfer/*.sock`），以 `annotation.submit` 帧发送，broker 转成 xfer handoff 推入目标 session。prompt 可留空——留空时自动改用默认指令（逐条回应标注 note / 解释元素渲染逻辑）。
 _Avoid_: chrome-devtools 驱动、直接写 session 存储
 
 **ask-page（反向通道）**:
