@@ -20,5 +20,4 @@ tmux = "latest"
 # npm global packages (mise npm backend uses --ignore-scripts by default)
 "npm:@tailwindcss/language-server" = "latest"
 "npm:@earendil-works/pi-coding-agent" = "latest"
-herdr = "latest"
 hunk = "latest"
