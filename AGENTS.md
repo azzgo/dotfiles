@@ -28,6 +28,7 @@ Pi 相关约定补充：
   - `just install-shell`
   - `just install-terminals`
   - `just install-pi`
+  - `just install-skills`
 - 大多数配置通过软链接或追加 `source` 语句接入用户目录。
 
 ## Neovim / lazy.nvim
@@ -53,6 +54,7 @@ Pi 相关约定补充：
 - `shell/`：Shell 配置
 - `alacritty/` / `ghostty/`：终端配置
 - `pi/`：Pi 共享配置
+- `skills/`：通用（pi 无关）skills，`just install-skills` 装到 `~/.agents/skills/`
 - `mise/`：mise 工具版本管理配置（全局 CLI 工具、node/python/uv、npm 全局包）
 
 ## 给后续代理的提醒
@@ -63,21 +65,30 @@ Pi 相关约定补充：
 
 ## Skills 维护要求
 
-Skills 定义文件位于多个搜索路径，按优先级加载：
+本仓库维护的 skills 按耦合程度分两处存放：
+
+| 位置 | 内容 | 安装方式 |
+|------|------|----------|
+| `pi/agent/skills/` | 与 pi 机制耦合的 skill（sub-dispatch / dispatch 工具 / pi prompts） | `just install-pi` 整体软链到 `~/.pi/agent/skills/` |
+| `skills/`（仓库根） | 通用、pi 无关的 skill（`grill-with-docs`、`prototype` 等） | `just install-skills` 逐个软链到 `~/.agents/skills/`，不链入 pi 目录 |
+
+Agent 侧的 skill 搜索路径按优先级：
 
 | 优先级 | 路径 | 说明 |
 |--------|------|------|
-| 1 | `~/.pi/agent/skills/` | 手动安装/精炼的 skill（本仓库相关 skill 安装在此） |
+| 1 | `~/.pi/agent/skills/` | pi 耦合 skill（本仓库 `pi/agent/skills/`） |
 | 2 | `~/.pi/agent/npm/node_modules/*/skills/` | npm 包自带 skill（如 pi-web-access 的 librarian），不要直接修改 |
-| 3 | `~/.agents/skills/` | 其他 agent skill（browser-bridge、pixso、skill-creator） |
+| 3 | `~/.agents/skills/` | 本仓库通用 skill（`just install-skills`）+ 其他手动安装的 agent skill（browser-bridge、pixso、skill-creator） |
 
-本仓库维护的 skills（`grill-with-docs`、`prototype` 等）统一安装在 `~/.pi/agent/skills/` 下。
-`~/.pi/agent/skills/README.txt` 仅记录本仓库维护的 skill 来源、安装日期、调整内容和上游地址，不包含其他来源的 skill。
+由于 `~/.agents/skills/` 也是 pi 的低优先级搜索路径，通用 skill 在 `just install-skills` 之后对 pi 同样可用。
+
+两处各有自己的 `README.txt`（`pi/agent/skills/README.txt`、`skills/README.txt`），仅记录本仓库维护的 skill 来源、安装日期、调整内容和上游地址，不包含其他来源的 skill。
 
 Skills 维护规则：
 
-1. **记录来源** — 从外部安装的 skill 必须在 `~/.pi/agent/skills/README.txt` 中记录来源 URL、commit hash 和安装日期，以便日后判断是否需要升级。
+1. **记录来源** — 从外部安装的 skill 必须在所在目录的 `README.txt` 中记录来源 URL、commit hash 和安装日期，以便日后判断是否需要升级。
 2. **检查上游再更新** — 更新外部 skill 前，先 `git log` 查看上游变更，确认值得更新再操作。
 3. **混合来源 skill 保留双上游** — 从多个来源精炼的 skill（如 `code-review`）需同时记录所有上游 URL。
-4. **机器本地** — `~/.pi/agent/skills/` 下的 skill 需要每台机器单独安装，不会通过本仓库自动同步。
+4. **机器本地** — 两处 skill 都需要每台机器单独安装（`just install-pi` / `just install-skills`），不会通过本仓库自动同步。
 5. **只记本仓库维护的** — README 中不要混入 npm 管理或与本仓库无关的 skill 条目。
+6. **按耦合归位** — 新 skill 若依赖 pi 机制（dispatch 工具、`/skill:` 语法、pi prompts）放 `pi/agent/skills/`；否则放 `skills/`。迁移 skill 时在对应 `README.txt` 的 Adjustments 里记录迁移日期和去向。
