@@ -284,6 +284,30 @@ _Avoid_: 在 skill 内硬编码 pi 的 spawn 参数、重复配置
 通过后台派发编排子代理的 skill（如 `impl-with-spawn`、`explore-codebase`）。它必须内嵌等待纪律，而非假定读者已知。
 _Avoid_: 半套 dispatch 模板、缺失等待纪律小节
 
+**Dispatch Session（派发会话）**:
+一次后台派发从启动到结算的完整生命周期实体，是派发可视性与后续管理的基本单位。结算（done / error / killed / timeout）即终结，不常驻。
+_Avoid_: 子代理进程（口语可指代，正式术语用本词）、BgSession（实现名）、pi session（主会话）
+
+**Extension-owned Visibility（扩展侧可视性）**:
+派发的可视性（数量、时长、输出情况）由扩展程序侧实时呈现：程序截取输出与计时，零模型 token。编排 agent 不承担状态汇报或检查职责——这是 End-turn Wait Discipline 的另一面。
+_Avoid_: 要求编排 agent 轮询检查、模型汇报状态、用 token 换可视化
+
+**Dispatch Overview（派发总览）**:
+运行中派发会话的常驻一眼视图：每个活跃会话一行（身份、状态、实时时长、最新输出预览行，均为程序截取）。结算行以终态短暂停留（约 5 秒余像）后消失；无会话时整体隐藏。它回答"现在派出了多少、跑了多久"。
+_Avoid_: 翻消息流找状态、常驻完成列表、靠命令查询才能看到
+
+**Output Peek（输出抽查）**:
+对运行中派发会话输出的只读流式查看：可滚动浏览全量缓冲，无任何输入通道，会话结算时自动关闭。定位是抽查而非值班盯屏，与上游 pi-interactive-shell 的人工介入严格区分。
+_Avoid_: 人工介入子代理、向子代理输入、常驻监控室
+
+**Dispatch Record（派发档案）**:
+派发会话结算后在聊天流中留下的终态档案：默认紧凑一行（身份、状态、退出码、总时长），全局展开模式下才显示完整输出 tail。它是唯一持久的原始输出副本（内存表清空后仍在）。
+_Avoid_: 原始输出直接灌聊天流、常驻多行输出预览
+
+**Single Dispatch Entry（派发单一入口）**:
+子代理派发只经由编排 agent 调用 dispatch 工具完成；人的命令面（`/dispatch`）收敛为纯查看入口（会话选择器 → Output Peek），不承担派发。
+_Avoid_: 命令行手动派发、绕过编排 agent 直派
+
 ## Code Mode（工具折叠模式）
 
 pi 的 code-mode 扩展把工具目录折叠为单一 `run_code` 工具时的工作约定。
