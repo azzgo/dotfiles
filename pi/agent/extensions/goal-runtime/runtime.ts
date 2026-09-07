@@ -78,8 +78,8 @@ const GOAL_HELP = [
 	"",
 	"/track — flat working memory (findings.md + progress.md at .pi/track/; auto-initialized once when missing, otherwise fully manual)",
 	"  /track new                 reset/init the scratchpad",
-	"  /track update              reconcile track with current state",
-	"  /track context             inject track context (goal state + findings/progress tails) as a user message",
+	"  /track update              reconcile track with current state, then STOP (checkpoint before ending the session; auto-continue is suppressed)",
+	"  /track context             inject track context (goal state + findings/progress tails) as a user message; continue only when the user stated an explicit next step",
 	"  /track status              report track state (no mutation)",
 ].join("\n");
 
@@ -88,6 +88,15 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 	let snapshot = getSnapshot(process.cwd());
 	let goalProgressToolCalledThisTurn = false;
 	let bgDispatchFiredThisTurn = false;
+	/**
+	 * The turn triggered by `/track update` is a checkpoint: it flushes working
+	 * memory to disk so the user can end the session (low context, handoff), NOT a
+	 * sign to keep driving the goal. Auto-continuation is suppressed for exactly
+	 * that turn — see turn_end. Set in the /track update command handler and
+	 * consumed (reset) in turn_end; NOT reset in turn_start (the flag must survive
+	 * until the turn it marks completes).
+	 */
+	let suppressContinuationThisTurn = false;
 	let continuationQueuedFor: string | null = null;
 	let continuationTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -585,6 +594,11 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 					ctx.ui.notify("Track reset: .pi/track/findings.md + progress.md initialized fresh.", "info");
 					break;
 				case "update":
+					// /track update is a session checkpoint (flush state before a fresh
+					// session / handoff). The reconciliation turn writes the track files
+					// — without this flag those writes would count as goal progress and
+					// auto-continue the run. Gate the turn that follows this command.
+					suppressContinuationThisTurn = true;
 					send(buildTrackUpdatePrompt(snapshot), MESSAGE_TYPE_TRACK_UPDATE);
 					break;
 				case "context":
@@ -696,6 +710,15 @@ export default function goalRuntime(pi: ExtensionAPI): void {
 			return;
 		}
 		refresh(ctx, false);
+		// /track update is a checkpoint turn: stop after reconciliation and wait
+		// for the user (typically the context window is nearly full and the user
+		// wants to resume in a fresh session via /track context). No auto-continue,
+		// no serial-queue advance.
+		if (suppressContinuationThisTurn) {
+			suppressContinuationThisTurn = false;
+			clearContinuation();
+			return;
+		}
 		// serial queue: current goal reached a terminal phase -> activate next
 		if (maybeAdvanceQueue(ctx)) return;
 		if (snapshot.activeGoal && goalProgressToolCalledThisTurn) {

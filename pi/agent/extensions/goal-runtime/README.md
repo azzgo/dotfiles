@@ -38,8 +38,8 @@ and `CONTEXT.md` (glossary).
 - `/goal abandon <id>` — abandon (terminal, stays on the board)
 - `/goal ui` — open the taskmd board for the goals store
 - `/track new` — reset/init the scratchpad (independent of Goals; also runs **automatically** at the first conversation of a session when the track files are missing)
-- `/track update` — reconcile Track with current state (manual)
-- `/track context` — inject the current Track (goal state + findings/progress tails) as a user message (manual; nothing is auto-injected)
+- `/track update` — reconcile Track with current state, then **STOP and wait for the user** (manual; the reconciliation turn is a checkpoint — goal auto-continuation is suppressed so the agent doesn't keep running after the flush)
+- `/track context` — inject the current Track (goal state + findings/progress tails) as a user message (manual; nothing is auto-injected). The agent **continues only when the user stated an explicit next step** in the same message — otherwise it gives an orientation summary and waits; it never guesses tasks just to keep moving
 - `/track status` — report Track state (no mutation)
 
 ## Model
@@ -74,7 +74,12 @@ effects). Agents (including Wayfinder) may only **suggest the user run** a `/goa
 command. **Track initializes itself once** (auto `/track new` when the files are missing at
 the first conversation of a session) and is otherwise fully manual: `/track context` injects
 working memory into the conversation on demand, `/track update` reconciles it. Nothing is
-auto-injected and there is no periodic auto-run.
+auto-injected and there is no periodic auto-run. **`/track update` is a stop-point, not a
+resume**: it flushes memory to disk (typically before ending a context-exhausted session
+and resuming in a fresh one via `/track context`), so its reconciliation turn suppresses
+goal auto-continuation and the agent stops for user input. `/track context` may lead
+straight into continued work only when the user's message carries an explicit next-step
+intent — with none, the agent summarizes state and waits.
 While a goal run is active, wake-up is **event-driven**: after a turn that made progress and launched
 no background sub-agents the orchestrator is immediately re-triggered to keep driving;
 while leaf sub-agents are in flight the runtime stays silent — their **sub-dispatch
