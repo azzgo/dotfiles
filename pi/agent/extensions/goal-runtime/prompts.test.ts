@@ -6,6 +6,7 @@ import {
 	buildGoalRunProposalPrompt,
 	buildGoalSetPrompt,
 	buildTrackContextPrompt,
+	buildTrackUpdatePrompt,
 } from "./prompts";
 
 // Pure-function tests: fake snapshots only, no taskmd subprocess and no FS
@@ -147,5 +148,31 @@ describe("buildTrackContextPrompt", () => {
 		const out = buildTrackContextPrompt(mkSnapshot([]));
 		expect(out).not.toContain("auto");
 		expect(out).toContain("No active goal.");
+	});
+});
+
+describe("buildTrackUpdatePrompt", () => {
+	it("instructs the agent to STOP after reconciliation and wait for the user", () => {
+		const goals = [mkGoal({ id: "021", title: "Ship feature", phase: "active", runCount: 1 })];
+		const out = buildTrackUpdatePrompt(mkSnapshot(goals));
+		expect(out).toContain("[TRACK UPDATE]");
+		expect(out).toContain("STOP");
+		expect(out).toContain("checkpoint");
+		expect(out).toContain("wait for the user");
+	});
+
+	it("tells the agent to ask and wait on discontinuity, never decide itself", () => {
+		const out = buildTrackUpdatePrompt(mkSnapshot([]));
+		expect(out).toContain("Ask the user and STOP");
+		expect(out).toContain("Never pick one yourself");
+	});
+});
+
+describe("buildTrackContextPrompt gating", () => {
+	it("permits continuing only on explicit next-step intent; otherwise stop and ask", () => {
+		const out = buildTrackContextPrompt(mkSnapshot([]));
+		expect(out).toContain("explicitly asked you to continue");
+		expect(out).toContain("Otherwise STOP");
+		expect(out).toContain("Do NOT guess or invent tasks");
 	});
 });
