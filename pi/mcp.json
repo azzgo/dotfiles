@@ -2,6 +2,7 @@
   "mcpServers": {
   },
   "settings": {
-    "idleTimeout": 0
+    "idleTimeout": 0,
+    "warnOnLargeDirectTools": false
   }
 }
