@@ -1,16 +1,24 @@
 /**
  * sub-dispatch — a minimal sub-agent dispatch extension for pi, trimmed from
  * pi-interactive-shell (v0.15.0). Single use-case: spawn a coding agent as a
- * subprocess (`dispatch` mode) and collect its output. No overlay / PTY /
- * interactive input / monitor machinery.
+ * subprocess (`dispatch` mode) and collect its output. No PTY / interactive
+ * input — read-only visibility only (see ui.ts).
  *
  * Files:
- *   index.ts   entry: `dispatch` tool, `/dispatch` command, background session table
+ *   index.ts   entry: `dispatch` tool, `/dispatch` peek command, background
+ *              session table, widget/renderer wiring
  *   runner.ts  core engine: config, agent resolution, non-PTY spawn
+ *   ui.ts      visual surfaces: Dispatch Overview widget, Output Peek viewer,
+ *              Dispatch Record renderer
  *   config.json  commands / defaultArgs / caps
  *
  * Bridge hook (v2b, reserved): code-mode imports `runDispatch` programmatically
  * from `../sub-dispatch/runner.ts` for its own execute.
+ *
+ * Visibility layers (all program-side, zero tokens):
+ *   Dispatch Overview — widget: running sessions, live elapsed, 5s settle linger
+ *   Output Peek       — `/dispatch` → read-only scrollable output overlay
+ *   Dispatch Record   — completion message: one compact line, ctrl+o expands
  */
 import type { ChildProcess } from "node:child_process";
 import { spawn } from "node:child_process";
@@ -24,6 +32,16 @@ import {
 	spawnCommand,
 	tailTruncate,
 } from "./runner.js";
+import {
+	createDispatchWidget,
+	formatDurationMs,
+	lastOutputLine,
+	openOutputPeek,
+	renderDispatchRecord,
+	sessionSummary,
+	type CompletionDetails,
+	type DispatchWidgetHandle,
+} from "./ui.js";
 
 export { runDispatch } from "./runner.js";
 
@@ -46,6 +64,14 @@ interface BgSession {
 /** Module-level background session table (cleared on /reload — expected). */
 const bgSessions = new Map<string, BgSession>();
 
+/** Running first (oldest spawn), then settled (newest settle) — picker order. */
+function orderedSessions(): BgSession[] {
+	const all = [...bgSessions.values()];
+	const running = all.filter((s) => s.status === "running").sort((a, b) => a.startedAt - b.startedAt);
+	const settled = all.filter((s) => s.status !== "running").sort((a, b) => (b.doneAt ?? 0) - (a.doneAt ?? 0));
+	return [...running, ...settled];
+}
+
 function formatSessionStatus(s: BgSession): string {
 	const durMs = (s.doneAt ?? Date.now()) - s.startedAt;
 	const lines = [
@@ -57,21 +83,33 @@ function formatSessionStatus(s: BgSession): string {
 	return lines.join("\n");
 }
 
-function formatDurationMs(ms: number): string {
-	const total = Math.max(0, Math.round(ms / 1000));
-	const h = Math.floor(total / 3600);
-	const m = Math.floor((total % 3600) / 60);
-	const sec = total % 60;
-	if (h > 0) return `${h}h ${m}m ${sec}s`;
-	if (m > 0) return `${m}m ${sec}s`;
-	return `${sec}s`;
-}
-
 export default function (pi: ExtensionAPI) {
+	// ── Dispatch Overview widget (persistent; renders nothing when empty) ──
+	// UI surfaces live on ExtensionContext, not ExtensionAPI, so registration
+	// happens per session_start. Re-setting the same key is idempotent; the
+	// stale handle is disposed so its repaint timer can't leak.
+	let widgetHandle: DispatchWidgetHandle | null = null;
+	const refreshWidget = (): void => widgetHandle?.refresh();
+	pi.on("session_start", (_event, ctx) => {
+		if (!ctx.hasUI) return;
+		widgetHandle?.dispose();
+		widgetHandle = null;
+		ctx.ui.setWidget(
+			"sub-dispatch",
+			(tui, theme) => {
+				const handle = createDispatchWidget(tui, theme, () => [...bgSessions.values()]);
+				widgetHandle = handle;
+				return handle;
+			},
+			{ placement: "aboveEditor" },
+		);
+	});
+
 	// Notify the host when a background session settles. `triggerTurn` wakes the
 	// agent if idle; `deliverAs: "followUp"` queues behind an in-flight turn so it
 	// is never lost. The content is self-contained (status + output tail + how to
-	// fetch full details) so the model needs no history to act on it.
+	// fetch full details) so the model needs no history to act on it. Rendered
+	// compactly in the transcript by the Dispatch Record renderer below.
 	const notifyBackgroundDone = (session: BgSession): void => {
 		if (session.notified) return;
 		session.notified = true;
@@ -82,10 +120,18 @@ export default function (pi: ExtensionAPI) {
 			`agent: ${session.agent}\n` +
 			(out.trim() ? `── output ──\n${out}\n` : "") +
 			`\nQuery for full details: dispatch({ sessionId: "${session.id}" })`;
+		const details: CompletionDetails = {
+			sessionId: session.id,
+			agent: session.agent,
+			status: session.status,
+			exitCode: session.exitCode,
+			durationMs: durMs,
+		};
 		pi.sendMessage(
-			{ customType: "sub-dispatch", content, display: true, details: { sessionId: session.id, status: session.status, exitCode: session.exitCode } },
+			{ customType: "sub-dispatch", content, display: true, details },
 			{ triggerTurn: true, deliverAs: "followUp" },
 		);
+		refreshWidget();
 	};
 
 	const runBackground = (opts: {
@@ -93,7 +139,7 @@ export default function (pi: ExtensionAPI) {
 		executable: string;
 		args: string[];
 		cwd: string;
-			maxOutputChars: number;
+		maxOutputChars: number;
 		env?: Record<string, string>;
 	}): BgSession => {
 		const id = generateSessionId(opts.agent);
@@ -135,6 +181,7 @@ export default function (pi: ExtensionAPI) {
 			notifyBackgroundDone(session);
 		});
 		bgSessions.set(id, session);
+		refreshWidget();
 		return session;
 	};
 
@@ -195,6 +242,7 @@ export default function (pi: ExtensionAPI) {
 					session.status = "killed";
 					session.output += "\n[killed]";
 					session.doneAt = Date.now();
+					refreshWidget();
 					return {
 						content: [{ type: "text", text: `Killed background session ${p.sessionId}.` }],
 						details: { sessionId: p.sessionId, status: "killed" },
@@ -256,7 +304,7 @@ export default function (pi: ExtensionAPI) {
 			}
 
 			// ── Foreground (default): wait and return output ──
-		const effectiveCwd = cwd;
+			const effectiveCwd = cwd;
 
 			const startedAt = Date.now();
 			if (ctx.hasUI) ctx.ui.setStatus("sub-dispatch", `${p.reason ? p.reason + " — " : ""}dispatch ${p.agent} — running…`);
@@ -270,7 +318,7 @@ export default function (pi: ExtensionAPI) {
 					env: p.env,
 				});
 				const durationMs = Date.now() - startedAt;
-								return {
+				return {
 					content: [
 						{
 							type: "text",
@@ -288,44 +336,64 @@ export default function (pi: ExtensionAPI) {
 		},
 	});
 
-	// ── /dispatch command (manual dispatch) ──
+	// ── Dispatch Record renderer: compact completion lines, ctrl+o expands ──
+	pi.registerMessageRenderer<CompletionDetails>("sub-dispatch", renderDispatchRecord);
+
+	// ── /dispatch command: pure peek surface (dispatching happens only via
+	// the orchestrating agent's tool call — Single Dispatch Entry) ──
 	pi.registerCommand("dispatch", {
-		description: "Dispatch a sub-agent as a subprocess. Usage: /dispatch <agent> <prompt...>",
+		description: "Peek a dispatch session's output. Usage: /dispatch [sessionId-substring]",
 		handler: async (args, ctx) => {
-			const match = /^(\S+)\s+(.+)$/.exec((args ?? "").trim());
-			const config = loadConfig();
-			if (!match) {
-				ctx.ui.notify("Usage: /dispatch <agent> <prompt...> — e.g. /dispatch pi \"review the diffs\"", "error");
+			const needle = (args ?? "").trim();
+			const sessions = orderedSessions();
+			if (sessions.length === 0) {
+				ctx.ui.notify("No dispatch sessions.", "info");
 				return;
 			}
-			const agent = match[1];
-			const prompt = match[2];
-			const resolved = resolveCommand(config, agent, prompt);
-			if (!resolved.ok) {
-				ctx.ui.notify(resolved.error, "error");
+
+			let target: BgSession | undefined;
+			if (needle) {
+				target = sessions.find((s) => s.id.startsWith(needle));
+				if (!target) {
+					ctx.ui.notify(`No dispatch session matching "${needle}".`, "error");
+					return;
+				}
+			} else {
+				// Always list first, then peek — even for a single session.
+				const now = Date.now();
+				const labels = sessions.map((s) => {
+					const preview = lastOutputLine(s.output);
+					const base = sessionSummary(s, now);
+					return preview ? `${base} ▏ ${preview.slice(0, 48)}` : base;
+				});
+				const picked = await ctx.ui.select("Dispatch sessions", labels);
+				if (picked == null) return;
+				target = sessions[labels.indexOf(picked)];
+			}
+			if (!target) return;
+
+			if (!ctx.hasUI) {
+				ctx.ui.notify("Output peek requires an interactive session.", "error");
 				return;
 			}
-			ctx.ui.notify(`Dispatching ${agent} in foreground… (this waits for the sub-agent to finish)`, "info");
-			const startedAt = Date.now();
-			const result = await spawnCommand(resolved.executable, resolved.args, {
-				cwd: ctx.cwd,
-				timeoutMs: config.defaultTimeoutSec * 1000,
-				maxOutputChars: config.maxOutputChars,
+			const sessionId = target.id;
+			void openOutputPeek({
+				ui: ctx.ui,
+				getSession: () => bgSessions.get(sessionId),
+				autoClose: target.status === "running",
 			});
-			const durationMs = Date.now() - startedAt;
-			ctx.ui.notify(
-				`${agent} finished (${result.ok ? "ok" : "failed"}, exit ${result.exitCode}, ${formatDurationMs(durationMs)})\n${tailTruncate(result.output, 4000)}`,
-				result.ok ? "info" : "error",
-			);
 		},
 	});
 
 	// ── Cleanup background sessions on shutdown ──
-	pi.on("session_shutdown", () => {
+	pi.on("session_shutdown", (_event, ctx) => {
 		for (const session of bgSessions.values()) {
 			killProcessGroup(session.child);
 		}
 		bgSessions.clear();
+		widgetHandle?.dispose();
+		widgetHandle = null;
+		if (ctx.hasUI) ctx.ui.setWidget("sub-dispatch", undefined);
 	});
 }
 
