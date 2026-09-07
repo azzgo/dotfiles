@@ -129,24 +129,36 @@ install-pi:
     rm -rf ~/.pi/agent/skills
     ln -s {{ dotfiles_dir }}/pi/agent/skills ~/.pi/agent/skills
 
-    # Link each skill folder (by folder) into ~/.agents/skills, one by one,
-    # skipping any that already exist so we never clobber skills installed there.
+    echo "⚠️  Keep local only: ~/.pi/agent/models.json ~/.pi/agent/auth.json ~/.pi/agent/settings.json"
+    echo "✅ Pi shared configuration linked"
+
+# Install generic (pi-independent) skills into the shared agent skills dir.
+# Links each folder from <root>/skills/ into ~/.agents/skills, one by one.
+# - symlink still pointing into pi/agent/skills (legacy install-pi layout) → re-pointed here
+# - anything else already present → skipped, never clobbered
+install-skills:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "🚀 Linking generic skills into ~/.agents/skills..."
+
     mkdir -p ~/.agents/skills
-    for skill_dir in ~/.pi/agent/skills/*/; do
+    for skill_dir in {{ dotfiles_dir }}/skills/*/; do
         [ -d "$skill_dir" ] || continue
         skill_name="$(basename "$skill_dir")"
         target=~/.agents/skills/"$skill_name"
-        if [ -e "$target" ] || [ -L "$target" ]; then
+        if [ -L "$target" ] && [[ "$(readlink "$target")" == *pi/agent/skills* ]]; then
+            rm -f "$target"
+            ln -s "{{ dotfiles_dir }}/skills/$skill_name" "$target"
+            echo "  🔁 Re-linked (moved out of pi): $skill_name"
+        elif [ -e "$target" ] || [ -L "$target" ]; then
             echo "  ⏭️  ~/.agents/skills/$skill_name already exists, skipping (preserve existing)"
         else
-            ln -s "$skill_dir" "$target"
+            ln -s "{{ dotfiles_dir }}/skills/$skill_name" "$target"
             echo "  🔗 Linked skill: $skill_name -> ~/.agents/skills/$skill_name"
         fi
     done
 
-
-    echo "⚠️  Keep local only: ~/.pi/agent/models.json ~/.pi/agent/auth.json ~/.pi/agent/settings.json"
-    echo "✅ Pi shared configuration linked"
+    echo "✅ Generic skills linked"
 
 # Install shell configurations (bash, zsh, tmux, starship)
 install-shell:
@@ -197,7 +209,7 @@ install-mise:
 link: install-pi
 
 # Install all configurations
-install-all: install-mise install-neovim install-vim install-shell install-terminals install-herdr
+install-all: install-mise install-neovim install-vim install-shell install-terminals install-herdr install-skills
     echo "🎉 All configurations installed!"
 
 # Development helpers

@@ -13,16 +13,26 @@ Methodology lives in [SKILL.md](SKILL.md). Do not redefine method here.
 
 | Purpose | Path |
 |---|---|
-| Wayfinder Workspace | `.pi/wayfinder/` |
-| taskmd ticket directory | `.pi/wayfinder/tickets/` |
+| Wayfinder Workspace | `~/.cache/wayfinder/<workspace-id>/` |
+| taskmd ticket directory | `~/.cache/wayfinder/<workspace-id>/tickets/` |
+
+`<workspace-id>` is derived from the repository root — resolve it with `git rev-parse --show-toplevel` (fallback: current directory), take its absolute path, strip any trailing slash, replace every `/` with `-` (the leading slash becomes the leading dash), and append a trailing `-`. Example: `/Users/ison/dev/dotfiles` → `-Users-ison-dev-dotfiles-`. Data lives outside the repo, so nothing needs gitignoring.
+
+Compute the ticket dir with this canonical command instead of hand-transforming the path — it normalizes trailing slashes and symlinked paths, so every session lands on the same workspace:
+
+```bash
+repo="$(git rev-parse --show-toplevel 2>/dev/null || pwd -P)"
+repo="${repo%/}"   # strip trailing slash — avoids a double dash in the id
+wf_tickets="$HOME/.cache/wayfinder/$(printf '%s' "$repo" | sed 's|/|-|g')-/tickets"
+```
 
 Always pass the ticket directory explicitly to taskmd, for example:
 
 ```bash
-taskmd --task-dir .pi/wayfinder/tickets <command>
+taskmd --task-dir ~/.cache/wayfinder/<workspace-id>/tickets <command>
 ```
 
-Use the project's actual relative/absolute path for the current repo.
+Resolve the actual workspace-id for the current repo first (see [Workspace](SKILL.md#workspace)).
 
 ## Identity tags
 
@@ -169,7 +179,7 @@ Practical composition:
 Suggested mental command shape (adapt to installed taskmd version):
 
 ```bash
-taskmd --task-dir .pi/wayfinder/tickets next \
+taskmd --task-dir ~/.cache/wayfinder/<workspace-id>/tickets next \
   --filter status=pending \
   --filter tag=wayfinder:research
 # also consider prototype / grilling / setup tags as needed
@@ -187,9 +197,9 @@ Exact flags may vary by taskmd version. Prefer:
 ### Init workspace
 
 ```bash
-mkdir -p .pi/wayfinder/tickets
+mkdir -p ~/.cache/wayfinder/<workspace-id>/tickets
 # optional: smoke-check taskmd against the dir
-taskmd --task-dir .pi/wayfinder/tickets list
+taskmd --task-dir ~/.cache/wayfinder/<workspace-id>/tickets list
 ```
 
 ### Create Map
@@ -197,7 +207,7 @@ taskmd --task-dir .pi/wayfinder/tickets list
 Verified against taskmd `0.2.6`:
 
 ```bash
-taskmd -d .pi/wayfinder/tickets add "Wayfinder: <Destination>" \
+taskmd -d ~/.cache/wayfinder/<workspace-id>/tickets add "Wayfinder: <Destination>" \
   --tags wayfinder:map --status in-progress --format json
 ```
 
@@ -206,7 +216,7 @@ Then overwrite the created markdown body with the Map template. Default `taskmd 
 ### Create Ticket
 
 ```bash
-taskmd -d .pi/wayfinder/tickets add "<question-focused title>" \
+taskmd -d ~/.cache/wayfinder/<workspace-id>/tickets add "<question-focused title>" \
   --tags wayfinder:<type> --status pending --parent <map-id> --format json
 ```
 
@@ -220,14 +230,14 @@ Second pass after create:
 
 ```bash
 # conceptual
-taskmd -d .pi/wayfinder/tickets set <ticket-id> --depends-on <upstream-id>
+taskmd -d ~/.cache/wayfinder/<workspace-id>/tickets set <ticket-id> --depends-on <upstream-id>
 # multiple: --depends-on 002,003
 ```
 
 ### Mark Current Ticket
 
 ```bash
-taskmd -d .pi/wayfinder/tickets set <ticket-id> --status in-progress
+taskmd -d ~/.cache/wayfinder/<workspace-id>/tickets set <ticket-id> --status in-progress
 ```
 
 Set chosen Ticket to `status=in-progress`.  
@@ -243,7 +253,7 @@ For a HITL-channel Ticket (`research`+HITL, `prototype`, `grilling`, `setup`+HIT
 4. resume (fill `## Resolution`, complete) only when the human returns with the input
 
 ```bash
-taskmd -d .pi/wayfinder/tickets set <ticket-id> --status waiting-human
+taskmd -d ~/.cache/wayfinder/<workspace-id>/tickets set <ticket-id> --status waiting-human
 ```
 
 `prototype`/`grilling` are live HITL exchanges and stay `in-progress` during the conversation, not `waiting-human`.
@@ -251,8 +261,8 @@ taskmd -d .pi/wayfinder/tickets set <ticket-id> --status waiting-human
 ### Complete Ticket
 
 ```bash
-taskmd -d .pi/wayfinder/tickets set <ticket-id> --status completed
-# or: taskmd -d .pi/wayfinder/tickets set <ticket-id> --done
+taskmd -d ~/.cache/wayfinder/<workspace-id>/tickets set <ticket-id> --status completed
+# or: taskmd -d ~/.cache/wayfinder/<workspace-id>/tickets set <ticket-id> --done
 ```
 
 1. write `## Resolution`
@@ -267,9 +277,9 @@ taskmd -d .pi/wayfinder/tickets set <ticket-id> --status completed
 
 When a Ticket has matured into "ready to build, no decision left", complete it as a **graduation** rather than a decision:
 
-- `## Resolution` = handoff pointer, e.g. `Graduated → Goal <id>` or a spec link
+- `## Resolution` = handoff pointer, e.g. a spec link or `Graduated → <implementation record>`
 - `## Decision` summary states it was handed off to build, not decided inline
-- Map `## Decisions So Far` line records it as a **route step** (e.g. `- [Name](link) — graduated to build → Goal 003`)
+- Map `## Decisions So Far` line records it as a **route step** (e.g. `- [Name](link) — graduated to build, see spec`)
 - status `completed`
 - do **not** implement the destination here (Wayfinder session is read-only to production code)
 
@@ -284,22 +294,19 @@ Use when the Ticket is abandoned or mis-scoped before resolution:
 
 ### Open Web UI
 
-Human inspection surface. Default launch path for `/wayfinder ui`:
+Human inspection surface. Default launch path for the `ui` command:
 
 ```bash
-taskmd -d .pi/wayfinder/tickets web start --port 8080 --open
+taskmd -d ~/.cache/wayfinder/<workspace-id>/tickets web start --port 8080 --open
 ```
 
 How the agent should start it:
 
-1. Prefer `bash` background launch with:
-   - `mode: "dispatch"`
-   - `background: true`
+1. Prefer the environment's background-mechanism (background shell / background dispatch) over a plain blocking call — long-lived web servers must not block the session.
 2. Report:
    - URL (default `http://localhost:8080`)
-   - session id for later `/attach`
-3. Do **not** use plain `bash`/nohup as the primary path — long-lived web servers are unreliable there.
-4. Agent still mutates state via CLI, never by driving the web UI.
+   - how to stop it (port / process), so the user stays in control
+3. Agent still mutates state via CLI, never by driving the web UI.
 
 Web UI can also be opened in the foreground for manual inspection when the user wants to watch. Background launch is the default.
 
@@ -326,7 +333,7 @@ Stop and ask the human when detecting:
 
 - multiple Active Maps
 - multiple Current Tickets without explicit user intent
-- Wayfinder-tagged records outside `.pi/wayfinder/tickets/`
+- Wayfinder-tagged records outside `~/.cache/wayfinder/` (e.g. repo-local `.pi/wayfinder/` leftovers from before the global-workspace layout)
 - Tickets without parent Map
 - circular dependencies (use taskmd validate if available)
 - HITL Tickets stuck `in-progress` without a live human exchange (should be `waiting-human` or completed)

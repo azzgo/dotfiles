@@ -139,8 +139,17 @@ Shared Pi setup with:
 - `pi/agent/prompts/` is linked to Pi's global prompt templates directory: `~/.pi/agent/prompts/`
 - `models.json` and `auth.json` remain local on each machine
 - Only cross-device-safe Pi config is linked by dotfiles
+- `pi/agent/skills/` holds pi-coupled skills (sub-dispatch / dispatch tool / pi prompts), linked as `~/.pi/agent/skills/`
 
 **Installation**: `just install-pi` or `just link`
+
+#### Generic Skills
+Pi-independent skills (`skills/` at the repo root: `grill-with-docs`, `prototype`, `wayfinder`, etc.):
+- Each skill folder is symlinked into the shared agent skills dir `~/.agents/skills/`
+- Not linked into the Pi directory; Pi still picks them up as a lower-priority search path
+- Provenance (source, install date, adjustments, upstream) is recorded per directory in `README.txt`
+
+**Installation**: `just install-skills`
 
 ## Available Just Commands
 
@@ -153,6 +162,7 @@ Shared Pi setup with:
 | `just install-terminals` | Install all terminal configurations |
 | `just install-shell` | Install shell, tmux, and starship configurations |
 | `just install-pi` | Link shared Pi configuration files |
+| `just install-skills` | Link generic skills into ~/.agents/skills |
 | `just install-herdr` | Symlink herdr config.toml into ~/.config/herdr |
 | `just link` | Alias for `install-pi` |
 | `just nvim-health` | Check Neovim health and dependencies |

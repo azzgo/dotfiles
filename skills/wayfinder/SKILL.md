@@ -1,6 +1,6 @@
 ---
 name: wayfinder
-description: Plan foggy, multi-session work as a local decision map of Tickets on taskmd, then resolve one Ticket at a time until the route to the destination is clear. Personal Wayfinder variant — no team claim flow, taskmd backend only, separate from Goal Runtime.
+description: Plan foggy, multi-session work as a local decision map of Tickets on taskmd, then resolve one Ticket at a time until the route to the destination is clear. Personal Wayfinder variant — no team claim flow, taskmd backend only.
 disable-model-invocation: true
 ---
 
@@ -8,14 +8,14 @@ disable-model-invocation: true
 
 A loose idea has arrived — too big for one agent session, and wrapped in fog. Wayfinding finds the **route**, not charges at the destination.
 
-This skill charts a **shared Map** in the repository's local **taskmd** workspace, then works **decision Tickets** one at a time until the route is clear. Tickets resolve **decisions / investigations / prototypes / setup**, not implementation slices.
+This skill charts a **shared Map** in the local **taskmd** workspace, then works **decision Tickets** one at a time until the route is clear. Tickets resolve **decisions / investigations / prototypes / setup**, not implementation slices.
 
 This is a **Personal Wayfinder**:
 
 - keeps the original decision-oriented method
 - removes team collaboration ceremony
 - uses **taskmd as an explicit backend** (not built-in, not swapped silently)
-- stays **separate from Goal Runtime** (`.pi/goals/` + `.pi/track/`)
+- stays **out of the implementation layer** — it never enters implementation-tracking or execution systems; handoff to them is suggestion-only
 - recommends only capabilities available in the current agent/repo environment
 
 ## Plan, don't do
@@ -34,13 +34,13 @@ Not allowed by default:
 
 - production implementation of the destination
 - turning Tickets into a build backlog
-- silently expanding into Goal Runtime execution
-- invoking Goal Runtime — goal-runtime exposes no goal tools to the model (lifecycle is `/goal` command-driven); never run `/goal set`, `/goal activate`, `/goal review`, … on the user's behalf from a Wayfinder session. Goal flows are **user-triggered**: the Wayfinder agent may only **suggest the user run** a `/goal ...` command at Graduate/Exit, and only as one capability-aware option among others
-- mutating production code — the Wayfinder session is **read-only** to production code; only `.pi/wayfinder/` and throwaway prototype scratch may be written
+- silently expanding into implementation execution
+- entering or operating an implementation-tracking / execution system on the user's behalf — such systems are **user-triggered**: the Wayfinder agent may only **suggest** fitting capabilities (drawn from its own context: local skills, workflows, commands) at Graduate/Exit, as options among others
+- mutating production code — the Wayfinder session is **read-only** to production code; only the Wayfinder workspace (see [Workspace](#workspace)) and throwaway prototype scratch may be written
 
-Writing a handoff spec / Goal contract is **planning**, not implementation — it stays in scope. Specs are Wayfinder's decision-layer output and may be written **incrementally** (a partial spec as soon as one part of the exploration is decided, handed off via Graduate) or as a single unified spec when exploration completes.
+Writing a handoff spec is **planning**, not implementation — it stays in scope. Specs are Wayfinder's decision-layer output and may be written **incrementally** (a partial spec as soon as one part of the exploration is decided, handed off via Graduate) or as a single unified spec when exploration completes.
 
-When remaining work is mostly "how to implement", exit Wayfinder (see [Exit condition](#exit-condition)) and hand off by **suggesting commands for the user to run** (capability-aware, not hard-coded; `/goal set` is one option, not the default).
+When remaining work is mostly "how to implement", exit Wayfinder (see [Exit condition](#exit-condition)) and hand off by **suggesting paths for the user to take** (capability-aware, not hard-coded).
 
 ## Core objects
 
@@ -50,8 +50,8 @@ When remaining work is mostly "how to implement", exit Wayfinder (see [Exit cond
 | **Ticket** | One decision / investigation / prototype / setup unit |
 | **Frontier** | Unblocked pending Tickets under the Active Map |
 | **Current Ticket** | The single Ticket this session is advancing |
-| **Wayfinder Workspace** | Per-repo local storage at `.pi/wayfinder/` |
-| **Task** | Implementation work under Goal Runtime (`.pi/goals/` records + `.pi/track/`) — different system |
+| **Wayfinder Workspace** | Per-workspace local storage under `~/.cache/wayfinder/` (outside any repo) |
+| **Task** | Implementation-tracking unit in other systems — different system |
 
 Human-facing prose always says **Ticket**, never "task", except when quoting literal taskmd CLI objects/commands.
 
@@ -77,10 +77,12 @@ Details of CLI flags, tags, filters, and templates live in [TASKMD-CONVENTION.md
 
 ## Workspace
 
-- Path: `.pi/wayfinder/`
-- taskmd ticket dir: `.pi/wayfinder/tickets/`
-- Per-repository isolation
-- Local only; already covered by `.pi/` gitignore in this dotfiles repo
+- Root: `~/.cache/wayfinder/`
+- Per-workspace dir: `~/.cache/wayfinder/<workspace-id>/`
+- workspace-id: derived from the repository root — resolve it with `git rev-parse --show-toplevel` (fallback: current directory), take its absolute path, strip any trailing slash, replace every `/` with `-` (the leading slash becomes the leading dash), and append a trailing `-`. Example: `/Users/ison/dev/dotfiles` → `-Users-ison-dev-dotfiles-`. Compute it with the canonical command in [TASKMD-CONVENTION.md](TASKMD-CONVENTION.md#paths) — do not hand-transform the path
+- taskmd ticket dir: `~/.cache/wayfinder/<workspace-id>/tickets/`
+- Per-repository isolation via the workspace-id; data lives **outside** the repo, so nothing needs gitignoring
+- Local only
 - Lazy init: create only on explicit Wayfinder start (`init` / first `chart`), never from mere discussion
 
 One **Active Map** per repository at a time.
@@ -164,10 +166,10 @@ Channel defaults by type; only `research` and `setup` are genuinely dual-mode:
 
 | Type | Intent | Default channel | Local capability |
 |---|---|---|---|
-| `research` | Gather facts needed for a decision | AFK | `/skill:explore-codebase` (in-repo) or web fetch (`web_search` + `fetch_content`) |
+| `research` | Gather facts needed for a decision | AFK | the `explore-codebase` skill (if available) or the environment's web search / URL fetch tools |
 | `research` + HITL | Facts only obtainable via a human (a colleague, the requirement owner, an architecture doc the agent can't reach) | HITL | none the agent runs itself — see [HITL research](#hitl-research) |
-| `prototype` | Cheap concrete artifact to react to | HITL (fixed) | `prototype` skill |
-| `grilling` | Live decision interview | HITL (fixed) | `grill-with-docs` (fallback `/grill-me`) |
+| `prototype` | Cheap concrete artifact to react to | HITL (fixed) | `prototype` skill (if available) |
+| `grilling` | Live decision interview | HITL (fixed) | `grill-with-docs` skill (if available; else any local grilling practice) |
 | `setup` | Prep work that unblocks a later decision | AFK or HITL | no dedicated skill; checklist / shell / manual prep |
 
 Channel is recorded as the tag `wayfinder:hitl` when HITL; its absence means AFK. `prototype`/`grilling` are HITL by nature, so the tag is redundant but harmless.
@@ -235,7 +237,7 @@ Fog is formal. Out of Scope is formal. Neither is a junk drawer.
 7. **No silent tracker fallback**
 8. **No silent destination invention**
 9. **HITL never auto-resolved** — a HITL-channel Ticket is never resolved by the agent standing in for the human; it gets an intake brief and `waiting-human`
-10. **Goal ops are user-triggered** — never invoke Goal Runtime (`/goal` commands or goal-runtime tools) from a Wayfinder session. At Graduate/Exit, **suggest the user run** the fitting capability (`/goal set`, `/goal activate`, or an alternative that exists in this environment); if other local skills cover the need, suggest those too. The agent only recommends — the user pulls the trigger.
+10. **Implementation entry is user-triggered** — never enter or operate an implementation-tracking / execution system from a Wayfinder session. At Graduate/Exit, **suggest** the fitting capabilities that exist in the current environment (drawn from the agent's own context: local skills, workflows, commands); if several fit, suggest them as options. The agent only recommends — the user pulls the trigger.
 
 Parallel **read-only** research sub-agents are allowed **only in Chart mode**, **only for `research`-AFK Tickets**, and all results merge back into the Map/Chart pass. They are never used to resolve HITL Tickets.
 
@@ -280,7 +282,7 @@ Use when an Active Map already exists.
      not as an ongoing exploration)
    - one-line gist into Map `## Decisions So Far`
 7. Mark Ticket `completed` (or `cancelled` only if abandoned before answer).
-8. **Graduate** if the Ticket has matured into "ready to build, no decision left": set `## Resolution` to a pointer into the **spec layer** (a spec link, or `Graduated → Goal <id>` **if the user has already created** such a goal via `/goal set`), mark `completed`, and record the gist in `## Decisions So Far` as a route step. This is the partial-spec handoff path: **suggest the user** start a separate implementation session (`/goal run` → `/goal activate <id>`, a spawn agent, ordinary coding) for the spec'd portion — but do **not** implement it inside Wayfinder and do **not** invoke `/goal` or goal tools yourself.
+8. **Graduate** if the Ticket has matured into "ready to build, no decision left": set `## Resolution` to a pointer into the **spec layer** (a spec link, or a pointer to whatever implementation record the user has already created), mark `completed`, and record the gist in `## Decisions So Far` as a route step. This is the partial-spec handoff path: **suggest the user** start a separate implementation session (a spawn / sub-agent, ordinary coding, or whatever implementation workflow exists in this environment) for the spec'd portion — but do **not** implement it inside Wayfinder and do **not** enter any implementation system yourself.
 9. Graduate fog into new Tickets if now sharp; clear graduated fog from `Not Yet Specified`.
 10. Rule mis-scoped work into `Out of Scope` and cancel those Tickets.
 11. Update / create dependency edges as needed.
@@ -309,25 +311,23 @@ Then:
 - finish the Active Map
 - summarize the route for the user
 - **capability-aware, spec-as-boundary handoff — suggestions to the USER, not agent actions**:
-  - **Spec side (Wayfinder's own output).** Suggest the user finalize the spec via whatever spec-writing capability actually exists here (running `/goal set <topic>` themselves, or an alternative). Partial specs may already have been handed off during exploration via Graduate; at exit the unified spec covers the rest.
-  - **Implementation side (separate agent/session, never inside Wayfinder).** Once a spec exists, suggest the user open a new session on the fitting path (`/goal run` → `/goal activate <id>`, cursor/pi spawn agents, ordinary coding, etc.). Implementation for an already-spec'd portion may have started earlier and may continue in parallel with remaining exploration — but never in the Wayfinder session, and never bundled with spec-writing.
+  - **Spec side (Wayfinder's own output).** Suggest the user finalize the spec via whatever spec-writing capability actually exists here. Partial specs may already have been handed off during exploration via Graduate; at exit the unified spec covers the rest.
+  - **Implementation side (separate agent/session, never inside Wayfinder).** Once a spec exists, suggest the user open a new session on the fitting path (a spawn / sub-agent, ordinary coding, or any other implementation workflow available in this environment). Implementation for an already-spec'd portion may have started earlier and may continue in parallel with remaining exploration — but never in the Wayfinder session, and never bundled with spec-writing.
 - detect which capabilities actually exist on each side and **suggest** the fitting one to the user — do **not** hard-code a single path and do **not** execute it yourself.
 
 ## Invocation surface
 
-Primary methodology lives in this skill.
-
-Thin prompt shortcut: `/wayfinder` (see `pi/agent/prompts/wayfinder.md`).
+Primary methodology lives in this skill. Arguments are appended raw to the skill; hosts may bind a thin `/wayfinder` shortcut to it.
 
 | Invocation | Behavior |
 |---|---|
-| bare `/wayfinder` | Smart entry: inspect state and route |
-| `/wayfinder init` | Check deps + create workspace only |
-| `/wayfinder chart <topic>` | Clarification gate + create Map |
-| `/wayfinder work` | Advance one Current Ticket |
-| `/wayfinder status` | Report state only; no mutation |
-| `/wayfinder ui` | Open taskmd Web UI for human inspection (background by default) |
-| `/wayfinder help` | Print the command surface + one-paragraph when-to-use guidance; start no work |
+| bare `wayfinder` | Smart entry: inspect state and route |
+| `wayfinder init` | Check deps + create workspace only |
+| `wayfinder chart <topic>` | Clarification gate + create Map |
+| `wayfinder work` | Advance one Current Ticket |
+| `wayfinder status` | Report state only; no mutation |
+| `wayfinder ui` | Open taskmd Web UI for human inspection (background by default) |
+| `wayfinder help` | Print the command surface + one-paragraph when-to-use guidance; start no work |
 
 Smart entry routing:
 
@@ -343,14 +343,13 @@ Smart entry routing:
 |---|---|
 | Personal Wayfinder | Decision map while foggy |
 | taskmd | Local backend + human Web UI |
-| `/goal set` (Goal spec) | Writing the implementable spec — Wayfinder's decision-layer output; **user-triggered only**: Wayfinder suggests the user run it, never invokes it |
-| `/goal run` → `/goal activate <id>` (Goal Runtime) | Implementation session — `/goal run` proposes the goal, the **user** runs `/goal activate <id>` to start it (a drafted goal goes through `/goal commit` first); always a separate agent/session, may run in parallel with ongoing Wayfinder exploration once a spec exists |
-| `grill-with-docs` / `prototype` / `/skill:explore-codebase` | Local capabilities used by Ticket types |
+| Implementation spec / execution systems (downstream) | Receive Wayfinder's decision-layer output via Graduate/Exit — **user-chosen and user-triggered**; Wayfinder only suggests, never enters |
+| `grill-with-docs` / `prototype` / `explore-codebase` skills | Local capabilities used by Ticket types (capability-aware: used only if available) |
 
 Never confuse:
 
 - **Ticket** (Wayfinder decision unit)
-- **Task** (implementation unit under Goal Runtime: `.pi/goals/` records + `.pi/track/`)
+- **Task** (implementation-tracking unit in other systems)
 - taskmd's underlying `task` record (storage primitive only)
 
 ## Do / Don't
@@ -359,15 +358,15 @@ Never confuse:
 
 - keep fog and out-of-scope explicit
 - operate through taskmd CLI as agent backend
-- open Web UI when the human wants inspection/manual override (default: `bash` background launch)
+- open Web UI when the human wants inspection/manual override (default: background launch)
 - recommend only locally available skills on handoff — as **suggestions for the user to run**, never as actions the Wayfinder agent executes
 - keep one Current Ticket focus
 
 ### Don't
 
 - invent a tracker when taskmd is missing
-- merge Wayfinder into Goal Runtime
-- invoke `/goal` commands or goal-runtime tools from a Wayfinder session — goal flows are user-triggered; suggest, don't execute
+- pull Wayfinder into the implementation layer
+- enter or operate implementation-tracking / execution systems from a Wayfinder session — handoff is suggestion-only; the user pulls the trigger
 - implement the destination under Wayfinder
 - resolve many unrelated Tickets in one unfocused session
 - use bare ids in human-facing narration
