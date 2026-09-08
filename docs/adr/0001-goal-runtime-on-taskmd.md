@@ -1,6 +1,6 @@
 # Goal Runtime on taskmd; Track stays flat; retire the "Planning" name
 
-Status: accepted
+Status: accepted — superseded in part by ADR 0006 (taskmd exited the execution layer with goal-runtime; taskmd remains Wayfinder's backend only)
 
 The `planning-files-runtime` extension was single-Goal, zero-dependency, pure file-IO, with no retention or traceability — completed Goals were dumped into opaque timestamped archive folders and were not queryable. We are rebuilding it as **`goal-runtime`**: a multi-Goal system that stores **Goals, Stories, and Tasks as taskmd records** (in a store separate from Wayfinder's, tag family `goal` / `goal:story` / `goal:task`), while **Track** (the `findings.md` + `progress.md` working-memory scratchpad) stays as flat, non-taskmd files used only for cross-session / context-tight continuity. The old "Planning" name is retired everywhere because the Task layer was extracted into the Goal mechanism and the remnant no longer resembles "planning with files".
 

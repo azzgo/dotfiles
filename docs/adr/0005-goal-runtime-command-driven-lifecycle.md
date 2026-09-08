@@ -1,6 +1,6 @@
 # Goal lifecycle becomes command-driven; Track is the one auto surface
 
-Status: accepted
+Status: superseded by ADR 0006 — its lessons carry into workflow-runtime/track (deterministic command-driven transitions, no model-facing lifecycle tools, manual Track), while the goal lifecycle itself is retired
 
 ## Context
 
