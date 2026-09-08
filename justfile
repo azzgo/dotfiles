@@ -111,8 +111,10 @@ install-pi:
     ln -sf {{ dotfiles_dir }}/pi/agent/APPEND_SYSTEM.md ~/.pi/agent/APPEND_SYSTEM.md
     ln -sf {{ dotfiles_dir }}/pi/mcp.json ~/.pi/agent/mcp.json
 
-    rm -rf ~/.pi/agent/extensions/goal-runtime
-    ln -s {{ dotfiles_dir }}/pi/agent/extensions/goal-runtime ~/.pi/agent/extensions/goal-runtime
+    rm -rf ~/.pi/agent/extensions/track
+    ln -s {{ dotfiles_dir }}/pi/agent/extensions/track ~/.pi/agent/extensions/track
+    rm -rf ~/.pi/agent/extensions/workflow-runtime
+    ln -s {{ dotfiles_dir }}/pi/agent/extensions/workflow-runtime ~/.pi/agent/extensions/workflow-runtime
     rm -rf ~/.pi/agent/extensions/readonly-mode
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/readonly-mode ~/.pi/agent/extensions/readonly-mode
 
@@ -128,6 +130,9 @@ install-pi:
 
     rm -rf ~/.pi/agent/skills
     ln -s {{ dotfiles_dir }}/pi/agent/skills ~/.pi/agent/skills
+
+    rm -rf ~/.pi/agent/patterns
+    ln -s {{ dotfiles_dir }}/pi/agent/patterns ~/.pi/agent/patterns
 
     echo "⚠️  Keep local only: ~/.pi/agent/models.json ~/.pi/agent/auth.json ~/.pi/agent/settings.json"
     echo "✅ Pi shared configuration linked"

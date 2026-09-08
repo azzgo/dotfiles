@@ -18,7 +18,8 @@
   ],
   "lastChangelogVersion": "0.78.1",
   "extensions": [
-    "+extensions/goal-runtime/index.ts",
+    "+extensions/workflow-runtime/index.ts",
+    "+extensions/track/index.ts",
     "+extensions/readonly-mode/index.ts"
   ]
 }
