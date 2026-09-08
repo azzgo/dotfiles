@@ -1,23 +1,19 @@
-# Pi Goal, Track & Wayfinder Workflows
+# Pi Workflow, Track & Wayfinder
 
-This context defines the local workflows maintained in this dotfiles repo for Pi. It distinguishes goal-driven execution (Goals and Track, via Goal Runtime) from decision-oriented wayfinding so future prompts, skills, and automation use consistent terms.
+This context defines the local workflows maintained in this dotfiles repo for Pi. It distinguishes decision-oriented wayfinding (Wayfinder), execution orchestration (Workflow runtime), and freeform working memory (Track) so future prompts, skills, and automation use consistent terms.
 
 ## Language
 
 **Wayfinder**:
-A decision-oriented planning workflow for work that is still foggy. It maps a destination, unresolved decisions, and dependency edges before implementation starts.
+A decision-oriented planning method for work that is still foggy. It maps a destination, unresolved decisions, and dependency edges before implementation starts.
 _Avoid_: implementation plan, task runner, todo list
 
-**Goal Runtime**:
-The execution-oriented Pi extension (`goal-runtime`) that manages Goals (durable, taskmd-backed implementation targets) and Track (the shared working-memory scratchpad) during implementation. It shares the taskmd backend with Wayfinder but keeps separate stores and tag families.
-_Avoid_: wayfinder, roadmap engine, issue tracker
-
 **Track**:
-The shared, reset-able working-memory scratchpad managed by Goal Runtime — the freeform findings and progress narrative that accumulates execution context. Track is orthogonal to Goals: resetting it (`/track new`) clears the scratchpad without touching Goal records, and Track updates (`/track update`) run independently of goal lifecycle.
-_Avoid_: goal history, permanent log, per-goal notebook
+The shared, reset-able working-memory scratchpad managed by the standalone `track` extension — the freeform findings and progress narrative that accumulates execution context. Track is fully manual (auto-init on the first conversation of a session only) and a stranger to the Workflow runtime: Runs keep their own structured progress logs, Track is the model's freeform memory.
+_Avoid_: goal history, permanent log, per-run notebook
 
 **Project**:
-The repository scope that owns one Goal Runtime workspace and the Goals within it. A Project may hold many Goals, but only one Goal may be active at a time.
+The repository scope that owns the local automation workspaces — the Workflow storage (`.pi/workflows/`), the Track scratchpad (`.pi/track/`), and a Wayfinder workspace. Many non-terminal Runs may coexist in a Project; nothing is exclusive.
 _Avoid_: workspace (see Wayfinder Workspace), map, global account
 
 **Local Skill**:
@@ -25,32 +21,20 @@ A Pi skill maintained inside this dotfiles repo for personal use on the current 
 _Avoid_: package, product, shared extension
 
 **Taskmd Backend**:
-The local task tracker used as shared storage by both Wayfinder (Maps, Tickets, dependency edges) and Goal Runtime (Goals, Stories, Tasks), exposed through taskmd's CLI and web UI. Each system uses its own store directory and tag family. It is an explicit prerequisite, not a built-in fallback.
-_Avoid_: embedded database, custom UI core, wayfinder-only backend
+The local task tracker behind Wayfinder's planning layer (Maps, Tickets, dependency edges), exposed through taskmd's CLI and web UI. The Workflow runtime deliberately does not use taskmd — its Definitions and Runs are flat files under `.pi/workflows/` (this amends the goal-era shared-backend decision, ADR 0001).
+_Avoid_: embedded database, custom UI core, workflow storage backend
 
 **Personal Wayfinder**:
 A local Wayfinder variant that keeps the original decision-oriented method while removing team coordination ceremony. It recommends only the skills and prompts available in this repo.
 _Avoid_: generic issue tracker workflow, full team-process port
 
 **Wayfinder Workspace**:
-The per-repository local storage area for a Personal Wayfinder map and its tickets, stored by default at `.pi/wayfinder/`. It is isolated from other repositories and kept out of version control.
-_Avoid_: global tracker, shared inbox, goal-runtime directory
+The per-repository storage area for a Personal Wayfinder map and its tickets, stored at `~/.cache/wayfinder/<workspace-id>/` (workspace-id is a slug of the repo-root abs path). It is isolated from other repositories and kept out of version control.
+_Avoid_: global tracker, shared inbox, project-local .pi directory
 
 **Ticket**:
-A Wayfinder child item that captures one decision, investigation, prototype, or other unit of planning work under a Map. In taskmd it is stored as a task, but Wayfinder prose should call it a Ticket to avoid confusion with Goal Runtime Tasks.
+A Wayfinder child item that captures one decision, investigation, prototype, or other unit of planning work under a Map. In taskmd it is stored as a task, but Wayfinder prose should call it a Ticket to avoid confusion with taskmd's generic storage primitive.
 _Avoid_: task, todo, card
-
-**Task**:
-The leaf execution unit under a Story in Goal Runtime — a one-commit-granularity work item with dependency edges and TDD markers, stored as a taskmd record. It is the parallelizable unit of implementation, distinct from a Wayfinder Ticket (decision unit) and from taskmd's generic storage primitive.
-_Avoid_: ticket, wayfinder task, taskmd storage primitive
-
-**Goal**:
-A durable implementation target owned by Goal Runtime — an epic or feature expressed as a contract (objective, acceptance criteria, constraints, out-of-scope) and a design blueprint, decomposed into Stories and Tasks. A Project holds many Goals, each with its own identity; a Goal is retained after completion for traceability rather than consumed once. It is the spec-layer handoff target for Wayfinder (`Graduated → Goal`).
-_Avoid_: ticket, todo, one-shot disposable feature
-
-**Story**:
-A vertical-slice breakdown layer of a Goal — an end-to-end deliverable with its own acceptance criteria, sitting between a Goal and its Tasks. A Goal is decomposed into Stories, and each Story into Tasks.
-_Avoid_: epic, ticket, milestone, task
 
 **Active Map**:
 The single Wayfinder Map in a repository that is currently being worked through. A repository may keep historical Maps, but only one Map may be active at a time.
@@ -213,12 +197,58 @@ Personal Wayfinder produces decisions, clarified destinations, and map advanceme
 _Avoid_: turning Tickets into build backlog, shipping production code under Wayfinder
 
 **Wayfinder Artifact Layout**:
-Personal Wayfinder lives as a local skill at `pi/agent/skills/wayfinder/SKILL.md`, with taskmd field and command conventions in `pi/agent/skills/wayfinder/TASKMD-CONVENTION.md`, and a thin prompt shortcut at `pi/agent/prompts/wayfinder.md`.
+Personal Wayfinder lives as a generic skill at `skills/wayfinder/SKILL.md` (repo root, installed via `just install-skills`), with taskmd field and command conventions in `skills/wayfinder/TASKMD-CONVENTION.md`, and a thin prompt shortcut at `pi/agent/prompts/wayfinder.md`. Wayfinding state lives outside the repo at `~/.cache/wayfinder/<workspace-id>/`.
 _Avoid_: single mega skill file, methodology inside the prompt
 
 **Wayfinder Doc Language**:
 Wayfinder skill and prompt documents are written in English for token efficiency and stable terminology. Human conversation may still be Chinese.
 _Avoid_: full Chinese methodology docs, mixed bilingual instruction bodies
+
+## Workflow (Orchestration Skeleton)
+
+**Workflow**:
+A human-started, resumable unit of work shaped as a linear Spine of Nodes. A Workflow only books state and recommends flow — it never executes node internals and never judges work quality. Domain-agnostic: SDLC patterns are one application, not a boundary.
+_Avoid_: Goal, pipeline engine, autonomous process
+
+**Definition**:
+The maintained, human-reviewable text artifact describing one Workflow: its node list, each node's brief, type, and suggested skills/sub-agents. Drafted by AI, edited by hand, promotable from a good Run.
+_Avoid_: template (use Definition or Pattern), code-defined workflow, DSL graph
+
+**Pattern**:
+A curated Definition shipped in the repo's pattern library (`pi/agent/patterns/`, e.g. feature / bugfix / perf), format-identical to any Definition. Starting a Run copies it into the project; promoting a good Run back (`save-as-template`) writes to the library — visible as a dotfiles git diff.
+_Avoid_: built-in code, hardcoded flow, skill
+
+**Run**:
+One execution instance of a Definition, stored under `.pi/workflows/runs/` with node states, per-node session links, and a progress log. A Run is dormant whenever no Driving Session is attached — it never runs by itself.
+_Avoid_: workflow (reserved for the concept), session, Goal
+
+**Spine**:
+The ordered, linear node list of a Workflow. No edges, no conditional branches; structural changes happen only as explicit Rerouting.
+_Avoid_: graph, DAG, conditional edges
+
+**Node**:
+One entry/exit boundary on a Spine. A Node owns only its completion semantics; loops, parallel dispatch, and quality judgment live inside the Node — carried by the skills or sub-agents it suggests.
+_Avoid_: task, stage, quality gate
+
+**Auto Node**:
+A Node executed by a fresh sub-agent session via dispatch (sub-dispatch). Completion is event-driven: the extension flips state on settle, logs progress with the child session id, and notifies the user; consecutive Auto Nodes cascade without asking.
+_Avoid_: babysat dispatch, unattended cascade into Human Nodes
+
+**Human Node**:
+A Node whose work the user performs in their own session (grilling, wayfinding, review) and completes with an explicit command. The extension then logs progress and asks about the next Node — at session start of whichever fresh session the user opens next.
+_Avoid_: workflow-owned gate, auto-completed step
+
+**Rerouting**:
+An explicit mid-Run change to the Spine — skip, insert, or replan (AI-proposed revision, human-approved). Every reroute appends its reason to the Run's progress log.
+_Avoid_: silent mutation, conditional edge
+
+**Driving Session**:
+The pi session currently advancing a Run: it dispatches Auto Nodes, hosts Human Node commands, and stays deliberately thin — node work happens in sub-sessions or the user's hands, never in the driver's own context.
+_Avoid_: orchestrator that executes, main session doing node work
+
+**Focus**:
+The per-session pointer to the Run that bare `/wf` commands target — defaults to the Run this session last interacted with. A cold-start Run picker (dismissible, injects nothing) sets it when a fresh session meets dormant Runs; sessions opened with a run already named in context preselect it.
+_Avoid_: activation, exclusive lock, global current-run
 
 ## Element Picking（元素拾取）
 
