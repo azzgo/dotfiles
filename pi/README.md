@@ -9,7 +9,9 @@
 - `pi/agent/prompts/`
 - `pi/agent/skills/`
 - `pi/mcp.json`
-- `pi/agent/extensions/goal-runtime/`
+- `pi/agent/extensions/track/`
+- `pi/agent/extensions/workflow-runtime/`
+- `pi/agent/patterns/`
 - `pi/agent/extensions/readonly-mode/`
 - `pi/agent/extensions/xfer/`
 - `pi/agent/extensions/code-mode/`
@@ -38,11 +40,9 @@
 
 去掉了原本机器相关的绝对路径参数，方便多端直接复用。
 
-### 3. goal-runtime 扩展已迁移
+### 3. 扩展与 pattern 目录 link
 
-`~/.pi/agent/extensions/goal-runtime/` 已纳入 dotfiles。
-
-执行 `just install-pi` 时会把仓库中的扩展目录 link 到本机 Pi 扩展目录。
+执行 `just install-pi` 时会把仓库中的扩展目录 link 到本机 Pi 扩展目录，`pi/agent/patterns/` link 到 `~/.pi/agent/patterns/`（workflow pattern 库）。
 
 ### 4. 自研扩展：sub-dispatch 与 code-mode
 
@@ -55,10 +55,8 @@
 `pi/agent/skills/` 会通过 `just install-pi` link 到 `~/.pi/agent/skills/`。
 
 当前维护的 skills：
-- `wayfinder` — Personal Wayfinder（本地 taskmd 决策地图）
-- `grill-with-docs` — 对着领域文档 grilling 计划
-- `prototype` — throwaway prototype 验证设计问题
-- `code-review` / `impl-with-spawn` / `improve-codebase-architecture` — 其它本地维护 skills
+- `code-review` / `impl-with-spawn` / `explore-codebase` / `spawn-model-selection` — pi 耦合 skills
+- 通用 skills（wayfinder、grill-with-docs、prototype、improve-codebase-architecture 等）已迁至仓库根 `skills/`，经 `just install-skills` 安装到 `~/.agents/skills/`
 
 ### 6. prompt templates 已纳入 dotfiles
 
@@ -70,16 +68,13 @@
 
 页面元素拾取已改为 `web-picker.user.js` + `/xfer broker` 链路：Tampermonkey userscript 手动连接本地 broker daemon，标注 + prompt 以 xfer handoff 推入目标 session；安装与排障见 `pi/agent/extensions/xfer/docs/web-picker.md`。`open-chrome-pause.md` 保留（MCP 浏览器入口），随 prompts 目录一起 link。
 
-### 8. goal-runtime 已内聚实现 Goals/Stories/Tasks + Track
+### 8. workflow-runtime（编排骨架）+ track（工作记忆）
 
-当前业务侧只保留一个本地维护的 Pi 扩展：`goal-runtime`（前身 planning-files-runtime）。
+goal-runtime 已废弃删除（ADR 0006），替代为两个扩展：
 
-它现在同时负责：
+- `workflow-runtime` — 工作流编排骨架：Definition/Run 平面文件存 `.pi/workflows/`，线性 Spine + auto/human 节点，auto 节点经 sub-dispatch 派发新会话执行（事件驱动结算、auto→auto 级联），`/wf` 命令族。只编排不判优，模型不翻转状态。pattern 库在 `pi/agent/patterns/`（首发 feature / bugfix / perf）。
+- `track` — 从 goal-runtime 纯提取的工作记忆扩展：`/track`（new / update / context / status），`.pi/track/` 平面文件，与 workflow-runtime 互为陌生人。
 
-- Goals/Stories/Tasks 存 taskmd（`.pi/goals/`，tag 族 `goal` / `goal:story` / `goal:task`），Track 工作记忆存 `.pi/track/`（findings.md + progress.md）
-- 生命周期：phase 为准，status 为派生投影；one active 互斥
-- 命令族：`/goal`（set / commit / run / activate / list / status / review / pause / abandon / ui）+ `/track`（new / update / context / status；Track 缺失时在 session 首轮自动初始化，context 注入与 update 均为手动命令）
-
-`planning-with-files` skill 与 `plan-mode` 已移除，不再单独管理。
+历史决策见 `docs/adr/0001-goal-runtime-on-taskmd.md`、`docs/adr/0005-goal-runtime-command-driven-lifecycle.md`（由 ADR 0006 修正/取代）。
 
 另外，当前共享 `settings.json` 里也已移除 `pi-subagents`、`pi-intercom` 与 `pi-interactive-shell`，外部 agent / 子 agent 能力统一由 `sub-dispatch` 扩展承载。
