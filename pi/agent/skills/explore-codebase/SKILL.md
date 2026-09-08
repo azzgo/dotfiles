@@ -108,7 +108,7 @@ After all sub-agents finish (all queries report done), synthesize the output. **
 
 1. **Overall summary**: 3-5 sentences on the codebase's core character
 2. **Findings by dimension**: one section per subtask, merged and de-duplicated
-3. **Architecture panorama**: module relationship map (prose), key entry points, core data flows
+3. **Architecture panorama**: module relationship map, key entry points, core data flows
 4. **Key file index**: ranked file paths with one-line descriptions
 5. **Business triggers & feature boundaries** (if relevant): trigger conditions, inputs/outputs, dependencies, external systems per module
 6. **Core business flow & data movement** (if relevant): main flow steps and key data paths
@@ -116,6 +116,77 @@ After all sub-agents finish (all queries report done), synthesize the output. **
 8. **Core design highlights** (if relevant): architecture decisions and implementation tricks worth learning
 
 Use clear heading hierarchy for easy scanning.
+
+### Present visually, not just in prose
+
+A wall of prose is the weakest way to report codebase understanding. Default to the **smallest visual form that makes each point clear**, and place the visual right next to the short text it supports. Keep only the calls, files, states, and boundaries needed for the user's exploration goal — don't overwhelm.
+
+Match the form to the content:
+
+- **Module relationships / architecture panorama** → shallow file tree with one-line responsibility comments, or a Mermaid graph:
+
+```text
+src/
+├── commands/       # parses user actions
+├── sessions/       # owns session state
+└── transport/      # sends API requests
+```
+
+```mermaid
+graph LR
+    CLI --> Commands --> Core
+    Core --> Transport
+    Plugins --> Core
+```
+
+- **Core business flow / data movement** → Mermaid sequence diagram:
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI
+    participant Daemon
+    User->>UI: choose command
+    UI->>Daemon: send expanded prompt
+    Daemon-->>UI: stream result
+```
+
+- **Call chains, runtime control flow, "who invokes what"** → indented call tree:
+
+```text
+submitForm
+  createSession
+    persistPrompt
+    launchAgent
+  navigateToSession
+```
+
+- **Key algorithms / decision logic** → condensed pseudocode (not pasted source):
+
+```text
+on(save)
+  if content is unchanged
+    return cached result
+  write new content
+  return fresh result
+```
+
+- **UI-heavy codebases** → component tree with state/module boundaries and file anchors:
+
+```tsx
+<SessionPage> (apps/example/src/routes/session.tsx)
+  useSessionEvents()
+  <SessionToolbar>
+```
+
+- **Extension points / plugin mechanisms** → show the seam: interface shape or a short code block of the registration point.
+
+Rules of thumb:
+- Use **real names and real file paths** from the codebase in every visual — no invented placeholders.
+- You will rarely need all forms; pick 2-4 that fit the actual findings.
+- **Key file index stays prose** (a table or list) — that's the one section where a plain list is the right shape.
+- Fall back to prose only for nuances that don't compress into a visual.
+
 
 ---
 
