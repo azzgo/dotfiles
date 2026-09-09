@@ -35,7 +35,7 @@ Because `~/.agents/skills/` is also a pi skill search path, these skills remain 
 | **Source** | Custom / originally from Pi examples |
 | **Description** | Grilling session that challenges plans against existing domain model, sharpens terminology, and updates documentation (CONTEXT.md, ADRs) inline as decisions crystallise |
 | **Installed** | 2026-06-15 |
-| **Adjustments** | Originally adapted from Pi SDK examples. Created CONTEXT-FORMAT.md and ADR-FORMAT.md as supplementary reference docs. 2026-07-31: added `disable-model-invocation: true` (no model auto-invocation; explicit trigger only). 2026-09-07: moved from `pi/agent/skills/` to repo-root `skills/` (decoupled from pi; installed via `just install-skills` → `~/.agents/skills`) |
+| **Adjustments** | Originally adapted from Pi SDK examples. Created CONTEXT-FORMAT.md and ADR-FORMAT.md as supplementary reference docs. 2026-07-31: added `disable-model-invocation: true` (no model auto-invocation; explicit trigger only). 2026-09-07: moved from `pi/agent/skills/` to repo-root `skills/` (decoupled from pi; installed via `just install-skills` → `~/.agents/skills`). 2026-09-09: added a by-name reference to the `show-me` skill (now in `pi/agent/skills/show-me/`) for visual presentation of design understanding / proposed changes during grilling |
 | **Upstream** | Derived from Pi SDK docs; no external upstream to track |
 
 ### `handoff`
