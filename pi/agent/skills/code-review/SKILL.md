@@ -299,6 +299,8 @@ If you cannot determine pass/fail, say "unknown" and suggest the user run the ve
 
 The three sub-agent reports stay separate (per "don't merge the axes" principle). The aggregated `Findings (P0–P3)` section covers findings from the **supplementary dimensions** (Code Quality, Race Condition, Removal) plus any high-severity items the main agent deems worth cross-referencing from any sub-agent report — each such item is tagged with its source axis `[Standards]` / `[Spec]` / `[Doc-Consistency]` / `[Code Quality]` / `[Race]` / `[Removal]` so the origin is traceable.
 
+**Visual presentation**: per the shared **`show-me`** skill, where a finding is clearest as a diff, call tree, pseudocode, or code-shape sketch, show it in that form instead of prose — use the diff's real paths and hunks, and keep each visual to the finding it supports. Verbatim sub-agent sections stay as-is.
+
 ```markdown
 ## Code Review Summary
 

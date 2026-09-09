@@ -117,74 +117,13 @@ After all sub-agents finish (all queries report done), synthesize the output. **
 
 Use clear heading hierarchy for easy scanning.
 
-### Present visually, not just in prose
+### Present visually (show-me)
 
-A wall of prose is the weakest way to report codebase understanding. Default to the **smallest visual form that makes each point clear**, and place the visual right next to the short text it supports. Keep only the calls, files, states, and boundaries needed for the user's exploration goal — don't overwhelm.
+Present the report using the shared skill **`show-me`** — the single source of truth for choosing the smallest visual form (file tree, Mermaid graph / sequence diagram, call tree, pseudocode, component tree, code block) that makes each point clear. Rules when applying it here:
 
-Match the form to the content:
-
-- **Module relationships / architecture panorama** → shallow file tree with one-line responsibility comments, or a Mermaid graph:
-
-```text
-src/
-├── commands/       # parses user actions
-├── sessions/       # owns session state
-└── transport/      # sends API requests
-```
-
-```mermaid
-graph LR
-    CLI --> Commands --> Core
-    Core --> Transport
-    Plugins --> Core
-```
-
-- **Core business flow / data movement** → Mermaid sequence diagram:
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant UI
-    participant Daemon
-    User->>UI: choose command
-    UI->>Daemon: send expanded prompt
-    Daemon-->>UI: stream result
-```
-
-- **Call chains, runtime control flow, "who invokes what"** → indented call tree:
-
-```text
-submitForm
-  createSession
-    persistPrompt
-    launchAgent
-  navigateToSession
-```
-
-- **Key algorithms / decision logic** → condensed pseudocode (not pasted source):
-
-```text
-on(save)
-  if content is unchanged
-    return cached result
-  write new content
-  return fresh result
-```
-
-- **UI-heavy codebases** → component tree with state/module boundaries and file anchors:
-
-```tsx
-<SessionPage> (apps/example/src/routes/session.tsx)
-  useSessionEvents()
-  <SessionToolbar>
-```
-
-- **Extension points / plugin mechanisms** → show the seam: interface shape or a short code block of the registration point.
-
-Rules of thumb:
 - Use **real names and real file paths** from the codebase in every visual — no invented placeholders.
-- You will rarely need all forms; pick 2-4 that fit the actual findings.
-- **Key file index stays prose** (a table or list) — that's the one section where a plain list is the right shape.
+- Pick **2-4 forms** that fit the actual findings; don't use all of them.
+- **Key file index stays prose** (a plain ranked list) — that's the one section where a list is the right shape.
 - Fall back to prose only for nuances that don't compress into a visual.
 
 

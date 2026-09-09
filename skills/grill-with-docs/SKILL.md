@@ -12,6 +12,8 @@ Ask the questions one at a time, waiting for feedback on each question before co
 
 If a question can be answered by exploring the codebase, explore the codebase instead.
 
+When explaining your understanding of the current design or a proposed change, follow the shared **`show-me`** skill: prefer the smallest visual form that makes the point clear (call tree, component tree, diff sketch, pseudocode) over prose — real names and paths, one visual per point.
+
 </what-to-do>
 
 <supporting-info>
