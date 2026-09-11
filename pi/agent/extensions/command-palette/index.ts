@@ -85,18 +85,25 @@ export default function commandPaletteExtension(pi: ExtensionAPI): void {
 				return;
 			}
 
-			const picked = await ctx.ui.custom<PaletteItem | null>(
+			await ctx.ui.custom<PaletteItem | null>(
 				(tui, theme, _keybindings, done) => {
 					const palette = new CommandPalette(tui, theme, items);
 					palette.onDone = done;
+					// Insert from dispose(), NOT from the awaited result: pi runs
+					// dispose inside custom()'s close sequence, before the immediate
+					// render that follows the confirming keypress. Editor.setText does
+					// not request a render, so a post-await write would only show up
+					// on the NEXT keypress.
+					palette.onDispose = () => {
+						const picked = palette.confirmed;
+						if (!picked) return;
+						const prefix = `${picked.value} `;
+						const existing = ctx.ui.getEditorText();
+						ctx.ui.setEditorText(existing ? prefix + existing : prefix);
+					};
 					return palette;
 				},
 			);
-			if (!picked) return;
-
-			const prefix = `${picked.value} `;
-			const existing = ctx.ui.getEditorText();
-			ctx.ui.setEditorText(existing ? prefix + existing : prefix);
 		},
 	});
 }

@@ -52,6 +52,22 @@ export class CommandPalette implements Component, Focusable {
 	/** Resolved once when the user confirms or cancels. */
 	onDone?: (item: PaletteItem | null) => void;
 
+	/**
+	 * The item confirmed via Enter/Tab, if any. Set before onDone fires so the
+	 * host can act on it from onDispose (see below).
+	 */
+	confirmed: PaletteItem | null = null;
+
+	/**
+	 * Called from dispose(), which pi runs inside custom()'s close() — AFTER the
+	 * editor is restored but BEFORE the immediate render that follows the current
+	 * keypress. Doing the composer write here means the editor repaints with the
+	 * inserted text in that same frame; writing after `await ctx.ui.custom()]
+	 * instead races ahead of the frame and the change only shows up on the next
+	 * keypress (Editor.setText does not request a render itself).
+	 */
+	onDispose?: () => void;
+
 	constructor(tui: TUI, theme: Theme, items: PaletteItem[]) {
 		this.tui = tui;
 		this.theme = theme;
@@ -185,6 +201,14 @@ export class CommandPalette implements Component, Focusable {
 
 	private confirm(): void {
 		const item = this.filtered[this.selected];
-		if (item) this.onDone?.(item);
+		if (!item) return;
+		this.confirmed = item;
+		this.onDone?.(item);
+	}
+
+	/** Component teardown hook invoked by pi's custom() close sequence. */
+	dispose(): void {
+		this.invalidate();
+		this.onDispose?.();
 	}
 }
