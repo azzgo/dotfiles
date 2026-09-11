@@ -10,7 +10,11 @@ import type { Run } from "./types";
 export function buildRunWidgetLines(cwd: string, focusRunId: string | null): string[] | undefined {
 	const runs = nonTerminalRuns(cwd);
 	if (runs.length === 0) return undefined;
-	const lines = [`wf: ${runs.length} open run${runs.length === 1 ? "" : "s"}`];
+	const focused = focusRunId != null && runs.some((r) => r.id === focusRunId);
+	const head = focused
+		? `wf: ${runs.length} open run${runs.length === 1 ? "" : "s"} · this session is driving one ◀`
+		: `wf: ${runs.length} open run${runs.length === 1 ? "" : "s"} · this session is NOT in a workflow (free mode)`;
+	const lines = [head];
 	for (const run of runs) {
 		const node = activeNode(run) ?? run.nodes.find((n) => n.status === "failed");
 		const nodePart = node ? `${node.id}:${node.status}` : "-";
