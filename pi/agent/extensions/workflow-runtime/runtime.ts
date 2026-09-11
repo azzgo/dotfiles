@@ -243,7 +243,12 @@ export default function workflowRuntime(pi: ExtensionAPI): void {
 		const preselect = readLastFocus(ctx.cwd);
 		void event.reason;
 		await getCommands(ctx).pickRunCmd(preselect);
+		// picking in the cold-start picker must update the widget too, not just
+		// the /wf command path (which syncs + refreshes after its own handler)
+		focusRunId = getCommands(ctx).getFocus() ?? focusRunId;
+		refreshWidget(ctx);
 	});
+
 
 	pi.on("session_shutdown", async (_event, ctx) => {
 		dispatchReasonBySession.clear();
