@@ -13,6 +13,7 @@ Pi 相关约定补充：
 - 外部 agent 派发与子 agent 能力由本仓库维护的 `sub-dispatch` 扩展承载（`pi/agent/extensions/sub-dispatch/`，从 pi-interactive-shell 剪裁，仅保留 dispatch 模式）。
 - Code Mode（工具目录折叠为 `run_code` + TS SDK 注入）由 `code-mode` 扩展提供（`pi/agent/extensions/code-mode/`，设计见 `docs/adr/0001-code-mode-extension.md`）。
 - 工作流编排骨架由 `workflow-runtime` 扩展承载（`pi/agent/extensions/workflow-runtime/`，`/wf` 命令族，设计见 `docs/adr/0006-workflow-runtime-replaces-goal-runtime.md`）；pattern 库在 `pi/agent/patterns/`（经 `install-pi` link 到 `~/.pi/agent/patterns/`）。工作记忆由独立的 `track` 扩展承载（`/track` 命令族）。goal-runtime 已废弃删除（ADR 0006）。
+- 命令面板（对所有 slash command 的 fuzzy picker，`alt+.` 呼出，选中后前置插入 composer，不直接执行）由 `command-palette` 扩展承载（`pi/agent/extensions/command-palette/`）。
 - 在这个仓库的默认共享配置里，实际可依赖的外部 agent 以 `pi` 和 Cursor 的 `agent` 命令为主。
 
 仓库以“可单独安装、可组合安装”为目标，安装入口主要由 `justfile` 提供。
