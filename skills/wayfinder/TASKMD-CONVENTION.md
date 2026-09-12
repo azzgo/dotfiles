@@ -34,6 +34,14 @@ taskmd --task-dir ~/.cache/wayfinder/<workspace-id>/tickets <command>
 
 Resolve the actual workspace-id for the current repo first (see [Workspace](SKILL.md#workspace)).
 
+**HARD RULE — every taskmd invocation MUST pass the ticket directory explicitly**
+(`--task-dir` / `-d`), including one-off mutations like `set <id> --status …`. A
+bare `taskmd <cmd>` resolves its scope from cwd / registered projects and HAS
+modified a different project's tickets that way (2026-09-09 incident: a bare
+`taskmd set 002` flipped an unrelated workspace's ticket and needed manual
+rollback). If you cannot construct the ticket dir, do not mutate — read only,
+or edit the ticket file directly under `~/.cache/wayfinder/<workspace-id>/tickets/`.
+
 ## Identity tags
 
 All Wayfinder records must carry a `wayfinder:*` tag. Untagged taskmd records are out of Wayfinder logic.
