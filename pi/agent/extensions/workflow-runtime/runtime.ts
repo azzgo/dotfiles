@@ -13,15 +13,20 @@
  *    (customType "sub-dispatch" → message_end) flips state deterministically.
  * 4. auto→auto cascades without asking; auto→human prompts a brief + question.
  * 5. Global zero-exclusivity: many non-terminal Runs; per-session Focus pointer.
- * 6. Cold start injects nothing: a dismissible Run picker only.
+ * 6. Cold start injects nothing and prompts nothing: entering a workflow is
+ *    always an explicit user action (/wf …); the widget is the only standing
+ *    visibility. Focusing a run auto-injects a state digest (triggerTurn:
+ *    false) so resuming costs zero archaeology.
  * 7. Visibility is program-side: widget lines, zero tokens.
  */
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { createWfCommands, wfHelpText } from "./commands";
 import { DISPATCH_REASON_PREFIX, MESSAGE_TYPE_SUB_DISPATCH, MESSAGE_TYPE_WF_PROMPT } from "./types";
 import type { Run } from "./types";
-import { listRuns, nonTerminalRuns, readLastFocus, readRun, writeRun } from "./state";
+import { listRuns, nonTerminalRuns, readLastFocus, readLogTail, readRun, writeRun } from "./state";
 import { buildRunWidgetLines } from "./ui";
+import { buildStateDigest } from "./prompts";
+import { TERMINAL_RUN_STATUSES, MESSAGE_TYPE_WF_DIGEST } from "./types";
 
 /** In-flight dispatch correlation: dispatch session id → reason (wf-<runId>-node-<nodeId>). */
 const dispatchReasonBySession = new Map<string, string>();
@@ -47,6 +52,8 @@ function matchReason(cwd: string, reason: string): { run: Run; nodeId: string } 
 export default function workflowRuntime(pi: ExtensionAPI): void {
 	let focusRunId: string | null = null;
 	let commands: ReturnType<typeof createWfCommands> | null = null;
+	/** Run id whose state digest was already injected into this session's context. */
+	let digestInjectedRunId: string | null = null;
 
 	const getCommands = (ctx: ExtensionContext): ReturnType<typeof createWfCommands> => {
 		if (!commands) {
@@ -151,6 +158,7 @@ export default function workflowRuntime(pi: ExtensionAPI): void {
 			// keep the session Focus mirror in sync for the widget / settle routing
 			focusRunId = wf.getFocus() ?? focusRunId;
 			refreshWidget(ctx);
+			maybeInjectDigest(ctx);
 		},
 	});
 
@@ -230,24 +238,39 @@ export default function workflowRuntime(pi: ExtensionAPI): void {
 		}
 	});
 
-	// ---- cold start: dismissible Run picker (injects NOTHING on dismissal) ----
+	// ---- cold start: no picker, no injection. Entering a workflow is always
+	// explicit (/wf, /wf switch, /wf focus, /wf next <run-id>, /wf start);
+	// the widget above the editor is the only standing visibility.
 
-	pi.on("session_start", async (event, ctx) => {
+	pi.on("session_start", async (_event, ctx) => {
 		focusRunId = null;
 		commands = null;
-		refreshWidget(ctx);
-		const open = nonTerminalRuns(ctx.cwd);
-		if (open.length === 0 || !ctx.hasUI) return;
-		// preselect only when the session itself points at a run (resumed session)
-		// or the last-interacted run — the picker stays fully dismissible
-		const preselect = readLastFocus(ctx.cwd);
-		void event.reason;
-		await getCommands(ctx).pickRunCmd(preselect);
-		// picking in the cold-start picker must update the widget too, not just
-		// the /wf command path (which syncs + refreshes after its own handler)
-		focusRunId = getCommands(ctx).getFocus() ?? focusRunId;
+		digestInjectedRunId = null;
 		refreshWidget(ctx);
 	});
+
+	/**
+	 * When this session's Focus lands on a (new) non-terminal run, dump the
+	 * run state into the context (triggerTurn: false — silent append, zero
+	 * turn cost). The user remains the only actor; the digest just removes
+	 * the manual resume archaeology when they decide to continue a workflow.
+	 */
+	const maybeInjectDigest = (ctx: ExtensionContext): void => {
+		if (!focusRunId || focusRunId === digestInjectedRunId) return;
+		const run = readRun(ctx.cwd, focusRunId);
+		if (!run || TERMINAL_RUN_STATUSES.includes(run.status)) return;
+		digestInjectedRunId = focusRunId;
+		let logTail: string | undefined;
+		try {
+			logTail = readLogTail(ctx.cwd, run.id, 20);
+		} catch {
+			logTail = undefined;
+		}
+		void pi.sendMessage(
+			{ customType: MESSAGE_TYPE_WF_DIGEST, content: buildStateDigest(run, logTail), display: false },
+			{ triggerTurn: false },
+		);
+	};
 
 
 	pi.on("session_shutdown", async (_event, ctx) => {

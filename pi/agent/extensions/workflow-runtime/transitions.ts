@@ -89,7 +89,13 @@ export function activateNode(node: RunNode, at: string): void {
 	node.note = undefined;
 }
 
-/** Complete the active HUMAN node; advance to the next node. */
+/**
+ * Complete the active node; advance to the next node. The user outranks the
+ * runtime: auto nodes normally settle via their dispatch notification, but a
+ * lost/stuck settle must never deadlock the run — /wf done is the human
+ * override. A late settle finds no active node with its sessionId and becomes
+ * a silent noop.
+ */
 export function applyDone(
 	run: Run,
 	note: string | undefined,
@@ -97,12 +103,6 @@ export function applyDone(
 ): { ok: true; outcome: SettleOutcome } | { ok: false; error: string } {
 	const node = activeNode(run);
 	if (!node) return { ok: false, error: `run ${run.id} has no active node (status: ${run.status})` };
-	if (node.type !== "human") {
-		return {
-			ok: false,
-			error: `/wf done only completes HUMAN nodes — ${node.id} is an auto node (it settles automatically when its dispatched sub-agent finishes)`,
-		};
-	}
 	if (node.status !== "active") {
 		return { ok: false, error: `node ${node.id} is ${node.status}, not active — nothing to complete` };
 	}
@@ -110,7 +110,13 @@ export function applyDone(
 	node.completedAt = at;
 	if (note?.trim()) node.note = note.trim();
 	const logLines: SettleOutcome["logLines"] = [
-		{ kind: "node", text: `${node.id} → done${note?.trim() ? ` — ${note.trim()}` : ""}` },
+		{
+			kind: "node",
+			text:
+				node.type === "auto"
+					? `${node.id} → done (human override of auto node${node.sessionId ? `; in-flight dispatch ${node.sessionId} will settle as a noop` : ""})`
+					: `${node.id} → done${note?.trim() ? ` — ${note.trim()}` : ""}`,
+		},
 	];
 	const nextNode = nextPendingNode(run);
 	if (nextNode) {

@@ -33,13 +33,21 @@ Human Node / Rerouting / Driving Session / Focus).
    per-session Focus pointer (defaults to the run this session last interacted
    with; a lone run is implicit) disambiguates bare commands; explicit run ids
    are always exact.
-6. **Cold start injects nothing.** When a fresh session meets non-terminal
-   Runs without a Focus, a dismissible Run picker appears — Esc dismisses it
-   and *nothing happens*. The picker only pre-highlights the last-interacted
-   run (`.pi/workflows/.last-focus`, machine-local).
+6. **Cold start injects nothing and asks nothing.** A fresh session never
+   triggers a Run picker — entering a workflow is always an explicit user
+   action (`/wf`, `/wf switch`, `/wf focus`, `/wf next <run-id>`, `/wf start`).
+   When the session's Focus lands on a non-terminal Run, the runtime silently
+   injects a **state digest** (a hard-capped plain dump of run.json + the
+   progress-log tail; `triggerTurn: false`, zero turn cost) so resuming a
+   workflow after context exhaustion costs no archaeology. The digest asks the
+   model to do nothing on its own.
 7. **Visibility is program-side, zero tokens.** A persistent widget above the
    editor lists every non-terminal Run (one line: name / current node / status,
    Focus highlighted) — modeled on sub-dispatch's Dispatch Overview.
+8. **The user outranks the runtime.** Auto Nodes normally settle via their
+   dispatch notification, but a lost or stuck settle must never deadlock a
+   Run: `/wf done` completes the active node regardless of type (logged as a
+   human override; the late settle becomes a silent noop).
 
 ## Disk layout
 
@@ -79,8 +87,10 @@ done-when: repro or root-cause hypothesis is recorded.
 ```
 
 - The ordered `nodes` array **is** the Spine (linear; no edges, no branches).
-- `id` kebab-case and unique; `type` ∈ `human | auto`; `suggest` is a plain
-  skill-name array (no paths, no `/skill:` syntax), may be empty.
+- `id` kebab-case and unique; `type` ∈ `human | auto`; `suggest` entries are
+  `skill-name` or `name:<path-to-SKILL.md-or-its-dir>` — paths are encouraged
+  because most skills are not visible to the driving model by default; the
+  array may be empty.
 - Every node has a `## <id>` body section with brief prose plus exactly one
   `done-when:` line. Anything violating the contract is rejected with readable
   errors — never silently accepted.
@@ -89,13 +99,13 @@ done-when: repro or root-cause hypothesis is recorded.
 
 | Command | Behavior |
 |---|---|
-| `/wf` (bare) / `/wf switch` | Run picker (same surface as cold start; Esc = nothing). Open runs set Focus; archived (done/cancelled) runs offer a `🗑 remove` row — deleting the Run directory after a confirm. **Removal is manual, human-only: the model has no tool or prompt for it and the runtime never deletes runs automatically.** |
-| `/wf new <topic>` | Prompt the model to draft a Definition (capability-aware: `suggest` names only actually-available skills) into `.pi/workflows/definitions/`; you review, then start |
+| `/wf` (bare) / `/wf switch` | Run picker (manual entry — no cold-start popup; Esc = nothing). Open runs set Focus; archived (done/cancelled) runs offer a `🗑 remove` row — deleting the Run directory after a confirm. **Removal is manual, human-only: the model has no tool or prompt for it and the runtime never deletes runs automatically.** |
+| `/wf new <topic>` | Prompt the model to draft a Definition (capability-aware: `suggest` entries verified on disk, `name:<path>` encouraged) into `.pi/workflows/definitions/`; you review, then start |
 | `/wf start <name> [title]` | Instantiate a Run (global patterns are copied into the project), set Focus, send the first node's flow prompt |
 | `/wf list` | Non-terminal Runs + recent terminal archive (program-side, zero tokens) |
 | `/wf status [<run-id>]` | Nodes, states, dispatch session ids, progress-log tail |
 | `/wf next [<run-id>]` | Drive the active node: auto → dispatch-instruction prompt; human → brief + question. On a failed auto node it re-dispatches. Warns instead of double-dispatching when a session is already in flight |
-| `/wf done [note]` | Complete the active **human** node (note lands in the log); auto nodes refuse |
+| `/wf done [note]` | Complete the active node (note lands in the log). Auto nodes normally settle by themselves; `/wf done` is the human override when a settle is lost or stuck (logged as an override; the late settle becomes a noop) |
 | `/wf skip <node-id> <reason>` | Reroute; reason mandatory; logged |
 | `/wf insert <after-node-id> <title> [auto\|human]` | Reroute; inserts a pending node; logged. Inserting **ahead of the active node is allowed (backflow)**: the flow returns to the inserted node as soon as the current node completes — the notify says so explicitly |
 | `/wf replan [confirm [note]]` | Prompt the model to propose a revised Spine → it rewrites the Definition → you approve → `/wf replan confirm` replaces the Spine (old Spine archived in the log). Node states of surviving nodes are preserved, in-flight dispatch correlation is kept; **dropped in-flight dispatches are surfaced as severed** (warning with the session id — kill manually via the Dispatch Overview, never auto-killed) |

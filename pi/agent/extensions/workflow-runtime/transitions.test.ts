@@ -81,12 +81,22 @@ describe("applyDone (command handler)", () => {
 		}
 	});
 
-	it("refuses to complete an AUTO node (state never flips via done)", () => {
+	it("human override completes an AUTO node (a lost settle must never deadlock the run)", () => {
 		const run = makeRun("r1"); // active node is 'locate' (auto)
-		const result = applyDone(run, undefined, AT);
-		expect(result.ok).toBe(false);
-		if (!result.ok) expect(result.error).toMatch(/only completes HUMAN nodes/);
-		expect(run.nodes[1]!.status).toBe("active");
+		run.nodes[1]!.sessionId = "sess-xyz";
+		const result = applyDone(run, "done by hand", AT);
+		expect(result.ok).toBe(true);
+		expect(run.nodes[1]!.status).toBe("done");
+		expect(run.nodes[1]!.note).toBe("done by hand");
+		expect(result.outcome.logLines.some((l) => /human override of auto node/.test(l.text) && /sess-xyz/.test(l.text))).toBe(true);
+	});
+
+	it("a late settle after a human override is a silent noop (node is already done)", () => {
+		const run = makeRun("r1");
+		run.nodes[1]!.sessionId = "sess-xyz";
+		applyDone(run, undefined, AT);
+		const late = applySettle(run, "sess-xyz", "done", 0, AT);
+		expect(late.applied).toBe(false);
 	});
 });
 

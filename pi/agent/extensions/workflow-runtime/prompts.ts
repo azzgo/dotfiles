@@ -6,7 +6,7 @@
  */
 import { DISPATCH_REASON_PREFIX } from "./types";
 import type { Run, RunNode } from "./types";
-import { activeNode } from "./state";
+import { activeNode, formatNodeLine } from "./state";
 
 const FORMAT_CONTRACT = `Format contract (Markdown + YAML frontmatter):
 ---
@@ -16,7 +16,7 @@ nodes:
   - id: <kebab-case-id>
     title: <short title>
     type: <human|auto>
-    suggest: [<skill-name>, ...]
+    suggest: [<skill-name-or-name:path>, ...]
 ---
 ## <node-id>
 Brief prose: what this node is for, how to approach it.
@@ -106,7 +106,7 @@ export function buildNewDefinitionPrompt(topic: string, projectDefinitionsDir: s
 		FORMAT_CONTRACT,
 		"",
 		"Rules:",
-		"- Capability-Aware: `suggest` arrays must reference skills/sub-agents that are ACTUALLY available in this environment — check which skills you can see (your own skill list) before naming them; use short names only (no paths, no /skill: syntax). Empty arrays are fine.",
+		"- Capability-Aware: `suggest` entries must reference skills/sub-agents that ACTUALLY exist in this environment — verify on disk under ~/.pi/agent/skills/, ~/.agents/skills/, and <project>/.agents/skills/ before naming (your own visible skill list is NOT the full set). Most skills are not visible to the driving model by default, so prefer entries of the form `name:<path-to-SKILL.md-or-its-dir>` so the model can read the SKILL.md directly. Bare `name` entries are allowed. Empty arrays are fine.",
 		"- The Spine is LINEAR — no branches, no edges. Roughly 3-6 nodes; node-count guidance lives in the pattern, it is not enforced.",
 		"- `type` per node: `auto` = a fresh sub-agent can execute it end-to-end; `human` = the user does the work (grilling, review, wayfinding, judgment calls).",
 		"- Every node body needs exactly one `done-when:` line — a verifiable completion criterion.",
@@ -138,4 +138,38 @@ export function buildReplanPrompt(run: Run, definitionsFile: string): string {
 /** Cascade context line appended when the next node activates automatically. */
 export function settleContextLine(run: Run, settled: RunNode, exitCode: number | null, durationHint?: string): string {
 	return `Previous node ${settled.id} settled (session ${settled.sessionId ?? "?"}, exit ${exitCode ?? "n/a"}${durationHint ? `, ${durationHint}` : ""}) — logged automatically.`;
+}
+
+/**
+ * Crude dump of Run state for automatic context injection (triggerTurn: false).
+ * No analysis, no summarization — plain fields from run.json plus the progress
+ * log tail, hard-capped. This replaces manual "resume archaeology" after
+ * context exhaustion: the driving model already holds the state when the user
+ * says "continue the workflow".
+ */
+const DIGEST_CAP_CHARS = 2500;
+
+export function buildStateDigest(run: Run, logTail?: string): string {
+	const node = activeNode(run);
+	const sections = [
+		[
+			`[WF STATE DIGEST run=${run.id}]`,
+			`Workflow "${run.title}" [${run.status}] — injected automatically by the runtime for context recovery. Do NOT act on it; it becomes relevant if the user asks to continue this workflow.`,
+			`Definition: ${run.definitionName} · created ${run.createdAt} · updated ${run.updatedAt}`,
+			"",
+			"Nodes:",
+			...run.nodes.map((n) => `  ${formatNodeLine(n)}`),
+			...(node
+				? [
+						"",
+						`Active node: ${node.id} — ${node.title} (${node.type}, ${node.status})`,
+						`Brief: ${(node.brief || "(no brief)").slice(0, 400)}`,
+						`Done-when: ${node.doneWhen || "(not specified)"}`,
+						...(node.suggest.length > 0 ? [`Suggested skills: ${node.suggest.join(", ")}`] : []),
+					]
+				: []),
+			...(logTail?.trim() ? ["", "Progress log (tail):", ...logTail.trim().split("\n").map((l) => `  ${l}`)] : []),
+		].join("\n"),
+	];
+	return sections.join("\n").slice(0, DIGEST_CAP_CHARS);
 }

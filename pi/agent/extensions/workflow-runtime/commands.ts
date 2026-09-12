@@ -132,7 +132,7 @@ export function createWfCommands(deps: WfDeps) {
 	// ---- /wf (bare) & /wf switch ----
 
 /**
-	 * Run picker (`/wf`, `/wf switch`, cold start). Esc dismisses with zero
+	 * Run picker (`/wf`, `/wf switch`). Esc dismisses with zero
 	 * side effects; a run line sets Focus; the "🗑 remove" lines (terminal runs
 	 * only) delete the Run directory after an explicit confirm — a purely
 	 * manual hygiene action, never offered to the model or auto-run.
@@ -633,7 +633,7 @@ export function wfHelpText(): string {
 		"  /wf list                     Non-terminal runs + recent terminal archive",
 		"  /wf status [<run-id>]        Run detail (nodes, sessions, progress-log tail)",
 		"  /wf next [<run-id>]          Drive the active node: auto → dispatch prompt; human → brief + question",
-		"  /wf done [note]              Complete the active HUMAN node (auto nodes settle by themselves)",
+		"  /wf done [note]              Complete the active node (auto nodes settle by themselves; /wf done is the human override if a settle is lost or stuck)",
 		"  /wf skip <node-id> <reason>  Reroute: skip a node (reason required)",
 		"  /wf insert <after> <title> [auto|human]  Reroute: insert a node",
 		"  /wf replan [confirm [note]]  Propose a revised Spine / apply the approved revision",

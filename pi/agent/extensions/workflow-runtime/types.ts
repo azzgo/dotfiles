@@ -12,6 +12,8 @@ export const GLOBAL_PATTERNS_DIR = "~/.pi/agent/patterns";
 
 /** customType of the prompts this extension sends to the driving model (display: false). */
 export const MESSAGE_TYPE_WF_PROMPT = "wf-prompt";
+/** customType of the auto-injected run state digest (display: false, triggerTurn: false — context only). */
+export const MESSAGE_TYPE_WF_DIGEST = "wf-digest";
 /** customType of program-side notification lines (display: true; zero LLM context). */
 export const MESSAGE_TYPE_WF_NOTIFY = "wf-notify";
 /** customType of sub-dispatch settle notifications (correlation hook; owned by sub-dispatch). */
