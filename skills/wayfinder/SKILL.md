@@ -85,6 +85,12 @@ Details of CLI flags, tags, filters, and templates live in [TASKMD-CONVENTION.md
 - Local only
 - Lazy init: create only on explicit Wayfinder start (`init` / first `chart`), never from mere discussion
 
+**HARD RULE — taskmd scoping:** every taskmd invocation, including one-off
+mutations (`set <id> --status …`), MUST pass the ticket directory explicitly
+(`--task-dir` / `-d`). Never run a bare `taskmd` command: it resolves scope from
+cwd / registered projects and can mutate a different project's tickets (that
+failure has happened). See [TASKMD-CONVENTION.md](TASKMD-CONVENTION.md#paths).
+
 One **Active Map** per repository at a time.
 
 ## Map
