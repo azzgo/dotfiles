@@ -122,7 +122,7 @@ describe("done / skip / insert validation", () => {
 		expect(sent[0]).toMatch(/WF AUTO NODE run=r-run node=locate/);
 	});
 
-	it("done on an auto node is refused with a readable error", () => {
+	it("done on an auto node is a human override that cascades", () => {
 		const wf = setupRun();
 		wf.nextCmd(); // placeholder to ensure focus set
 		// manually flip active node to the auto node
@@ -132,8 +132,13 @@ describe("done / skip / insert validation", () => {
 		run.activeNodeId = "locate";
 		fs.writeFileSync(path.join(cwd, ".pi/workflows/runs/r-run/run.json"), JSON.stringify(run), "utf8");
 		notes.length = 0;
-		wf.doneCmd();
-		expect(notes[0]!.text).toMatch(/only completes HUMAN nodes/);
+		sent.length = 0;
+		wf.doneCmd("settled by hand");
+		const updated = readRun(cwd, "r-run")!;
+		expect(updated.nodes[1]!.status).toBe("done");
+		expect(updated.nodes[1]!.note).toBe("settled by hand");
+		const log = fs.readFileSync(path.join(cwd, ".pi/workflows/runs/r-run/progress.md"), "utf8");
+		expect(log).toContain("human override of auto node");
 	});
 
 	it("skip without a reason is refused", () => {

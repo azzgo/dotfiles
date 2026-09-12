@@ -85,3 +85,25 @@ gated by one-time VERIFY_TOKENs. Practice showed three things:
 - Cross-session continuity relies on disk state plus session-start surfaces; "the plugin
   opens a new interactive session by itself" remains impossible without a terminal
   multiplexer (herdr/tmux) — out of scope by decision.
+
+## Amendment (2026-09-12, from a week of session evidence)
+
+Two original decisions are revised after live use:
+
+- **No cold-start picker.** The dismissible cold-start Run question is removed —
+  every new session had to answer it even in free ("vibe") mode, and the Esc
+  path kept being misread as "am I in the workflow?". Entering a workflow is
+  now always an explicit user action (`/wf`, `/wf switch`, `/wf focus`,
+  `/wf next <run-id>`, `/wf start`); the widget remains the standing visibility.
+- **The state digest is an exception to "never by injection".** Sessions resumed
+  after context exhaustion cost dozens of tool calls of manual archaeology
+  (`.pi/track`, wayfinder tickets, run.json) before real work restarted. When a
+  session's Focus lands on a non-terminal Run, the runtime now silently injects
+  a hard-capped plain dump of run state (`triggerTurn: false`, no turn, no
+  analysis, no action requested). Context still enters only by explicit user
+  action — focusing a run *is* that action.
+- **Human override on Auto Nodes.** Auto Nodes relied entirely on the settle
+  notification; a lost settle deadlocked the run and `/wf done` refused to
+  intervene. The user outranks the runtime: `/wf done` now completes the active
+  node regardless of type, logged as a human override; a late settle becomes a
+  silent noop.
