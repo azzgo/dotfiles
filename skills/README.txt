@@ -18,14 +18,14 @@ Because `~/.agents/skills/` is also a pi skill search path, these skills remain 
 
 ## Skills in this directory (`<repo-root>/skills/`)
 
-### `chrome-devtools-cli`
+### `chrome-devtools`
 
 | Field | Value |
 |-------|-------|
-| **Source** | Forked from [ChromeDevTools/chrome-devtools-mcp](https://github.com/ChromeDevTools/chrome-devtools-mcp/tree/main/skills/chrome-devtools-cli) `skills/chrome-devtools-cli/` |
-| **Description** | Chrome DevTools CLI skill: project-scoped profiles (each `PWD` gets its own isolated Chrome instance via sha256 hash), headed mode by default, no auto-invocation. Replaces the chrome-devtools MCP for browser automation via CLI |
+| **Source** | Forked from [ChromeDevTools/chrome-devtools-mcp](https://github.com/ChromeDevTools/chrome-devtools-mcp/tree/main/skills/chrome-devtools-cli) `skills/chrome-devtools/` |
+| **Description** | Chrome DevTools automation skill, MCP-first: use the chrome-devtools MCP server when configured (process managed by the agent host, no daemon cleanup), fall back to the CLI daemon when MCP is unavailable. Project-scoped profiles (each `PWD` gets its own isolated Chrome instance via hash), headed mode by default, no auto-invocation |
 | **Installed** | 2026-08-19 |
-| **Adjustments** | `disable-model-invocation: true` (prompt-routed only); default `--headless=false`; project-scoped profile via `~/.cache/chrome-devtools-mcp/profiles/<pwd-hash>` with `.mapping.json` for human readability; multi-profile suffix support for clean/separate contexts; removed PWA, Memory Debugging, experimental features sections; `open-chrome-pause.md` prompt adapted to route through this skill. 2026-09-07: moved from `pi/agent/skills/` to repo-root `skills/` (decoupled from pi; installed via `just install-skills` → `~/.agents/skills`) |
+| **Adjustments** | `disable-model-invocation: true` (prompt-routed only); default `--headless=false`; project-scoped profile via `~/.cache/chrome-devtools-mcp/profiles/<pwd-hash>` with `.mapping.json` for human readability; multi-profile suffix support for clean/separate contexts; removed PWA, Memory Debugging, experimental features sections; `open-chrome-pause.md` prompt adapted to route through this skill. 2026-09-07: moved from `pi/agent/skills/` to repo-root `skills/` (decoupled from pi; installed via `just install-skills` → `~/.agents/skills`). 2026-09-13: restructured to MCP-primary/CLI-fallback — SKILL.md is now routing + shared conventions, with `references/mcp-sop.md` (agent-host-managed server, preferred), `references/cli-sop.md` (self-managed daemon fallback) and shared `references/tool-catalog.md`; skills are now provisioned per project via the project-skills extension (`/pi-skills`) instead of global install. 2026-09-13: renamed `chrome-devtools-cli` → `chrome-devtools` (MCP is primary; name no longer CLI-specific) |
 | **Upstream** | https://github.com/ChromeDevTools/chrome-devtools-mcp/tree/main/skills/chrome-devtools-cli |
 
 ### `grill-with-docs`
