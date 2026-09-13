@@ -1,10 +1,26 @@
+<!--
+Template for the generated project-level code-review skill. The setup agent
+copies this file as the generated skill's SKILL.md (copy mode — the generated
+skill must be fully self-contained and must NOT reference setup-code-review),
+then adapts it per the setup decisions:
+  - name: <project>-code-review
+  - Delete axes / supplementary dimensions the grilling session ruled out,
+    together with their steps, prompts, output sections, and reference files.
+  - Fill the project-specific spec / standards / docs source locations into
+    steps 2–3b so the generated skill never has to re-discover them.
+  - Copy only the reference files the retained axes actually need into the
+    generated skill's references/.
+  - Keep references to shared user-level skills (show-me, spawn-model-selection)
+    by name only — never reference setup-code-review or its files.
+-->
+
 ---
-name: code-review
-description: Multi-axis code review — Standards, Spec, Documentation Consistency. Three sub-agents run as parallel background dispatches (fire-and-forget). Review-only.
+name: {{PROJECT_NAME}}-code-review
+description: Project-tuned multi-axis code review — axes selected during setup. Three sub-agents run as parallel background dispatches (fire-and-forget). Review-only.
 disable-model-invocation: true
 ---
 
-# Code Review
+# {{PROJECT_NAME}} Code Review
 
 Three-axis review of the diff against a fixed point, with supplementary dimensions added during aggregation.
 
