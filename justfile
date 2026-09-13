@@ -192,6 +192,20 @@ install-all: install-mise install-neovim install-vim install-shell install-termi
 
 # Development helpers
 
+# Run the track extension's test suite
+# Pass vitest args directly, e.g. `just test-track reconcile.test.ts`
+# Requires the Pi runtime for the compaction integration tests; see
+# pi/agent/extensions/track/README.md to link it (they skip otherwise).
+test-track *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd {{ dotfiles_dir }}/pi/agent/extensions/track
+    if [ ! -d node_modules ]; then
+        echo "📦 Installing track extension dev dependencies..."
+        npm install --silent
+    fi
+    npm test -- {{ args }}
+
 # Check Neovim health
 nvim-health:
     nvim --headless -c 'checkhealth' -c 'qa'

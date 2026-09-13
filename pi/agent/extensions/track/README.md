@@ -79,19 +79,21 @@ record survives compaction and the next agent sees it. Failures also raise
 ## Dotfiles integration
 
 Version-controlled in `dotfiles` under `pi/agent/extensions/track/`, linked into
-`~/.pi/agent/extensions/track` via `just install-pi` (registration in
-`pi/agent/settings.json` handled by the workflow-runtime retirement change).
+`~/.pi/agent/extensions/track` via `just install-pi`. Pi auto-discovers every
+entry under `~/.pi/agent/extensions/`, so the symlink **is** the registration —
+there is no `settings.json` entry to maintain.
 
 ## Tests
 
 ```bash
-cd pi/agent/extensions/track && npm test
+just test-track                       # whole suite
+just test-track reconcile.test.ts     # vitest args pass through
 ```
 
 `reconcile.test.ts` covers the pure parsing logic and needs nothing but vitest.
 `compaction.test.ts` exercises the real reconcile path, so it needs the Pi
 runtime resolvable from `node_modules/@earendil-works/`; it **skips** (rather
-than fails) when that is missing. To run it locally:
+than fails) when that is missing. To run it locally, from the repo root:
 
 ```bash
 mkdir -p pi/agent/extensions/track/node_modules/@earendil-works
