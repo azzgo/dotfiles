@@ -55,7 +55,7 @@
 `pi/agent/skills/` 会通过 `just install-pi` link 到 `~/.pi/agent/skills/`。
 
 当前维护的 skills：
-- `code-review` / `impl-with-spawn` / `explore-codebase` / `spawn-model-selection` — pi 耦合 skills
+- `setup-code-review` / `impl-with-spawn` / `explore-codebase` / `spawn-model-selection` — pi 耦合 skills
 - 通用 skills（wayfinder、grill-with-docs、prototype、improve-codebase-architecture 等）已迁至仓库根 `skills/`，经 `just install-skills` 安装到 `~/.agents/skills/`
 
 ### 6. prompt templates 已纳入 dotfiles
@@ -72,7 +72,7 @@
 
 goal-runtime 已废弃删除（ADR 0006），替代为两个扩展：
 
-- `workflow-runtime` — 工作流编排骨架：Definition/Run 平面文件存 `.pi/workflows/`，线性 Spine + auto/human 节点，auto 节点经 sub-dispatch 派发新会话执行（事件驱动结算、auto→auto 级联），`/wf` 命令族。只编排不判优，模型不翻转状态。pattern 库在 `pi/agent/patterns/`（首发 feature / bugfix / perf）。
+- `workflow-runtime` — 工作流编排骨架：Definition/Run 平面文件存 `.pi/workflows/`，线性 Spine + auto/human 节点，auto 节点经 sub-dispatch 派发新会话执行（事件驱动结算、auto→auto 级联），`/wf` 命令族。只编排不判优，模型不翻转状态。pattern 库在 `pi/agent/patterns/`（根目录可被 `/wf start` 直接实例化；`examples/` 下是 feature / bugfix / perf 参考样板，不参与实例化——workflow 主张按项目 setup，不维护全局通用样板）。
 - `track` — 从 goal-runtime 纯提取的工作记忆扩展：`/track`（new / update / context / status），`.pi/track/` 平面文件，与 workflow-runtime 互为陌生人。
 
 历史决策见 `docs/adr/0001-goal-runtime-on-taskmd.md`、`docs/adr/0005-goal-runtime-command-driven-lifecycle.md`（由 ADR 0006 修正/取代）。

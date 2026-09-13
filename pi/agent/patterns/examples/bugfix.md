@@ -21,7 +21,7 @@ nodes:
   - id: verify
     title: Verify & ship the patch
     type: human
-    suggest: [code-review]
+    suggest: [<project>-code-review]
 ---
 ## intake
 Capture the report and triage: what is broken, since when, how severe, and is it worth
@@ -46,7 +46,7 @@ must turn the repro green without weakening the test.
 
 done-when: the fix is implemented and the regression test passes.
 ## verify
-The user checks the patch: review the diff (dispatch code-review inside this node),
+The user checks the patch: review the diff (dispatch the project's code-review skill inside this node),
 confirm the repro is fixed in a real run, and decide how the patch ships — commit,
 install, or release.
 

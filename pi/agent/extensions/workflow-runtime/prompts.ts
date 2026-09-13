@@ -98,7 +98,11 @@ export function buildPickerItems(runs: Run[], preselectRunId?: string): { items:
 }
 
 /** Prompt for /wf new: draft a Definition using actually-available skills. */
-export function buildNewDefinitionPrompt(topic: string, projectDefinitionsDir: string): string {
+export function buildNewDefinitionPrompt(
+	topic: string,
+	projectDefinitionsDir: string,
+	examplesDir?: string,
+): string {
 	return [
 		`[WF NEW definition topic="${topic}"]`,
 		`Draft a workflow Definition for the topic above and write it to ${projectDefinitionsDir}/<name>.md (create the directory if needed).`,
@@ -106,6 +110,7 @@ export function buildNewDefinitionPrompt(topic: string, projectDefinitionsDir: s
 		FORMAT_CONTRACT,
 		"",
 		"Rules:",
+		`- Reference first: before drafting, read the example Definitions in ${examplesDir ?? "~/.pi/agent/patterns/examples"} (if the directory exists). They are structural references, not templates to copy wholesale — adapt the shape (node granularity, human/auto placement, suggest entries) to THIS topic and project.`,
 		"- Capability-Aware: `suggest` entries must reference skills/sub-agents that ACTUALLY exist in this environment — verify on disk under ~/.pi/agent/skills/, ~/.agents/skills/, and <project>/.agents/skills/ before naming (your own visible skill list is NOT the full set). Most skills are not visible to the driving model by default, so prefer entries of the form `name:<path-to-SKILL.md-or-its-dir>` so the model can read the SKILL.md directly. Bare `name` entries are allowed. Empty arrays are fine.",
 		"- The Spine is LINEAR — no branches, no edges. Roughly 3-6 nodes; node-count guidance lives in the pattern, it is not enforced.",
 		"- `type` per node: `auto` = a fresh sub-agent can execute it end-to-end; `human` = the user does the work (grilling, review, wayfinding, judgment calls).",
