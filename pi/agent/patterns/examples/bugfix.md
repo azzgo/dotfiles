@@ -13,7 +13,7 @@ nodes:
   - id: reproduce
     title: Reproduce & pin a regression test
     type: auto
-    suggest: [browser-bridge, chrome-devtools-cli]
+    suggest: [browser-bridge, chrome-devtools]
   - id: fix
     title: Implement the fix
     type: auto

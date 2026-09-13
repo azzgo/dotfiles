@@ -5,7 +5,7 @@ nodes:
   - id: instrumentation
     title: Establish the evidence channel
     type: human
-    suggest: [browser-bridge, chrome-devtools-cli]
+    suggest: [browser-bridge, chrome-devtools]
   - id: collect
     title: Collect & analyze performance data
     type: auto

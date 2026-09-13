@@ -1,7 +1,7 @@
 ---
-description: use chrome-devtools-cli skill to open chrome and do user command
+description: use chrome-devtools skill to open chrome and do user command
 ---
-Load and follow skill: `chrome-devtools-cli` (read `~/.pi/agent/skills/chrome-devtools-cli/SKILL.md`).
+Load and follow skill: `chrome-devtools` (read `~/.pi/agent/skills/chrome-devtools/SKILL.md`).
 
 1. Ensure `chrome-devtools` CLI is available (`command -v chrome-devtools || npm i -g chrome-devtools-mcp@latest`).
 2. Compute the project-scoped profile from the current working directory:
