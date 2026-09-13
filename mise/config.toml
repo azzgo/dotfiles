@@ -16,6 +16,3 @@ jq = "latest"
 lazygit = "latest"
 starship = "latest"
 tmux = "latest"
-
-# npm global packages (mise npm backend uses --ignore-scripts by default)
-"npm:@earendil-works/pi-coding-agent" = "latest"
