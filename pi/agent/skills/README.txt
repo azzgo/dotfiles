@@ -16,14 +16,14 @@ Generic, pi-independent skills maintained by this repo live in the repo-root `sk
 
 ## Skills in this directory (`~/.pi/agent/skills/`)
 
-### `code-review`
+### `setup-code-review`
 
 | Field | Value |
 |-------|-------|
-| **Source** | Refined from [sanyuan0704/sanyuan-skills](https://github.com/sanyuan0704/sanyuan-skills) + [mattpocock/skills](https://github.com/mattpocock/skills) code-review |
-| **Description** | Multi-axis structured code review (Standards + Spec + Documentation Consistency), combining both sources' review axes and further refined |
-| **Installed** | 2026-07-10 |
-| **Adjustments** | Merged review dimensions from both sources; added code-quality, removal-plan, security, and SOLID checklists as references. 2026-07-31: added `disable-model-invocation: true` (no model auto-invocation; explicit trigger only). 2026-08-22: extended from two-axis to multi-axis — added Documentation Consistency as a third independent sub-agent (user-facing docs vs diff / vs each other / vs manifests); rewrote spawn as parallel background dispatch via the `dispatch` tool (fire-and-forget, no sleep-and-poll, timeout/retry belong to the dispatch tool); added a bounded trigger (default diff-signal gate + user "force doc check" override); main agent is the sole dispatcher; sub-agents are static workflows (no nested dispatch). Standards / Spec sub-agent prompts kept unchanged (extension, not refactor). 2026-09-09: step 7 output format now references the `show-me` skill for visual presentation of findings (diff / call tree / code-shape sketches) |
+| **Source** | Refined from [sanyuan0704/sanyuan-skills](https://github.com/sanyuan0704/sanyuan-skills) + [mattpocock/skills](https://github.com/mattpocock/skills) code-review; setup orchestration is repo-owned |
+| **Description** | One-time project setup that generates a self-contained, project-tuned `<project>-code-review` skill in the project's `.agents/skills/`. Grilling session first (local grill skill preferred), probes project-local skills as SOP replacements, assembles the generated skill in copy mode from `references/` (review-skill-template + checklists), then trial-runs it on a real diff |
+| **Installed** | 2026-09-13 |
+| **Adjustments** | 2026-09-13: absorbed and retired the standalone `code-review` skill — review focus differs per project, so the skill became a setup tool instead of a directly-invoked review skill. The former three-axis SKILL.md is preserved verbatim as `references/review-skill-template.md` (parameterized `{{PROJECT_NAME}}`, adaptation guide in header comment); the four checklists (SOLID / code-quality / security-race / removal-plan) copied unchanged into `references/`. Hard rules: copy mode (generated skill never references setup-code-review), local-first grilling + SOP replacement, upgrade-in-place instead of duplicate, mandatory trial run |
 | **Upstream** | https://github.com/sanyuan0704/sanyuan-skills / https://github.com/mattpocock/skills |
 
 ### `explore-codebase`
