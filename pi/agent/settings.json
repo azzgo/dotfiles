@@ -5,7 +5,7 @@
   "collapseChangelog": true,
   "quietStartup": true,
   "compaction": {
-    "enabled": false
+    "enabled": true
   },
   "packages": [
     "npm:pi-web-access",
@@ -16,10 +16,5 @@
     "deepseek/deepseek-v4-flash",
     "deepseek/deepseek-v4-pro"
   ],
-  "lastChangelogVersion": "0.78.1",
-  "extensions": [
-    "+extensions/workflow-runtime/index.ts",
-    "+extensions/track/index.ts",
-    "+extensions/readonly-mode/index.ts"
-  ]
+  "lastChangelogVersion": "0.78.1"
 }

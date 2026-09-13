@@ -135,6 +135,7 @@ Terminal multiplexer configuration with:
 #### Pi
 Shared Pi setup with:
 - Version-controlled `settings.json`, `keybindings.json`, `mcp.json`, `prompts/`, `skills/`, `extensions/`
+- **Extensions load by directory auto-discovery, not by the `settings.json` `extensions` array.** Pi scans `~/.pi/agent/extensions/` and loads every entry it finds (`addAutoDiscoveredResources` in pi's `package-manager.js`), so `install-pi`'s symlinks are the actual load list. Do **not** add a redundant `extensions` array — entries there are only meaningful as filters (`-extensions/x` to force-disable an auto-discovered extension, `+extensions/x` to override an exclusion). A plain (unprefixed) entry turns the array into a whitelist and hides everything else.
 - `pi/agent/APPEND_SYSTEM.md` — appended to pi's system prompt globally (language rule + blocking-command guidance)
 - `pi/agent/prompts/` is linked to Pi's global prompt templates directory: `~/.pi/agent/prompts/`
 - `models.json` and `auth.json` remain local on each machine
@@ -154,6 +155,7 @@ Shared Pi setup with:
 | `just install-terminals` | Install all terminal configurations |
 | `just install-shell` | Install shell, tmux, and starship configurations |
 | `just install-pi` | Link shared Pi configuration files |
+| `just test-track` | Run the track extension's test suite (args pass through to vitest) |
 | `just install-herdr` | Symlink herdr config.toml into ~/.config/herdr |
 | `just link` | Alias for `install-pi` |
 | `just nvim-health` | Check Neovim health and dependencies |
