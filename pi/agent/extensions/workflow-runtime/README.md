@@ -100,7 +100,7 @@ done-when: repro or root-cause hypothesis is recorded.
 | Command | Behavior |
 |---|---|
 | `/wf` (bare) / `/wf switch` | Run picker (manual entry — no cold-start popup; Esc = nothing). Open runs set Focus; archived (done/cancelled) runs offer a `🗑 remove` row — deleting the Run directory after a confirm. **Removal is manual, human-only: the model has no tool or prompt for it and the runtime never deletes runs automatically.** |
-| `/wf new <topic>` | Prompt the model to draft a Definition (capability-aware: `suggest` entries verified on disk, `name:<path>` encouraged) into `.pi/workflows/definitions/`; you review, then start |
+| `/wf new <topic>` | Prompt the model to draft a Definition (references `~/.pi/agent/patterns/examples/` first; capability-aware: `suggest` entries verified on disk, `name:<path>` encouraged) into `.pi/workflows/definitions/`; you review, then start |
 | `/wf start <name> [title]` | Instantiate a Run (global patterns are copied into the project), set Focus, send the first node's flow prompt |
 | `/wf list` | Non-terminal Runs + recent terminal archive (program-side, zero tokens) |
 | `/wf status [<run-id>]` | Nodes, states, dispatch session ids, progress-log tail |

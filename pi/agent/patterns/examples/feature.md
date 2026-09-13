@@ -17,7 +17,7 @@ nodes:
   - id: review
     title: Review & verify the result
     type: human
-    suggest: [code-review, hunk-review]
+    suggest: [<project>-code-review, hunk-review]
   - id: release
     title: Ship the change
     type: human
@@ -42,7 +42,7 @@ the node only cares that the work lands and the result is reported back.
 
 done-when: the implementation is complete in the working tree and self-tested by the sub-agent.
 ## review
-The user inspects the result. Recommended inside this node: dispatch code-review for a
+The user inspects the result. Recommended inside this node: dispatch the project's code-review skill for a
 multi-axis pass, and walk the diff with hunk-review for line-level judgment. Fix-ups loop
 inside this node until the user accepts.
 

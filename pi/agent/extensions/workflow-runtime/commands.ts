@@ -210,7 +210,13 @@ export function createWfCommands(deps: WfDeps) {
 			deps.notify("Usage: /wf new <topic>", "warning");
 			return;
 		}
-		deps.sendPrompt(buildNewDefinitionPrompt(clean, path.join(deps.cwd, DEFINITIONS_DIR)));
+		deps.sendPrompt(
+			buildNewDefinitionPrompt(
+				clean,
+				path.join(deps.cwd, DEFINITIONS_DIR),
+				path.join(deps.globalPatternsDir ?? globalPatternsDir(), "examples"),
+			),
+		);
 		deps.notify("Definition drafting prompt queued — the model writes the file, you review it, then /wf start <name>.", "info");
 	}
 

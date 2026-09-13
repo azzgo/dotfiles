@@ -25,7 +25,7 @@ nodes:
   - id: verify
     title: Verify the win & ship
     type: human
-    suggest: [code-review]
+    suggest: [<project>-code-review]
 ---
 ## instrumentation
 Before measuring anything, make performance observable. The user decides the evidence
@@ -57,7 +57,7 @@ reviewable as possible; behavior must not change, only the numbers.
 done-when: the optimization is implemented without behavior change and the benchmark still runs.
 ## verify
 The user judges the result: benchmark after vs. baseline must show a real win, the diff
-gets reviewed (dispatch code-review inside this node), and the change ships — commit,
+gets reviewed (dispatch the project's code-review skill inside this node), and the change ships — commit,
 install, or release.
 
 done-when: the benchmark comparison shows the target improvement is met and the change is committed/released.
