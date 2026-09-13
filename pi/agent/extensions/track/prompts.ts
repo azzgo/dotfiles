@@ -1,5 +1,64 @@
-import type { TrackSnapshot } from "./types";
+import type { TrackSnapshot, TrackState } from "./types";
 import { tailLines } from "./utils";
+
+// ---- compaction reconcile (see ADR 0008) ----
+
+/**
+ * Prompt for the tool-less reconcile call at compaction time. It receives the
+ * current Track files in full (so it does not re-record what is already there)
+ * plus the transcript tail, and returns ONLY new entries as JSON.
+ *
+ * Appending is the contract: the reconcile sees only the tail, so a rewrite
+ * would drop what earlier reconciles recorded.
+ */
+export function buildReconcilePrompt(track: TrackState, transcriptTail: string): string {
+	return [
+		"You are extracting NEW working-memory entries from the tail of a conversation that is about to be compacted.",
+		"",
+		"The Track files below are the summary that will replace this conversation. Your output is appended to them, so:",
+		"- Report only findings/progress NOT already recorded below. Do not restate existing entries.",
+		"- Never rewrite or summarize the whole conversation. Extract increments.",
+		"- If nothing new is worth recording, return empty arrays.",
+		"- Be terse: one line per entry, no preamble, no markdown fences.",
+		"",
+		"## Available sections (use these exact heading strings)",
+		'- findings.md: "Confirmed Constraints" | "Repo / System Findings" | "Design Decisions" | "Notes"',
+		'- progress.md: "Timeline" | "Work Completed" | "Verification" | "Blockers / Interruptions" | "Completion Evidence"',
+		"",
+		"## Output format (JSON only)",
+		'{"findings":[{"heading":"Design Decisions","text":"..."}],"progress":[{"heading":"Work Completed","text":"..."}]}',
+		"",
+		"## Current findings.md",
+		track.findings.trim() || "(empty)",
+		"",
+		"## Current progress.md",
+		track.progress.trim() || "(empty)",
+		"",
+		"## Conversation tail (most recent last)",
+		transcriptTail || "(unavailable)",
+	].join("\n");
+}
+
+/**
+ * In-band failure record. Pi swallows extension exceptions, so this — not a
+ * thrown error — is what keeps a failed reconcile observable: the summary
+ * carries the reason plus the transcript tail so the record survives
+ * compaction and the next agent sees it.
+ */
+export function buildFailureSummary(reason: string, transcriptTail: string): string {
+	return [
+		"# Working Memory (Track) — RECONCILE FAILED",
+		"",
+		`Track could not supply a compaction summary: ${reason}.`,
+		"",
+		"No Track content was written for this compaction. The conversation tail is",
+		"reproduced below so the work is not lost. Consider running `/track update`",
+		`once the cause is known; failures are also logged to .pi/track/reconcile.log.`,
+		"",
+		"## Conversation tail (most recent last)",
+		transcriptTail || "(unavailable)",
+	].join("\n");
+}
 
 // ---- /track update ----
 

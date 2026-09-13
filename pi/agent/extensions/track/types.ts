@@ -10,6 +10,9 @@ export const TRACK_DIR = ".pi/track";
 export const TRACK_FILES = ["findings.md", "progress.md"] as const;
 export const TRACK_FILE_NAMES = [...TRACK_FILES] as const;
 
+/** Append-only log of failed Compaction Reconciles (see ADR 0008). */
+export const RECONCILE_LOG_FILE = "reconcile.log";
+
 // ---- types ----
 
 export type TrackState = {
@@ -23,4 +26,15 @@ export type TrackSnapshot = {
 	trackDir: string;
 	track: TrackState;
 	resumedFromPreviousSession: boolean;
+};
+
+/** One new bullet to append during a Compaction Reconcile. */
+export type ReconcileEntry = {
+	file: (typeof TRACK_FILES)[number];
+	heading: string;
+	text: string;
+};
+
+export type ReconcileResult = {
+	entries: ReconcileEntry[];
 };
