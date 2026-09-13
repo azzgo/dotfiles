@@ -13,15 +13,24 @@
  * Args are skill names to exclude: /pi-skills wayfinder show-me
  */
 
-import { existsSync, lstatSync, mkdirSync, readdirSync, readlinkSync, symlinkSync, unlinkSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readdirSync, readlinkSync, realpathSync, symlinkSync, unlinkSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 
-// Extension is symlinked into ~/.pi/agent/extensions, but node resolves the
-// realpath of the module, so import.meta.url points back into the dotfiles repo:
-// <dotfiles>/pi/agent/extensions/project-skills -> up four levels to <dotfiles>.
-const extensionDir = dirname(fileURLToPath(import.meta.url));
+// Extension is symlinked into ~/.pi/agent/extensions. Native Node ESM would
+// resolve the symlink, but pi loads extensions via jiti, which keeps the
+// ~/.pi path in import.meta.url — so realpath it explicitly to get back into
+// the dotfiles repo: <dotfiles>/pi/agent/extensions/project-skills -> up four
+// levels to <dotfiles>.
+function realpathSafe(path: string): string {
+	try {
+		return realpathSync(path);
+	} catch {
+		return path;
+	}
+}
+const extensionDir = realpathSafe(dirname(fileURLToPath(import.meta.url)));
 const dotfilesDir = resolve(extensionDir, '..', '..', '..', '..');
 
 const SOURCE_DIRS = [join(dotfilesDir, 'pi', 'agent', 'skills'), join(dotfilesDir, 'skills')];
@@ -65,7 +74,7 @@ export default function projectSkills(pi: ExtensionAPI): void {
 				}
 			}
 
-			ctx?.ui?.notify(lines.length > 0 ? `/pi-skills done:\n${lines.join('\n')}` : '/pi-skills: no skills found to link.', 'info');
+			ctx?.ui?.notify(lines.length > 0 ? `/pi-skills done:\n${lines.join('\n')}` : `/pi-skills: no skills found to link (looked in ${SOURCE_DIRS.join(', ')}).`, 'info');
 		},
 	});
 }
