@@ -6,6 +6,7 @@ import { trackDir } from "./utils";
 import { initTrack, readTrack } from "./track";
 import { buildTrackContextPrompt, buildTrackStatusText, buildTrackUpdatePrompt } from "./prompts";
 import { buildWidgetLines } from "./ui";
+import { buildTrackCompaction } from "./compaction";
 
 const TRACK_HELP = [
 	"/track — flat working memory (findings.md + progress.md at .pi/track/; auto-initialized once when missing, otherwise fully manual)",
@@ -123,5 +124,17 @@ export default function trackExtension(pi: ExtensionAPI): void {
 		if (suppressContinuationThisTurn) {
 			suppressContinuationThisTurn = false;
 		}
+	});
+
+	// ---- Track-Sourced Compaction (see docs/adr/0008-track-sourced-compaction.md) ----
+	//
+	// Track content IS the compaction summary, so Pi's built-in summarizer never
+	// runs. buildTrackCompaction never throws and never returns undefined:
+	// Pi's ExtensionRunner.emit() swallows handler exceptions and treats the
+	// resulting undefined exactly like "no extension result", which would
+	// silently reinstate built-in summarization. Failures are therefore recorded
+	// in-band by the returned summary instead.
+	pi.on("session_before_compact", async (event, ctx) => {
+		return buildTrackCompaction(event, ctx);
 	});
 }
