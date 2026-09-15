@@ -2,6 +2,7 @@
 
 alias g='git'
 alias ga='git add'
+alias gf='git fetch'
 alias gc='git commit -v'
 alias gcn='git commit -v --no-verify'
 alias gca='git commit -v --amend --no-edit'
