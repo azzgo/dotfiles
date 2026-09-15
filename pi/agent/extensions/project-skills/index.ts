@@ -3,14 +3,11 @@
  *
  * Replaces the old global skill linking in `just install-pi`
  * (~/.pi/agent/skills and ~/.agents/skills). Instead, `/pi-skills`
- * links the dotfiles-maintained skills into the *current project*:
+ * links the dotfiles-maintained skills into the *current project*,
+ * each source with its own target:
  *
- *   dotfiles/pi/agent/skills/*  ->  <cwd>/.pi/skills/<name> and <cwd>/.agents/skills/<name>
- *   dotfiles/skills/*           ->  <cwd>/.pi/skills/<name> and <cwd>/.agents/skills/<name>
- *
- * Skills are linked one by one, so a project can delete or override
- * individual skills locally. Existing non-symlink entries are never clobbered.
- * Args are skill names to exclude: /pi-skills wayfinder show-me
+ *   dotfiles/pi/agent/skills/*  ->  <cwd>/.pi/skills/<name>       (pi-coupled)
+ *   dotfiles/skills/*           ->  <cwd>/.agents/skills/<name>   (generic)
  */
 
 import { existsSync, lstatSync, mkdirSync, readdirSync, readlinkSync, realpathSync, symlinkSync, unlinkSync } from 'node:fs';
@@ -33,8 +30,10 @@ function realpathSafe(path: string): string {
 const extensionDir = realpathSafe(dirname(fileURLToPath(import.meta.url)));
 const dotfilesDir = resolve(extensionDir, '..', '..', '..', '..');
 
-const SOURCE_DIRS = [join(dotfilesDir, 'pi', 'agent', 'skills'), join(dotfilesDir, 'skills')];
-const PROJECT_TARGET_DIRS = ['.pi/skills', '.agents/skills'];
+const LINK_PAIRS = [
+	{ sourceDir: join(dotfilesDir, 'pi', 'agent', 'skills'), targetDir: '.pi/skills' },
+	{ sourceDir: join(dotfilesDir, 'skills'), targetDir: '.agents/skills' },
+];
 
 function isSymlink(target: string): boolean {
 	return lstatSync(target, { throwIfNoEntry: false })?.isSymbolicLink() ?? false;
@@ -58,7 +57,7 @@ export default function projectSkills(pi: ExtensionAPI): void {
 			const skip = new Set(typeof args === 'string' ? args.split(/\s+/).filter(Boolean) : []);
 			const lines: string[] = [];
 
-			for (const sourceDir of SOURCE_DIRS) {
+			for (const { sourceDir, targetDir } of LINK_PAIRS) {
 				if (!existsSync(sourceDir)) continue;
 				for (const entry of readdirSync(sourceDir, { withFileTypes: true })) {
 					if (!entry.isDirectory() || entry.name.startsWith('.') || entry.name === 'README.txt') continue;
@@ -67,10 +66,8 @@ export default function projectSkills(pi: ExtensionAPI): void {
 						continue;
 					}
 					const source = join(sourceDir, entry.name);
-					for (const rel of PROJECT_TARGET_DIRS) {
-						const outcome = linkSkill(source, join(cwd, rel, entry.name));
-						lines.push(outcome === 'kept' ? `  ⏭️  ${rel}/${entry.name} (already present, kept)` : `  🔗 ${rel}/${entry.name} -> ${source}`);
-					}
+					const outcome = linkSkill(source, join(cwd, targetDir, entry.name));
+					lines.push(outcome === 'kept' ? `  ⏭️  ${targetDir}/${entry.name} (already present, kept)` : `  🔗 ${targetDir}/${entry.name} -> ${source}`);
 				}
 			}
 
