@@ -2,13 +2,13 @@
 # Usage: mise install
 
 [tools]
-node = "26"
+node = "26.8.2"
 python = "3.14"
-uv = "latest"
-pnpm = "latest"
+uv = "0.12.10"
+pnpm = "12.3.4"
 
-ripgrep = "latest"
-fzf = "latest"
+ripgrep = "15.2.0"
+fzf = "0.74.3"
 neovim = "stable"
 delta = "latest"
 fx = "latest"
