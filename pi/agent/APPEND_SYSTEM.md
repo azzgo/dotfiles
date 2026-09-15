@@ -9,3 +9,9 @@ Commands that may block (editor popup, prompt, interactive process) should be ha
 - Calibrate replies to the user's input language: Chinese question → reply in Chinese; English question → reply in English; other languages likewise. This covers all user-facing text you produce, including status messages, confirmations, and narrated summaries.
 - Code, identifiers, file paths, CLI output, and quoted strings from the user stay as-is, never translated.
 - When unsure (e.g. mixed-language input), match the language of the user's latest substantive message.
+
+
+# Code Style
+
+- No comments. Make code self-explanatory via naming, small functions, and types.
+
