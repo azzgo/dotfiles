@@ -16,7 +16,7 @@ Methodology lives in [SKILL.md](SKILL.md). Do not redefine method here.
 | Wayfinder Workspace | `~/.cache/wayfinder/<workspace-id>/` |
 | taskmd ticket directory | `~/.cache/wayfinder/<workspace-id>/tickets/` |
 
-`<workspace-id>` is derived from the repository root — resolve it with `git rev-parse --show-toplevel` (fallback: current directory), take its absolute path, strip any trailing slash, replace every `/` with `-` (the leading slash becomes the leading dash), and append a trailing `-`. Example: `/path/to/repo` → `-Users-ison-dev-dotfiles-`. Data lives outside the repo, so nothing needs gitignoring.
+`<workspace-id>` is derived from the repository root — resolve it with `git rev-parse --show-toplevel` (fallback: current directory), take its absolute path, strip any trailing slash, replace every `/` with `-` (the leading slash becomes the leading dash), and append a trailing `-`. Example: `/path/to/repo` → `-path-to-repo-`. Data lives outside the repo, so nothing needs gitignoring.
 
 Compute the ticket dir with this canonical command instead of hand-transforming the path — it normalizes trailing slashes and symlinked paths, so every session lands on the same workspace:
 

@@ -79,7 +79,7 @@ Details of CLI flags, tags, filters, and templates live in [TASKMD-CONVENTION.md
 
 - Root: `~/.cache/wayfinder/`
 - Per-workspace dir: `~/.cache/wayfinder/<workspace-id>/`
-- workspace-id: derived from the repository root — resolve it with `git rev-parse --show-toplevel` (fallback: current directory), take its absolute path, strip any trailing slash, replace every `/` with `-` (the leading slash becomes the leading dash), and append a trailing `-`. Example: `/path/to/repo` → `-Users-ison-dev-dotfiles-`. Compute it with the canonical command in [TASKMD-CONVENTION.md](TASKMD-CONVENTION.md#paths) — do not hand-transform the path
+- workspace-id: derived from the repository root — resolve it with `git rev-parse --show-toplevel` (fallback: current directory), take its absolute path, strip any trailing slash, replace every `/` with `-` (the leading slash becomes the leading dash), and append a trailing `-`. Example: `/path/to/repo` → `-path-to-repo-`. Compute it with the canonical command in [TASKMD-CONVENTION.md](TASKMD-CONVENTION.md#paths) — do not hand-transform the path
 - taskmd ticket dir: `~/.cache/wayfinder/<workspace-id>/tickets/`
 - Per-repository isolation via the workspace-id; data lives **outside** the repo, so nothing needs gitignoring
 - Local only

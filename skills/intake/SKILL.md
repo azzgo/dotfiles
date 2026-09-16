@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Intake is the funnel mouth: inputs arrive from many directions (PRDs, meeting minutes, Figma extracts, spreadsheets — none authored by you), and each one gets archived and aligned **one source at a time**. Intake never reconciles sources, never proposes solutions, never opens the codebase — cross-source work belongs downstream (grill-me / grill-with-docs / wayfinder).
 
-**Step 0 — locate the funnel (always, before touching the input material).** Compute the workspace slug (same convention as the `wayfinder` skill: repo-root abs path → dash-slug, e.g. `/path/to/repo` → `-Users-ison-dev-dotfiles-`), list requirement directories under `~/.cache/intake/<workspace-slug>/`, and ask the user: does this input belong to one of these, or is it a new requirement? Even if the user names one, confirm the match — don't guess.
+**Step 0 — locate the funnel (always, before touching the input material).** Compute the workspace slug (same convention as the `wayfinder` skill: repo-root abs path → dash-slug, e.g. `/path/to/repo` → `-path-to-repo-`), list requirement directories under `~/.cache/intake/<workspace-slug>/`, and ask the user: does this input belong to one of these, or is it a new requirement? Even if the user names one, confirm the match — don't guess.
 
 **Step 1 — file the source.** Write `raw/<YYYY-MM-DD>-<source-name>.md`: the input as received, unaltered, with a source frontmatter (type, originator, fidelity). Do not summarize or clean up — the raw file is evidence. If the input is still a link or binary, ask the user to parse it with the appropriate skill/MCP first.
 
