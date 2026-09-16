@@ -11,6 +11,7 @@ import {
 	appendLog,
 	clearLastFocus,
 	definitionPath,
+	definitionsDir,
 	findDefinition,
 	globalPatternsDir,
 	listRuns,
@@ -29,6 +30,7 @@ import {
 	buildAutoDispatchPrompt,
 	buildHumanNodePrompt,
 	buildNewDefinitionPrompt,
+	buildRefinePatternPrompt,
 	buildReplanPrompt,
 } from "./prompts";
 import { parseDefinition } from "./definition";
@@ -56,6 +58,8 @@ export interface WfDeps {
 	now(): string;
 	/** Global pattern library dir (overridable for tests). */
 	globalPatternsDir?: string;
+	/** Open a directory in the OS file manager (injected by runtime.ts). */
+	openPath?: (dir: string) => void;
 }
 
 /** Handle a state-changing outcome: log, persist, and route the next prompt. */
@@ -573,6 +577,76 @@ export function createWfCommands(deps: WfDeps) {
 		deps.notify(`Promoted "${run.definitionName}" to ${target}.`, "info");
 	}
 
+	// ---- /wf refine <name> [direction] ----
+
+	function refineCmd(nameAndDirection: string): void {
+		const trimmed = nameAndDirection.trim();
+		const [name, ...directionParts] = trimmed.split(/\s+/);
+		if (!name) {
+			deps.notify("Usage: /wf refine <definition-name> [direction]", "warning");
+			return;
+		}
+		const found = findDefinition(deps.cwd, name, deps.globalPatternsDir);
+		if ("error" in found) {
+			deps.notify(found.error, "warning");
+			return;
+		}
+		deps.sendPrompt(buildRefinePatternPrompt(found.file, found.from, directionParts.join(" ")));
+		deps.notify(
+			found.from === "global"
+				? `Refine prompt queued for global pattern ${name} (${found.file}) — review the diff afterwards.`
+				: `Refine prompt queued for definition ${name} (${found.file}).`,
+			"info",
+		);
+	}
+
+	// ---- /wf open ----
+
+	function openCmd(): void {
+		const projectDir = definitionsDir(deps.cwd);
+		const dir = fs.existsSync(projectDir) ? projectDir : (deps.globalPatternsDir ?? globalPatternsDir());
+		if (!fs.existsSync(dir)) {
+			fs.mkdirSync(dir, { recursive: true });
+			deps.notify(`Created ${dir} (it did not exist).`, "info");
+		}
+		if (!deps.openPath) {
+			deps.notify(`No file-manager opener available — the directory is ${dir}`, "warning");
+			return;
+		}
+		deps.openPath(dir);
+		deps.notify(`📂 ${dir}`, "info");
+	}
+
+	// ---- /wf patterns ----
+
+	function patternsCmd(): void {
+		const projectDir = definitionsDir(deps.cwd);
+		const globalDir = deps.globalPatternsDir ?? globalPatternsDir();
+		const names = (dir: string): string[] =>
+			fs.existsSync(dir)
+				? fs
+						.readdirSync(dir, { withFileTypes: true })
+						.filter((e) => e.isFile() && e.name.endsWith(".md"))
+						.map((e) => e.name.slice(0, -3))
+						.sort()
+				: [];
+		const project = names(projectDir);
+		const global = names(globalDir).filter((n) => !project.includes(n));
+		if (project.length === 0 && global.length === 0) {
+			deps.notify(`No definitions or patterns yet — draft one with /wf new <topic> (library: ${globalDir}).`, "info");
+			return;
+		}
+		const lines = [
+			`Project definitions (${projectDir}):`,
+			...(project.length > 0 ? project.map((n) => `  ${n}`) : ["  (none)"]),
+			`Global pattern library (${globalDir}):`,
+			...(global.length > 0 ? global.map((n) => `  ${n}`) : ["  (none)"]),
+			"",
+			"Start with /wf start <name> [title]; refine with /wf refine <name> [direction].",
+		];
+		deps.notify(lines.join("\n"), "info");
+	}
+
 	// ---- /wf cancel <run-id> ----
 
 	function cancelCmd(runRef?: string): void {
@@ -623,6 +697,9 @@ export function createWfCommands(deps: WfDeps) {
 		insertCmd,
 		replanCmd,
 		focusCmd,
+		refineCmd,
+		openCmd,
+		patternsCmd,
 		saveAsTemplateCmd,
 		cancelCmd,
 		settle,
@@ -642,8 +719,11 @@ export function wfHelpText(): string {
 		"  /wf done [note]              Complete the active node (auto nodes settle by themselves; /wf done is the human override if a settle is lost or stuck)",
 		"  /wf skip <node-id> <reason>  Reroute: skip a node (reason required)",
 		"  /wf insert <after> <title> [auto|human]  Reroute: insert a node",
-		"  /wf replan [confirm [note]]  Propose a revised Spine / apply the approved revision",
-		"  /wf focus <run-id>           Point this session's Focus at a run",
+			"  /wf replan [confirm [note]]  Propose a revised Spine / apply the approved revision",
+			"  /wf refine <name> [direction]  AI-refine a Definition/Pattern file in place (contract-checked, you review the diff)",
+			"  /wf open                     Open the definitions dir (project) or the global pattern library in the file manager",
+			"  /wf patterns                 List project definitions + global patterns (by source)",
+			"  /wf focus <run-id>           Point this session's Focus at a run",
 		"  /wf switch                   Run picker (= bare /wf)",
 		"  /wf save-as-template <run-id>  Promote the Run's Definition to the global pattern library",
 		"  /wf cancel <run-id>          Cancel a run (logged; open nodes → cancelled)",

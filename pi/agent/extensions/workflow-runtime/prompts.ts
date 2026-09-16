@@ -140,6 +140,33 @@ export function buildReplanPrompt(run: Run, definitionsFile: string): string {
 	].join("\n");
 }
 
+/**
+ * Prompt for /wf refine: the model edits an existing Definition/Pattern file
+ * in place (contract-preserving). The user reviews the diff; the runtime
+ * never touches the file and no Run state is involved.
+ */
+export function buildRefinePatternPrompt(file: string, from: "project" | "global", direction?: string): string {
+	return [
+		`[WF REFINE file=${file} source=${from}]`,
+		`Refine the workflow ${from === "global" ? "Pattern" : "Definition"} file above.`,
+		direction?.trim()
+			? `User direction: ${direction.trim()}`
+			: "No explicit direction: propose refinements yourself — sharpen node briefs and done-when criteria, improve human/auto placement, fix stale or non-existent suggest entries, tighten the description.",
+		"",
+		FORMAT_CONTRACT,
+		"",
+		"Rules:",
+		`- Edit the file IN PLACE (same path). Keep the same \`name\` — runs and templates reference it.`,
+		"- Capability-Aware: `suggest` entries must reference skills/sub-agents that ACTUALLY exist — verify on disk under ~/.pi/agent/skills/, ~/.agents/skills/, and <project>/.agents/skills/ before naming; prefer `name:<path-to-SKILL.md-or-its-dir>` form. Empty arrays are fine.",
+		"- The Spine stays LINEAR; every node body keeps exactly one `done-when:` line.",
+		"- Do NOT create, start, or modify anything under .pi/workflows/runs/ — no Run state is involved in a refine.",
+		"- When done, summarize the changes you made and why in a few bullets, then STOP.",
+		...(from === "global"
+			? ["- This file lives in the global pattern library (version-controlled dotfiles) — leave committing to the user; just tell them to review the diff."]
+			: []),
+	].join("\n");
+}
+
 /** Cascade context line appended when the next node activates automatically. */
 export function settleContextLine(run: Run, settled: RunNode, exitCode: number | null, durationHint?: string): string {
 	return `Previous node ${settled.id} settled (session ${settled.sessionId ?? "?"}, exit ${exitCode ?? "n/a"}${durationHint ? `, ${durationHint}` : ""}) — logged automatically.`;

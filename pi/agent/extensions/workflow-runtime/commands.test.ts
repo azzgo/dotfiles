@@ -405,3 +405,81 @@ function writeTerminalRun(id: string): void {
 	fs.mkdirSync(path.join(cwd, ".pi/workflows/runs", id), { recursive: true });
 	fs.writeFileSync(path.join(cwd, ".pi/workflows/runs", id, "run.json"), JSON.stringify(run), "utf8");
 }
+
+describe("refine", () => {
+	it("queues a refine prompt for a global pattern, carrying the file path and direction", () => {
+		const wf = createWfCommands(makeDeps());
+		wf.refineCmd("testflow sharpen the intake brief");
+		expect(sent).toHaveLength(1);
+		expect(sent[0]).toMatch(/WF REFINE/);
+		expect(sent[0]).toContain(path.join(patternsDir, "testflow.md"));
+		expect(sent[0]).toContain("source=global");
+		expect(sent[0]).toContain("sharpen the intake brief");
+		expect(notes[0]!.text).toMatch(/global pattern testflow/);
+	});
+
+	it("works for project definitions and refuses unknown names", () => {
+		const wf = createWfCommands(makeDeps());
+		fs.mkdirSync(path.join(cwd, ".pi/workflows/definitions"), { recursive: true });
+		fs.writeFileSync(definitionPath(cwd, "localflow"), PATTERN("localflow"), "utf8");
+		wf.refineCmd("localflow");
+		expect(sent[0]).toMatch(/source=project/);
+		wf.refineCmd("ghost");
+		expect(sent).toHaveLength(1);
+		expect(notes[1]!.text).toMatch(/no definition or pattern named "ghost"/);
+	});
+
+	it("bare usage is a warning, not a prompt", () => {
+		const wf = createWfCommands(makeDeps());
+		wf.refineCmd("");
+		expect(sent).toHaveLength(0);
+		expect(notes[0]!.text).toMatch(/Usage: \/wf refine/);
+	});
+});
+
+describe("open", () => {
+	it("opens the project definitions dir when it exists", () => {
+		const opened: string[] = [];
+		const wf = createWfCommands(makeDeps({ openPath: (dir) => opened.push(dir) }));
+		fs.mkdirSync(path.join(cwd, ".pi/workflows/definitions"), { recursive: true });
+		wf.openCmd();
+		expect(opened).toEqual([path.join(cwd, ".pi/workflows/definitions")]);
+	});
+
+	it("falls back to the global pattern library when the project has no definitions dir", () => {
+		const opened: string[] = [];
+		const wf = createWfCommands(makeDeps({ openPath: (dir) => opened.push(dir) }));
+		wf.openCmd();
+		expect(opened).toEqual([patternsDir]);
+	});
+
+	it("without an opener it reports the directory instead of crashing", () => {
+		const wf = createWfCommands(makeDeps());
+		wf.openCmd();
+		expect(notes[0]!.text).toContain(patternsDir);
+	});
+});
+
+describe("patterns", () => {
+	it("lists project definitions and global patterns by source (project wins on name clash)", () => {
+		const wf = createWfCommands(makeDeps());
+		fs.mkdirSync(path.join(cwd, ".pi/workflows/definitions"), { recursive: true });
+		fs.writeFileSync(definitionPath(cwd, "localflow"), PATTERN("localflow"), "utf8");
+		fs.writeFileSync(definitionPath(cwd, "testflow"), PATTERN("testflow"), "utf8");
+		wf.patternsCmd();
+		const text = notes[0]!.text;
+		expect(text).toContain("Project definitions");
+		expect(text).toContain("  localflow");
+		expect(text).toContain("Global pattern library");
+		expect(text).toMatch(/Global pattern library[^\n]*\n(?:.|\n)*  autoflow/);
+		// testflow exists in both — listed once, under project
+		const globalSection = text.split("Global pattern library")[1]!;
+		expect(globalSection).not.toContain("  testflow");
+	});
+
+	it("reports a readable hint when nothing exists yet", () => {
+		const wf = createWfCommands(makeDeps({ globalPatternsDir: path.join(cwd, "empty-lib") }));
+		wf.patternsCmd();
+		expect(notes[0]!.text).toMatch(/No definitions or patterns yet/);
+	});
+});

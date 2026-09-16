@@ -21,6 +21,7 @@
  */
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { createWfCommands, wfHelpText } from "./commands";
+import { wfCompletions } from "./completions";
 import { DISPATCH_REASON_PREFIX, MESSAGE_TYPE_SUB_DISPATCH, MESSAGE_TYPE_WF_PROMPT } from "./types";
 import type { Run } from "./types";
 import { listRuns, nonTerminalRuns, readLastFocus, readLogTail, readRun, writeRun } from "./state";
@@ -54,17 +55,25 @@ export default function workflowRuntime(pi: ExtensionAPI): void {
 	let commands: ReturnType<typeof createWfCommands> | null = null;
 	/** Run id whose state digest was already injected into this session's context. */
 	let digestInjectedRunId: string | null = null;
+	/** Project cwd — completions get no ctx, so it is captured from events. */
+	let lastCwd: string | null = null;
 
 	const getCommands = (ctx: ExtensionContext): ReturnType<typeof createWfCommands> => {
 		if (!commands) {
-			commands = createWfCommands({
-				cwd: ctx.cwd,
-				sendPrompt: (content) =>
-					pi.sendMessage({ customType: MESSAGE_TYPE_WF_PROMPT, content, display: false }, { triggerTurn: true, deliverAs: "followUp" }),
-				notify: (text, level) => ctx.ui.notify(text, level ?? "info"),
-				pickRun: (title, items) => ctx.ui.select(title, items).then((v) => v ?? null),
-				now: () => new Date().toISOString(),
-			});
+		commands = createWfCommands({
+			cwd: ctx.cwd,
+			sendPrompt: (content) =>
+				pi.sendMessage({ customType: MESSAGE_TYPE_WF_PROMPT, content, display: false }, { triggerTurn: true, deliverAs: "followUp" }),
+			notify: (text, level) => ctx.ui.notify(text, level ?? "info"),
+			pickRun: (title, items) => ctx.ui.select(title, items).then((v) => v ?? null),
+			now: () => new Date().toISOString(),
+			openPath: (dir) => {
+				const opener = process.platform === "darwin" ? "open" : process.platform === "win32" ? "explorer" : "xdg-open";
+				import("node:child_process").then(({ spawn }) => {
+					spawn(opener, [dir], { detached: true, stdio: "ignore" }).unref();
+				});
+			},
+		});
 		}
 		return commands;
 	};
@@ -78,9 +87,14 @@ export default function workflowRuntime(pi: ExtensionAPI): void {
 
 	pi.registerCommand("wf", {
 		description:
-			"Workflow runtime: orchestration skeleton (new / start / list / status / next / done / skip / insert / replan / focus / switch / save-as-template / cancel).",
+			"Workflow runtime: orchestration skeleton (new / start / list / status / next / done / skip / insert / replan / refine / open / focus / switch / save-as-template / cancel).",
+		getArgumentCompletions: (prefix: string) => {
+			const cwd = lastCwd ?? process.cwd();
+			return wfCompletions(cwd, prefix);
+		},
 		handler: async (args, ctx) => {
 			const wf = getCommands(ctx);
+			lastCwd = ctx.cwd;
 			const trimmed = args.trim();
 			const [sub, ...rest] = trimmed.split(/\s+/);
 			const restStr = rest.join(" ");
@@ -130,9 +144,18 @@ export default function workflowRuntime(pi: ExtensionAPI): void {
 					wf.insertCmd(after, titleParts.join(" "));
 					break;
 				}
-				case "replan":
-					wf.replanCmd(restStr);
-					break;
+			case "replan":
+				wf.replanCmd(restStr);
+				break;
+			case "refine":
+				wf.refineCmd(restStr);
+				break;
+			case "open":
+				wf.openCmd();
+				break;
+			case "patterns":
+				wf.patternsCmd();
+				break;
 				case "focus":
 					if (!rest[0]) {
 						ctx.ui.notify("Usage: /wf focus <run-id>", "warning");
@@ -246,6 +269,7 @@ export default function workflowRuntime(pi: ExtensionAPI): void {
 		focusRunId = null;
 		commands = null;
 		digestInjectedRunId = null;
+		lastCwd = ctx.cwd;
 		refreshWidget(ctx);
 	});
 

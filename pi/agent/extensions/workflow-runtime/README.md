@@ -109,6 +109,9 @@ done-when: repro or root-cause hypothesis is recorded.
 | `/wf skip <node-id> <reason>` | Reroute; reason mandatory; logged |
 | `/wf insert <after-node-id> <title> [auto\|human]` | Reroute; inserts a pending node; logged. Inserting **ahead of the active node is allowed (backflow)**: the flow returns to the inserted node as soon as the current node completes — the notify says so explicitly |
 | `/wf replan [confirm [note]]` | Prompt the model to propose a revised Spine → it rewrites the Definition → you approve → `/wf replan confirm` replaces the Spine (old Spine archived in the log). Node states of surviving nodes are preserved, in-flight dispatch correlation is kept; **dropped in-flight dispatches are surfaced as severed** (warning with the session id — kill manually via the Dispatch Overview, never auto-killed) |
+| `/wf refine <name> [direction]` | Prompt the model to refine an existing Definition/Pattern **file in place** (same format contract, same `name`, capability-aware `suggest` re-check). The runtime never touches the file and no Run state is involved — you review the diff (global patterns are dotfiles-controlled: commit is the user's call) |
+| `/wf open` | Open the definitions directory in the OS file manager — project `.pi/workflows/definitions/` if it exists, otherwise the global pattern library |
+| `/wf patterns` | List all Definitions/Patterns by source (project definitions first, then global patterns not shadowed by a project definition) — program-side, zero tokens |
 | `/wf focus <run-id>` | Point this session's Focus at a Run |
 | `/wf save-as-template <run-id>` | Promote the Run's Definition into the global pattern library (a dotfiles git diff; never overwrites) |
 | `/wf cancel [<run-id>]` | Terminal cancel; open nodes → cancelled; logged |
@@ -138,7 +141,9 @@ done-when: repro or root-cause hypothesis is recorded.
 - `definition.ts` — strict dependency-free Definition parser (contract
   violations rejected with reasons).
 - `prompts.ts` — instruction prompts (dispatch / human brief / new definition /
-  replan).
+  replan / refine).
+- `completions.ts` — `/wf` argument completions (subcommands, definition/pattern
+  names for `start`, run ids, focused-run node ids).
 - `ui.ts` — widget lines (program-side visibility).
 - `*.test.ts` + `vitest.config.ts` — tests (`npm test`, mirrors goal-runtime's
   setup; Node >= 23.6 native TS).
