@@ -1,0 +1,5 @@
+{
+	"name": "pi-navigator-extension",
+	"private": true,
+	"type": "module"
+}

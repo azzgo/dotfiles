@@ -141,6 +141,7 @@ Shared Pi setup with:
 - `models.json` and `auth.json` remain local on each machine
 - Only cross-device-safe Pi config is linked by dotfiles
 - `pi/agent/skills/` holds pi-coupled skills (sub-dispatch / dispatch tool / pi prompts). Skills are **not linked globally** anymore — the `project-skills` pi extension provisions them per project: run `/pi-skills` inside a project to link `pi/agent/skills/` and `skills/` into `<project>/.pi/skills/` and `<project>/.agents/skills/`, then delete or override individual links as the project needs.
+- `pi-navigator` extension — `/nav <task or question>` suggests a workflow over all repo-maintained capabilities (extensions, skills, patterns). Skills are `disable-model-invocation` and extension commands are invisible to the model, so `/nav` injects a hand-curated capability catalog (`catalog.md`) plus a live scan of the skills on disk, on demand.
 
 **Installation**: `just install-pi` or `just link` (per-project skills via `/pi-skills` in the target project)
 

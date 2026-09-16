@@ -128,6 +128,8 @@ install-pi:
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/command-palette ~/.pi/agent/extensions/command-palette
     rm -rf ~/.pi/agent/extensions/project-skills
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/project-skills ~/.pi/agent/extensions/project-skills
+    rm -rf ~/.pi/agent/extensions/pi-navigator
+    ln -s {{ dotfiles_dir }}/pi/agent/extensions/pi-navigator ~/.pi/agent/extensions/pi-navigator
 
     rm -rf ~/.pi/agent/prompts
     ln -s {{ dotfiles_dir }}/pi/agent/prompts ~/.pi/agent/prompts
