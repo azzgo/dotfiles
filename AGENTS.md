@@ -70,8 +70,8 @@ Pi 相关约定补充：
 
 | 位置 | 内容 | 安装方式 |
 |------|------|----------|
-| `pi/agent/skills/` | 与 pi 机制耦合的 skill（sub-dispatch / dispatch 工具 / pi prompts） | 不再全局链接；由 `project-skills` 扩展的 `/pi-skills` 命令链接到项目 `.pi/skills/` 和 `.agents/skills/` |
-| `skills/`（仓库根） | 通用、pi 无关的 skill（`grill-with-docs`、`prototype` 等） | 同上，经 `/pi-skills` 按项目链接到 `.pi/skills/` 和 `.agents/skills/` |
+| `pi/agent/skills/` | 与 pi 机制耦合的 skill（sub-dispatch / dispatch 工具 / pi prompts） | 不全局链接；由 `project-skills` 扩展的 `/pi-skills` 命令按项目链接到项目 `.pi/skills/` |
+| `skills/`（仓库根） | 通用、pi 无关的 skill（`grill-with-docs`、`prototype`、`intake` 等） | `just install-skills` 全局链接到 `~/.agents/skills/` |
 
 Agent 侧的 skill 搜索路径按优先级：
 
@@ -79,9 +79,9 @@ Agent 侧的 skill 搜索路径按优先级：
 |--------|------|------|
 | 1 | `~/.pi/agent/skills/` | pi 耦合 skill（本仓库 `pi/agent/skills/`） |
 | 2 | `~/.pi/agent/npm/node_modules/*/skills/` | npm 包自带 skill（如 pi-web-access 的 librarian），不要直接修改 |
-| 3 | `~/.agents/skills/` | 其他手动安装的 agent skill（browser-bridge、pixso、skill-creator）及项目内链接的 skill |
+| 3 | `~/.agents/skills/` | 通用 skill（本仓库 `skills/` 经 `just install-skills` 全局链接）及其他手动安装的 agent skill（browser-bridge、pixso、skill-creator） |
 
-全局 skill 链接已退役：`install-pi` 会清理旧的 `~/.pi/agent/skills` 与 `~/.agents/skills` 中指向本仓库的链接。需要本仓库 skills 的项目在项目内运行 `/pi-skills`（project-skills 扩展）按需链接，项目可自行删除或覆盖个别 skill。
+全局的 `~/.pi/agent/skills` 链接已退役：`install-pi` 会清理旧的 `~/.pi/agent/skills` 与 `~/.agents/skills` 中指向本仓库 pi 耦合 skill 的链接。pi 耦合 skill 需要的项目在项目内运行 `/pi-skills`（project-skills 扩展）按需链接到 `.pi/skills/`，项目可自行删除或覆盖个别 skill；通用 skill 则由 `just install-skills` 全局安装。
 
 两处各有自己的 `README.txt`（`pi/agent/skills/README.txt`、`skills/README.txt`），仅记录本仓库维护的 skill 来源、安装日期、调整内容和上游地址，不包含其他来源的 skill。
 
@@ -90,6 +90,6 @@ Skills 维护规则：
 1. **记录来源** — 从外部安装的 skill 必须在所在目录的 `README.txt` 中记录来源 URL、commit hash 和安装日期，以便日后判断是否需要升级。
 2. **检查上游再更新** — 更新外部 skill 前，先 `git log` 查看上游变更，确认值得更新再操作。
 3. **混合来源 skill 保留双上游** — 从多个来源精炼的 skill（如 `code-review`）需同时记录所有上游 URL。
-4. **机器本地** — skill 不会通过本仓库自动同步；扩展经 `just install-pi` 装到每台机器，skills 按项目经 `/pi-skills` 链接。
+4. **机器本地** — skill 不会通过本仓库自动同步；扩展经 `just install-pi` 装到每台机器，pi 耦合 skill 按项目经 `/pi-skills` 链接，通用 skill 经 `just install-skills` 全局链接。
 5. **只记本仓库维护的** — README 中不要混入 npm 管理或与本仓库无关的 skill 条目。
 6. **按耦合归位** — 新 skill 若依赖 pi 机制（dispatch 工具、`/skill:` 语法、pi prompts）放 `pi/agent/skills/`；否则放 `skills/`。迁移 skill 时在对应 `README.txt` 的 Adjustments 里记录迁移日期和去向。

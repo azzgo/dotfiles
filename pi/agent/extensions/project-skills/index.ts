@@ -1,13 +1,14 @@
 /**
  * project-skills extension for pi.
  *
- * Replaces the old global skill linking in `just install-pi`
- * (~/.pi/agent/skills and ~/.agents/skills). Instead, `/pi-skills`
- * links the dotfiles-maintained skills into the *current project*,
- * each source with its own target:
+ * `/pi-skills` links the *pi-coupled* skills maintained by this dotfiles
+ * repo into the *current project*:
  *
- *   dotfiles/pi/agent/skills/*  ->  <cwd>/.pi/skills/<name>       (pi-coupled)
- *   dotfiles/skills/*           ->  <cwd>/.agents/skills/<name>   (generic)
+ *   dotfiles/pi/agent/skills/*  ->  <cwd>/.pi/skills/<name>
+ *
+ * Generic (pi-independent) skills from dotfiles/skills/ are NOT handled
+ * here — they are installed globally via `just install-skills` into
+ * ~/.agents/skills/ (which is also a pi skill search path).
  */
 
 import { existsSync, lstatSync, mkdirSync, readdirSync, readlinkSync, realpathSync, symlinkSync, unlinkSync } from 'node:fs';
@@ -30,10 +31,8 @@ function realpathSafe(path: string): string {
 const extensionDir = realpathSafe(dirname(fileURLToPath(import.meta.url)));
 const dotfilesDir = resolve(extensionDir, '..', '..', '..', '..');
 
-const LINK_PAIRS = [
-	{ sourceDir: join(dotfilesDir, 'pi', 'agent', 'skills'), targetDir: '.pi/skills' },
-	{ sourceDir: join(dotfilesDir, 'skills'), targetDir: '.agents/skills' },
-];
+const SOURCE_DIR = join(dotfilesDir, 'pi', 'agent', 'skills');
+const TARGET_DIR = '.pi/skills';
 
 function isSymlink(target: string): boolean {
 	return lstatSync(target, { throwIfNoEntry: false })?.isSymbolicLink() ?? false;
@@ -49,29 +48,28 @@ function linkSkill(source: string, target: string): 'linked' | 'kept' {
 }
 
 export default function projectSkills(pi: ExtensionAPI): void {
-	pi.registerCommand('pi-skills', {
-		description: 'Link dotfiles skills into this project (.pi/skills and .agents/skills); args = skill names to skip',
-		handler: async (args: unknown, ctx: { cwd?: string; ui?: { notify(message: string, tone?: string): void } } | undefined) => {
-			const cwd = ctx?.cwd ?? process.cwd();
-			// Args are skill names to exclude: /pi-skills wayfinder show-me
-			const skip = new Set(typeof args === 'string' ? args.split(/\s+/).filter(Boolean) : []);
-			const lines: string[] = [];
+		pi.registerCommand('pi-skills', {
+			description: 'Link pi-coupled dotfiles skills into this project (.pi/skills); args = skill names to skip',
+			handler: async (args: unknown, ctx: { cwd?: string; ui?: { notify(message: string, tone?: string): void } } | undefined) => {
+				const cwd = ctx?.cwd ?? process.cwd();
+				// Args are skill names to exclude: /pi-skills wayfinder show-me
+				const skip = new Set(typeof args === 'string' ? args.split(/\s+/).filter(Boolean) : []);
+				const lines: string[] = [];
 
-			for (const { sourceDir, targetDir } of LINK_PAIRS) {
-				if (!existsSync(sourceDir)) continue;
-				for (const entry of readdirSync(sourceDir, { withFileTypes: true })) {
-					if (!entry.isDirectory() || entry.name.startsWith('.') || entry.name === 'README.txt') continue;
-					if (skip.has(entry.name)) {
-						lines.push(`  ⏭️  ${entry.name} (skipped by args)`);
-						continue;
+				if (existsSync(SOURCE_DIR)) {
+					for (const entry of readdirSync(SOURCE_DIR, { withFileTypes: true })) {
+						if (!entry.isDirectory() || entry.name.startsWith('.') || entry.name === 'README.txt') continue;
+						if (skip.has(entry.name)) {
+							lines.push(`  ⏭️  ${entry.name} (skipped by args)`);
+							continue;
+						}
+						const source = join(SOURCE_DIR, entry.name);
+						const outcome = linkSkill(source, join(cwd, TARGET_DIR, entry.name));
+						lines.push(outcome === 'kept' ? `  ⏭️  ${TARGET_DIR}/${entry.name} (already present, kept)` : `  🔗 ${TARGET_DIR}/${entry.name} -> ${source}`);
 					}
-					const source = join(sourceDir, entry.name);
-					const outcome = linkSkill(source, join(cwd, targetDir, entry.name));
-					lines.push(outcome === 'kept' ? `  ⏭️  ${targetDir}/${entry.name} (already present, kept)` : `  🔗 ${targetDir}/${entry.name} -> ${source}`);
 				}
-			}
 
-			ctx?.ui?.notify(lines.length > 0 ? `/pi-skills done:\n${lines.join('\n')}` : `/pi-skills: no skills found to link (looked in ${SOURCE_DIRS.join(', ')}).`, 'info');
-		},
-	});
+				ctx?.ui?.notify(lines.length > 0 ? `/pi-skills done:\n${lines.join('\n')}` : `/pi-skills: no skills found to link (looked in ${SOURCE_DIR}).`, 'info');
+			},
+		});
 }

@@ -186,8 +186,21 @@ install-mise:
 # Alias for install-pi (link Pi shared config)
 link: install-pi
 
+# Install generic skills (skills/) globally into ~/.agents/skills
+install-skills:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "🔗 Linking generic skills into ~/.agents/skills..."
+    mkdir -p ~/.agents/skills
+    for dir in {{ dotfiles_dir }}/skills/*/; do
+        name="$(basename "$dir")"
+        ln -sfn "$dir" ~/.agents/skills/"$name"
+        echo "  🔗 ~/.agents/skills/$name -> $dir"
+    done
+    echo "✅ Generic skills installed (pi sees them via ~/.agents/skills search path)."
+
 # Install all configurations
-install-all: install-mise install-neovim install-vim install-shell install-terminals install-herdr
+install-all: install-mise install-neovim install-vim install-shell install-terminals install-herdr install-skills
     echo "🎉 All configurations installed!"
 
 # Development helpers
