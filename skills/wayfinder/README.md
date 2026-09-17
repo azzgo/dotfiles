@@ -172,7 +172,7 @@ wayfinder ui
 
 | 类型 | 默认 channel | 用途 | 常见本地能力 |
 |---|---|---|---|
-| `research` | AFK | 查清事实 | `explore-codebase` skill（仓库内）或当前环境的 web 搜索/抓取工具 |
+| `research` | AFK | 查清事实 | `how` skill（仓库内）或当前环境的 web 搜索/抓取工具 |
 | `research` + HITL | HITL | 事实只有人能取到（同事/需求方/拿不到的架构文档） | 无 — 写 intake brief 后 `waiting-human` |
 | `grilling` | HITL（固定） | 和你对决策 | `grill-with-docs` |
 | `prototype` | HITL（固定） | 廉价验证手感 | `prototype` |
@@ -239,7 +239,7 @@ wayfinder work  ──(一张)──►  决策变清
 | 场景 | 更好选择 |
 |---|---|
 | 「帮我实现这个已定方案」 | 实现层（spawn / 直接实现） |
-| 「这段代码怎么读」 | `explore-codebase` skill |
+| 「这段代码怎么读」 | `how` skill |
 | 「列一下今天要改的文件」 | 普通清单，不必开 Map |
 | 「顺手把实现层系统也融进来」 | 明确 Out of Scope，另开图或以后再说 |
 

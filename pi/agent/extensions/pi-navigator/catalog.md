@@ -23,7 +23,7 @@ capability explicitly:
 |---|---|---|
 | workflow-runtime | `/wf` command family | Multi-node orchestrated work: `/wf new` drafts a Definition (nodes with human/auto steps and `suggest` refs), `/wf start <pattern>` instantiates a pattern, `/wf` books state and suggests the next node — it never executes node work itself |
 | track | `/track` command family | Working memory across steps/sessions: `/track new`, `/track update` (checkpoint before ending a session), `/track context` (reload findings into a fresh context) |
-| sub-dispatch | `dispatch` tool | Parallel/foreground sub-agents: spawn pi/codex/claude/cursor subprocesses for delegated work; consumed by impl-with-spawn and explore-codebase skills — prefer going through those skills rather than calling dispatch raw |
+| sub-dispatch | `dispatch` tool | Parallel/foreground sub-agents: spawn pi/codex/claude/cursor subprocesses for delegated work; consumed by impl-with-spawn and how skills — prefer going through those skills rather than calling dispatch raw |
 | code-mode | `run_code` tool | Bulk programmatic work over the repo (many files, structured queries) in one TypeScript program instead of dozens of tool calls |
 | readonly-mode | `/readonly` toggle | Fence the agent to read-only tools during exploration or review on precious branches |
 | xfer | `/xfer` | Hand the work to another Pi/Cursor instance in a different terminal/project via Unix socket |
@@ -39,9 +39,9 @@ capability explicitly:
 
 **Foggy, multi-session effort** → `/skill:wayfinder` first (decision map of Tickets), then resolve tickets one at a time.
 
-**Need to understand the codebase before touching it** → `/skill:explore-codebase` (read-only, parallel sub-agents). Anti-pattern: skipping exploration and jumping straight to implementation on an unfamiliar area.
+**Need to understand the codebase before touching it** → `/skill:how` (read-only, parallel sub-agents). Anti-pattern: skipping exploration and jumping straight to implementation on an unfamiliar area.
 
-**Need the motivation behind the code's shape** ("why was this built this way", design rationale, regression/postmortem context) → `/skill:why` (code anchor + parallel evidence investigators, confidence-tiered cited read). Companion to explore-codebase: that answers how it works, this answers what forces led to its shape.
+**Need the motivation behind the code's shape** ("why was this built this way", design rationale, regression/postmortem context) → `/skill:why` (code anchor + parallel evidence investigators, confidence-tiered cited read). Companion to how: that answers how it works, this answers what forces led to its shape.
 
 **Ready to implement** → `/skill:impl-with-spawn` (delegates via `dispatch`; consults `/skill:spawn-model-selection` internally for model choice).
 

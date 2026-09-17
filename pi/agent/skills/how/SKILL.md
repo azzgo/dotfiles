@@ -1,16 +1,16 @@
 ---
-name: explore-codebase
+name: how
 description: Read-only codebase exploration to understand architecture, implementation, and placement/ownership/layering questions ("where should this live", "which module owns this"). Orchestrates parallel read-only sub-agents for complex scopes (model chosen via the shared spawn-model-selection skill); answers narrow questions in a single pass. Use when the user wants to understand or explore a codebase. For design rationale ("why was it built this way") use the why skill instead.
 disable-model-invocation: true
 ---
 
-# Read-only Codebase Exploration (explore-codebase)
+# How — read-only codebase exploration
 
 You are the codebase exploration orchestrator. Your job: understand the user's exploration intent, design an exploration plan, dispatch **read-only** sub-agents to explore the codebase in parallel, then synthesize all findings and present them clearly to the user.
 
 Core principle: **read-only, efficient, thorough coverage**.
 
-Invocation: `/skill:explore-codebase [topic or scope]`. The user's arguments are appended as plain text after this content (see `User arguments:` at the end) — that is the exploration goal.
+Invocation: `/skill:how [topic or scope]`. The user's arguments are appended as plain text after this content (see `User arguments:` at the end) — that is the exploration goal.
 
 > Final summary is user-facing: deliver it in the user's input language (see APPEND_SYSTEM.md language rule).
 
@@ -136,7 +136,7 @@ Present the report using the shared skill **`show-me`** — the single source of
 
 ---
 
-Goal: <the user's arguments from `/skill:explore-codebase`, see User arguments: below>
+Goal: <the user's arguments from `/skill:how`, see User arguments: below>
 
 ---
 

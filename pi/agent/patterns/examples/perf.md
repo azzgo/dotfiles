@@ -9,7 +9,7 @@ nodes:
   - id: collect
     title: Collect & analyze performance data
     type: auto
-    suggest: [explore-codebase]
+    suggest: [how]
   - id: locate
     title: Pin down the bottleneck
     type: auto

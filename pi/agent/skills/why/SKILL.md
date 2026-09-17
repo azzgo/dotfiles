@@ -1,13 +1,13 @@
 ---
 name: why
-description: Investigate the motivation and intent behind code — "why does X work this way", "why we picked Y", design rationale, regressions, postmortems. Anchors on the code, then queries evidence sources in parallel (git/gh always; docs, chat, issue trackers, observability when available) and returns a cited, confidence-tiered read on decisions and tradeoffs. Use explore-codebase for how code works; use this for why it has its shape.
+description: Investigate the motivation and intent behind code — "why does X work this way", "why we picked Y", design rationale, regressions, postmortems. Anchors on the code, then queries evidence sources in parallel (git/gh always; docs, chat, issue trackers, observability when available) and returns a cited, confidence-tiered read on decisions and tradeoffs. Use how for how code works; use this for why it has its shape.
 disable-model-invocation: true
 ---
 
 # Why (design-rationale investigation)
 
 Investigate the motivation and intent behind code. Companion to
-**`explore-codebase`**: that skill answers what the code does and how it
+**`how`**: that skill answers what the code does and how it
 works; this one answers what forces led to its shape.
 
 Adapted from pstack's `why` (Cursor MCP-centric evidence sweep trimmed to
@@ -86,7 +86,7 @@ that made the author defensive — defensive code is fossilized pain.
 #### Dispatch
 
 Use the `dispatch` tool (sub-dispatch extension), same wait discipline as
-`explore-codebase`: fire all investigators in a **single parallel batch**
+`how`: fire all investigators in a **single parallel batch**
 with `background: true`, end your turn, collect from completion
 notifications; query `dispatch({ sessionId })` only for diagnosis/recovery.
 
@@ -94,7 +94,7 @@ Model selection: shared skill **`spawn-model-selection`**, simple /
 mechanical tier, same as exploration. Investigators are read-only in spirit —
 include the read-only constraint in every prompt (no file writes, no
 state-changing commands). If code mode (`/code`) is on, use the foreground
-`Promise.all` + `run_code` shape from `explore-codebase`.
+`Promise.all` + `run_code` shape from `how`.
 
 #### Investigator prompt template
 

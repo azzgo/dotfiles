@@ -78,7 +78,7 @@ nodes:
   - id: locate
     title: Locate the root cause
     type: auto
-    suggest: [explore-codebase]
+    suggest: [how]
 ---
 ## intake
 Brief prose: what this node is for, how to approach it.

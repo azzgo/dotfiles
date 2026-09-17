@@ -55,7 +55,7 @@
 `pi/agent/skills/` 会通过 `just install-pi` link 到 `~/.pi/agent/skills/`。
 
 当前维护的 skills：
-- `setup-code-review` / `impl-with-spawn` / `explore-codebase` / `spawn-model-selection` — pi 耦合 skills
+- `setup-code-review` / `impl-with-spawn` / `how` / `spawn-model-selection` — pi 耦合 skills
 - 通用 skills（wayfinder、grill-with-docs、prototype、improve-codebase-architecture 等）已迁至仓库根 `skills/`，经 `just install-skills` 安装到 `~/.agents/skills/`
 
 ### 6. prompt templates 已纳入 dotfiles

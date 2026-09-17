@@ -323,7 +323,7 @@ _Avoid_: sleep、轮询循环、在 turn 内手动查状态
 _Avoid_: 在 skill 内硬编码 pi 的 spawn 参数、重复配置
 
 **Dispatch-oriented Skill（派发型 skill）**:
-通过后台派发编排子代理的 skill（如 `impl-with-spawn`、`explore-codebase`）。它必须内嵌等待纪律，而非假定读者已知。
+通过后台派发编排子代理的 skill（如 `impl-with-spawn`、`how`）。它必须内嵌等待纪律，而非假定读者已知。
 _Avoid_: 半套 dispatch 模板、缺失等待纪律小节
 
 **Dispatch Session（派发会话）**:

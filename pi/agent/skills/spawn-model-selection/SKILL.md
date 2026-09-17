@@ -1,6 +1,6 @@
 ---
 name: spawn-model-selection
-description: Shared single-source-of-truth for choosing which model to run a sub-agent on when dispatching via the dispatch tool (sub-dispatch extension). Referenced by impl-with-spawn and explore-codebase to avoid maintaining the model-priority list in multiple places. Not meant to be invoked standalone.
+description: Shared single-source-of-truth for choosing which model to run a sub-agent on when dispatching via the dispatch tool (sub-dispatch extension). Referenced by impl-with-spawn and how to avoid maintaining the model-priority list in multiple places. Not meant to be invoked standalone.
 disable-model-invocation: true
 ---
 

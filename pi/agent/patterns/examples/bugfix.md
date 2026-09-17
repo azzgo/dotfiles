@@ -9,7 +9,7 @@ nodes:
   - id: locate
     title: Locate the root cause
     type: auto
-    suggest: [explore-codebase]
+    suggest: [how]
   - id: reproduce
     title: Reproduce & pin a regression test
     type: auto

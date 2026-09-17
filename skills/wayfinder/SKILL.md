@@ -172,7 +172,7 @@ Channel defaults by type; only `research` and `setup` are genuinely dual-mode:
 
 | Type | Intent | Default channel | Local capability |
 |---|---|---|---|
-| `research` | Gather facts needed for a decision | AFK | the `explore-codebase` skill (if available) or the environment's web search / URL fetch tools |
+| `research` | Gather facts needed for a decision | AFK | the `how` skill (if available) or the environment's web search / URL fetch tools |
 | `research` + HITL | Facts only obtainable via a human (a colleague, the requirement owner, an architecture doc the agent can't reach) | HITL | none the agent runs itself — see [HITL research](#hitl-research) |
 | `prototype` | Cheap concrete artifact to react to | HITL (fixed) | `prototype` skill (if available) |
 | `grilling` | Live decision interview | HITL (fixed) | `grill-with-docs` skill (if available; else any local grilling practice) |
@@ -350,7 +350,7 @@ Smart entry routing:
 | Personal Wayfinder | Decision map while foggy |
 | taskmd | Local backend + human Web UI |
 | Implementation spec / execution systems (downstream) | Receive Wayfinder's decision-layer output via Graduate/Exit — **user-chosen and user-triggered**; Wayfinder only suggests, never enters |
-| `grill-with-docs` / `prototype` / `explore-codebase` skills | Local capabilities used by Ticket types (capability-aware: used only if available) |
+| `grill-with-docs` / `prototype` / `how` skills | Local capabilities used by Ticket types (capability-aware: used only if available) |
 
 Never confuse:
 
