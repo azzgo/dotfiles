@@ -140,5 +140,5 @@ Because `~/.agents/skills/` is also a pi skill search path, these skills remain 
 | **Description** | Cut AI writing tells — 33 numbered detection rules with stable ids (vague -ing phrases, rule of three, em dash overuse, metaphor nouns, over-compression, ...), rewrite + self-audit process |
 | **Installed** | 2026-09-17 |
 | **Source commit** | `5bf2b15` (2026-09-13) — `feat(pstack): setup-pstack budget ask` |
-| **Adjustments** | Installed as-is, no modifications. Note: rule ids are cited by other pstack skills; decision-log's "plain words" standard resolves to this skill |
+| **Adjustments** | Installed as-is with one routing note added: unslop targets English technical/general writing; Chinese narrative/fiction stays with the `humanize` pi prompt (author-voice preservation conflicts with unslop's normalize-to-plain-prose rules). Rule ids are cited by other pstack skills; decision-log's "plain words" standard resolves to this skill |
 | **Upstream** | https://github.com/cursor/plugins/tree/main/pstack — check for upstream changes regularly |

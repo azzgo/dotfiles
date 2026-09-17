@@ -2,6 +2,8 @@
 description: Rewrite text to remove AI-sounding tells while preserving the original information, plot skeleton, and the author's voice.
 ---
 
+> Routing: this prompt targets **Chinese narrative/fiction and personal prose** (author-voice preservation, show-don't-tell). For English technical/general writing, use the `unslop` skill instead — its rules normalize toward plain standard prose and would sand off the stylistic edges this prompt is designed to keep.
+
 ## Two Modes
 
 Determine the mode from the user's input:

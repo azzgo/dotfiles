@@ -8,6 +8,8 @@ disable-model-invocation: true
 
 Edit text to remove AI patterns.
 
+> Routing: this skill targets **English technical/general writing**. For Chinese narrative/fiction and personal prose where the author's voice must survive (fragments, colloquialisms, and stylistic rough edges are features there, not tells), use the `humanize` prompt instead.
+
 ## Process
 
 1. Scan for the patterns below.
