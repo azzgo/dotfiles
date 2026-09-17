@@ -161,7 +161,7 @@ dispatch({
 
 **Why independent**: the Standards sub-agent should not know whether the code matches the spec, and vice versa — otherwise "the code does what was asked" can mask "the code breaks conventions" (or the reverse). Documentation Consistency is independent of both: it answers a different question ("do the user-facing docs still match the diff and each other?").
 
-**Model selection**: per `spawn-model-selection`, all three sub-agents use the **simple / mechanical** tier (`minimax-m2.7` → `opencode/mimo-v2.5` → `deepseek-v4-flash`). Confirm availability via `pi --list-models` before each batch.
+**Model selection**: per `spawn-model-selection`, all three sub-agents use the **simple / mechanical** tier (`minimax-cn/MiniMax-M2.7` → `openrouter/xiaomi/mimo-v2.5` → `deepseek/deepseek-v4-flash`). Confirm availability via `pi --list-models` before each batch. Always pass `provider/model` — bare ids fail when multiple providers share the name.
 
 **Handling large diffs**: if the diff is large, split it by module / directory into batches and review each batch through both / all three axes before aggregating.
 

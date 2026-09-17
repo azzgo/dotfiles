@@ -15,21 +15,21 @@ Single source of truth for picking which model to run a spawned sub-agent on. Pr
 3. **Neither specified** → pick from what is **actually available on this machine**, cheapest-first, good-enough:
 
    - **Simple / mechanical tasks** (refactor, add tests, fix typo, commit messages, cleanup):
-     1. `minimax-m2.7` — generous quota, first choice for light tasks (~200K context)
-     3. `deepseek-v4-flash` — 1M context, for mid-weight tasks
+     1. `minimax-cn/MiniMax-M2.7` — generous quota, first choice for light tasks (~200K context)
+     3. `deepseek/deepseek-v4-flash` — 1M context, for mid-weight tasks
      4. Local Ollama small models — commit messages, cleanup only; **max 2 concurrent**
 
    - **Complex / long-context tasks** (multi-file design, large refactor, architecture):
-     1. `deepseek-v4-flash` — 1M context, best value for long-context scenarios
+     1. `deepseek/deepseek-v4-flash` — 1M context, best value for long-context scenarios
 
    - **Notes**:
-     - `deepseek-v4-pro` is no longer recommended by default after the price hike — use only when the user explicitly requests it.
+     - `deepseek/deepseek-v4-pro` is no longer recommended by default after the price hike — use only when the user explicitly requests it.
      - `MiniMax-M3` is excluded — unstable instruction following.
-     - Prefer `glm-5.3-flash` or `deepseek-v4-flash-vision-exp` for multimodal; it's the default fallback when no multimodal capability is needed either.
-
-4. **Model runs on local ollama** → it shares this machine's GPU/CPU with the main agent. **Cap concurrent dispatches at 2.**
+     - Prefer `zai-api/glm-5.3-flash` or `deepseek/deepseek-v4-flash-vision-exp` for multimodal; it's the default fallback when no multimodal capability is needed either.
+     - Alternates when a provider is rate-limited: `ark/deepseek-v4-flash`, `openrouter/xiaomi/mimo-v2.5`, `openrouter/tencent/hy3`.
 
 ## Hard rules
 
-- **Trust the actual `pi --list-models` output**; opencode-go / official deepseek mentioned elsewhere are only "maybe available" examples — **never assume they exist**. When unsure, default to `pi` (the dispatch default agent).
-- **Concurrency limit (local ollama):** never keep more than **2 sub-agents running concurrently** — parallel work beyond that thrashes local GPU/CPU and memory. Dispatch at most 2 at a time, wait for completions, then dispatch the next batch.
+- **Always pass the model as `provider/model` (fully qualified)** in the dispatch `model` parameter. Bare model ids are ambiguous once two or more providers expose the same id — pi errors out with `Model "x" is ambiguous across providers`, the spawn fails with `exitCode null`, and the failure looks like a mystery. Verified 2026-09-17: bare `deepseek-v4-flash` and `glm-5.3-flash` both fail this way (6 providers each).
+- **Local Ollama concurrency cap**: an ollama model shares this machine's GPU/CPU with the main agent — never keep more than **2 sub-agents running concurrently**. Dispatch at most 2 at a time, wait for completions, then dispatch the next batch.
+- **Trust the actual `pi --list-models` output**; model ids and provider availability drift over time — **never assume they exist**. When unsure, default to `pi` (the dispatch default agent). When `pi --list-models` shows a model only once, the provider prefix is still required by the rule above; copy the `provider/model` string verbatim from the listing.

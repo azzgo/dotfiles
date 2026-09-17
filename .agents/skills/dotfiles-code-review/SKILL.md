@@ -105,7 +105,7 @@ dispatch({
 
 **Why independent**: the Spec sub-agent should not know whether docs match the change, and vice versa.
 
-**Model selection**: per `spawn-model-selection`, sub-agents use the **simple / mechanical** tier (`minimax-m2.7` → `opencode/mimo-v2.5` → `deepseek-v4-flash`). Confirm availability via `pi --list-models` before each batch.
+**Model selection**: per `spawn-model-selection`, sub-agents use the **simple / mechanical** tier (`minimax-cn/MiniMax-M2.7` → `openrouter/xiaomi/mimo-v2.5` → `deepseek/deepseek-v4-flash`). Confirm availability via `pi --list-models` before each batch. Always pass `provider/model` — bare ids fail when multiple providers share the name.
 
 **Handling large diffs**: split by top-level directory into batches and review each batch through both axes before aggregating.
 

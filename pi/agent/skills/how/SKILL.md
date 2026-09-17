@@ -56,7 +56,7 @@ Use the `dispatch` tool (from the **sub-dispatch** extension) to dispatch read-o
 
 #### Model selection
 
-Use the shared skill **`spawn-model-selection`** — the single source of truth for sub-agent model priority. For read-only exploration, use the **simple / mechanical** tier (cheapest-first): prefer `minimax-m2.7`, then `opencode/hy3`, `opencode/mimo-v2.5`, `deepseek-v4-flash`. Confirm availability via `pi --list-models` before each dispatch.
+Use the shared skill **`spawn-model-selection`** — the single source of truth for sub-agent model priority. For read-only exploration, use the **simple / mechanical** tier (cheapest-first): prefer `minimax-cn/MiniMax-M2.7`, then `openrouter/tencent/hy3`, `openrouter/xiaomi/mimo-v2.5`, `deepseek/deepseek-v4-flash`. Confirm availability via `pi --list-models` before each dispatch. Always pass the model as `provider/model` — bare ids fail when multiple providers share the name.
 
 #### Dispatch method
 
