@@ -88,3 +88,13 @@ Because `~/.agents/skills/` is also a pi skill search path, these skills remain 
 | **Installed** | 2026-09-16 |
 | **Adjustments** | Files: SKILL.md (core flow only, grill-with-docs style) + INTAKE-FORMAT.md (STATE.md / raw frontmatter / aligned templates). workspace-slug reuses the wayfinder convention (repo-root abs path → dash-slug with trailing dash). Mandatory step 0: every invocation first lists existing requirement slugs and asks the user to pick or open a new funnel. `STATE.md` is the cross-session baton (index + one-liner, never a conversation log). Parsing intentionally upstream (inputs must arrive pre-parsed) |
 | **Upstream** | None (repo-owned; reference-only upstreams above) |
+
+### `retro`
+
+| Field | Value |
+|-------|-------|
+| **Source** | Hybrid: process skeleton from [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/in-progress/retro) `retro` (in-progress upstream, 7 improvement categories reused); evidence layer (agentview MCP first, own session history fallback) and grilling consensus gate are repo-owned designs |
+| **Description** | Evidence-driven retrospective over AI agent sessions: gather evidence (agentview preferred, fallback to the running agent's own history), organise improvement candidates with repetition counts, grilling session, then distil whatever the user decides (skill / rule / hook / pattern / doc) for any target project or agent |
+| **Installed** | 2026-09-13 |
+| **Adjustments** | Deliberately not agentview-locked — agentview is the preferred evidence source, never a hard dependency; deliverable form is user-decided, not assumed to be a skill. 2026-09-17: moved from `.agents/skills/` (dotfiles-project-local) to repo-root `skills/` — retros target arbitrary projects and often improve the target project's rules/checks rather than this repo, so the skill must be discoverable globally via `just install-skills` |
+| **Upstream** | https://github.com/mattpocock/skills/tree/main/skills/in-progress/retro (in-progress — re-check before syncing) |
