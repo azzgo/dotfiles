@@ -99,7 +99,7 @@ done-when: repro or root-cause hypothesis is recorded.
 
 | Command | Behavior |
 |---|---|
-| `/wf` (bare) / `/wf switch` | Run picker (manual entry — no cold-start popup; Esc = nothing). Open runs set Focus; archived (done/cancelled) runs offer a `🗑 remove` row — deleting the Run directory after a confirm. **Removal is manual, human-only: the model has no tool or prompt for it and the runtime never deletes runs automatically.** |
+| `/wf` (bare) / `/wf switch` | Run picker (manual entry — no cold-start popup; Esc = nothing). Open runs set Focus; **ctrl+r renames the highlighted run** (interactive picker; a non-interactive fallback select omits it); archived (done/cancelled) runs offer a `🗑 remove` row — deleting the Run directory after a confirm. **Removal is manual, human-only: the model has no tool or prompt for it and the runtime never deletes runs automatically.** |
 | `/wf new <topic>` | Prompt the model to draft a Definition (references `~/.pi/agent/patterns/examples/` first; capability-aware: `suggest` entries verified on disk, `name:<path>` encouraged) into `.pi/workflows/definitions/`; you review, then start |
 | `/wf start <name> [title]` | Instantiate a Run (global patterns are copied into the project), set Focus, send the first node's flow prompt |
 | `/wf list` | Non-terminal Runs + recent terminal archive (program-side, zero tokens) |
@@ -113,6 +113,7 @@ done-when: repro or root-cause hypothesis is recorded.
 | `/wf open` | Open the definitions directory in the OS file manager — project `.pi/workflows/definitions/` if it exists, otherwise the global pattern library |
 | `/wf patterns` | List all Definitions/Patterns by source (project definitions first, then global patterns not shadowed by a project definition) — program-side, zero tokens |
 | `/wf focus <run-id>` | Point this session's Focus at a Run |
+| `/wf name <new-title>` | Rename the Focus Run's title (a Run's title defaults to the Definition `description`, which can be long — rename it to something you'll recognize in the picker; renames are logged) |
 | `/wf save-as-template <run-id>` | Promote the Run's Definition into the global pattern library (a dotfiles git diff; never overwrites) |
 | `/wf cancel [<run-id>]` | Terminal cancel; open nodes → cancelled; logged |
 
@@ -144,6 +145,8 @@ done-when: repro or root-cause hypothesis is recorded.
   replan / refine).
 - `completions.ts` — `/wf` argument completions (subcommands, definition/pattern
   names for `start`, run ids, focused-run node ids).
+- `run-picker.ts` — interactive Run picker component (`ctx.ui.custom` + pi-tui
+  `SelectList`; adds ctrl+r rename on top of the select-based flow).
 - `ui.ts` — widget lines (program-side visibility).
 - `*.test.ts` + `vitest.config.ts` — tests (`npm test`, mirrors goal-runtime's
   setup; Node >= 23.6 native TS).

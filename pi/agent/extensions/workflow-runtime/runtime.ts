@@ -22,6 +22,7 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { createWfCommands, wfHelpText } from "./commands";
 import { wfCompletions } from "./completions";
+import { RunPicker } from "./run-picker";
 import { DISPATCH_REASON_PREFIX, MESSAGE_TYPE_SUB_DISPATCH, MESSAGE_TYPE_WF_PROMPT } from "./types";
 import type { Run } from "./types";
 import { listRuns, nonTerminalRuns, readLastFocus, readLogTail, readRun, writeRun } from "./state";
@@ -65,7 +66,25 @@ export default function workflowRuntime(pi: ExtensionAPI): void {
 			sendPrompt: (content) =>
 				pi.sendMessage({ customType: MESSAGE_TYPE_WF_PROMPT, content, display: false }, { triggerTurn: true, deliverAs: "followUp" }),
 			notify: (text, level) => ctx.ui.notify(text, level ?? "info"),
-			pickRun: (title, items) => ctx.ui.select(title, items).then((v) => v ?? null),
+			pickRun: (title, entries) => {
+				if (!ctx.hasUI) {
+					// non-interactive fallback: plain select, rename not offered (ctrl+r needs the custom component)
+					return ctx.ui
+						.select(
+							title,
+							entries.filter((e) => e.kind !== "header").map((e) => e.label),
+						)
+						.then((label) => entries.find((e) => e.label === label) ?? null);
+				}
+				return ctx.ui
+					.custom((tui, theme, _keybindings, done) => {
+						const picker = new RunPicker(tui, theme, title, entries);
+						picker.onDone = done;
+						return picker;
+					})
+					.then((picked) => picked ?? null);
+			},
+			input: (title, placeholder) => ctx.ui.input(title, placeholder).then((v) => v ?? null),
 			now: () => new Date().toISOString(),
 			openPath: (dir) => {
 				const opener = process.platform === "darwin" ? "open" : process.platform === "win32" ? "explorer" : "xdg-open";
@@ -87,7 +106,7 @@ export default function workflowRuntime(pi: ExtensionAPI): void {
 
 	pi.registerCommand("wf", {
 		description:
-			"Workflow runtime: orchestration skeleton (new / start / list / status / next / done / skip / insert / replan / refine / open / focus / switch / save-as-template / cancel).",
+				"Workflow runtime: orchestration skeleton (new / start / list / status / next / done / skip / insert / replan / refine / open / name / focus / switch / save-as-template / cancel).",
 		getArgumentCompletions: (prefix: string) => {
 			const cwd = lastCwd ?? process.cwd();
 			return wfCompletions(cwd, prefix);
@@ -162,6 +181,9 @@ export default function workflowRuntime(pi: ExtensionAPI): void {
 						break;
 					}
 					wf.focusCmd(rest[0]);
+					break;
+				case "name":
+					wf.renameCmd(restStr);
 					break;
 				case "switch":
 					await wf.pickRunCmd(readLastFocus(ctx.cwd));

@@ -27,6 +27,7 @@ const SUBCOMMANDS: CompletionItem[] = [
 	{ value: "open", label: "open", description: "Open the definitions/patterns directory in the file manager" },
 	{ value: "patterns", label: "patterns", description: "List project definitions + global patterns" },
 	{ value: "focus", label: "focus", description: "Point this session's Focus at a run" },
+	{ value: "name", label: "name", description: "Rename the Focus run (title defaults to the Definition description)" },
 	{ value: "switch", label: "switch", description: "Run picker (= bare /wf)" },
 	{ value: "save-as-template", label: "save-as-template", description: "Promote the Run's Definition to the global pattern library" },
 	{ value: "cancel", label: "cancel", description: "Cancel a run" },

@@ -46,6 +46,14 @@ import {
 } from "./transitions";
 import { DEFINITIONS_DIR, MESSAGE_TYPE_WF_PROMPT, TERMINAL_RUN_STATUSES, type Run, type RunNode } from "./types";
 
+/** One row of the Run picker. `kind` drives both the picker hint line and the handler switch. */
+export interface PickEntry {
+	label: string;
+	kind: "run" | "rename" | "remove" | "header" | "plain";
+	/** Set on run/rename/remove rows so ctrl+r can jump from a run row to its rename row. */
+	runId?: string;
+}
+
 export interface WfDeps {
 	cwd: string;
 	/** Send an instruction prompt to the driving model (triggerTurn). */
@@ -53,7 +61,9 @@ export interface WfDeps {
 	/** Program-side notification line (zero tokens). */
 	notify(text: string, level?: "info" | "warning" | "error"): void;
 	/** Dismissible Run picker; resolves null when dismissed (Esc). Preselection is conveyed by a "◀ " item prefix. */
-	pickRun(title: string, items: string[]): Promise<string | null>;
+	pickRun(title: string, entries: PickEntry[]): Promise<PickEntry | null>;
+	/** Dismissible single-line text input; resolves null when dismissed (Esc). */
+	input(title: string, placeholder?: string): Promise<string | null>;
 	/** Override for tests. */
 	now(): string;
 	/** Global pattern library dir (overridable for tests). */
@@ -136,60 +146,75 @@ export function createWfCommands(deps: WfDeps) {
 	// ---- /wf (bare) & /wf switch ----
 
 /**
-	 * Run picker (`/wf`, `/wf switch`). Esc dismisses with zero
-	 * side effects; a run line sets Focus; the "🗑 remove" lines (terminal runs
-	 * only) delete the Run directory after an explicit confirm — a purely
-	 * manual hygiene action, never offered to the model or auto-run.
-	 */
-	async function pickRunCmd(preselectRunId?: string): Promise<void> {
-		// re-opens after a removal; falls through once nothing remains
-		for (;;) {
-			const runs = listRuns(deps.cwd);
-			if (runs.length === 0) {
-				deps.notify("No runs exist yet. Start one with /wf start <definition-name> (or draft with /wf new <topic>).", "info");
+ * Run picker (`/wf`, `/wf switch`). Esc dismisses with zero
+ * side effects; a run line sets Focus; ctrl+r (or the "✏️ rename" rows in the
+ * headerless fallback) renames a run; the "🗑 remove" lines (terminal runs
+ * only) delete the Run directory after an explicit confirm — a purely
+ * manual hygiene action, never offered to the model or auto-run.
+ */
+async function pickRunCmd(preselectRunId?: string): Promise<void> {
+	// re-opens after a removal/rename; falls through once nothing remains
+	for (;;) {
+		const runs = listRuns(deps.cwd);
+		if (runs.length === 0) {
+			deps.notify("No runs exist yet. Start one with /wf start <definition-name> (or draft with /wf new <topic>).", "info");
+			return;
+		}
+		const open = runs.filter((r) => !TERMINAL_RUN_STATUSES.includes(r.status));
+		// the picker is the cleanup entry: list ALL terminal runs, no cap (/wf list keeps its tail view)
+		const terminal = runs.filter((r) => TERMINAL_RUN_STATUSES.includes(r.status));
+
+		const entries: PickEntry[] = [];
+		const add = (entry: PickEntry): void => void entries.push(entry);
+
+		for (const r of open) {
+			const node = activeNode(r) ?? r.nodes.find((n) => n.status === "failed");
+			const pre = preselectRunId === r.id ? "◀ " : "  ";
+			add({ label: `${pre}${r.id} · ${r.title} · ${node ? `${node.id} (${node.status})` : "no active node"}`, kind: "run", runId: r.id });
+		}
+		if (terminal.length > 0) {
+			add({ label: "── archived (done/cancelled — select 🗑 to delete the run) ──", kind: "header" });
+			for (const r of terminal) {
+				add({ label: `   ${r.id} · ${r.title} [${r.status}]`, kind: "run", runId: r.id });
+				add({ label: `🗑 remove ${r.id} · ${r.title}`, kind: "remove", runId: r.id });
+			}
+		}
+		const picked = await deps.pickRun("Workflow runs (Esc = do nothing)", entries);
+		if (picked == null) return; // dismissed: inject NOTHING, change NOTHING
+		switch (picked.kind) {
+			case "run": {
+				const run = picked.runId ? readRun(deps.cwd, picked.runId) : undefined;
+				if (!run) return;
+				if (TERMINAL_RUN_STATUSES.includes(run.status)) {
+					deps.notify(`${run.id} is ${run.status}. To delete it from this project, pick its "🗑 remove" row.`, "info");
+					continue;
+				}
+				setFocus(run);
+				deps.notify(`Focus: ${run.id}`, "info");
 				return;
 			}
-			const open = runs.filter((r) => !TERMINAL_RUN_STATUSES.includes(r.status));
-			// the picker is the cleanup entry: list ALL terminal runs, no cap (/wf list keeps its tail view)
-			const terminal = runs.filter((r) => TERMINAL_RUN_STATUSES.includes(r.status));
-
-			interface EntryAction {
-				run?: Run;
-				remove?: boolean;
-				removeable?: boolean; // terminal row itself: picking it asks if you meant remove
-			}
-			const items: string[] = [];
-			const actions: EntryAction[] = [];
-			const add = (item: string, action: EntryAction): void => void (items.push(item), actions.push(action));
-
-			for (const r of open) {
-				const node = activeNode(r) ?? r.nodes.find((n) => n.status === "failed");
-				const pre = preselectRunId === r.id ? "◀ " : "  ";
-				add(`${pre}${r.id} · ${r.title} · ${node ? `${node.id} (${node.status})` : "no active node"}`, { run: r });
-			}
-			if (terminal.length > 0) {
-				add("── archived (done/cancelled — select 🗑 to delete the run) ──", {});
-				for (const r of terminal) {
-					add(`   ${r.id} · ${r.title} [${r.status}]`, { run: r, removeable: true });
-					add(`🗑 remove ${r.id} · ${r.title}`, { run: r, remove: true });
+			case "rename": {
+				const run = picked.runId ? readRun(deps.cwd, picked.runId) : undefined;
+				if (!run) return;
+				const title = (await deps.input(`Rename ${run.id}`, run.title))?.trim();
+				if (title == null || title === "") continue; // Esc / empty: back to the picker, unchanged
+				if (title !== run.title) {
+					appendLog(deps.cwd, run.id, "run", `renamed: "${run.title}" → "${title}"`, at());
+					run.title = title;
+					writeRun(deps.cwd, run);
+					deps.notify(`Renamed ${run.id} → "${title}"`, "info");
 				}
+				preselectRunId = run.id;
+				continue; // refresh the picker so the new title is visible
 			}
-			const picked = await deps.pickRun("Workflow runs (Esc = do nothing)", items);
-			if (picked == null) return; // dismissed: inject NOTHING, change NOTHING
-			const action = actions[items.indexOf(picked)];
-			if (!action) return;
-			// terminal info row: explain that only the 🗑 row removes
-			if (action.removeable && !action.remove) {
-				deps.notify(`${action.run!.id} is ${action.run!.status}. To delete it from this project, pick its “🗑 remove” row.`, "info");
-				continue;
-			}
-			if (action.remove) {
-				const run = action.run!;
+			case "remove": {
+				const run = picked.runId ? readRun(deps.cwd, picked.runId) : undefined;
+				if (!run) return;
 				const sure = await deps.pickRun(`Remove ${run.id}? This deletes its run state and progress log (the Definition file is kept).`, [
-					`Yes, remove ${run.id}`,
-					`Cancel`,
+					{ label: `Yes, remove ${run.id}`, kind: "plain" },
+					{ label: `Cancel`, kind: "plain" },
 				]);
-				if (sure == null || sure.startsWith("Cancel")) return;
+				if (sure == null || sure.label.startsWith("Cancel")) return;
 				removeRun(deps.cwd, run.id);
 				if (focusRunId === run.id) focusRunId = null;
 				if (readLastFocus(deps.cwd) === run.id) clearLastFocus(deps.cwd);
@@ -197,14 +222,11 @@ export function createWfCommands(deps: WfDeps) {
 				preselectRunId = undefined;
 				continue; // refresh the picker
 			}
-
-			if (action.run) {
-				setFocus(action.run);
-				deps.notify(`Focus: ${action.run.id}`, "info");
-			}
-			return;
+			default:
+				return;
 		}
 	}
+}
 
 	// ---- /wf new <topic> ----
 
@@ -532,6 +554,31 @@ export function createWfCommands(deps: WfDeps) {
 		deps.notify('Usage: /wf replan [confirm [note]] — bare replan proposes; "confirm" applies the approved revision.', "warning");
 	}
 
+	// ---- /wf name <new-title> ----
+
+	/** Rename the Focus run's title (the long Definition description is the default title on start). */
+	function renameCmd(title: string): void {
+		const clean = title.trim();
+		if (!clean) {
+			deps.notify("Usage: /wf name <new-title> — renames the Focus run (use /wf switch + ctrl+r to rename any run)", "warning");
+			return;
+		}
+		const focus = requireFocus();
+		if ("error" in focus) {
+			deps.notify(focus.error, "warning");
+			return;
+		}
+		const run = focus.run;
+		if (clean === run.title) {
+			deps.notify(`${run.id} is already titled "${clean}" — nothing to change.`, "info");
+			return;
+		}
+		appendLog(deps.cwd, run.id, "run", `renamed: "${run.title}" → "${clean}"`, at());
+		run.title = clean;
+		writeRun(deps.cwd, run);
+		deps.notify(`Renamed ${run.id} → "${clean}"`, "info");
+	}
+
 	// ---- /wf focus <run-id> ----
 
 	function focusCmd(runRef: string): void {
@@ -696,6 +743,7 @@ export function createWfCommands(deps: WfDeps) {
 		skipCmd,
 		insertCmd,
 		replanCmd,
+		renameCmd,
 		focusCmd,
 		refineCmd,
 		openCmd,
@@ -710,7 +758,7 @@ export function createWfCommands(deps: WfDeps) {
 export function wfHelpText(): string {
 	return [
 		"/wf — workflow-runtime: orchestration skeleton only (books state, suggests flow, notifies; never executes node work)",
-		"  /wf                          Run picker: set Focus, or 🗑 remove finished runs (Esc = nothing)",
+		"  /wf                          Run picker: set Focus, ctrl+r renames the highlighted run, 🗑 removes finished runs (Esc = nothing)",
 		"  /wf new <topic>              Draft a Definition (capability-aware; you review, then /wf start)",
 		"  /wf start <name> [title]     Instantiate a Run from a Definition/Pattern; sets Focus; sends the first node brief",
 		"  /wf list                     Non-terminal runs + recent terminal archive",
@@ -724,7 +772,8 @@ export function wfHelpText(): string {
 			"  /wf open                     Open the definitions dir (project) or the global pattern library in the file manager",
 			"  /wf patterns                 List project definitions + global patterns (by source)",
 			"  /wf focus <run-id>           Point this session's Focus at a run",
-		"  /wf switch                   Run picker (= bare /wf)",
+			"  /wf name <new-title>         Rename the Focus run (title is the Definition description by default)",
+			"  /wf switch                   Run picker (= bare /wf)",
 		"  /wf save-as-template <run-id>  Promote the Run's Definition to the global pattern library",
 		"  /wf cancel <run-id>          Cancel a run (logged; open nodes → cancelled)",
 	].join("\n");

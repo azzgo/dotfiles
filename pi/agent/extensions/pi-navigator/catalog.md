@@ -21,7 +21,7 @@ capability explicitly:
 
 | Capability | Form | Use when |
 |---|---|---|
-| workflow-runtime | `/wf` command family | Multi-node orchestrated work: `/wf new` drafts a Definition (nodes with human/auto steps and `suggest` refs), `/wf start <pattern>` instantiates a pattern, `/wf` books state and suggests the next node — it never executes node work itself |
+| workflow-runtime | `/wf` command family | Multi-node orchestrated work: `/wf new` drafts a Definition (nodes with human/auto steps and `suggest` refs), `/wf start <pattern>` instantiates a pattern, `/wf name` renames a run's long default title, `/wf` books state and suggests the next node — it never executes node work itself |
 | track | `/track` command family | Working memory across steps/sessions: `/track new`, `/track update` (checkpoint before ending a session), `/track context` (reload findings into a fresh context) |
 | sub-dispatch | `dispatch` tool | Parallel/foreground sub-agents: spawn pi/codex/claude/cursor subprocesses for delegated work; consumed by impl-with-spawn and how skills — prefer going through those skills rather than calling dispatch raw |
 | code-mode | `run_code` tool | Bulk programmatic work over the repo (many files, structured queries) in one TypeScript program instead of dozens of tool calls |

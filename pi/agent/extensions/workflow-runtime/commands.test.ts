@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { createWfCommands, type WfDeps } from "./commands";
+import { createWfCommands, type PickEntry, type WfDeps } from "./commands";
 import { definitionPath, readRun } from "./state";
 import { makeRun } from "./test-helpers";
 
@@ -42,6 +42,7 @@ function makeDeps(overrides: Partial<WfDeps> = {}): WfDeps {
 		sendPrompt: (content) => sent.push(content),
 		notify: (text, level) => notes.push({ text, level }),
 		pickRun: async () => null,
+		input: async () => null,
 		now: () => "2026-09-07T12:00:00.000Z",
 		globalPatternsDir: patternsDir,
 		...overrides,
@@ -324,38 +325,95 @@ describe("pickRunCmd (cold-start surface)", () => {
 
 	it("picking a run sets focus", async () => {
 		setupRun();
-		const wf = createWfCommands(makeDeps({ pickRun: async (_t, items) => items.find((i) => i.includes("r-run")) ?? null }));
+		const wf = createWfCommands(makeDeps({ pickRun: async (_t, entries) => entries.find((e) => e.label.includes("r-run")) ?? null }));
 		await wf.pickRunCmd();
 		expect(wf.getFocus()).toBe("r-run");
+	});
+
+	it("picking a terminal run row explains remove and reopens the picker", async () => {
+		writeTerminalRun("r-done");
+		let calls = 0;
+		const wf = createWfCommands(
+			makeDeps({
+				pickRun: async (_t, entries) => {
+					calls++;
+					return calls === 1 ? (entries.find((e) => e.kind === "run" && e.runId === "r-done") ?? null) : null;
+				},
+			}),
+		);
+		await wf.pickRunCmd();
+		expect(calls).toBe(2);
+		expect(notes.some((n) => n.text.includes("r-done is done"))).toBe(true);
+	});
+
+	it("the rename entry (ctrl+r path) prompts for a title, rewrites run.json, logs, and refreshes the picker", async () => {
+		setupRun();
+		const inputs: string[] = [];
+		let calls = 0;
+		const wf = createWfCommands(
+			makeDeps({
+				pickRun: async (_t, entries) => {
+					calls++;
+					return calls === 1 ? { label: "✏️ rename r-run", kind: "rename", runId: "r-run" } : null;
+				},
+				input: async (_title, placeholder) => {
+					inputs.push(placeholder ?? "");
+					return "short name";
+				},
+			}),
+		);
+		await wf.pickRunCmd();
+		expect(inputs).toEqual(["Run r-run"]); // placeholder shows the old title
+		const run = readRun(cwd, "r-run")!;
+		expect(run.title).toBe("short name");
+		expect(notes.some((n) => n.text.includes('Renamed r-run → "short name"'))).toBe(true);
+		const log = fs.readFileSync(path.join(cwd, ".pi/workflows/runs/r-run/progress.md"), "utf8");
+		expect(log).toMatch(/renamed: "Run r-run" → "short name"/);
+	});
+
+	it("dismissing the rename input (Esc) changes nothing", async () => {
+		setupRun();
+		let calls = 0;
+		const wf = createWfCommands(
+			makeDeps({
+				pickRun: async () => {
+					calls++;
+					return calls === 1 ? { label: "✏️ rename r-run", kind: "rename", runId: "r-run" } : null;
+				},
+				input: async () => null,
+			}),
+		);
+		await wf.pickRunCmd();
+		expect(readRun(cwd, "r-run")!.title).toBe("Run r-run");
 	});
 
 	it("lists only 🗑 remove rows for terminal runs (active runs cannot be removed)", async () => {
 		setupRun(); // active run
 		writeTerminalRun("r-done"); // done run
-		const seen: string[][] = [];
-		const wf = createWfCommands(makeDeps({ pickRun: async (_t, items) => { seen.push(items); return null; } }));
+		const seen: PickEntry[][] = [];
+		const wf = createWfCommands(makeDeps({ pickRun: async (_t, entries) => { seen.push(entries); return null; } }));
 		await wf.pickRunCmd();
 		const items = seen[0]!;
 		// active run row is focus-only, with no remove row
-		const activeRow = items.find((i) => i.includes("r-run"))!;
-		expect(activeRow).not.toMatch(/remove/);
-		expect(items.some((i) => i.startsWith("🗑") && i.includes("r-run"))).toBe(false);
+		const activeRow = items.find((e) => e.label.includes("r-run"))!;
+		expect(activeRow.label).not.toMatch(/remove/);
+		expect(items.some((e) => e.label.startsWith("🗑") && e.label.includes("r-run"))).toBe(false);
 		// the terminal run gets both an info row and a remove row
-		expect(items.some((i) => i.startsWith("🗑 remove r-done"))).toBe(true);
+		expect(items.some((e) => e.label.startsWith("🗑 remove r-done"))).toBe(true);
 	});
 
 	it("confirming removal deletes the run directory and refreshes the picker", async () => {
 		writeTerminalRun("r-done");
 		writeTerminalRun("r-done2");
-		const calls: string[][] = [];
+		const calls: PickEntry[][] = [];
 		// first picker: choose the remove row; confirmation: say yes;
 		// refreshed picker (r-done gone, r-done2 left): dismiss
 		const wf = createWfCommands(
 			makeDeps({
-				pickRun: async (_title, items) => {
-					calls.push(items);
-					if (calls.length === 1) return items.find((i) => i.startsWith("🗑 remove r-done ")) ?? null;
-					if (calls.length === 2) return items.find((i) => i.startsWith("Yes")) ?? null;
+				pickRun: async (_title, entries) => {
+					calls.push(entries);
+					if (calls.length === 1) return entries.find((e) => e.label.startsWith("🗑 remove r-done ")) ?? null;
+					if (calls.length === 2) return entries.find((e) => e.label.startsWith("Yes")) ?? null;
 					return null;
 				},
 			}),
@@ -366,8 +424,8 @@ describe("pickRunCmd (cold-start surface)", () => {
 		expect(notes.some((n) => n.text.includes("Removed run r-done "))).toBe(true);
 		// initial picker → confirmation → refreshed picker (r-done gone)
 		expect(calls).toHaveLength(3);
-		expect(calls[2]!.some((i) => i.includes("r-done2"))).toBe(true);
-		expect(calls[2]!.some((i) => i.includes("r-done "))).toBe(false);
+		expect(calls[2]!.some((e) => e.label.includes("r-done2"))).toBe(true);
+		expect(calls[2]!.some((e) => e.label.includes("r-done "))).toBe(false);
 	});
 
 	it("cancelling the confirmation keeps the run on disk", async () => {
@@ -375,10 +433,10 @@ describe("pickRunCmd (cold-start surface)", () => {
 		let calls = 0;
 		const wf = createWfCommands(
 			makeDeps({
-				pickRun: async (_title, items) => {
+				pickRun: async (_title, entries) => {
 					calls++;
-					if (calls === 1) return items.find((i) => i.startsWith("🗑 remove r-done")) ?? null;
-					return items.find((i) => i.startsWith("Cancel")) ?? null; // confirm dialog → cancel
+					if (calls === 1) return entries.find((e) => e.label.startsWith("🗑 remove r-done")) ?? null;
+					return entries.find((e) => e.label.startsWith("Cancel")) ?? null; // confirm dialog → cancel
 				},
 			}),
 		);
@@ -389,11 +447,40 @@ describe("pickRunCmd (cold-start surface)", () => {
 	it("picker lists ALL terminal runs (the picker is the cleanup entry — no archive cap)", async () => {
 		setupRun();
 		for (let i = 0; i < 12; i++) writeTerminalRun(`r-done-${String(i).padStart(2, "0")}`);
-		const seen: string[][] = [];
-		const wf = createWfCommands(makeDeps({ pickRun: async (_t, items) => { seen.push(items); return null; } }));
+		const seen: PickEntry[][] = [];
+		const wf = createWfCommands(makeDeps({ pickRun: async (_t, entries) => { seen.push(entries); return null; } }));
 		await wf.pickRunCmd();
-		const removes = seen[0]!.filter((i) => i.startsWith("🗑 remove r-done-"));
+		const removes = seen[0]!.filter((e) => e.label.startsWith("🗑 remove r-done-"));
 		expect(removes).toHaveLength(12);
+	});
+});
+
+describe("renameCmd (/wf name)", () => {
+	it("renames the focus run, logs, and persists", () => {
+		setupRun();
+		const wf = createWfCommands(makeDeps());
+		wf.renameCmd("my short name");
+		const run = readRun(cwd, "r-run")!;
+		expect(run.title).toBe("my short name");
+		expect(notes.some((n) => n.text.includes('Renamed r-run → "my short name"'))).toBe(true);
+		const log = fs.readFileSync(path.join(cwd, ".pi/workflows/runs/r-run/progress.md"), "utf8");
+		expect(log).toMatch(/renamed: "Run r-run" → "my short name"/);
+	});
+
+	it("empty title shows usage; same title is a noop", () => {
+		setupRun();
+		const wf = createWfCommands(makeDeps());
+		wf.renameCmd("");
+		expect(notes[0]!.level).toBe("warning");
+		wf.renameCmd("Run r-run");
+		expect(notes[1]!.text).toMatch(/nothing to change/);
+	});
+
+	it("no focus run surfaces the requireFocus error", () => {
+		writeTerminalRun("r-done"); // only a terminal run exists
+		const wf = createWfCommands(makeDeps());
+		wf.renameCmd("x");
+		expect(notes[0]!.level).toBe("warning");
 	});
 });
 
