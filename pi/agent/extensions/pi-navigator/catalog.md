@@ -59,6 +59,16 @@ capability explicitly:
 
 **Review workflow for this project** → `<project>-code-review` skill, generated once by `/skill:setup-code-review` in the project's `.agents/skills/`.
 
+**Fixing a bug with a clear, cheap test target** → `/skill:tdd` (failing regression test first, fail-before/pass-after evidence; skips itself when no practical test path exists).
+
+**Retrospective / 复盘 over agent sessions** → `/skill:retro` (agentview evidence, improvement candidates with repetition counts, grilling gate; distils into rules/skills/hooks for the target project).
+
+**Long-running or unattended work needs a reviewable trail** → `/skill:decision-log` (append-only TSV decision log; other skills route their audit trail here instead of inventing one).
+
+**Writing quality** → `/skill:unslop` for English technical/general prose (Chinese narrative/personal prose goes to the `/humanize` prompt instead — it preserves the author's voice).
+
+**User didn't understand the last reply's jargon** → `/skill:bro` (restate the last message in plain language).
+
 ## Workflow patterns
 
 `/wf start <name>` instantiates a Pattern from `~/.pi/agent/patterns/`. Root
