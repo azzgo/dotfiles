@@ -1,6 +1,6 @@
 ---
 name: explore-codebase
-description: Read-only codebase exploration to understand architecture and implementation. Orchestrates multiple parallel read-only sub-agents (model chosen via the shared spawn-model-selection skill), then synthesizes findings. Use when the user wants to understand or explore a codebase.
+description: Read-only codebase exploration to understand architecture, implementation, and placement/ownership/layering questions ("where should this live", "which module owns this"). Orchestrates parallel read-only sub-agents for complex scopes (model chosen via the shared spawn-model-selection skill); answers narrow questions in a single pass. Use when the user wants to understand or explore a codebase. For design rationale ("why was it built this way") use the why skill instead.
 disable-model-invocation: true
 ---
 
@@ -22,9 +22,16 @@ Invocation: `/skill:explore-codebase [topic or scope]`. The user's arguments are
 
 Extract the key information from the user input (the arguments appended after this skill):
 
-- **Exploration goal**: what does the user want to know? (overall architecture? a specific module? data flow? dependencies?)
+- **Exploration goal**: what does the user want to know? (overall architecture? a specific module? data flow? dependencies? — also placement/ownership/layering questions like "where should this live", "which module owns this")
 - **Exploration scope**: which directories/files are in scope? whole repo or a subset?
 - **Dimensions of interest**: code structure, design patterns, interface contracts, data models, key algorithms, tech stack?
+
+**Complexity triage before planning:**
+
+- **Complex** (a subsystem spanning multiple files/services, a cross-cutting feature, a full architectural overview): proceed with the full plan → dispatch flow below.
+- **Simple** (a single module, a small utility, a narrow question such as "how does function X work"): skip Phase 2 fan-out — answer inline in one read-through pass, or dispatch a **single** sub-agent if the reading itself is heavy. Go straight to Phase 4 with a proportionate report.
+
+When in doubt, take the simple path. Don't spawn 3 agents to answer a question one read can settle.
 
 If the user input is too vague, ask clarifying questions first — don't launch blindly.
 
@@ -104,7 +111,7 @@ Output the results directly when done; do not create files.
 
 ### Phase 4: Synthesize and present
 
-After all sub-agents finish (all queries report done), synthesize the output. **Pick report dimensions flexibly based on actual findings and the user's prompt** — no need to cover everything every time:
+After all sub-agents finish (all queries report done), synthesize the output. **Pick report dimensions flexibly based on actual findings and the user's prompt** — no need to cover everything every time. A good mental-model explanation typically covers (drop sections that don't apply): overview; key concepts; how it works (runtime flow); where things live (ownership/layering — mandatory for placement questions); gotchas.
 
 1. **Overall summary**: 3-5 sentences on the codebase's core character
 2. **Findings by dimension**: one section per subtask, merged and de-duplicated
