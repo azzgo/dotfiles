@@ -45,7 +45,7 @@ Because `~/.agents/skills/` is also a pi skill search path, these skills remain 
 | **Source** | Converted from `pi/agent/prompts/handoff.md` (repo-owned prompt) |
 | **Description** | Generate a handoff document summarizing the current conversation for a fresh agent to continue the work |
 | **Installed** | 2026-08-25 |
-| **Adjustments** | Converted prompt → skill per Agent Skills standard; added `disable-model-invocation: true` (no model auto-invocation; explicit trigger only); replaced `$@` prompt substitution with appended instruction (skill args are appended raw, not substituted). 2026-09-07: moved from `pi/agent/skills/` to repo-root `skills/` (decoupled from pi; installed via `just install-skills` → `~/.agents/skills`) |
+| **Adjustments** | Converted prompt → skill per Agent Skills standard; added `disable-model-invocation: true` (no model auto-invocation; explicit trigger only); replaced `$@` prompt substitution with appended instruction (skill args are appended raw, not substituted). 2026-09-07: moved from `pi/agent/skills/` to repo-root `skills/` (decoupled from pi; installed via `just install-skills` → `~/.agents/skills`). 2026-09-17: added an output contract (capsule / status-tagged threads / problems / next move) adapted from pstack's `recall` skill (upstream commit 5bf2b15) — recall itself was not ported; handoff owns the forward-looking half of that format |
 | **Upstream** | None (repo-owned; no external upstream to track) |
 
 ### `improve-codebase-architecture`
