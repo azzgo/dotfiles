@@ -120,3 +120,14 @@ Because `~/.agents/skills/` is also a pi skill search path, these skills remain 
 | **Source commit** | `5bf2b15` (2026-09-13) — `feat(pstack): setup-pstack budget ask` |
 | **Adjustments** | Installed as-is, no modifications |
 | **Upstream** | https://github.com/cursor/plugins/tree/main/pstack — check for upstream changes regularly |
+
+### `decision-log`
+
+| Field | Value |
+|-------|-------|
+| **Source** | [cursor/plugins pstack](https://github.com/cursor/plugins/tree/main/pstack/skills/show-me-your-work) `show-me-your-work`, renamed and adapted |
+| **Description** | Reviewable decision trail for long-running/unattended work — one TSV row per decision (what, why, evidence, result), append-only, local by default, committed only when a reviewer needs the trail |
+| **Installed** | 2026-09-17 |
+| **Source commit** | `5bf2b15` (2026-09-13) — `feat(pstack): setup-pstack budget ask` |
+| **Adjustments** | Renamed `show-me-your-work` → `decision-log` (name clash with `pi/agent/skills/show-me`); transcript-audit step generalized from Cursor's `agent-transcripts/` path to "best available record of the run" (agentview etc.); cross-model review made conditional on a second model family being available instead of Cursor multi-model spawn; references to the upstream `unslop`/`encode-lessons-in-structure` principle skills dropped (not present in this repo). Template TSV and `log.sh` helper kept as-is |
+| **Upstream** | https://github.com/cursor/plugins/tree/main/pstack — check for upstream changes regularly |
