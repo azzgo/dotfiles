@@ -41,6 +41,8 @@ capability explicitly:
 
 **Need to understand the codebase before touching it** → `/skill:explore-codebase` (read-only, parallel sub-agents). Anti-pattern: skipping exploration and jumping straight to implementation on an unfamiliar area.
 
+**Need the motivation behind the code's shape** ("why was this built this way", design rationale, regression/postmortem context) → `/skill:why` (code anchor + parallel evidence investigators, confidence-tiered cited read). Companion to explore-codebase: that answers how it works, this answers what forces led to its shape.
+
 **Ready to implement** → `/skill:impl-with-spawn` (delegates via `dispatch`; consults `/skill:spawn-model-selection` internally for model choice).
 
 **The design question needs runnable answers first** → `/skill:prototype` (throwaway; LOGIC.md for state models, UI.md for look-and-feel).

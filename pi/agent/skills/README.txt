@@ -65,3 +65,14 @@ Generic, pi-independent skills maintained by this repo live in the repo-root `sk
 | **Installed** | 2026-08-20 |
 | **Adjustments** | Extracted model-selection priority from impl-with-spawn's Agent Selection section. Simple/mechanical tier: minimax-m2.7 → opencode/hy3 → opencode/mimo-v2.5 → deepseek-v4-flash → local Ollama (commit/cleanup only, max 2 concurrent). Complex/long-context tier: deepseek-v4-flash → opencode/mimo-v2.5 → opencode/hy3. Notes: deepseek-v4-pro excluded by default after price hike (explicit request only); MiniMax-M3 excluded (unstable instruction following); hy3 preferred for multimodal, mimo-v2.5 when 1M context needed |
 | **Upstream** | None (repo-owned; no external upstream to track) |
+
+### `why`
+
+| Field | Value |
+|-------|-------|
+| **Source** | Adapted from [cursor/plugins pstack](https://github.com/cursor/plugins/tree/main/pstack/skills/why) `why` |
+| **Description** | Design-rationale investigation — "why does X work this way". Anchors on code (blame / log --follow / gh PR bodies), then dispatches parallel read-only investigators per available evidence category (source control always; docs / tracker / chat / observability when the environment offers them), synthesizes a confidence-tiered, cited read (references/epistemics.md) |
+| **Installed** | 2026-09-17 |
+| **Source commit** | `5bf2b15` (2026-09-13) — `feat(pstack): setup-pstack budget ask` |
+| **Adjustments** | Trimmed the Cursor-specific MCP discovery mechanism and per-source playbooks (`references/sources/`, `investigator-prompt.md`) — replaced with an environment-neutral category table (source control guaranteed, others opportunistic, nulls documented); dispatch/wait discipline and model selection re-pointed to the repo's own sub-dispatch conventions (spawn-model-selection, code-mode shape, show-me presentation) instead of Cursor Task agents and pstack model configs; epistemics.md reference kept verbatim; incident-postmortem playbook folded into the SKILL.md "defensive code" note |
+| **Upstream** | https://github.com/cursor/plugins/tree/main/pstack — check for upstream changes regularly |
