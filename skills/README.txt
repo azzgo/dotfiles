@@ -98,3 +98,25 @@ Because `~/.agents/skills/` is also a pi skill search path, these skills remain 
 | **Installed** | 2026-09-13 |
 | **Adjustments** | Deliberately not agentview-locked — agentview is the preferred evidence source, never a hard dependency; deliverable form is user-decided, not assumed to be a skill. 2026-09-17: moved from `.agents/skills/` (dotfiles-project-local) to repo-root `skills/` — retros target arbitrary projects and often improve the target project's rules/checks rather than this repo, so the skill must be discoverable globally via `just install-skills` |
 | **Upstream** | https://github.com/mattpocock/skills/tree/main/skills/in-progress/retro (in-progress — re-check before syncing) |
+
+### `tdd`
+
+| Field | Value |
+|-------|-------|
+| **Source** | [cursor/plugins pstack](https://github.com/cursor/plugins/tree/main/pstack/skills/tdd) |
+| **Description** | TDD bug fix — write the smallest failing regression test before touching production code, confirm fail-before/pass-after, prefer no new test over a bad test |
+| **Installed** | 2026-09-17 |
+| **Source commit** | `5bf2b15` (2026-09-13) — `feat(pstack): setup-pstack budget ask` |
+| **Adjustments** | Installed as-is, no modifications |
+| **Upstream** | https://github.com/cursor/plugins/tree/main/pstack — check for upstream changes regularly |
+
+### `bro`
+
+| Field | Value |
+|-------|-------|
+| **Source** | [cursor/plugins pstack](https://github.com/cursor/plugins/tree/main/pstack/skills/bro) |
+| **Description** | Restate the last message in plain human language, no jargon — a one-prompt skill |
+| **Installed** | 2026-09-17 |
+| **Source commit** | `5bf2b15` (2026-09-13) — `feat(pstack): setup-pstack budget ask` |
+| **Adjustments** | Installed as-is, no modifications |
+| **Upstream** | https://github.com/cursor/plugins/tree/main/pstack — check for upstream changes regularly |
