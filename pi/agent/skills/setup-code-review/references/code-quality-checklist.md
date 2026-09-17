@@ -71,3 +71,26 @@
 
 - Is it stable when empty, zero, negative, or at the max boundary?
 - Is failure behaviour controllable when input is missing fields or has extra fields?
+
+## 4) Comments / Constraint Encoding
+
+> A comment justifying code shape is a claim, not a fact. Adapted from pstack's no-comments skill: keep only constraints that are provably external, and prefer encoding constraints in structure over prose.
+
+### Issues to flag
+
+- Constraint comments ("do not remove", "do not change", "talk to X first") with no stated reason, or a reason that is actually a codebase-internal choice we control
+- Comments that explain *what* the next line does (the code already says it); comments should carry intent, external contracts, or gotchas only
+- Workaround comments ("hack", "temporary", "revisit later") with no linked issue or follow-up — a symptom guard bolted on instead of the root-cause fix
+- Suppressed checks (eslint-disable, typeignore, nolint) without a scoped justification comment naming why the suppression is correct
+
+### Review questions
+
+- Is this constraint about something we cannot change (external API contract, protocol, data format owned elsewhere)? If not, the fix is to change the code, not to keep the comment
+- Can this constraint be encoded mechanically instead — a lint rule, type, test, assertion, or CI check? If yes, propose encoding it, then deleting the comment
+- If the comment must stay, does it say who owns the constraint and where it's documented?
+
+### Severity guidance
+
+- Suppressed checks guarding correctness/safety without justification: high
+- Constraint comment on an internal choice blocking refactors: medium
+- What-it-does narration comments: low (churn noise, flag in batches)
