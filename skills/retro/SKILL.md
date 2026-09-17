@@ -20,16 +20,16 @@ Ask (or infer) three things before touching evidence:
 
 - **Which sessions?** A named session, the current one, a project, a date range, or "everything this week".
 - **Which concern?** Open-ended ("what went wrong") or focused ("why do UI tasks keep looping", "where do tokens go").
-- **Which projects / agents?** agentview indexes pi / cursor / zcode / codex / gemini alike; the user may want cross-agent comparison.
+- **Which projects / agents?** agentsview indexes pi / cursor / zcode / codex / gemini alike; the user may want cross-agent comparison.
 
 ### 2. Gather evidence
 
-**Preferred source — agentview MCP** (`search_sessions`, `search_content`, `list_sessions`, `get_session_overview`, `get_messages`, `get_usage_summary`): cross-agent, cross-project, persisted. Notes on degraded modes:
+**Preferred source — agentsview MCP** (`search_sessions`, `search_content`, `list_sessions`, `get_session_overview`, `get_messages`, `get_usage_summary`): cross-agent, cross-project, persisted. Notes on degraded modes:
 
 - `query_recall` (semantic/distilled) may be unavailable (`recall index is not available`) — fall back to lexical `search_sessions` / `search_content` without drama, and suggest running `agentsview embeddings build --store recall` once as a follow-up.
-- Tool names are prefixed `mcp__agentview__` in some clients; the functions are the same.
+- Tool names are prefixed `mcp__agentsview__` in some clients; the functions are the same.
 
-**Fallback — the agent's own history.** If no agentview MCP is available (this skill may be read by agents other than pi — they can still retro), use whatever session history the running agent natively has: its own transcript, its session store on disk, its `/history` equivalent, or files the user points at. State plainly which source was used and its blind spots (e.g. own-transcript-only means no cross-agent view).
+**Fallback — the agent's own history.** If no agentsview MCP is available (this skill may be read by agents other than pi — they can still retro), use whatever session history the running agent natively has: its own transcript, its session store on disk, its `/history` equivalent, or files the user points at. State plainly which source was used and its blind spots (e.g. own-transcript-only means no cross-agent view).
 
 **What to extract**, per session or search pass — concrete, quotable facts, not vibes:
 
@@ -75,4 +75,4 @@ Close with a short written summary: scope, evidence highlights, decisions, actio
 - **Evidence before opinion** — every candidate cites session evidence; no candidates from general principle alone.
 - **Grilling is a hard gate** — no distillation before consensus, same as the setup skills.
 - **Form follows the user** — "not everything should become a skill" is the default stance; push back only with evidence.
-- **State your evidence source and its blind spots** — agentview cross-agent, own history single-agent; never present a limited view as complete.
+- **State your evidence source and its blind spots** — agentsview cross-agent, own history single-agent; never present a limited view as complete.

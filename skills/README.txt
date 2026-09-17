@@ -93,10 +93,10 @@ Because `~/.agents/skills/` is also a pi skill search path, these skills remain 
 
 | Field | Value |
 |-------|-------|
-| **Source** | Hybrid: process skeleton from [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/in-progress/retro) `retro` (in-progress upstream, 7 improvement categories reused); evidence layer (agentview MCP first, own session history fallback) and grilling consensus gate are repo-owned designs |
-| **Description** | Evidence-driven retrospective over AI agent sessions: gather evidence (agentview preferred, fallback to the running agent's own history), organise improvement candidates with repetition counts, grilling session, then distil whatever the user decides (skill / rule / hook / pattern / doc) for any target project or agent |
+| **Source** | Hybrid: process skeleton from [mattpocock/skills](https://github.com/mattpocock/skills/tree/main/skills/in-progress/retro) `retro` (in-progress upstream, 7 improvement categories reused); evidence layer (agentsview MCP first, own session history fallback) and grilling consensus gate are repo-owned designs |
+| **Description** | Evidence-driven retrospective over AI agent sessions: gather evidence (agentsview preferred, fallback to the running agent's own history), organise improvement candidates with repetition counts, grilling session, then distil whatever the user decides (skill / rule / hook / pattern / doc) for any target project or agent |
 | **Installed** | 2026-09-13 |
-| **Adjustments** | Deliberately not agentview-locked — agentview is the preferred evidence source, never a hard dependency; deliverable form is user-decided, not assumed to be a skill. 2026-09-17: moved from `.agents/skills/` (dotfiles-project-local) to repo-root `skills/` — retros target arbitrary projects and often improve the target project's rules/checks rather than this repo, so the skill must be discoverable globally via `just install-skills` |
+| **Adjustments** | Deliberately not agentsview-locked — agentsview is the preferred evidence source, never a hard dependency; deliverable form is user-decided, not assumed to be a skill. 2026-09-17: moved from `.agents/skills/` (dotfiles-project-local) to repo-root `skills/` — retros target arbitrary projects and often improve the target project's rules/checks rather than this repo, so the skill must be discoverable globally via `just install-skills` |
 | **Upstream** | https://github.com/mattpocock/skills/tree/main/skills/in-progress/retro (in-progress — re-check before syncing) |
 
 ### `tdd`
@@ -129,7 +129,7 @@ Because `~/.agents/skills/` is also a pi skill search path, these skills remain 
 | **Description** | Reviewable decision trail for long-running/unattended work — one TSV row per decision (what, why, evidence, result), append-only, local by default, committed only when a reviewer needs the trail |
 | **Installed** | 2026-09-17 |
 | **Source commit** | `5bf2b15` (2026-09-13) — `feat(pstack): setup-pstack budget ask` |
-| **Adjustments** | Renamed `show-me-your-work` → `decision-log` (name clash with `pi/agent/skills/show-me`); transcript-audit step generalized from Cursor's `agent-transcripts/` path to "best available record of the run" (agentview etc.); cross-model review made conditional on a second model family being available instead of Cursor multi-model spawn; references to the upstream `unslop`/`encode-lessons-in-structure` principle skills dropped (not present in this repo). Template TSV and `log.sh` helper kept as-is |
+| **Adjustments** | Renamed `show-me-your-work` → `decision-log` (name clash with `pi/agent/skills/show-me`); transcript-audit step generalized from Cursor's `agent-transcripts/` path to "best available record of the run" (agentsview etc.); cross-model review made conditional on a second model family being available instead of Cursor multi-model spawn; references to the upstream `unslop`/`encode-lessons-in-structure` principle skills dropped (not present in this repo). Template TSV and `log.sh` helper kept as-is |
 | **Upstream** | https://github.com/cursor/plugins/tree/main/pstack — check for upstream changes regularly |
 
 ### `unslop`

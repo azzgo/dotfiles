@@ -73,7 +73,7 @@ trail to trust the result.
 
 At the end of the run, before handing back, check the log told the truth. Use
 the best available record of the run: the running agent's session transcript
-(whatever path or session store the host exposes — e.g. agentview for recorded
+(whatever path or session store the host exposes — e.g. agentsview for recorded
 sessions), or the artifacts the run produced. Don't read other projects' or
 other agents' transcripts. Walk the log against what actually happened:
 
