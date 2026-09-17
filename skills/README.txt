@@ -131,3 +131,14 @@ Because `~/.agents/skills/` is also a pi skill search path, these skills remain 
 | **Source commit** | `5bf2b15` (2026-09-13) — `feat(pstack): setup-pstack budget ask` |
 | **Adjustments** | Renamed `show-me-your-work` → `decision-log` (name clash with `pi/agent/skills/show-me`); transcript-audit step generalized from Cursor's `agent-transcripts/` path to "best available record of the run" (agentview etc.); cross-model review made conditional on a second model family being available instead of Cursor multi-model spawn; references to the upstream `unslop`/`encode-lessons-in-structure` principle skills dropped (not present in this repo). Template TSV and `log.sh` helper kept as-is |
 | **Upstream** | https://github.com/cursor/plugins/tree/main/pstack — check for upstream changes regularly |
+
+### `unslop`
+
+| Field | Value |
+|-------|-------|
+| **Source** | [cursor/plugins pstack](https://github.com/cursor/plugins/tree/main/pstack/skills/unslop) |
+| **Description** | Cut AI writing tells — 33 numbered detection rules with stable ids (vague -ing phrases, rule of three, em dash overuse, metaphor nouns, over-compression, ...), rewrite + self-audit process |
+| **Installed** | 2026-09-17 |
+| **Source commit** | `5bf2b15` (2026-09-13) — `feat(pstack): setup-pstack budget ask` |
+| **Adjustments** | Installed as-is, no modifications. Note: rule ids are cited by other pstack skills; decision-log's "plain words" standard resolves to this skill |
+| **Upstream** | https://github.com/cursor/plugins/tree/main/pstack — check for upstream changes regularly |
