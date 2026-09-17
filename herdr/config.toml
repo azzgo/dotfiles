@@ -21,3 +21,12 @@ delivery = "system"
 
 [experimental]
 kitty_graphics = true
+
+
+[[keys.command]]
+key = "prefix+t"
+type = "popup"
+command = "exec \"${SHELL:-sh}\""
+description = "open scratch terminal"
+width = "80%"
+height = "80%"
