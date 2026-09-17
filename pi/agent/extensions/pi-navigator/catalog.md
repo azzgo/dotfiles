@@ -41,6 +41,8 @@ capability explicitly:
 
 **Need to understand the codebase before touching it** → `/skill:how` (read-only, parallel sub-agents). Anti-pattern: skipping exploration and jumping straight to implementation on an unfamiliar area.
 
+**About to ship a change you don't fully trust** ("blast radius of X", "what could this break") → `/skill:blast-radius` (finds the one safety fact, proves it by running code on the 5-rung ladder, marks the rest unproven). Third of the how/why/blast-radius trilogy.
+
 **Need the motivation behind the code's shape** ("why was this built this way", design rationale, regression/postmortem context) → `/skill:why` (code anchor + parallel evidence investigators, confidence-tiered cited read). Companion to how: that answers how it works, this answers what forces led to its shape.
 
 **Ready to implement** → `/skill:impl-with-spawn` (delegates via `dispatch`; consults `/skill:spawn-model-selection` internally for model choice).

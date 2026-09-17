@@ -76,3 +76,14 @@ Generic, pi-independent skills maintained by this repo live in the repo-root `sk
 | **Source commit** | `5bf2b15` (2026-09-13) — `feat(pstack): setup-pstack budget ask` |
 | **Adjustments** | Trimmed the Cursor-specific MCP discovery mechanism and per-source playbooks (`references/sources/`, `investigator-prompt.md`) — replaced with an environment-neutral category table (source control guaranteed, others opportunistic, nulls documented); dispatch/wait discipline and model selection re-pointed to the repo's own sub-dispatch conventions (spawn-model-selection, code-mode shape, show-me presentation) instead of Cursor Task agents and pstack model configs; epistemics.md reference kept verbatim; incident-postmortem playbook folded into the SKILL.md "defensive code" note |
 | **Upstream** | https://github.com/cursor/plugins/tree/main/pstack — check for upstream changes regularly |
+
+### `blast-radius`
+
+| Field | Value |
+|-------|-------|
+| **Source** | Adapted from [cursor/plugins pstack](https://github.com/cursor/plugins/tree/main/pstack/skills/blast-radius) |
+| **Description** | Pre-ship breakage review beyond the diff — find the one fact the change is safe because of, grade it on the 5-rung proof ladder (said → pointed → walked → ran → reproduced; below "ran" = unproven), look where grep stops (library source, wire formats, flags, downstream readers) |
+| **Installed** | 2026-09-17 |
+| **Source commit** | `5bf2b15` (2026-09-13) — `feat(pstack): setup-pstack budget ask` |
+| **Adjustments** | Trimmed Cursor Task/arena orchestration and pstack model configs — step 6 parallel review re-pointed to repo `dispatch` conventions; epistemics discipline delegated to `why`'s references/epistemics.md instead of restating; writeup standard delegated to the `unslop` skill by name; proof ladder and "one fact" method kept verbatim. Pairs with `how` and `why` as the third of the trilogy |
+| **Upstream** | https://github.com/cursor/plugins/tree/main/pstack — check for upstream changes regularly |
