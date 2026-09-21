@@ -11,7 +11,7 @@
  */
 
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
-import { CONTEXT_ENTRY, READONLY_CMD, READONLY_FLAG } from './constants.js';
+import { READONLY_CMD, READONLY_FLAG } from './constants.js';
 import { ReadonlyController } from './controller.js';
 import { readonlyGuard } from './guard.js';
 import { getReadonlyInstructions } from './prompt.js';
@@ -100,18 +100,6 @@ export default function readonlyMode(pi: ExtensionAPI): void {
     if (toRestore.length > 0) pi.setActiveTools([...active, ...toRestore]);
     removedTools = null;
     restorePending = false;
-  });
-
-  // ── Filter out stale context entries when mode is off ─────────
-  pi.on('context', async (event) => {
-    if (readonlyCtrl.isEnabled()) return;
-
-    return {
-      messages: event.messages.filter((message) => {
-        const msg = message as typeof message & { customType?: string };
-        return msg.customType !== CONTEXT_ENTRY;
-      }),
-    };
   });
 
   // ── Restore state on session start ────────────────────────────

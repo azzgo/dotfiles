@@ -241,25 +241,7 @@ export default function (pi: ExtensionAPI) {
 			description: t.description,
 			parameters: t.parameters,
 		}));
-		// dispatch is registered by sub-dispatch, so it DOES appear in getAllTools()
-		// when sub-dispatch is loaded; inject the manual schema only as a fallback.
-		if (!sdkInfos.some((t) => t.name === "dispatch")) {
-			sdkInfos.push({
-				name: "dispatch",
-				description:
-					"Spawn a sub-agent (pi/codex/claude/cursor/custom) as a subprocess and await its completion (foreground). Resolves to a structured object { ok, exitCode, output } (output tail-truncated).",
-				parameters: {
-					type: "object",
-					required: ["agent", "prompt"],
-					properties: {
-						agent: { type: "string", description: "Spawning agent: pi/codex/claude/cursor or a custom key from sub-dispatch config.commands." },
-						prompt: { type: "string", description: "Task prompt passed to the sub-agent." },
-						model: { type: "string", description: "Optional model override injected as --model <value> before the prompt (e.g. \"deepseek-v4-flash\")." },
-						timeout: { type: "number", description: "Timeout in seconds (default 600)." },
-					},
-				},
-			});
-		}
+		// dispatch is registered by sub-dispatch and appears in getAllTools() there.
 		let sdk = "";
 		if (sdkInfos.length > 0) {
 				sdk = generateSdk(sdkInfos, loadConfig().maxResultBytes);
