@@ -25,7 +25,6 @@ capability explicitly:
 | track | `/track` command family | Working memory across steps/sessions: `/track new`, `/track update` (checkpoint before ending a session), `/track context` (reload findings into a fresh context) |
 | sub-dispatch | `dispatch` tool | Parallel/foreground sub-agents: spawn pi/codex/claude/cursor subprocesses for delegated work; consumed by impl-with-spawn and how skills — prefer going through those skills rather than calling dispatch raw |
 | code-mode | `run_code` tool | Bulk programmatic work over the repo (many files, structured queries) in one TypeScript program instead of dozens of tool calls |
-| readonly-mode | `/readonly` toggle | Fence the agent to read-only tools during exploration or review on precious branches |
 | xfer | `/xfer` | Hand the work to another Pi/Cursor instance in a different terminal/project via Unix socket |
 | command-palette | `alt+.` | User-facing: fuzzy-pick any slash command into the composer (mention it to the user, don't invoke it) |
 | project-skills | `/pi-skills` | One-time per project: link pi-coupled skills into `<cwd>/.pi/skills/` |

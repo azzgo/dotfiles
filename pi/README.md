@@ -12,7 +12,6 @@
 - `pi/agent/extensions/track/`
 - `pi/agent/extensions/workflow-runtime/`
 - `pi/agent/patterns/`
-- `pi/agent/extensions/readonly-mode/`
 - `pi/agent/extensions/xfer/`
 - `pi/agent/extensions/code-mode/`
 - `pi/agent/extensions/sub-dispatch/`

@@ -1,3 +1,7 @@
+# 状态：已废弃并删除（2026-09-21）
+
+readonly-mode 扩展已从仓库移除（hashline 编辑工具替代后该模式不再使用），共享 guard 随之删除，code-mode 的 `readonlyGuard.authorize` 调用一并移除。本文仅作历史记录。
+
 # Readonly Guard：跨扩展只读授权单例
 
 问题：readonly-mode 的拦截挂在 `pi.on("tool_call")` 扩展事件上，只覆盖模型的直接工具调用；code-mode 的 run_code 子调用直连内置工具工厂的 `execute()`（不经事件总线），readonly ON + code ON 时模型可在程序内静默 edit/write/bash——只读模式存在活洞。

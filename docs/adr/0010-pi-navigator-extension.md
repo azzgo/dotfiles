@@ -5,7 +5,7 @@ Status: accepted
 ## Context
 
 Every skill in this repo is `disable-model-invocation`, and the extension command
-families (`/wf`, `/track`, `/xfer`, `/pi-skills`, `/readonly`) plus the `dispatch`
+families (`/wf`, `/track`, `/xfer`, `/pi-skills`) plus the `dispatch`
 and `run_code` tools are invisible to the driving model unless something tells it
 they exist. As the capability surface grew (8 extensions, 12+ skills, a pattern
 library), "which capability do I use for this task?" became a question only the

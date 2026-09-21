@@ -32,7 +32,6 @@ import {
   createWriteToolDefinition,
 } from "@earendil-works/pi-coding-agent";
 import { runDispatch } from "../sub-dispatch/runner.js";
-import { readonlyGuard } from "../readonly-mode/guard.js";
 
 
 const EXT_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -332,10 +331,6 @@ export default function (pi: ExtensionAPI) {
 					let result: any;
 					let error: unknown = null;
 					try {
-						const verdict = readonlyGuard.authorize(name, (args ?? {}) as Record<string, unknown>);
-						if (verdict) {
-							throw new Error(verdict.reason);
-						}
 						if (name === "dispatch") {
 							// dispatch resolves to a structured object {ok, exitCode, output} so the
 							// model can read fields directly without JSON.parse.
