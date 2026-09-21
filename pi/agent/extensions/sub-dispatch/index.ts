@@ -191,27 +191,18 @@ export default function (pi: ExtensionAPI) {
 		name: "dispatch",
 		label: "Dispatch",
 		description:
-			"Spawn a sub-agent as a subprocess and collect its output (no interactive overlay). Use for fire-and-forget delegations to a coding agent (pi/codex/claude/cursor or a config-added agent). Foreground (default) waits and returns { exitCode, durationMs, output }; background:true returns a sessionId immediately for later query/kill. Pass an existing sessionId to query (or with kill:true to terminate) a background session.",
+			"Spawn a sub-agent (pi/codex/claude/cursor or a custom key from config.commands) as a subprocess and collect its output. Foreground (default) waits and returns { exitCode, durationMs, output }; background:true returns a sessionId immediately. Pass an existing sessionId to query it, plus kill:true to terminate it.",
 		promptSnippet: "Dispatch a sub-agent (pi/codex/claude/cursor/custom) as a subprocess and collect its output",
 		parameters: Type.Object({
-			agent: Type.Optional(
-				Type.String({
-					description:
-						"Spawning agent name: built-in pi/codex/claude/cursor or a custom key from config.commands. Required for a new dispatch; omit when querying/killing by sessionId.",
-				}),
-			),
-			prompt: Type.Optional(
-				Type.String({ description: "Task prompt passed to the sub-agent. Required for a new dispatch." }),
-			),
-			sessionId: Type.Optional(
-				Type.String({ description: "Existing background session id to query, or kill with kill:true." }),
-			),
-			kill: Type.Optional(Type.Boolean({ description: "With sessionId: terminate the background session." })),
-			background: Type.Optional(Type.Boolean({ description: "Return immediately with a sessionId (default false)." })),
-			timeout: Type.Optional(Type.Number({ description: "Timeout in seconds (default 600)." })),
-			reason: Type.Optional(Type.String({ description: "UI label / reason." })),
-			model: Type.Optional(Type.String({ description: "Model override injected as --model <value> before the prompt (e.g. deepseek-v4-flash)." })),
-			env: Type.Optional(Type.Record(Type.String(), Type.String({ description: "Environment variables for the sub-agent process." }))),
+			agent: Type.Optional(Type.String({ description: "Agent name; required for a new dispatch, omit when using sessionId." })),
+			prompt: Type.Optional(Type.String({ description: "Task prompt; required for a new dispatch." })),
+			sessionId: Type.Optional(Type.String({ description: "Background session id to query (or kill with kill:true)." })),
+			kill: Type.Optional(Type.Boolean()),
+			background: Type.Optional(Type.Boolean()),
+			timeout: Type.Optional(Type.Number({ description: "Seconds (default 600)." })),
+			reason: Type.Optional(Type.String({ description: "UI label." })),
+			model: Type.Optional(Type.String({ description: "Model override passed as --model <value>." })),
+			env: Type.Optional(Type.Record(Type.String(), Type.String())),
 		}),
 
 		async execute(_toolCallId, params, signal, onUpdate, ctx) {
