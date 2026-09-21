@@ -19,17 +19,33 @@ export interface DispatchConfig {
 	defaultAgent: string;
 	/** Any key here is a first-class spawn agent (incl. the built-in defaults). */
 	commands: Record<string, string>;
-	/** Per-agent argument prefix inserted before the prompt (e.g. claude -p). */
-	defaultArgs: Record<string, string[]>;
-	/** Output truncation cap (tail). */
+	/** Per-agent: pass the prompt to the child's stdin instead of argv. */
+	promptViaStdin: Record<string, boolean>;
+	/** Argv length above which stdin delivery is forced for agents that support it.
+	 * Corporate EDR kills node processes whose single argv entry is >= 1024 bytes.
+	 */
+	stdinPromptThreshold: number;
 	maxOutputChars: number;
 	defaultTimeoutSec: number;
 }
 
+/**
+ * Spawn mode args are NOT configurable: stdin delivery depends on each agent running
+ * in its non-interactive (print) mode, so a config mistake here would silently turn
+ * dispatches into hanging interactive sessions.
+ */
+const SPAWN_ARGS: Record<string, string[]> = {
+	pi: ["-p"],
+	codex: [],
+	claude: ["-p"],
+	cursor: ["--model", "composer-2-fast"],
+};
+
 const DEFAULT_CONFIG: DispatchConfig = {
 	defaultAgent: "pi",
 	commands: { pi: "pi", codex: "codex", claude: "claude", cursor: "agent" },
-	defaultArgs: { pi: [], codex: [], claude: ["-p"], cursor: ["--model", "composer-2-fast"] },
+	promptViaStdin: { pi: true, claude: true },
+	stdinPromptThreshold: 900,
 	maxOutputChars: 20000,
 	defaultTimeoutSec: 600,
 };
@@ -41,9 +57,10 @@ export function loadConfig(): DispatchConfig {
 			...DEFAULT_CONFIG,
 			...raw,
 			commands: isPlainObject(raw.commands) ? { ...DEFAULT_CONFIG.commands, ...raw.commands } : DEFAULT_CONFIG.commands,
-			defaultArgs: isPlainObject(raw.defaultArgs)
-				? { ...DEFAULT_CONFIG.defaultArgs, ...raw.defaultArgs }
-				: DEFAULT_CONFIG.defaultArgs,
+			promptViaStdin: isPlainObject(raw.promptViaStdin)
+				? { ...DEFAULT_CONFIG.promptViaStdin, ...raw.promptViaStdin }
+				: DEFAULT_CONFIG.promptViaStdin,
+			stdinPromptThreshold: clampInt(raw.stdinPromptThreshold, DEFAULT_CONFIG.stdinPromptThreshold, 1, 8192),
 			maxOutputChars: clampInt(raw.maxOutputChars, DEFAULT_CONFIG.maxOutputChars, 1000, 1_000_000),
 			defaultTimeoutSec: clampInt(raw.defaultTimeoutSec, DEFAULT_CONFIG.defaultTimeoutSec, 1, 86400),
 		};
@@ -65,7 +82,7 @@ function clampInt(value: number | undefined, fallback: number, min: number, max:
 /* ── Resolve ────────────────────────────────────────────────────────────── */
 
 export type ResolvedCommand =
-	| { ok: true; executable: string; args: string[] }
+	| { ok: true; executable: string; args: string[]; stdinData?: string; argvWarning?: string }
 	| { ok: false; error: string };
 
 export function resolveCommand(config: DispatchConfig, agent: string, prompt: string, model?: string): ResolvedCommand {
@@ -76,9 +93,17 @@ export function resolveCommand(config: DispatchConfig, agent: string, prompt: st
 		const configured = Object.keys(config.commands).sort().join(", ");
 		return { ok: false, error: `Unknown dispatch agent: ${agent}. Configured agents: ${configured}.` };
 	}
-	const defaultArgs = Object.hasOwn(config.defaultArgs, agent) ? [...config.defaultArgs[agent]] : [];
+	const defaultArgs = Object.hasOwn(SPAWN_ARGS, agent) ? [...SPAWN_ARGS[agent]] : [];
 	const modelArgs: string[] = model ? ["--model", model] : [];
-	return { ok: true, executable, args: [...defaultArgs, ...modelArgs, prompt] };
+	const viaStdin = Object.hasOwn(config.promptViaStdin, agent) && config.promptViaStdin[agent];
+	if (viaStdin && prompt.length >= config.stdinPromptThreshold) {
+		// EDR mitigation: a single argv entry >= 1024 bytes gets the child SIGKILLed before it runs.
+		return { ok: true, executable, args: [...defaultArgs, ...modelArgs], stdinData: prompt };
+	}
+	const argvWarning = prompt.length >= config.stdinPromptThreshold
+		? `Warning: prompt is ${prompt.length} chars but agent "${agent}" has no stdin support; long argv may be killed by endpoint security software.`
+		: undefined;
+	return { ok: true, executable, args: [...defaultArgs, ...modelArgs, prompt], argvWarning };
 }
 
 /* ── Spawn ──────────────────────────────────────────────────────────────── */
@@ -92,7 +117,9 @@ export interface SpawnCommandOptions {
 	onOutput?: (chunk: string) => void;
 	/** Environment variables merged into the subprocess (on top of process.env). */
 	env?: Record<string, string>;
-	}
+	/** Data written to the child's stdin (stream closed immediately after). */
+	stdinData?: string;
+}
 
 
 export interface RunDispatchResult {
@@ -119,10 +146,18 @@ export function spawnCommand(
 
 		const child = spawn(executable, args, {
 			cwd: opts.cwd,
-			stdio: ["ignore", "pipe", "pipe"],
+			stdio: [opts.stdinData != null ? "pipe" : "ignore", "pipe", "pipe"],
 			detached: true,
 			env: opts.env ? { ...process.env, ...opts.env } : undefined,
 		});
+		if (opts.stdinData != null) {
+			// Must always end() — a never-closed stdin makes print-mode agents wait for EOF forever.
+			try {
+				child.stdin?.end(opts.stdinData);
+			} catch {
+				/* child already gone */
+			}
+		}
 
 		const append = (chunk: Buffer | string) => {
 			const text = typeof chunk === "string" ? chunk : chunk.toString("utf-8");
@@ -198,7 +233,9 @@ export async function runDispatch(opts: {
 		signal: opts.signal,
 		maxOutputChars: config.maxOutputChars,
 		env: opts.env,
-	});	return result;
+		stdinData: resolved.stdinData,
+	});
+	return result;
 }
 
 /* ── Helpers ────────────────────────────────────────────────────────────── */

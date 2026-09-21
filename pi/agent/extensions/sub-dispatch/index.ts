@@ -10,7 +10,7 @@
  *   runner.ts  core engine: config, agent resolution, non-PTY spawn
  *   ui.ts      visual surfaces: Dispatch Overview widget, Output Peek viewer,
  *              Dispatch Record renderer
- *   config.json  commands / defaultArgs / caps
+ *   config.json  commands / caps (spawn args are hardcoded in runner.ts — see SPAWN_ARGS)
  *
  * Bridge hook (v2b, reserved): code-mode imports `runDispatch` programmatically
  * from `../sub-dispatch/runner.ts` for its own execute.
@@ -141,15 +141,17 @@ export default function (pi: ExtensionAPI) {
 		cwd: string;
 		maxOutputChars: number;
 		env?: Record<string, string>;
+		stdinData?: string;
+		argvWarning?: string;
 	}): BgSession => {
 		const id = generateSessionId(opts.agent);
-		const child = spawnDetached(opts.executable, opts.args, opts.cwd, opts.env);
+		const child = spawnDetached(opts.executable, opts.args, opts.cwd, opts.env, opts.stdinData);
 		const session: BgSession = {
 			id,
 			agent: opts.agent,
 			cwd: opts.cwd,
 			child,
-			output: "",
+			output: opts.argvWarning ? opts.argvWarning + "\n" : "",
 			exitCode: null,
 			status: "running",
 			startedAt: Date.now(),
@@ -286,8 +288,10 @@ export default function (pi: ExtensionAPI) {
 					agent: p.agent,
 					executable: resolved.executable,
 					args: resolved.args,
+					stdinData: resolved.stdinData,
 					cwd: effectiveCwd,
 					maxOutputChars: config.maxOutputChars,
+					argvWarning: resolved.argvWarning,
 				});
 				return {
 					content: [
@@ -316,15 +320,17 @@ export default function (pi: ExtensionAPI) {
 					maxOutputChars: config.maxOutputChars,
 					onOutput: (chunk) => onUpdate?.({ content: [{ type: "text", text: chunk }], details: {} }),
 					env: p.env,
-				});
+					stdinData: resolved.stdinData,
+					});
 				const durationMs = Date.now() - startedAt;
 				return {
 					content: [
 						{
 							type: "text",
 							text:
-								`exitCode: ${result.exitCode ?? "null"} — ${result.ok ? "ok" : "failed"} — ${formatDurationMs(durationMs)}` +
-								`\n── output ──\n${result.output}`,
+							(resolved.argvWarning ? resolved.argvWarning + "\n" : "") +
+							`exitCode: ${result.exitCode ?? "null"} — ${result.ok ? "ok" : "failed"} — ${formatDurationMs(durationMs)}` +
+							`\n── output ──\n${result.output}`,
 						},
 					],
 					isError: !result.ok,
@@ -397,6 +403,20 @@ export default function (pi: ExtensionAPI) {
 	});
 }
 
-function spawnDetached(executable: string, args: string[], cwd: string, env?: Record<string, string>): ChildProcess {
-	return spawn(executable, args, { cwd, stdio: ["ignore", "pipe", "pipe"], detached: true, env: env ? { ...process.env, ...env } : undefined });
+function spawnDetached(executable: string, args: string[], cwd: string, env?: Record<string, string>, stdinData?: string): ChildProcess {
+	const child = spawn(executable, args, {
+		cwd,
+		stdio: [stdinData != null ? "pipe" : "ignore", "pipe", "pipe"],
+		detached: true,
+		env: env ? { ...process.env, ...env } : undefined,
+	});
+	if (stdinData != null) {
+		// Must always end() — a never-closed stdin makes print-mode agents wait for EOF forever.
+		try {
+			child.stdin?.end(stdinData);
+		} catch {
+			/* child already gone */
+		}
+	}
+	return child;
 }
