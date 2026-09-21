@@ -20,3 +20,7 @@
 ## 参考
 
 上游设计：`~/dev/sources/deepseek-harness`，notes 见 `.agents/notes/implemented/feature/2026-06-15-code-mode.md` 及其后续篇。
+
+## 2026-09-21 更新：system prompt 注入改为结构化 sections（pi 0.86.0）
+
+`before_agent_start` 原先返回 `systemPrompt`（整串替换），每轮都把 SDK + COLLAPSE 作为新的 leading system message 发出，Code mode 开启期间每轮一次 cache miss。现改为修改 `event.systemPromptOptions.sections`（`code-mode-sdk` / `code-mode-rules` 两个 section）：Pi 对 sections 做 diff，仅首轮开启时追加一条补丁 system message，之后各轮零增量，保住 provider 的缓存前缀；`/code off` 时删除对应 section，同样只产生一次补丁。

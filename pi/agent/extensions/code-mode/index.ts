@@ -70,6 +70,9 @@ function loadConfig(): CodeModeConfig {
 	}
 }
 
+const SDK_SECTION = "code-mode-sdk";
+const RULES_SECTION = "code-mode-rules";
+
 const COLLAPSE = `You are in CODE MODE. run_code is the ONLY tool you may call directly. To perform any other action (read files, run commands, edit files, search, list directories, etc.), write a single TypeScript program and pass it to run_code using the injected SDK above. Compose multiple steps into one program to save round-trips. Do NOT call individual tools like read/bash/edit/write/grep/ls/find/dispatch directly — they are not available in this mode. Inside a run_code program you may use Node builtins via require(...) (e.g. const fs = require("node:fs")) and spawn a native-mode sub-agent (which CAN call every tool) via await tools.dispatch({ agent, prompt }). If a program fails, fix it and retry via run_code — do not fall back to direct tool calls.`;
 
 function truncateStr(s: string, maxBytes: number): string {
@@ -220,8 +223,18 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	// ── SDK + collapse injection ──
+	// Structured section edits (not full systemPrompt replacement) let Pi diff
+	// against the previous turn and append a single patch, preserving the
+	// provider's cached prompt prefix across turns while code mode stays on.
 	pi.on("before_agent_start", async (event) => {
-		if (!codeModeOn) return;
+		const sections = event.systemPromptOptions.sections;
+		if (!codeModeOn) {
+			if (sections) {
+				delete sections[SDK_SECTION];
+				delete sections[RULES_SECTION];
+			}
+			return;
+		}
 		const infos = getBridgedToolInfos();
 		const sdkInfos: Array<{ name: string; description: string; parameters: unknown }> = infos.map((t) => ({
 			name: t.name,
@@ -249,9 +262,13 @@ export default function (pi: ExtensionAPI) {
 		}
 		let sdk = "";
 		if (sdkInfos.length > 0) {
-				sdk = "\n\n" + generateSdk(sdkInfos, loadConfig().maxResultBytes);
+				sdk = generateSdk(sdkInfos, loadConfig().maxResultBytes);
 		}
-		return { systemPrompt: event.systemPrompt + sdk + "\n\n" + COLLAPSE };
+		event.systemPromptOptions.sections = {
+			...sections,
+			[SDK_SECTION]: sdk,
+			[RULES_SECTION]: COLLAPSE,
+		};
 	});
 
 	// ── run_code tool ──

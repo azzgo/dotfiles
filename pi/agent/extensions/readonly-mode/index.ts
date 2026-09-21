@@ -17,6 +17,10 @@ import { readonlyGuard } from './guard.js';
 import { getReadonlyInstructions } from './prompt.js';
 import type { StateEntry } from './state.js';
 
+const INSTRUCTIONS_SECTION = 'readonly-instructions';
+const WRITE_TOOLS = ['edit', 'write'];
+
+
 export default function readonlyMode(pi: ExtensionAPI): void {
   const readonlyCtrl = new ReadonlyController(pi);
 
@@ -52,17 +56,50 @@ export default function readonlyMode(pi: ExtensionAPI): void {
     return readonlyGuard.authorize(event.toolName, (event.input ?? {}) as Record<string, unknown>) ?? undefined;
   });
 
-  // ── Inject context message on each turn ───────────────────────
-  pi.on('before_agent_start', async () => {
-    if (!readonlyCtrl.isEnabled()) return;
+  // ── System-prompt section + active-tool filtering per turn ────
+  //
+  // Uses structured systemPromptOptions edits (not full systemPrompt
+  // replacement and not per-turn injected messages): Pi diffs the sections
+  // against the previous turn and appends a single patch, preserving the
+  // provider's cached prompt prefix. edit/write are also removed from the
+  // active tool set so the model never sees (or attempts) them; the
+  // tool_call guard stays as the last line of defense. Deactivation
+  // restores the removed tools, deferred a turn when code mode is on
+  // (run_code active) because code-mode owns the active set then.
+  let removedTools: string[] | null = null;
+  let restorePending = false;
 
-    return {
-      message: {
-        customType: CONTEXT_ENTRY,
-        content: getReadonlyInstructions(),
-        display: false,
-      },
-    };
+  pi.on('before_agent_start', async (event) => {
+    const sections = event.systemPromptOptions.sections;
+    if (readonlyCtrl.isEnabled()) {
+      if (removedTools === null) {
+        const active = pi.getActiveTools();
+        removedTools = active.filter((name) => WRITE_TOOLS.includes(name));
+        if (removedTools.length > 0) {
+          pi.setActiveTools(active.filter((name) => !WRITE_TOOLS.includes(name)));
+        }
+      }
+      event.systemPromptOptions.sections = {
+        ...sections,
+        [INSTRUCTIONS_SECTION]: getReadonlyInstructions(),
+      };
+      return;
+    }
+
+    if (sections) delete sections[INSTRUCTIONS_SECTION];
+    if (removedTools === null && !restorePending) return;
+    if (pi.getActiveTools().includes('run_code')) {
+      restorePending = true;
+      return;
+    }
+    const active = pi.getActiveTools();
+    const registered = new Set(pi.getAllTools().map((tool) => tool.name));
+    const toRestore = [...(removedTools ?? []), ...(restorePending ? WRITE_TOOLS : [])].filter(
+      (name) => registered.has(name) && !active.includes(name),
+    );
+    if (toRestore.length > 0) pi.setActiveTools([...active, ...toRestore]);
+    removedTools = null;
+    restorePending = false;
   });
 
   // ── Filter out stale context entries when mode is off ─────────
@@ -79,6 +116,8 @@ export default function readonlyMode(pi: ExtensionAPI): void {
 
   // ── Restore state on session start ────────────────────────────
   pi.on('session_start', async (_event, ctx) => {
+    removedTools = null;
+    restorePending = false;
     if (pi.getFlag(READONLY_FLAG) === true) {
       readonlyCtrl.enableFromFlag();
     }
@@ -87,6 +126,9 @@ export default function readonlyMode(pi: ExtensionAPI): void {
   });
 
   // ── Reset & restore on tree navigation ────────────────────────
+  removedTools = null;
+  restorePending = false;
+
   pi.on('session_tree', async (_event, ctx) => {
     readonlyCtrl.reset();
     const entries = (ctx.sessionManager.getBranch?.() ??

@@ -63,7 +63,7 @@ Three layers of protection:
 
 1. **Tool call interceptor** — `tool_call` event handler blocks `edit`, `write`, and unsafe `bash` commands at runtime.
 2. **Bash safety checker** — `isSafeCommand()` blocks redirects (`>`, `>>`), pipes into destructive commands, and non-whitelisted commands.
-3. **System prompt injection** — `before_agent_start` injects instructions reminding the LLM it's in read-only mode every turn.
+3. **System prompt section + tool unloading** — `before_agent_start` edits `systemPromptOptions.sections` (pi 0.86.0 structured patching: one diff patch instead of a per-turn injected message, preserving the cached prompt prefix), and removes `edit`/`write` from the active tool set so the model never sees them. Toggling off restores them (deferred a turn while code mode's `run_code` owns the active set); the `tool_call` guard remains as the last line of defense.
 
 State persists across session restarts and tree navigation.
 
