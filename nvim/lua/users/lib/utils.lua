@@ -31,16 +31,24 @@ end
 
 function M.preserve_for_selection_range()
   local was_visual = vim.fn.mode() == "v" or vim.fn.mode() == "V"
-  if was_visual then
-    vim.cmd([[execute "normal! \<ESC>"]])
-    -- Get visual selection line range (marks persist after <Esc>)
-    local start_line = vim.fn.line("'<")
-    local end_line = vim.fn.line("'>")
-    return start_line, end_line
-  else 
+  if not was_visual then
     local line = vim.fn.line('.')
-    return line, line
+    return { start_line = line, end_line = line }
   end
+  local vmode = vim.fn.mode()
+  vim.cmd([[execute "normal! \<ESC>"]])
+  local start_pos = vim.fn.getpos("'<")
+  local end_pos = vim.fn.getpos("'>")
+  local to_virtcol = function(pos)
+    return vim.fn.virtcol({ pos[2], pos[3] })
+  end
+  return {
+    start_line = start_pos[2],
+    start_col = to_virtcol(start_pos),
+    end_line = end_pos[2],
+    end_col = to_virtcol(end_pos),
+    charwise = (vmode == "v"),
+  }
 end
 
 function M.get_selected_text(only_first_line)

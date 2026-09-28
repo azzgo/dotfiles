@@ -163,22 +163,28 @@ function M.send_file()
 end
 
 --- Send location reference to Pi (@path L22 - L33)
-function M.send_selection(start_line, end_line)
+local function format_selection_range(range)
+  if not range.charwise then
+    if range.start_line == range.end_line then
+      return "L" .. range.start_line
+    end
+    return "L" .. range.start_line .. " - L" .. range.end_line
+  end
+  local start = "L" .. range.start_line .. ":C" .. range.start_col
+  if range.start_line == range.end_line then
+    return start .. " - C" .. range.end_col
+  end
+  return start .. " - L" .. range.end_line .. ":C" .. range.end_col
+end
+
+function M.send_selection(range)
   local rel = get_relative_path()
   if not rel then
     vim.notify("Buffer has no file path", vim.log.levels.WARN)
     return
   end
 
-  local msg
-  if start_line > 0 and end_line > 0 then
-    if start_line == end_line then
-      msg = "@" .. rel .. " L" .. start_line
-    else
-      msg = "@" .. rel .. " L" .. start_line .. " - L" .. end_line
-    end
-  end
-
+  local msg = "@" .. rel .. " " .. format_selection_range(range)
   local term = ensure_pi_open()
   if not term then return end
 
@@ -326,13 +332,13 @@ end
 
 --- Show the Pi actions menu (<A-i>)
 function M.show_actions_menu()
-  local start_line, end_line = utils.preserve_for_selection_range()
+  local range = utils.preserve_for_selection_range()
   --- Menu items definition
   local menu_items = {
     {
       label = "Send @this",
       action = function()
-        M.send_selection(start_line, end_line)
+        M.send_selection(range)
       end
     },
     { label = "Send @file", action = M.send_file },
