@@ -93,8 +93,8 @@ notifications; query `dispatch({ sessionId })` only for diagnosis/recovery.
 Model selection: shared skill **`spawn-model-selection`**, simple /
 mechanical tier, same as exploration. Investigators are read-only in spirit —
 include the read-only constraint in every prompt (no file writes, no
-state-changing commands). If code mode (`/code`) is on, use the foreground
-`Promise.all` + `run_code` shape from `how`.
+state-changing commands). Use the foreground
+`Promise.all` + `codemode` shape from `how`.
 
 #### Investigator prompt template
 

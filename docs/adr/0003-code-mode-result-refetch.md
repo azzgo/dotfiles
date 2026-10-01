@@ -1,5 +1,7 @@
 # Code Mode：截断结果的会话内续读（fetchResult）
 
+> **SUPERSEDED** by ADR 0011（pi 0.99.2 内置 codemode/MCP）：扩展已随仓库移除，本文仅存档。
+
 run_code 的返回值按 `maxResultBytes`（8KB）截断后，模型此前唯一的恢复路径是重跑程序——这会重放 `edit`/`write`/`bash` 子调用的副作用（文件改两遍、命令跑两遍）。决定：截断标记自带寻址信息（toolCallId + 总字节数），并在 worker 内注入与 `emit` 同级的宿主函数 `fetchResult(toolCallId, offset, size?)`，从 `ctx.sessionManager` 持久化的 entry 中按字节切片取回原始返回值。**存储量为零**：session JSONL 本来就全量落盘 `details.value`（compaction 只追加不重写，跨 reload/resume 存活），无需任何新 store。
 
 ## 决策细节

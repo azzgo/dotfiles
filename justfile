@@ -120,8 +120,6 @@ install-pi:
 
     rm -rf ~/.pi/agent/extensions/xfer
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/xfer ~/.pi/agent/extensions/xfer
-    rm -rf ~/.pi/agent/extensions/code-mode
-    ln -s {{ dotfiles_dir }}/pi/agent/extensions/code-mode ~/.pi/agent/extensions/code-mode
     rm -rf ~/.pi/agent/extensions/sub-dispatch
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/sub-dispatch ~/.pi/agent/extensions/sub-dispatch
     rm -rf ~/.pi/agent/extensions/command-palette

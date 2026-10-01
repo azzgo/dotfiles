@@ -2,15 +2,16 @@
   "mcpServers": {
     "chrome-devtools": {
       "command": "npx",
-      "args": ["-y", "chrome-devtools-mcp@latest"]
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest"
+      ]
     },
     "agentsview": {
       "command": "agentsview",
-      "args": ["mcp"]
+      "args": [
+        "mcp"
+      ]
     }
-  },
-  "settings": {
-    "idleTimeout": 0,
-    "warnOnLargeDirectTools": false
   }
 }

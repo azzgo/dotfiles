@@ -1,5 +1,7 @@
 # Code Mode：以 run_code 为唯一入口的工具呈现模式
 
+> **SUPERSEDED** by ADR 0011（pi 0.99.2 内置 codemode/MCP）：扩展已随仓库移除，本文仅存档。
+
 移植 DeepSeek Harness "PTC/Code Mode" 的核心思路到 pi 扩展：用 `pi.setActiveTools(["run_code"])` 把工具目录折叠成单一 `run_code` 工具，并在 system prompt 注入一段按当前活跃工具生成的 TypeScript SDK（类型从 JSON Schema 投影）。模型写一段 TS 程序，经 `await tools.name(args)` 组合多步操作，一次执行省 token 与轮次。
 
 ## 决策

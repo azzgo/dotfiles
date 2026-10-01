@@ -14,7 +14,7 @@ capability explicitly:
 - Skills by `/skill:<name>` (they are all `disable-model-invocation` — the model
   can never load them on its own; only explicit user invocation loads them).
 - Extension commands by their slash command (`/wf`, `/track`, `/xfer`, ...).
-- Tools by name (`dispatch`, `run_code`).
+- Tools by name (`dispatch`, `codemode`).
 - Say what the first concrete step is, and when to stop or switch routes.
 
 ## Extension capabilities
@@ -24,7 +24,7 @@ capability explicitly:
 | workflow-runtime | `/wf` command family | Multi-node orchestrated work: `/wf new` drafts a Definition (nodes with human/auto steps and `suggest` refs), `/wf start <pattern>` instantiates a pattern, `/wf name` renames a run's long default title, `/wf` books state and suggests the next node — it never executes node work itself |
 | track | `/track` command family | Working memory across steps/sessions: `/track new`, `/track update` (checkpoint before ending a session), `/track context` (reload findings into a fresh context) |
 | sub-dispatch | `dispatch` tool | Parallel/foreground sub-agents: spawn pi/codex/claude/cursor subprocesses for delegated work; consumed by impl-with-spawn and how skills — prefer going through those skills rather than calling dispatch raw |
-| code-mode | `run_code` tool | Bulk programmatic work over the repo (many files, structured queries) in one TypeScript program instead of dozens of tool calls |
+| codemode (built-in) | `codemode` tool | Bulk programmatic work (many files, structured queries, MCP tool composition) in one TypeScript script instead of dozens of tool calls; MCP servers reach the model through it |
 | xfer | `/xfer` | Hand the work to another Pi/Cursor instance in a different terminal/project via Unix socket |
 | command-palette | `alt+.` | User-facing: fuzzy-pick any slash command into the composer (mention it to the user, don't invoke it) |
 | project-skills | `/pi-skills` | One-time per project: link pi-coupled skills into `<cwd>/.pi/skills/` |

@@ -11,7 +11,7 @@
 
 Pi 相关约定补充：
 - 外部 agent 派发与子 agent 能力由本仓库维护的 `sub-dispatch` 扩展承载（`pi/agent/extensions/sub-dispatch/`，从 pi-interactive-shell 剪裁，仅保留 dispatch 模式）。
-- Code Mode（工具目录折叠为 `run_code` + TS SDK 注入）由 `code-mode` 扩展提供（`pi/agent/extensions/code-mode/`，设计见 `docs/adr/0001-code-mode-extension.md`）。
+- Code Mode 使用 pi 内置 `codemode` 工具（`defaultTools: ["+codemode"]` 常开），MCP 工具与扩展工具经 `tools.*` 在脚本内组合调用；自研 `code-mode` 扩展已移除（见 `docs/adr/0011-built-in-mcp-codemode-migration.md`）。
 - 工作流编排骨架由 `workflow-runtime` 扩展承载（`pi/agent/extensions/workflow-runtime/`，`/wf` 命令族，设计见 `docs/adr/0006-workflow-runtime-replaces-goal-runtime.md`）；pattern 库在 `pi/agent/patterns/`（经 `install-pi` link 到 `~/.pi/agent/patterns/`）。工作记忆由独立的 `track` 扩展承载（`/track` 命令族）。goal-runtime 已废弃删除（ADR 0006）。
 - 命令面板（对所有 slash command 的 fuzzy picker，`alt+.` 呼出，选中后前置插入 composer，不直接执行）由 `command-palette` 扩展承载（`pi/agent/extensions/command-palette/`）。
 - 能力导航入口由 `pi-navigator` 扩展承载（`pi/agent/extensions/pi-navigator/`，`/nav <输入>`，设计见 `docs/adr/0010-pi-navigator-extension.md`）：按需注入手工策展的能力目录（`catalog.md`，覆盖本仓库全部扩展/skill/pattern 及路由反模式）+ 运行时扫描的 skill 清单，让模型建议完整工作流；skill 均为 `disable-model-invocation`，目录更新时需同步维护 `catalog.md`。

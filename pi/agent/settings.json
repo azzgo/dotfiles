@@ -8,13 +8,15 @@
     "enabled": true
   },
   "packages": [
-    "npm:pi-web-access",
-    "npm:pi-mcp-adapter"
+    "npm:pi-web-access"
   ],
   "enabledModels": [
     "minimax-cn/MiniMax-M2.7",
     "deepseek/deepseek-v4-flash",
     "deepseek/deepseek-v4-pro"
   ],
-  "lastChangelogVersion": "0.78.1"
+  "lastChangelogVersion": "0.78.1",
+  "defaultTools": [
+    "+codemode"
+  ]
 }
