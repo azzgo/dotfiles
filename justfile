@@ -115,8 +115,7 @@ install-pi:
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/track ~/.pi/agent/extensions/track
     rm -rf ~/.pi/agent/extensions/workflow-runtime
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/workflow-runtime ~/.pi/agent/extensions/workflow-runtime
-    rm -rf ~/.pi/agent/extensions/readonly-mode
-    ln -s {{ dotfiles_dir }}/pi/agent/extensions/readonly-mode ~/.pi/agent/extensions/readonly-mode
+    rm -rf ~/.pi/agent/extensions/code-mode ~/.pi/agent/extensions/readonly-mode
 
     rm -rf ~/.pi/agent/extensions/xfer
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/xfer ~/.pi/agent/extensions/xfer

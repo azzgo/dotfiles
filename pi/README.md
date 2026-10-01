@@ -13,7 +13,7 @@
 - `pi/agent/extensions/workflow-runtime/`
 - `pi/agent/patterns/`
 - `pi/agent/extensions/xfer/`
-- `pi/agent/extensions/code-mode/`
+- `pi/agent/extensions/xfer/`
 - `pi/agent/extensions/sub-dispatch/`
 
 ## 保持本地，不入库
@@ -43,11 +43,11 @@
 
 执行 `just install-pi` 时会把仓库中的扩展目录 link 到本机 Pi 扩展目录，`pi/agent/patterns/` link 到 `~/.pi/agent/patterns/`（workflow pattern 库）。
 
-### 4. 自研扩展：sub-dispatch 与 code-mode
+### 4. 自研扩展与内置 codemode/MCP
 
 `pi/agent/extensions/sub-dispatch/` — 子 agent 派发扩展（从 pi-interactive-shell 剪裁，仅保留 dispatch 模式，非 PTY 子进程）。配置在扩展目录 `config.json`（内置 pi/codex/claude/cursor，可加自定义 agent）。pi-interactive-shell 已整体移除。
 
-`pi/agent/extensions/code-mode/` — Code Mode 扩展（工具目录折叠为 `run_code` + TS SDK 注入，`/code` 切换）。设计见 `docs/adr/0001-code-mode-extension.md`。
+Code Mode 与 MCP 已迁移到 pi 内置能力：codemode 经 `settings.json` 的 `defaultTools: ["+codemode"]` 常开，MCP 配置见 `pi/mcp.json`。自研 `code-mode` 扩展已移除（见 `docs/adr/0011-built-in-mcp-codemode-migration.md`）。
 
 ### 5. skills 已纳入 dotfiles
 
