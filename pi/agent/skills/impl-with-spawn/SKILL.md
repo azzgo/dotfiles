@@ -102,8 +102,9 @@ const [a, b, c] = await Promise.all([
 return { a, b, c };
 ```
 
-- `tools.dispatch` resolves to a structured object `{ ok, exitCode, output }`
-  (read fields directly, e.g. `r.output` — no JSON.parse). Each dispatch has
+- `tools.dispatch` resolves to a structured object `{ exitCode, durationMs, output, complete }`
+  (read fields directly, e.g. `r.output` — no JSON.parse). There is no `ok` field:
+  check `exitCode === 0` (or the rejected promise / `complete`). Each dispatch has
   its own internal timeout (pass `timeout` seconds; default 600). Parallel
   independent dispatches with `Promise.all`.
 - Still respect dependency tiers: run sequential subtasks as sequential `await`s;

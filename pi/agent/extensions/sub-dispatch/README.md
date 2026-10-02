@@ -6,9 +6,9 @@ subprocess and collect its output. Trimmed from
 (v0.15.0) to a single use-case (dispatch a sub-agent, no PTY / interactive
 input / monitor machinery) plus read-only visibility surfaces (see below).
 
-The secondary purpose is strategic: it provides the **v2b bridge hook** for the
-`code-mode` extension (`pi/agent/extensions/code-mode/`) — a self-owned
-`execute` for running sub-agents via `runDispatch()`.
+A historical note: it was built as the **v2b bridge hook** for the since-removed
+`code-mode` extension; that role is now filled by pi's built-in `codemode` tool
+calling the `dispatch` tool directly (see `docs/adr/0011`).
 
 ## Install
 
@@ -18,7 +18,7 @@ Symlinked by the dotfiles `justfile`:
 just install-pi    # links ~/.pi/agent/extensions/sub-dispatch -> pi/agent/extensions/sub-dispatch
 ```
 
-Requires Node >= 23.6 (native TS type-stripping, same as `code-mode`).
+Requires Node >= 23.6 (native TS type-stripping, same as pi itself).
 pi-interactive-shell has been **removed** (replaced by this extension).
 
 ## Usage
@@ -36,10 +36,19 @@ pi-interactive-shell has been **removed** (replaced by this extension).
 | `sessionId`  | string  | —       | existing background session to query (or `kill: true`)        |
 | `kill`       | boolean | —       | with `sessionId`, terminate the background session group      |
 
-- **Foreground (default)**: waits, returns `{ exitCode, durationMs, output }`
-  (stdout+stderr merged, tail-truncated to `maxOutputChars`, default 20000).
+- **Foreground (default)**: waits, returns `{ exitCode, durationMs, output }` in
+  `details` (stdout+stderr merged, tail-truncated to `maxOutputChars`, default 20000).
   Footer status shows `dispatch <agent> — running…` while waiting; Esc (abort
   signal) kills the process group.
+- **Tool hints**: `annotations` declares `destructiveHint: true` (kill /
+  process-group termination) and `openWorldHint: true` (arbitrary sub-agents).
+- **Structured value** (`outputSchema` / `structuredContent`, what codemode
+  scripts receive from `tools.dispatch`):
+  - foreground → `{ exitCode, durationMs, output, complete: true }` (no `ok` —
+    check `exitCode === 0`; failures also reject the promise)
+  - background spawn → `{ sessionId, status: "running", complete: false }`
+  - query → `{ sessionId, status, exitCode, durationMs, output, complete }`
+  - kill → `{ sessionId, status: "killed", exitCode, output, complete: true }`
 - **Background**: returns immediately with `{ sessionId }`; the host is
   **auto-notified when the session settles** — a `sendMessage` with
   `customType: "sub-dispatch"` and `{ triggerTurn: true, deliverAs: "followUp" }`
@@ -79,7 +88,7 @@ asked to poll or report status (see `End-turn Wait Discipline` in the repo
    (expanded mode) shows the complete tail inline — the only copy that
    survives `/reload` (the in-memory session table is cleared).
 
-### `runDispatch()` — code-mode bridge hook (v2b, reserved)
+### `runDispatch()` — programmatic bridge
 
 ```ts
 export async function runDispatch(opts: {
@@ -91,35 +100,32 @@ export async function runDispatch(opts: {
   env?: Record<string, string>;
 ```
 
-Re-exported from `index.ts` and defined in `runner.ts`. code-mode (same
-`~/.pi/agent/extensions/` dir) can import it via a relative path
-`../sub-dispatch/runner.ts` for its own `execute`. Note: it does **not** accept
+Re-exported from `index.ts` and defined in `runner.ts`. External extensions can
+import it via a relative path `../sub-dispatch/runner.ts` for their own `execute`.
 an `onOutput` stream callback (that lives on `spawnCommand`); it collects merged
 output and returns it.
 
-## code-mode integration
+## codemode integration
+With pi's built-in `codemode` tool (see `docs/adr/0011` — the old code-mode
+extension was removed), `dispatch` is exposed to scripts as
+`tools.dispatch({ agent, prompt, timeout? })`.
 
-When the **code-mode** extension is enabled (`/code`), `dispatch` is exposed in
-the run_code SDK as `tools.dispatch({ agent, prompt, timeout? })`. code-mode
-imports `runDispatch` directly from this package (`../sub-dispatch/runner.ts`).
-The two extensions are sibling dirs under `~/.pi/agent/extensions/` and both are
-symlinked by `just install-pi`; code-mode assumes sub-dispatch is installed.
-
-- **Foreground semantics**: inside a run_code program `await tools.dispatch(...)`
-  blocks until the sub-agent exits and resolves to a structured object
-  `{ ok, exitCode, output }` (not a string) — no background session, no polling.
+- **Foreground semantics**: inside a codemode program `await tools.dispatch(...)`
+  blocks until the sub-agent exits and resolves to its structured value
+  `{ exitCode, durationMs, output, complete }` (not a string; no `ok` field —
+  check `exitCode === 0`) — no background session, no polling.
 - **Timeout**: each dispatch inherits `defaultTimeoutSec` (600) unless a
   `timeout` (seconds) is passed; `spawnCommand` kills the process group on
-  expiry. The run_code wall-clock cap is paused while a dispatch is in flight.
-- **Concurrency**: `Promise.all` over dispatches overlaps up to code-mode's
-  `maxConcurrent` (TaskPool).
-- **Abort**: `runAbort.signal` is forwarded as the spawn `signal`, so Esc/abort
-  at the run_code level kills the child process group.
+  expiry.
+- **Concurrency**: `Promise.all` over dispatches overlaps calls inside the
+  script (QuickJS concurrency limits).
+- **Abort**: the script-scoped signal is forwarded as the spawn `signal`, so
+  Esc/abort at the codemode level kills the child process group.
 
 ## Config
 
 Chosen location: **extension-dir `config.json`** (symlinked with the extension,
-self-contained, mirrors `code-mode`). Fields:
+self-contained; layout inherited from the retired `code-mode` extension). Fields:
 
 ```jsonc
 {

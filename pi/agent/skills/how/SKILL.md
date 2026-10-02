@@ -163,8 +163,9 @@ console.log(ui, data, backend);
 return { ui, data, backend };
 ```
 
-- Each `tools.dispatch` resolves to a structured object `{ ok, exitCode, output }`
-  (read `r.output` directly — no JSON.parse); sub-agents run concurrently (up to
+- Each `tools.dispatch` resolves to a structured object `{ exitCode, durationMs, output, complete }`
+  (read `r.output` directly — no JSON.parse; no `ok` field — check `exitCode === 0`);
+  sub-agents run concurrently (up to
   QuickJS concurrency limits; dispatch is a normal tool inside the script).
 - Each dispatch has its own internal timeout (default 600s; pass `timeout` to
   override); exploration sub-agents finish naturally and return their findings
