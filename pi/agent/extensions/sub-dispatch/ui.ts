@@ -30,10 +30,11 @@ import type {
 	Theme,
 	ThemeColor,
 } from "@earendil-works/pi-coding-agent";
+import type { DispatchStatus } from "./runner.js";
 
 /* ── Session snapshot (view model shared by all surfaces) ────────────────── */
 
-export type DispatchStatus = "running" | "done" | "error" | "killed" | "timeout";
+export type { DispatchStatus };
 
 export interface SessionSnapshot {
 	id: string;

@@ -1,16 +1,16 @@
 /**
  * sub-dispatch — a minimal sub-agent dispatch extension for pi, trimmed from
- * pi-interactive-shell (v0.15.0). Single use-case: spawn a coding agent as a
- * subprocess (`dispatch` mode) and collect its output. No PTY / interactive
- * input — read-only visibility only (see ui.ts).
+ * pi-interactive-shell (v0.15.0). Single use-case: run a coding agent as an
+ * in-process sub-session (`dispatch` mode) and collect its output. No PTY /
+ * interactive input — read-only visibility only (see ui.ts).
  *
  * Files:
- *   index.ts   entry: `dispatch` tool, `/dispatch` peek command, background
- *              session table, widget/renderer wiring
- *   runner.ts  core engine: config, agent resolution, non-PTY spawn
+ *   index.ts   entry: `dispatch` tool, `/dispatch` peek + gc commands,
+ *              background session table, widget/renderer wiring
+ *   runner.ts  core engine: config, in-process sub-session run, forensics log
  *   ui.ts      visual surfaces: Dispatch Overview widget, Output Peek viewer,
  *              Dispatch Record renderer
- *   config.json  commands / caps (spawn args are hardcoded in runner.ts — see SPAWN_ARGS)
+ *   config.json  defaultTimeoutSec
  *
  * Bridge hook (v2b, reserved): code-mode imports `runDispatch` programmatically
  * from `../sub-dispatch/runner.ts` for its own execute.
@@ -20,17 +20,18 @@
  *   Output Peek       — `/dispatch` → read-only scrollable output overlay
  *   Dispatch Record   — completion message: one compact line, ctrl+o expands
  */
-import type { ChildProcess } from "node:child_process";
-import { spawn } from "node:child_process";
+import type { AgentSession } from "@earendil-works/pi-coding-agent";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 import {
 	generateSessionId,
-	killProcessGroup,
+	gcLogs,
 	loadConfig,
-	resolveCommand,
-	spawnCommand,
+	logDir,
+	resolveAgent,
+	runSession,
 	tailTruncate,
+	type DispatchStatus,
 } from "./runner.js";
 import {
 	createDispatchWidget,
@@ -45,19 +46,24 @@ import {
 
 export { runDispatch } from "./runner.js";
 
+/** Cap on the completion notification's output tail. */
+const NOTIFICATION_OUTPUT_CHARS = 20000;
+
 interface BgSession {
 	id: string;
 	agent: string;
 	cwd: string;
-	child: ChildProcess;
+	agentSession: AgentSession | null;
+	abort: AbortController;
 	output: string;
 	exitCode: number | null;
-	status: "running" | "done" | "error" | "killed" | "timeout";
+	status: DispatchStatus;
 	startedAt: number;
 	doneAt?: number;
+	logFile?: string;
 	/** Output truncation cap applied to completion notifications. */
 	maxOutputChars: number;
-	/** Guard so completion is notified exactly once (close+error can both fire). */
+	/** Guard so completion is notified exactly once. */
 	notified?: boolean;
 }
 
@@ -78,7 +84,7 @@ function formatSessionStatus(s: BgSession): string {
 		`Session ${s.id} — ${s.status}${s.exitCode != null ? ` (exit ${s.exitCode})` : ""} — ${formatDurationMs(durMs)}`,
 		`agent: ${s.agent}`,
 	];
-	const out = tailTruncate(s.output, 20000);
+	const out = tailTruncate(s.output, NOTIFICATION_OUTPUT_CHARS);
 	if (out.trim()) lines.push("── output ──\n" + out);
 	return lines.join("\n");
 }
@@ -136,54 +142,62 @@ export default function (pi: ExtensionAPI) {
 
 	const runBackground = (opts: {
 		agent: string;
-		executable: string;
-		args: string[];
+		prompt: string;
 		cwd: string;
-		maxOutputChars: number;
-		env?: Record<string, string>;
-		stdinData?: string;
-		argvWarning?: string;
+		model?: string;
+		timeoutSec: number;
+		modelRegistry: Parameters<typeof runSession>[0]["modelRegistry"];
 	}): BgSession => {
 		const id = generateSessionId(opts.agent);
-		const child = spawnDetached(opts.executable, opts.args, opts.cwd, opts.env, opts.stdinData);
+		const abort = new AbortController();
 		const session: BgSession = {
 			id,
 			agent: opts.agent,
 			cwd: opts.cwd,
-			child,
-			output: opts.argvWarning ? opts.argvWarning + "\n" : "",
+			agentSession: null,
+			abort,
+			output: "",
 			exitCode: null,
 			status: "running",
 			startedAt: Date.now(),
-			maxOutputChars: opts.maxOutputChars,
+			maxOutputChars: NOTIFICATION_OUTPUT_CHARS,
 		};
-		child.stdout?.on("data", (d) => {
-			session.output += d.toString("utf-8");
-			if (session.output.length > opts.maxOutputChars) {
-				session.output = session.output.slice(-opts.maxOutputChars);
-			}
-		});
-		child.stderr?.on("data", (d) => {
-			session.output += d.toString("utf-8");
-			if (session.output.length > opts.maxOutputChars) {
-				session.output = session.output.slice(-opts.maxOutputChars);
-			}
-		});
-		child.on("error", (err) => {
-			session.output += `\n[spawn error] ${err.message}`;
-			session.status = "error";
-			session.doneAt = Date.now();
-			notifyBackgroundDone(session);
-		});
-		child.on("close", (code) => {
-			session.exitCode = code;
-			// Keep an explicit kill status; only derive done/error for natural exits.
-			if (session.status !== "killed") session.status = code === 0 ? "done" : "error";
-			session.doneAt = Date.now();
-			notifyBackgroundDone(session);
-		});
 		bgSessions.set(id, session);
 		refreshWidget();
+
+		void (async () => {
+			try {
+				const result = await runSession({
+					agent: opts.agent,
+					prompt: opts.prompt,
+					cwd: opts.cwd,
+					model: opts.model,
+					timeoutSec: opts.timeoutSec,
+					signal: abort.signal,
+					modelRegistry: opts.modelRegistry,
+					onSession: (created) => {
+						session.agentSession = created;
+					},
+					onOutput: (chunk) => {
+						session.output = (session.output + chunk).slice(-session.maxOutputChars);
+						refreshWidget();
+					},
+				});
+				session.output = result.output;
+				session.exitCode = result.exitCode;
+				session.logFile = result.logFile;
+				// Keep an explicit kill status; only derive done/error for natural exits.
+				session.status = session.status === "killed" ? "killed" : result.status;
+			} catch (err) {
+				session.output += `${session.output ? "\n" : ""}[session error] ${err instanceof Error ? err.message : String(err)}`;
+				session.status = "error";
+				session.exitCode = 1;
+			} finally {
+				session.doneAt = Date.now();
+				notifyBackgroundDone(session);
+			}
+		})();
+
 		return session;
 	};
 
@@ -191,8 +205,8 @@ export default function (pi: ExtensionAPI) {
 		name: "dispatch",
 		label: "Dispatch",
 		description:
-			"Spawn a sub-agent (pi/codex/claude/cursor or a custom key from config.commands) as a subprocess and collect its output. Foreground (default) waits and returns { exitCode, durationMs, output }; background:true returns a sessionId immediately. Pass an existing sessionId to query it, plus kill:true to terminate it.",
-		promptSnippet: "Dispatch a sub-agent (pi/codex/claude/cursor/custom) as a subprocess and collect its output",
+			"Run a sub-agent (pi) as an in-process session and collect its output. Foreground (default) waits and returns { exitCode, durationMs, output }; background:true returns a sessionId immediately. Pass an existing sessionId to query it, plus kill:true to abort it.",
+		promptSnippet: "Dispatch a sub-agent (pi) in-process and collect its output",
 		parameters: Type.Object({
 			agent: Type.Optional(Type.String({ description: "Agent name; required for a new dispatch, omit when using sessionId." })),
 			prompt: Type.Optional(Type.String({ description: "Task prompt; required for a new dispatch." })),
@@ -201,8 +215,7 @@ export default function (pi: ExtensionAPI) {
 			background: Type.Optional(Type.Boolean()),
 			timeout: Type.Optional(Type.Number({ description: "Seconds (default 600)." })),
 			reason: Type.Optional(Type.String({ description: "UI label." })),
-			model: Type.Optional(Type.String({ description: "Model override passed as --model <value>." })),
-			env: Type.Optional(Type.Record(Type.String(), Type.String())),
+			model: Type.Optional(Type.String({ description: "Model override passed to the sub-session." })),
 		}),
 		annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
 		outputSchema: Type.Object({
@@ -212,6 +225,7 @@ export default function (pi: ExtensionAPI) {
 			durationMs: Type.Optional(Type.Number()),
 			output: Type.Optional(Type.String()),
 			complete: Type.Optional(Type.Boolean()),
+			logFile: Type.Optional(Type.String()),
 		}),
 
 		async execute(_toolCallId, params, signal, onUpdate, ctx) {
@@ -226,7 +240,6 @@ export default function (pi: ExtensionAPI) {
 				background?: boolean;
 				timeout?: number;
 				reason?: string;
-				env?: Record<string, string>;
 			};
 
 			// ── Query / kill an existing background session ──
@@ -241,16 +254,16 @@ export default function (pi: ExtensionAPI) {
 					};
 				}
 				if (p.kill) {
-					killProcessGroup(session.child);
+					session.abort.abort();
+					void session.agentSession?.abort().catch(() => undefined);
 					session.status = "killed";
-					session.output += "\n[killed]";
+					session.output += `${session.output ? "\n" : ""}[killed]`;
 					session.doneAt = Date.now();
 					refreshWidget();
 					return {
 						content: [{ type: "text", text: `Killed background session ${p.sessionId}.` }],
-						details: { sessionId: p.sessionId, status: "killed" },
+						details: { sessionId: p.sessionId, status: "killed", logFile: session.logFile },
 						structuredContent: {
-							sessionId: p.sessionId,
 							sessionId: p.sessionId,
 							status: "killed",
 							durationMs: session.doneAt - session.startedAt,
@@ -267,6 +280,7 @@ export default function (pi: ExtensionAPI) {
 						status: session.status,
 						exitCode: session.exitCode,
 						output: session.output,
+						logFile: session.logFile,
 					},
 					structuredContent: {
 						sessionId: p.sessionId,
@@ -275,6 +289,7 @@ export default function (pi: ExtensionAPI) {
 						durationMs: (session.doneAt ?? Date.now()) - session.startedAt,
 						output: session.output,
 						complete: session.status !== "running",
+						logFile: session.logFile,
 					},
 				};
 			}
@@ -294,7 +309,7 @@ export default function (pi: ExtensionAPI) {
 				};
 			}
 
-			const resolved = resolveCommand(config, p.agent, p.prompt, p.model);
+			const resolved = resolveAgent(p.agent);
 			if (!resolved.ok) {
 				return {
 					content: [{ type: "text", text: resolved.error }],
@@ -307,15 +322,13 @@ export default function (pi: ExtensionAPI) {
 			const timeoutSec = p.timeout ?? config.defaultTimeoutSec;
 
 			if (p.background) {
-				const effectiveCwd = cwd;
 				const session = runBackground({
-					agent: p.agent,
-					executable: resolved.executable,
-					args: resolved.args,
-					stdinData: resolved.stdinData,
-					cwd: effectiveCwd,
-					maxOutputChars: config.maxOutputChars,
-					argvWarning: resolved.argvWarning,
+					agent: resolved.agent,
+					prompt: p.prompt,
+					cwd,
+					model: p.model,
+					timeoutSec,
+					modelRegistry: ctx.modelRegistry,
 				});
 				return {
 					content: [
@@ -327,44 +340,43 @@ export default function (pi: ExtensionAPI) {
 								`Kill: dispatch({ sessionId: "${session.id}", kill: true })`,
 						},
 					],
-					details: { sessionId: session.id, status: "running", agent: p.agent, background: true },
+					details: { sessionId: session.id, status: "running", agent: resolved.agent, background: true },
 					structuredContent: { sessionId: session.id, status: "running", complete: false },
 				};
 			}
 
 			// ── Foreground (default): wait and return output ──
-			const effectiveCwd = cwd;
-
 			const startedAt = Date.now();
-			if (ctx.hasUI) ctx.ui.setStatus("sub-dispatch", `${p.reason ? p.reason + " — " : ""}dispatch ${p.agent} — running…`);
+			if (ctx.hasUI) ctx.ui.setStatus("sub-dispatch", `${p.reason ? p.reason + " — " : ""}dispatch ${resolved.agent} — running…`);
 			try {
-				const result = await spawnCommand(resolved.executable, resolved.args, {
-					cwd: effectiveCwd,
-					timeoutMs: timeoutSec * 1000,
+				const result = await runSession({
+					agent: resolved.agent,
+					prompt: p.prompt,
+					cwd,
+					model: p.model,
+					timeoutSec,
 					signal,
-					maxOutputChars: config.maxOutputChars,
+					modelRegistry: ctx.modelRegistry,
 					onOutput: (chunk) => onUpdate?.({ content: [{ type: "text", text: chunk }], details: {} }),
-					env: p.env,
-					stdinData: resolved.stdinData,
-					});
+				});
 				const durationMs = Date.now() - startedAt;
 				return {
 					content: [
 						{
 							type: "text",
 							text:
-							(resolved.argvWarning ? resolved.argvWarning + "\n" : "") +
-							`exitCode: ${result.exitCode ?? "null"} — ${result.ok ? "ok" : "failed"} — ${formatDurationMs(durationMs)}` +
-							`\n── output ──\n${result.output}`,
+								`exitCode: ${result.exitCode ?? "null"} — ${result.ok ? "ok" : "failed"} — ${formatDurationMs(durationMs)}` +
+								`\n── output ──\n${result.output}`,
 						},
 					],
 					isError: !result.ok,
-					details: { exitCode: result.exitCode, ok: result.ok, durationMs, output: result.output },
+					details: { exitCode: result.exitCode, ok: result.ok, durationMs, output: result.output, logFile: result.logFile },
 					structuredContent: {
 						exitCode: result.exitCode,
 						durationMs,
 						output: result.output,
 						complete: true,
+						logFile: result.logFile,
 					},
 				};
 			} finally {
@@ -377,11 +389,23 @@ export default function (pi: ExtensionAPI) {
 	pi.registerMessageRenderer<CompletionDetails>("sub-dispatch", renderDispatchRecord);
 
 	// ── /dispatch command: pure peek surface (dispatching happens only via
-	// the orchestrating agent's tool call — Single Dispatch Entry) ──
+	// the orchestrating agent's tool call — Single Dispatch Entry) plus log gc ──
 	pi.registerCommand("dispatch", {
-		description: "Peek a dispatch session's output. Usage: /dispatch [sessionId-substring]",
+		description: "Peek a dispatch session's output, or gc forensic logs. Usage: /dispatch [sessionId-substring | gc [N]]",
 		handler: async (args, ctx) => {
-			const needle = (args ?? "").trim();
+			const trimmed = (args ?? "").trim();
+			if (trimmed === "gc" || trimmed.startsWith("gc ")) {
+				const parsed = Number.parseInt(trimmed.slice(2).trim(), 10);
+				const keep = Number.isFinite(parsed) && parsed >= 0 ? parsed : 50;
+				const result = await gcLogs(keep);
+				const lines = [
+					`sub-dispatch logs: deleted ${result.deleted.length}, kept ${result.kept} (${logDir()})`,
+					...result.deleted.map((name) => `  − ${name}`),
+				];
+				ctx.ui.notify(lines.join("\n"), "info");
+				return;
+			}
+			const needle = trimmed;
 			const sessions = orderedSessions();
 			if (sessions.length === 0) {
 				ctx.ui.notify("No dispatch sessions.", "info");
@@ -425,29 +449,12 @@ export default function (pi: ExtensionAPI) {
 	// ── Cleanup background sessions on shutdown ──
 	pi.on("session_shutdown", (_event, ctx) => {
 		for (const session of bgSessions.values()) {
-			killProcessGroup(session.child);
+			session.abort.abort();
+			void session.agentSession?.abort().catch(() => undefined);
 		}
 		bgSessions.clear();
 		widgetHandle?.dispose();
 		widgetHandle = null;
 		if (ctx.hasUI) ctx.ui.setWidget("sub-dispatch", undefined);
 	});
-}
-
-function spawnDetached(executable: string, args: string[], cwd: string, env?: Record<string, string>, stdinData?: string): ChildProcess {
-	const child = spawn(executable, args, {
-		cwd,
-		stdio: [stdinData != null ? "pipe" : "ignore", "pipe", "pipe"],
-		detached: true,
-		env: env ? { ...process.env, ...env } : undefined,
-	});
-	if (stdinData != null) {
-		// Must always end() — a never-closed stdin makes print-mode agents wait for EOF forever.
-		try {
-			child.stdin?.end(stdinData);
-		} catch {
-			/* child already gone */
-		}
-	}
-	return child;
 }

@@ -1,11 +1,3 @@
 {
-  "defaultAgent": "pi",
-  "commands": {
-    "pi": "pi",
-    "codex": "codex",
-    "claude": "claude",
-    "cursor": "agent"
-  },
-  "maxOutputChars": 20000,
   "defaultTimeoutSec": 600
 }
