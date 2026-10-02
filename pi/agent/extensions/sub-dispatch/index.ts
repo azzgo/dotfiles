@@ -204,6 +204,15 @@ export default function (pi: ExtensionAPI) {
 			model: Type.Optional(Type.String({ description: "Model override passed as --model <value>." })),
 			env: Type.Optional(Type.Record(Type.String(), Type.String())),
 		}),
+		annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
+		outputSchema: Type.Object({
+			sessionId: Type.Optional(Type.String()),
+			status: Type.Optional(Type.String()),
+			exitCode: Type.Optional(Type.Union([Type.Number(), Type.Null()])),
+			durationMs: Type.Optional(Type.Number()),
+			output: Type.Optional(Type.String()),
+			complete: Type.Optional(Type.Boolean()),
+		}),
 
 		async execute(_toolCallId, params, signal, onUpdate, ctx) {
 			const config = loadConfig();
@@ -228,6 +237,7 @@ export default function (pi: ExtensionAPI) {
 						content: [{ type: "text", text: `Unknown background session: ${p.sessionId}` }],
 						isError: true,
 						details: { sessionId: p.sessionId },
+						structuredContent: { sessionId: p.sessionId, complete: false },
 					};
 				}
 				if (p.kill) {
@@ -239,6 +249,15 @@ export default function (pi: ExtensionAPI) {
 					return {
 						content: [{ type: "text", text: `Killed background session ${p.sessionId}.` }],
 						details: { sessionId: p.sessionId, status: "killed" },
+						structuredContent: {
+							sessionId: p.sessionId,
+							sessionId: p.sessionId,
+							status: "killed",
+							durationMs: session.doneAt - session.startedAt,
+							exitCode: session.exitCode,
+							output: session.output,
+							complete: true,
+						},
 					};
 				}
 				return {
@@ -248,6 +267,14 @@ export default function (pi: ExtensionAPI) {
 						status: session.status,
 						exitCode: session.exitCode,
 						output: session.output,
+					},
+					structuredContent: {
+						sessionId: p.sessionId,
+						status: session.status,
+						exitCode: session.exitCode,
+						durationMs: (session.doneAt ?? Date.now()) - session.startedAt,
+						output: session.output,
+						complete: session.status !== "running",
 					},
 				};
 			}
@@ -263,12 +290,18 @@ export default function (pi: ExtensionAPI) {
 					],
 					isError: true,
 					details: {},
+					structuredContent: { complete: false },
 				};
 			}
 
 			const resolved = resolveCommand(config, p.agent, p.prompt, p.model);
 			if (!resolved.ok) {
-				return { content: [{ type: "text", text: resolved.error }], isError: true, details: {} };
+				return {
+					content: [{ type: "text", text: resolved.error }],
+					isError: true,
+					details: {},
+					structuredContent: { complete: false },
+				};
 			}
 
 			const timeoutSec = p.timeout ?? config.defaultTimeoutSec;
@@ -295,6 +328,7 @@ export default function (pi: ExtensionAPI) {
 						},
 					],
 					details: { sessionId: session.id, status: "running", agent: p.agent, background: true },
+					structuredContent: { sessionId: session.id, status: "running", complete: false },
 				};
 			}
 
@@ -326,6 +360,12 @@ export default function (pi: ExtensionAPI) {
 					],
 					isError: !result.ok,
 					details: { exitCode: result.exitCode, ok: result.ok, durationMs, output: result.output },
+					structuredContent: {
+						exitCode: result.exitCode,
+						durationMs,
+						output: result.output,
+						complete: true,
+					},
 				};
 			} finally {
 				if (ctx.hasUI) ctx.ui.setStatus("sub-dispatch", undefined);
