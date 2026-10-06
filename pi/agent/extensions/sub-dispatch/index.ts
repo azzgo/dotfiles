@@ -78,6 +78,22 @@ function orderedSessions(): BgSession[] {
 	return [...running, ...settled];
 }
 
+const POLL_INTERVAL_MS = 250;
+const POLL_MS_MAX = 60000;
+
+function clampPollMs(value: number | undefined): number {
+	if (typeof value !== "number" || !Number.isFinite(value)) return 0;
+	return Math.min(POLL_MS_MAX, Math.max(0, Math.trunc(value)));
+}
+
+async function waitForSettle(session: BgSession, pollMs: number, signal?: AbortSignal): Promise<void> {
+	const deadline = Date.now() + pollMs;
+	while (session.status === "running" && Date.now() < deadline && !signal?.aborted) {
+		const slice = Math.min(POLL_INTERVAL_MS, deadline - Date.now());
+		await new Promise((resolve) => setTimeout(resolve, slice));
+	}
+}
+
 function formatSessionStatus(s: BgSession): string {
 	const durMs = (s.doneAt ?? Date.now()) - s.startedAt;
 	const lines = [
@@ -205,12 +221,13 @@ export default function (pi: ExtensionAPI) {
 		name: "dispatch",
 		label: "Dispatch",
 		description:
-			"Run a sub-agent (pi) as an in-process session and collect its output. Foreground (default) waits and returns { exitCode, durationMs, output }; background:true returns a sessionId immediately. Pass an existing sessionId to query it, plus kill:true to abort it.",
+			"Run a sub-agent (pi) as an in-process session and collect its output. Foreground (default) waits and returns { exitCode, durationMs, output }; background:true returns a sessionId immediately — prefer it for long-running tasks so the turn is not blocked, and the host is notified on completion. Pass an existing sessionId to query it (optionally long-polling with pollMs), plus kill:true to abort it.",
 		promptSnippet: "Dispatch a sub-agent (pi) in-process and collect its output",
 		parameters: Type.Object({
 			agent: Type.Optional(Type.String({ description: "Agent name; required for a new dispatch, omit when using sessionId." })),
 			prompt: Type.Optional(Type.String({ description: "Task prompt; required for a new dispatch." })),
 			sessionId: Type.Optional(Type.String({ description: "Background session id to query (or kill with kill:true)." })),
+			pollMs: Type.Optional(Type.Number({ description: "With sessionId: long-poll for up to this many ms, returning early once the session settles. Observation only — the session keeps running regardless; omit for an immediate snapshot." })),
 			kill: Type.Optional(Type.Boolean()),
 			background: Type.Optional(Type.Boolean()),
 			timeout: Type.Optional(Type.Number({ description: "Seconds (default 600)." })),
@@ -236,6 +253,7 @@ export default function (pi: ExtensionAPI) {
 				prompt?: string;
 				model?: string;
 				sessionId?: string;
+				pollMs?: number;
 				kill?: boolean;
 				background?: boolean;
 				timeout?: number;
@@ -272,6 +290,10 @@ export default function (pi: ExtensionAPI) {
 							complete: true,
 						},
 					};
+				}
+				const pollMs = clampPollMs(p.pollMs);
+				if (pollMs > 0 && session.status === "running") {
+					await waitForSettle(session, pollMs, signal);
 				}
 				return {
 					content: [{ type: "text", text: formatSessionStatus(session) }],
@@ -345,8 +367,28 @@ export default function (pi: ExtensionAPI) {
 				};
 			}
 
-			// ── Foreground (default): wait and return output ──
+			// ── Foreground (default): wait and return output. The session is
+			// registered like a background one so widget / peek / kill / pollMs
+			// work identically; only the completion notification is skipped,
+			// since the caller receives the result synchronously. ──
 			const startedAt = Date.now();
+			const fgId = generateSessionId(resolved.agent);
+			const fgSession: BgSession = {
+				id: fgId,
+				agent: resolved.agent,
+				cwd,
+				agentSession: null,
+				abort: new AbortController(),
+				output: "",
+				exitCode: null,
+				status: "running",
+				startedAt,
+				maxOutputChars: NOTIFICATION_OUTPUT_CHARS,
+			};
+			bgSessions.set(fgId, fgSession);
+			refreshWidget();
+			const onCallerAbort = () => fgSession.abort.abort();
+			signal?.addEventListener("abort", onCallerAbort, { once: true });
 			if (ctx.hasUI) ctx.ui.setStatus("sub-dispatch", `${p.reason ? p.reason + " — " : ""}dispatch ${resolved.agent} — running…`);
 			try {
 				const result = await runSession({
@@ -355,11 +397,24 @@ export default function (pi: ExtensionAPI) {
 					cwd,
 					model: p.model,
 					timeoutSec,
-					signal,
+					signal: fgSession.abort.signal,
 					modelRegistry: ctx.modelRegistry,
-					onOutput: (chunk) => onUpdate?.({ content: [{ type: "text", text: chunk }], details: {} }),
+					onSession: (created) => {
+						fgSession.agentSession = created;
+					},
+					onOutput: (chunk) => {
+						fgSession.output = (fgSession.output + chunk).slice(-fgSession.maxOutputChars);
+						refreshWidget();
+						onUpdate?.({ content: [{ type: "text", text: chunk }], details: {} });
+					},
 				});
 				const durationMs = Date.now() - startedAt;
+				fgSession.output = result.output;
+				fgSession.exitCode = result.exitCode;
+				fgSession.logFile = result.logFile;
+				fgSession.status = result.status;
+				fgSession.doneAt = Date.now();
+				refreshWidget();
 				return {
 					content: [
 						{
@@ -370,8 +425,9 @@ export default function (pi: ExtensionAPI) {
 						},
 					],
 					isError: !result.ok,
-					details: { exitCode: result.exitCode, ok: result.ok, durationMs, output: result.output, logFile: result.logFile },
+					details: { sessionId: fgId, exitCode: result.exitCode, ok: result.ok, durationMs, output: result.output, logFile: result.logFile },
 					structuredContent: {
+						sessionId: fgId,
 						exitCode: result.exitCode,
 						durationMs,
 						output: result.output,
@@ -379,7 +435,20 @@ export default function (pi: ExtensionAPI) {
 						logFile: result.logFile,
 					},
 				};
+			} catch (err) {
+				fgSession.output += `${fgSession.output ? "\n" : ""}[session error] ${err instanceof Error ? err.message : String(err)}`;
+				fgSession.status = "error";
+				fgSession.exitCode = 1;
+				fgSession.doneAt = Date.now();
+				refreshWidget();
+				return {
+					content: [{ type: "text", text: fgSession.output }],
+					isError: true,
+					details: { sessionId: fgId, exitCode: 1 },
+					structuredContent: { sessionId: fgId, exitCode: 1, complete: true },
+				};
 			} finally {
+				signal?.removeEventListener("abort", onCallerAbort);
 				if (ctx.hasUI) ctx.ui.setStatus("sub-dispatch", undefined);
 			}
 		},

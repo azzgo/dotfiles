@@ -48,12 +48,17 @@ dependency: dispatches run in-process.
 | `reason`     | string  | —       | UI label shown in the footer status while foreground-running  |
 | `model`      | string  | —       | model override passed to the sub-session (`provider/id` or bare id) |
 | `sessionId`  | string  | —       | existing background session to query (or `kill: true`)        |
+| `pollMs`     | number  | —       | with `sessionId`: long-poll up to N ms (≤60000), early-return on settle; observation only |
 | `kill`       | boolean | —       | with `sessionId`, abort the background session                |
 
 - **Foreground (default)**: waits, returns `{ exitCode, ok, durationMs, output,
   logFile }` in `details` (assistant text, tail-truncated to 20000 chars by the
   completion notification). Footer status shows `dispatch <agent> — running…`
-  while waiting; Esc (abort signal) aborts the sub-session.
+  while waiting; Esc (abort signal) aborts the sub-session. Foreground sessions
+  are **registered like background ones** — the overview widget, `/dispatch`
+  peek, forensic log, and `kill` / `pollMs` queries work identically; only the
+  completion notification is skipped, since the caller gets the result
+  synchronously.
 - **Tool hints**: `annotations` declares `destructiveHint: true` (kill / abort)
   and `openWorldHint: true` (arbitrary sub-agents).
 - **Structured value** (`outputSchema` / `structuredContent`, what codemode
@@ -68,8 +73,12 @@ dependency: dispatches run in-process.
   wakes the agent (if idle) or queues behind an in-flight turn, carrying status,
   exit code, the output tail, and how to fetch full details. So the caller can
   fire-and-end-turn with no polling. `dispatch({ sessionId })` remains for
-  mid-run status / diagnostics; `dispatch({ sessionId, kill: true })` aborts the
-  sub-session (`AbortController` + `session.abort()`) and reports `killed`.
+  mid-run status / diagnostics; `dispatch({ sessionId, pollMs })` long-polls —
+  it blocks up to `pollMs` (early return once the session settles), so a
+  codemode script can fan out background dispatches and join them in one script
+  without busy-waiting (the sandbox has no sleep). Either way the query is
+  observation only: the sub-session keeps running under its own
+  `AbortController` and only `kill: true` aborts it.
 - **Abort / timeout**: `AbortSignal` and the timeout timer both call
   `session.abort()` on the in-process session; the status lands on `killed` or
   `timeout` and the forensic dump is still written.
