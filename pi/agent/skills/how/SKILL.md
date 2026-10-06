@@ -149,33 +149,48 @@ Every dispatched sub-agent prompt must explicitly include the read-only constrai
 - ✅ may only use glob, grep, read, and read-only shell commands (ls, cat, find, git log, git diff, etc.)
 
 ## Code Mode shape
+## Code Mode shape
 
-Write ONE `codemode` script that dispatches the exploration sub-agents and awaits them inline
-(foreground promises — no polling):
+Write ONE `codemode` script: dispatch all exploration sub-agents with
+`background: true`, then join them in-script with `pollMs` long-polls. Never
+foreground-await a dispatch in a script — that black-boxes the whole wait
+(no mid-run visibility, no early kill), and the sandbox has no sleep for
+hand-rolled polling.
 
 ```ts
-const [ui, data, backend] = await Promise.all([
-  tools.dispatch({ agent: "pi", prompt: `<subtask 1 prompt incl. read-only constraint>` }),
-  tools.dispatch({ agent: "pi", prompt: `<subtask 2 prompt incl. read-only constraint>` }),
-  tools.dispatch({ agent: "pi", prompt: `<subtask 3 prompt incl. read-only constraint>` }),
+const jobs = await Promise.all([
+  tools.dispatch({ agent: "pi", prompt: `<subtask 1 prompt incl. read-only constraint>`, background: true, reason: "subtask-1" }),
+  tools.dispatch({ agent: "pi", prompt: `<subtask 2 prompt incl. read-only constraint>`, background: true, reason: "subtask-2" }),
+  tools.dispatch({ agent: "pi", prompt: `<subtask 3 prompt incl. read-only constraint>`, background: true, reason: "subtask-3" }),
 ]);
-console.log(ui, data, backend);
-return { ui, data, backend };
+
+let results;
+for (let i = 0; i < 120; i++) {
+  results = await Promise.all(jobs.map((j) => tools.dispatch({ sessionId: j.sessionId, pollMs: 5000 })));
+  if (results.every((r) => r.complete)) break;
+}
+return results.map((r) => ({ status: r.status, output: r.output }));
 ```
 
-- Each `tools.dispatch` resolves to a structured object `{ exitCode, durationMs, output, complete }`
-  (read `r.output` directly — no JSON.parse; no `ok` field — check `exitCode === 0`);
-  sub-agents run concurrently (up to
-  QuickJS concurrency limits; dispatch is a normal tool inside the script).
-- Each dispatch has its own internal timeout (default 600s; pass `timeout` to
-  override); exploration sub-agents finish naturally and return their findings
-  as output — no `dispatch({ sessionId })` queries needed in this shape.
+- Fire the batch with `background: true` — each call resolves immediately with
+  `{ sessionId, complete: false }`.
+- `dispatch({ sessionId, pollMs: 5000 })` long-polls: blocks up to 5s, returns
+  early once that session settles. One loop round ≈ 5s; each query is
+  observation only and never affects the sub-agent.
+- Each query resolves to a structured object `{ sessionId, status, exitCode,
+  durationMs, output, complete, logFile }` (read `r.output` directly — no
+  JSON.parse; no `ok` field — check `exitCode === 0`).
+- Mid-run intervention: if a round shows a session errored / ran off track,
+  `tools.dispatch({ sessionId: j.sessionId, kill: true })` it and re-dispatch
+  with a sharper prompt instead of waiting out its timeout.
+- Cap the loop rounds (e.g. 120 ≈ 10 min) so a hung session can't spin forever;
+  on cap, kill stragglers and synthesize from what completed.
 - Include the read-only constraint in every sub-agent prompt (same as the
   native shape above).
 
 ## Parallel efficiency
 
-- Fire all subtasks at once in one batch (`background: true`), end your turn, and collect results from the auto-notifications (no sleep+query polling)
+- Fire all subtasks at once in one batch (`background: true`), end your turn, and collect results from the auto-notifications (no hand-rolled sleep+query busy-wait; the codemode script shape joins via `pollMs` instead)
 - If a query reports the sub-agent errored / exited early / produced no substantive output, re-dispatch that subtask with a sharper prompt
 - In the final synthesis, keep only sub-results with substantive content
 

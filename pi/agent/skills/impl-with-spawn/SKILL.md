@@ -81,32 +81,44 @@ dispatch({ agent: "pi", prompt: "Fix login redirect bug in auth.ts — redirect 
 4. Summarize what was done to the user
 
 ## Code Mode shape
+## Code Mode shape
 
-Do **not** use background+query here. Instead write ONE `codemode` script that orchestrates sub-agents with `await tools.dispatch(...)`
-(foreground promise — completes when the sub-agent exits, no polling):
-
-```ts
-const impl = await tools.dispatch({ agent: "pi", prompt: "concrete task", timeout: 300 });
-console.log(impl);
-return { impl };
-```
-
-- Parallel independent subtasks with `Promise.all`:
+Write ONE `codemode` script: dispatch sub-agents with `background: true`, then
+join them in-script with `pollMs` long-polls. Never foreground-await a dispatch
+in a script — that black-boxes the whole wait (no mid-run visibility, no early
+kill), and the sandbox has no sleep for hand-rolled polling.
 
 ```ts
-const [a, b, c] = await Promise.all([
-  tools.dispatch({ agent: "pi", prompt: "dark mode in SettingsPage.tsx", timeout: 300 }),
-  tools.dispatch({ agent: "pi", prompt: "fix login redirect in auth.ts", timeout: 300 }),
-  tools.dispatch({ agent: "pi", prompt: "add search filters", timeout: 300 }),
+const jobs = await Promise.all([
+  tools.dispatch({ agent: "pi", prompt: "dark mode in SettingsPage.tsx", background: true, reason: "impl-a", timeout: 300 }),
+  tools.dispatch({ agent: "pi", prompt: "fix login redirect in auth.ts", background: true, reason: "impl-b", timeout: 300 }),
+  tools.dispatch({ agent: "pi", prompt: "add search filters", background: true, reason: "impl-c", timeout: 300 }),
 ]);
-return { a, b, c };
+
+let results;
+for (let i = 0; i < 120; i++) {
+  results = await Promise.all(jobs.map((j) => tools.dispatch({ sessionId: j.sessionId, pollMs: 5000 })));
+  if (results.every((r) => r.complete)) break;
+}
+return results.map((r) => ({ status: r.status, exitCode: r.exitCode, output: r.output }));
 ```
 
-- `tools.dispatch` resolves to a structured object `{ exitCode, durationMs, output, complete }`
-  (read fields directly, e.g. `r.output` — no JSON.parse). There is no `ok` field:
-  check `exitCode === 0` (or the rejected promise / `complete`). Each dispatch has
-  its own internal timeout (pass `timeout` seconds; default 600). Parallel
-  independent dispatches with `Promise.all`.
+- Fire the batch with `background: true` — each call resolves immediately with
+  `{ sessionId, complete: false }`.
+- `dispatch({ sessionId, pollMs: 5000 })` long-polls: blocks up to 5s, returns
+  early once that session settles. One loop round ≈ 5s; each query is
+  observation only and never affects the sub-agent.
+- Each query resolves to a structured object `{ sessionId, status, exitCode,
+  durationMs, output, complete, logFile }` (read fields directly — no
+  JSON.parse; no `ok` field — check `exitCode === 0`).
+- Mid-run intervention: if a round shows a session errored / ran off track,
+  `tools.dispatch({ sessionId: j.sessionId, kill: true })` it and re-dispatch
+  with more specific instructions instead of waiting out its timeout.
+- Cap the loop rounds (e.g. 120 ≈ 10 min) so a hung session can't spin forever;
+  on cap, kill stragglers and synthesize from what completed.
+- The tool-batch + end-turn shape above stays preferred when you don't need the
+  joined results inside one turn — completion auto-notifies and you synthesize
+  across turns.
 - Still respect dependency tiers: run sequential subtasks as sequential `await`s;
   never parallelize when one subtask's output feeds another.
 
