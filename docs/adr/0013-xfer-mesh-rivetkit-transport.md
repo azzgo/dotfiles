@@ -13,4 +13,6 @@
 - **跨机文档为纯静态快照**：Follow-up channel（本机 page-tool CLI）一节对 mesh 投递移除，不提供追问通道——回信循环覆盖不了它（broker 不是 agent；源会话也可能已结束）。
 - **web-picker/broker 永不注册为 actor、永不连引擎**：跨机发送借道本机 mesh 实例；清单用读穿查询 + broker 内短 TTL 缓存平滑 UI，无持久缓存（引擎是唯一真相源）。
 
+实施注记（bundle 模式）：rivetkit 的 in-process runner 必须用 native 二进制（wasm 被官方禁止承担 envoy），无法打进 JS bundle。因此 rivetkit 不进任何依赖清单；JS 部分预打包为入库的 bundle（同 web-picker 双轨模式），native .node 由首次 `mesh up` 按锁定版本从 npm 下载到本机缓存（不进 git）。曾评估把 runner 挪到引擎侧 docker——否决，因为引擎侧 runner 会立即消费 queue，pi 不在线时入站消息无人接收，离线缓冲语义被破坏。
+
 Considered: 纯 Tailscale 自写注册/路由/缓冲（全要手造，durable queue 是大头）；独立 bridge daemon（多一个需 GC 的常驻组件）；registry actor（与引擎判死打架）；自动 fallback 传输选择（歧义逻辑不值 5 个字符）。
