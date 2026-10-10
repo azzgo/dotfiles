@@ -117,8 +117,14 @@ install-pi:
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/workflow-runtime ~/.pi/agent/extensions/workflow-runtime
     rm -rf ~/.pi/agent/extensions/code-mode ~/.pi/agent/extensions/readonly-mode
 
+    # xfer moved to its own repo (github.com/azzgo/pi-xfer)
+    if [ ! -d "$HOME/dev/self/pi-xfer/.git" ]; then
+        git clone https://github.com/azzgo/pi-xfer.git "$HOME/dev/self/pi-xfer"
+    else
+        git -C "$HOME/dev/self/pi-xfer" pull --ff-only
+    fi
     rm -rf ~/.pi/agent/extensions/xfer
-    ln -s {{ dotfiles_dir }}/pi/agent/extensions/xfer ~/.pi/agent/extensions/xfer
+    ln -s "$HOME/dev/self/pi-xfer" ~/.pi/agent/extensions/xfer
     rm -rf ~/.pi/agent/extensions/sub-dispatch
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/sub-dispatch ~/.pi/agent/extensions/sub-dispatch
     rm -rf ~/.pi/agent/extensions/command-palette
