@@ -15,4 +15,6 @@
 
 实施注记（bundle 模式）：rivetkit 的 in-process runner 必须用 native 二进制（wasm 被官方禁止承担 envoy），无法打进 JS bundle。因此 rivetkit 不进任何依赖清单；JS 部分预打包为入库的 bundle（同 web-picker 双轨模式），native .node 由首次 `mesh up` 按锁定版本从 npm 下载到本机缓存（不进 git）。曾评估把 runner 挪到引擎侧 docker——否决，因为引擎侧 runner 会立即消费 queue，pi 不在线时入站消息无人接收，离线缓冲语义被破坏。
 
+E2E 注记：durable queue 的缓冲从目标 actor 创建后才生效——向从未上线过的节点发送会在超时后报错（现实现 30s），而非无限期缓冲；目标节点下线前已入队的消息在节点重新上线后仍可消费。引擎侧 crash_policy 默认即 sleep，符合本 ADR，无需额外配置。
+
 Considered: 纯 Tailscale 自写注册/路由/缓冲（全要手造，durable queue 是大头）；独立 bridge daemon（多一个需 GC 的常驻组件）；registry actor（与引擎判死打架）；自动 fallback 传输选择（歧义逻辑不值 5 个字符）。
