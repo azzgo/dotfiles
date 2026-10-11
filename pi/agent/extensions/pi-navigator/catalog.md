@@ -34,7 +34,8 @@ capability explicitly:
 **Have an idea / requirement to sharpen**
 
 - Raw requirements from documents (PRD, meeting notes, Figma dumps) → `/skill:intake` (grills ONE archived source at a time, no solutions).
-- A plan that needs stress-testing against the domain model → `/skill:grill-with-docs` (updates CONTEXT.md / ADRs inline as decisions crystallise).
+- A plan that needs stress-testing → `/skill:grilling` (frontier rounds of questions, one recommended answer each).
+- A plan that also needs stress-testing against the domain model → `/skill:grill-with-docs` (updates CONTEXT.md / ADRs inline as decisions crystallise).
 
 **Foggy, multi-session effort** → `/skill:wayfinder` first (decision map of Tickets), then resolve tickets one at a time.
 

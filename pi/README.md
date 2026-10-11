@@ -61,7 +61,7 @@ Code Mode 与 MCP 已迁移到 pi 内置能力：codemode 经 `settings.json` �
 
 - `~/.pi/agent/prompts/*.md`
 
-这样仓库里的 prompts（例如 `grill-me.md`、`wayfinder.md`）可以直接作为全局 `/prompt-name` 使用。
+这样仓库里的 prompts（例如 `wayfinder.md`、`humanize.md`）可以直接作为全局 `/prompt-name` 使用。（`grill-me.md` 已转化为 `pi/agent/skills/grilling/` skill。）
 
 页面元素拾取走 xfer（已迁至 [azzgo/pi-xfer](https://github.com/azzgo/pi-xfer)）的 web-picker：Tampermonkey userscript 手动连接本地 broker daemon，标注 + prompt 以 xfer handoff 推入目标 session；安装与排障见 pi-xfer 仓库的 `docs/web-picker.md`。`open-chrome-pause.md` 保留（MCP 浏览器入口），随 prompts 目录一起 link。
 

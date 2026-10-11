@@ -24,10 +24,9 @@ This skill does **not** review code. It sets up a project-level code-review skil
 Run a grilling interview about how code review should work **in this project**. Skill-selection rule: **local first** — probe for a grill-type skill in this order and follow the first one found:
 
 1. `<project>/.agents/skills/` — any project-local grilling / plan-challenging skill
-2. `~/.agents/skills/grill-with-docs`
-3. `~/.pi/agent/skills/` — any grilling skill there
+2. `~/.agents/skills/grilling` (or `~/.agents/skills/grill-with-docs`, which composes it)
 
-If none exists, fall back to the inline question list below (one question at a time, always offering your recommended answer; if a question can be answered by exploring the repo, explore instead of asking):
+If none exists, fall back to the inline question list below (frontier rounds per the shared `grilling` skill — batch the currently-unblocked questions, one recommended answer each; if a question can be answered by exploring the repo, explore instead of asking):
 
 1. **What does review most need to catch here?** (style regression? spec/requirement drift? API-doc mismatch? race conditions? design debt?) → decides which of the three axes (Standards / Spec / Documentation Consistency) to keep and which supplementary dimensions (Code Quality / Race Condition / Removal Plan / Simplification) to promote or drop.
 2. **Where do specs/requirements live?** (commit conventions? a spec dir? a ticket system? nowhere?) → pre-fills step 2 of the template.

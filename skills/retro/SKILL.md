@@ -54,7 +54,7 @@ Group findings into improvement candidates, each with evidence links (session id
 
 ### 4. Grilling session (consensus gate)
 
-Run a grilling interview over the candidates before acting. Skill-selection rule — **local first**: use the first grilling-type skill found in `<project>/.agents/skills/`, then `~/.agents/skills/`, then `~/.pi/agent/skills/`; otherwise interview inline (one question at a time, recommended answer offered each time).
+Run a grilling interview over the candidates before acting. Skill-selection rule — **local first**: use the first grilling-type skill found in `<project>/.agents/skills/`, then `~/.agents/skills/`, then `~/.pi/agent/skills/`; otherwise interview inline (frontier rounds: batch the currently-unblocked questions, number them, offer a recommended answer each; facts come from the repo, not the user).
 
 Decide per candidate: act now / queue for later / drop. For "act now", decide the **form** together with the user — the evidence suggests candidates, the user owns the verdict.
 

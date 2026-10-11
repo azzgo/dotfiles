@@ -6,11 +6,9 @@ disable-model-invocation: true
 
 <what-to-do>
 
-Interview me relentlessly about every aspect of this plan until we reach a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions one-by-one. For each question, provide your recommended answer.
+Run a relentless grilling interview about this plan, following the shared **`grilling`** skill for the mechanics: the design tree, frontier rounds, one recommended answer per question, facts looked up (or delegated to a sub-agent) rather than asked, and no action until the user confirms shared understanding.
 
-Ask the questions one at a time, waiting for feedback on each question before continuing.
-
-If a question can be answered by exploring the codebase, explore the codebase instead.
+While grilling, also **actively build and sharpen the project's domain model** as you design. This is the active discipline: challenging terms, inventing edge-case scenarios, and writing the glossary and decisions down the moment they crystallise. (Merely reading `CONTEXT.md` for vocabulary is not this skill: this skill is for when you're changing the model, not just consuming it.)
 
 When explaining your understanding of the current design or a proposed change, follow the shared **`show-me`** skill: prefer the smallest visual form that makes the point clear (call tree, component tree, diff sketch, pseudocode) over prose — real names and paths, one visual per point.
 

@@ -36,16 +36,6 @@ Generic, pi-independent skills maintained by this repo live in the repo-root `sk
 | **Adjustments** | Converted prompt → skill per Agent Skills standard; added `disable-model-invocation: true` (no model auto-invocation; explicit `/skill:explore-codebase` trigger only); replaced `$@` prompt substitution with appended `User arguments:` (skill args are appended raw, not substituted). `wayfinder` skill references updated to `/skill:explore-codebase`. 2026-08-20: root-cause fix after a live exploration session blocked on `sleep 90` — dispatch template was missing `handsFree: { autoExitOnQuiet: false }` (sub-agents quiet-killed at 16s mid-flight) and the skill had no "end turn after dispatch" instruction (2026-08-09 fix only covered impl-with-spawn). Template now requires `autoExitOnQuiet: false`; added Wait discipline section (end turn immediately, triggerTurn wake-up, never sleep/poll); removed the status-check-and-retry bullet that invited polling. 2026-09-08: Phase 4 report presentation upgraded by borrowing the show-me skill's visual vocabulary; 2026-09-09: inline visual-form examples replaced by a by-name reference to the `show-me` skill (single source of truth, token saving — same pattern as `spawn-model-selection`). 2026-09-17: renamed `explore-codebase` → `how` (short invocation, pairs with the companion `why` skill, name now matches the pstack `how` semantics it absorbed — the skill owns pstack-how's full scope after the same-day absorption); all live references updated (catalog.md, patterns, wayfinder, why, spawn-model-selection, CONTEXT.md); historical mentions in ADRs left as-is. 2026-09-17: absorbed pstack `how`'s three additions (upstream commit 5bf2b15): placement/ownership/layering question types added to description and Phase 1; complexity triage (simple → single inline pass or one sub-agent, skip fan-out); Phase 4 output skeleton (Overview / Key Concepts / How It Works / Where Things Live / Gotchas) with rationale questions routed to the new `why` skill. 2026-10-06: Code Mode shape rewritten — foreground `await Promise.all` inline replaced by background batch + `pollMs` long-poll join (sub-dispatch gained `pollMs`); added mid-run kill/re-dispatch and loop-round cap guidance; "Parallel efficiency" polling prohibition clarified to target hand-rolled sleep+query, not `pollMs`. |
 | **Upstream** | None (repo-owned; no external upstream to track) |
 
-### `show-me`
-
-| Field | Value |
-|-------|-------|
-| **Source** | Attributed to mattpocock's `/show-me` skill; no longer present in https://github.com/mattpocock/skills (no upstream commit to track) — the local copy is authoritative |
-| **Description** | Help the user understand the current topic visually with concise diagrams, code-shape sketches, and focused HTML artifacts (pseudocode / call tree / component tree / file tree / Mermaid / diff) |
-| **Installed** | 2026-09-07 (into `~/.agents/skills/`); 2026-09-09 moved into this repo directory `pi/agent/skills/show-me/` (installed via `just install-pi` → `~/.pi/agent/skills/`) and now referenced by name from `explore-codebase` and `code-review` |
-| **Adjustments** | None to SKILL.md content; location moves only |
-| **Upstream** | None trackable (removed upstream); local copy is authoritative |
-
 ### `impl-with-spawn`
 
 | Field | Value |

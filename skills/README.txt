@@ -28,6 +28,27 @@ Because `~/.agents/skills/` is also a pi skill search path, these skills remain 
 | **Adjustments** | `disable-model-invocation: true` (prompt-routed only); default `--headless=false`; project-scoped profile via `~/.cache/chrome-devtools-mcp/profiles/<pwd-hash>` with `.mapping.json` for human readability; multi-profile suffix support for clean/separate contexts; removed PWA, Memory Debugging, experimental features sections; `open-chrome-pause.md` prompt adapted to route through this skill. 2026-09-07: moved from `pi/agent/skills/` to repo-root `skills/` (decoupled from pi; installed via `just install-skills` → `~/.agents/skills`). 2026-09-13: restructured to MCP-primary/CLI-fallback — SKILL.md is now routing + shared conventions, with `references/mcp-sop.md` (agent-host-managed server, preferred), `references/cli-sop.md` (self-managed daemon fallback) and shared `references/tool-catalog.md`; skills are now provisioned per project via the project-skills extension (`/pi-skills`) instead of global install. 2026-09-13: renamed `chrome-devtools-cli` → `chrome-devtools` (MCP is primary; name no longer CLI-specific) |
 | **Upstream** | https://github.com/ChromeDevTools/chrome-devtools-mcp/tree/main/skills/chrome-devtools-cli |
 
+### `show-me`
+
+| Field | Value |
+|-------|-------|
+| **Source** | Attributed to mattpocock's `/show-me` skill; no longer present in https://github.com/mattpocock/skills (no upstream commit to track) — the local copy is authoritative |
+| **Description** | Help the user understand the current topic visually with concise diagrams, code-shape sketches, and focused HTML artifacts (pseudocode / call tree / component tree / file tree / Mermaid / diff) |
+| **Installed** | 2026-09-07 (into `~/.agents/skills/`); 2026-09-09 moved to `pi/agent/skills/show-me/`; 2026-10-09 moved back to repo-root `skills/` — no pi mechanism coupling, referenced by name only |
+| **Adjustments** | None to SKILL.md content; location moves only |
+| **Upstream** | None trackable (removed upstream); local copy is authoritative |
+
+### `grilling`
+
+| Field | Value |
+|-------|-------|
+| **Source** | Converted from `pi/agent/prompts/grill-me.md` (repo-owned prompt), redesigned against [mattpocock/skills grilling](https://github.com/mattpocock/skills/tree/main/skills/productivity/grilling) |
+| **Description** | Grill the user relentlessly about a plan/decision/idea until shared understanding — the topic mapped as a design tree, worked in frontier rounds: each round asks every currently-unblocked question (numbered, one recommended answer each), the user's answers settle decisions and push the frontier outward; facts are looked up or delegated to a sub-agent, never asked; no action until the user confirms shared understanding |
+| **Installed** | 2026-10-09 |
+| **Source commit** | `49dd158` (2026-10-09) — mattpocock/skills HEAD |
+| **Adjustments** | Prompt → skill per Agent Skills standard (`disable-model-invocation: true`, `$@` replaced by appended user arguments). Adopted upstream's frontier-rounds redesign in full (replaces the old one-question-at-a-time rule); kept the old prompt's "do not enact until confirmed" gate. Sub-agent wording generalized (upstream "dispatch", ours "spawn") — no pi coupling. Added a by-name `show-me` reference for presenting design understanding. Upstream `domain-modeling` was NOT ported as a separate skill — its discipline lives in the `grill-with-docs` skill below |
+| **Upstream** | https://github.com/mattpocock/skills/tree/main/skills/productivity/grilling — check for upstream changes regularly |
+
 ### `grill-with-docs`
 
 | Field | Value |
@@ -35,8 +56,9 @@ Because `~/.agents/skills/` is also a pi skill search path, these skills remain 
 | **Source** | Custom / originally from Pi examples |
 | **Description** | Grilling session that challenges plans against existing domain model, sharpens terminology, and updates documentation (CONTEXT.md, ADRs) inline as decisions crystallise |
 | **Installed** | 2026-06-15 |
-| **Adjustments** | Originally adapted from Pi SDK examples. Created CONTEXT-FORMAT.md and ADR-FORMAT.md as supplementary reference docs. 2026-07-31: added `disable-model-invocation: true` (no model auto-invocation; explicit trigger only). 2026-09-07: moved from `pi/agent/skills/` to repo-root `skills/` (decoupled from pi; installed via `just install-skills` → `~/.agents/skills`). 2026-09-09: added a by-name reference to the `show-me` skill (now in `pi/agent/skills/show-me/`) for visual presentation of design understanding / proposed changes during grilling |
-| **Upstream** | Derived from Pi SDK docs; no external upstream to track |
+| **Adjustments** | Originally adapted from Pi SDK examples. Created CONTEXT-FORMAT.md and ADR-FORMAT.md as supplementary reference docs. 2026-07-31: added `disable-model-invocation: true` (no model auto-invocation; explicit trigger only). 2026-09-07: moved from `pi/agent/skills/` to repo-root `skills/` (decoupled from pi; installed via `just install-skills` → `~/.agents/skills`). 2026-09-09: added a by-name reference to the `show-me` skill for visual presentation of design understanding / proposed changes during grilling. 2026-10-09: synced with upstream mattpocock/skills redesign (commit 49dd158): interview mechanics delegated by name to the new `grilling` skill (design tree / frontier rounds, replacing one-question-at-a-time); upstream `domain-modeling` skill deliberately folded in as the "actively build and sharpen the domain model" discipline instead of a separate skill; kept this repo's CONTEXT.md naming (upstream renamed to GLOSSARY.md — not adopted, repo-wide convention here is CONTEXT.md) |
+| **Upstream** | https://github.com/mattpocock/skills/tree/main/skills/engineering/grill-with-docs — check for upstream changes regularly |
+| **Upstream** | Derived from Pi SDK docs; synced 2026-10-09 against https://github.com/mattpocock/skills/tree/main/skills/engineering/grill-with-docs (commit 49dd158) |
 
 ### `handoff`
 
@@ -84,7 +106,7 @@ Because `~/.agents/skills/` is also a pi skill search path, these skills remain 
 | Field | Value |
 |-------|-------|
 | **Source** | Repo-owned; dialogue design informed by [DivikWu/product-requirement-craft](https://github.com/DivikWu/product-requirement-craft) (layered grilling + progressive disclosure) and [45ck/business-analysis-skills](https://github.com/45ck/business-analysis-skills) (ambiguity/assumption hunting), heavily narrowed to single-source alignment |
-| **Description** | Requirement intake funnel — archive parsed raw inputs (PRD text, meeting notes, Figma extracts, spreadsheets) per requirement under `~/.cache/intake/<workspace-slug>/<requirement-slug>/`, grilling on ONE source at a time until the agent's understanding matches the user's. No cross-source reconciliation, no solutions, no codebase access; output is the aligned raw requirement, handed down to grill-me / grill-with-docs / wayfinder |
+| **Description** | Requirement intake funnel — archive parsed raw inputs (PRD text, meeting notes, Figma extracts, spreadsheets) per requirement under `~/.cache/intake/<workspace-slug>/<requirement-slug>/`, grilling on ONE source at a time until the agent's understanding matches the user's. No cross-source reconciliation, no solutions, no codebase access; output is the aligned raw requirement, handed down to grilling / grill-with-docs / wayfinder |
 | **Installed** | 2026-09-16 |
 | **Adjustments** | Files: SKILL.md (core flow only, grill-with-docs style) + INTAKE-FORMAT.md (STATE.md / raw frontmatter / aligned templates). workspace-slug reuses the wayfinder convention (repo-root abs path → dash-slug with trailing dash). Mandatory step 0: every invocation first lists existing requirement slugs and asks the user to pick or open a new funnel. `STATE.md` is the cross-session baton (index + one-liner, never a conversation log). Parsing intentionally upstream (inputs must arrive pre-parsed) |
 | **Upstream** | None (repo-owned; reference-only upstreams above) |
@@ -129,7 +151,7 @@ Because `~/.agents/skills/` is also a pi skill search path, these skills remain 
 | **Description** | Reviewable decision trail for long-running/unattended work — one TSV row per decision (what, why, evidence, result), append-only, local by default, committed only when a reviewer needs the trail |
 | **Installed** | 2026-09-17 |
 | **Source commit** | `5bf2b15` (2026-09-13) — `feat(pstack): setup-pstack budget ask` |
-| **Adjustments** | Renamed `show-me-your-work` → `decision-log` (name clash with `pi/agent/skills/show-me`); transcript-audit step generalized from Cursor's `agent-transcripts/` path to "best available record of the run" (agentsview etc.); cross-model review made conditional on a second model family being available instead of Cursor multi-model spawn; references to the upstream `unslop`/`encode-lessons-in-structure` principle skills dropped (not present in this repo). Template TSV and `log.sh` helper kept as-is |
+| **Adjustments** | Renamed `show-me-your-work` → `decision-log` (name clash with the `show-me` skill); transcript-audit step generalized from Cursor's `agent-transcripts/` path to "best available record of the run" (agentsview etc.); cross-model review made conditional on a second model family being available instead of Cursor multi-model spawn; references to the upstream `unslop`/`encode-lessons-in-structure` principle skills dropped (not present in this repo). Template TSV and `log.sh` helper kept as-is |
 | **Upstream** | https://github.com/cursor/plugins/tree/main/pstack — check for upstream changes regularly |
 
 ### `unslop`
