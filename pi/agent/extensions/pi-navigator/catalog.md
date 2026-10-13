@@ -71,11 +71,15 @@ capability explicitly:
 
 ## Workflow patterns
 
-`/wf start <name>` instantiates a Pattern from `~/.pi/agent/patterns/`. Root
-patterns are intentionally per-project only; `examples/` (bugfix, feature, perf)
-are references for drafting a project Definition via `/wf new`, not for direct
-use. When the task maps onto a repeated multi-step shape, suggest `/wf new` and
-draft a Definition whose node `suggest` entries reference the skills above.
+`/wf start <name>` instantiates a Pattern from `~/.pi/agent/patterns/`. Two kinds
+live there: stage-shaped global patterns (root, directly startable) and `examples/`
+(bugfix, feature, perf) — project-shaped references for drafting a project
+Definition via `/wf new`, not for direct use. Currently one global pattern:
+**salon** — pre-implementation alignment: intake materials → grill/prototype
+discussion → converge on a written Spec; no code changes. When a task maps onto
+salon's shape (materials first, discussion, deliverable is a Spec), suggest
+`/wf start salon`; otherwise suggest `/wf new` and draft a Definition whose node
+`suggest` entries reference the skills above.
 
 ## Anti-patterns
 
