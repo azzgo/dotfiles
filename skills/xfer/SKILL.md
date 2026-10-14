@@ -58,13 +58,13 @@ kind: task | notification
 
 ```sh
 # to a local peer on this machine
-scripts/xfer send <target> /tmp/h.md "<one-line summary>" --from <my-node-name>
+scripts/xfer send <target> /tmp/h.md "<one-line summary>" --kind <task|notification> --from <my-node-name>
 
 # to a mesh node (no join, no daemon required)
-scripts/xfer mesh send <target> /tmp/h.md "<one-line summary>" --from <my-node-name>
+scripts/xfer mesh send <target> /tmp/h.md "<one-line summary>" --kind <task|notification> --from <my-node-name>
 ```
 
-- The `kind:` line is the whole reply contract. `task` obliges the receiver to send exactly one handoff back once it has a conclusion — done, blocked, or needing input. `notification` asks for nothing: the receiver stays silent unless it is missing information or the doc conflicts with fact. A doc with no `kind:` line reads as a notification. In a pi session the send tool takes `kind` as a required argument and stamps the line, so pass it rather than hand-writing the header.
+- `--kind` is required and is the whole reply contract — the send tool writes the `kind:` header line into the delivered doc, overriding whatever the file says, so never hand-write it. `task` obliges the receiver to send exactly one handoff back once it has a conclusion — done, blocked, or needing input. `notification` asks for nothing: the receiver stays silent unless it is missing information, or the doc conflicts with fact. Sending without a kind fails loudly; sending with the wrong one costs you the reply, silently.
 - Prints the handoff id; exit 0 means **enqueued**, not done. There is no reply wait, and a task's conclusion arrives as a separate handoff — never block on it.
 - **Never guess a target.** Get names from `peers`. `<target>` is a local socket name for `send` and a mesh node name for `mesh send`.
 - Sending to a node that has **never** been online does not buffer — it errors after ~30s. A node that was online before and went offline **is** buffered and receives on rejoin.
