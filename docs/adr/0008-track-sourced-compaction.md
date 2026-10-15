@@ -1,6 +1,6 @@
 # Track supplies the compaction summary; built-in summarization is never used
 
-Status: accepted
+Status: superseded by [ADR 0015](0015-compaction-summary-as-pointer.md) — Track is no longer the compaction summary; the summary is an orientation plus a retrieval handle instead.
 
 ## Context
 

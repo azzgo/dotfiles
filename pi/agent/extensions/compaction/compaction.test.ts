@@ -6,9 +6,9 @@ import { registerHooks } from "node:module";
 import { pathToFileURL } from "node:url";
 
 /**
- * Integration tests for the Compaction Reconcile path (ADR 0008).
+ * Integration tests for the Compaction Summary path (ADR 0015).
  *
- * These exercise the real `buildTrackCompaction`, so the Pi runtime values it
+ * These exercise the real `buildCompactionSummary`, so the Pi runtime values it
  * imports are stubbed via a loader hook (pattern from ../../xfer/commands.test.ts).
  * The behaviour under test is the failure accounting: Pi swallows extension
  * exceptions and treats a bare `undefined` result as "no extension result",
@@ -17,10 +17,10 @@ import { pathToFileURL } from "node:url";
  *
  * Requires the Pi runtime to be resolvable — true wherever the extension is
  * actually installed. When it is not, the suite skips instead of failing:
- * `reconcile.test.ts` still covers the pure parsing logic.
+ * `summary.test.ts` / `fileops.test.ts` still cover the pure logic.
  */
 
-let buildTrackCompaction: typeof import("./compaction").buildTrackCompaction;
+let buildCompactionSummary: typeof import("./compaction").buildCompactionSummary;
 
 /**
  * Locate pi-ai's entry module without hardcoding a machine-specific install path.
@@ -67,7 +67,7 @@ beforeAll(async () => {
 			return nextResolve(specifier, context);
 		},
 	});
-	({ buildTrackCompaction } = await import("./compaction.js"));
+	({ buildCompactionSummary } = await import("./compaction.js"));
 });
 
 const tmpDirs: string[] = [];
@@ -82,11 +82,7 @@ afterEach(() => {
 	for (const dir of tmpDirs.splice(0)) fs.rmSync(dir, { recursive: true, force: true });
 });
 
-function seedTrack(cwd: string, progress = "## Timeline\n- [2026-01-01T00:00:00.000Z] seed entry"): void {
-	fs.mkdirSync(path.join(cwd, ".pi/track"), { recursive: true });
-	fs.writeFileSync(path.join(cwd, ".pi/track/findings.md"), "# Findings\n\n## Notes\n- [empty]\n", "utf8");
-	fs.writeFileSync(path.join(cwd, ".pi/track/progress.md"), `# Progress\n\n${progress}\n`, "utf8");
-}
+const SESSION_FILE = "/tmp/pi-sessions/session.jsonl";
 
 function makeCtx(cwd: string, complete: (model: unknown, req: unknown, opts: unknown) => Promise<unknown>) {
 	return {
@@ -94,6 +90,7 @@ function makeCtx(cwd: string, complete: (model: unknown, req: unknown, opts: unk
 		hasUI: true,
 		model: { id: "stub" },
 		modelRegistry: { complete },
+		sessionManager: { getSessionFile: () => SESSION_FILE },
 		ui: { notify: () => {} },
 	} as never;
 }
@@ -102,7 +99,11 @@ const textResponse = (text: string) => ({ content: [{ type: "text", text }], usa
 
 function prep() {
 	return {
-		messagesToSummarize: [{ role: "user", content: [{ type: "text", text: "earlier work" }], timestamp: 1 }],
+		messagesToSummarize: [
+			{ role: "user", content: [{ type: "text", text: "earlier work" }], timestamp: 1 },
+			{ role: "assistant", content: [{ type: "toolCall", name: "write", arguments: { path: "src/a.ts" } }], timestamp: 2 },
+			{ role: "assistant", content: [{ type: "toolCall", name: "read", arguments: { path: "src/b.ts" } }], timestamp: 3 },
+		],
 		turnPrefixMessages: [],
 		tokensBefore: 12345,
 		firstKeptEntryId: "entry-42",
@@ -112,43 +113,63 @@ function prep() {
 const sig = () => new AbortController().signal;
 
 // Skipped (not failed) when the Pi runtime cannot be resolved on this machine.
-describe.skipIf(!piAiPath)("buildTrackCompaction", () => {
-	it("writes reconciled entries, preserves existing content, and summarises Track", async () => {
-		const cwd = tmpCwd();
-		seedTrack(cwd);
+describe.skipIf(!piAiPath)("buildCompactionSummary", () => {
+	const okSummary = JSON.stringify({
+		topics: ["改摘要提示词"],
+		fileNotes: [{ path: "src/a.ts", note: "重写了 reconcile" }],
+		nextIntent: "改完提示词跑测试",
+		restore: "",
+	});
 
-		const out = await buildTrackCompaction(
+	it("assembles the summary from model parts plus the mechanical file lists and handle", async () => {
+		const cwd = tmpCwd();
+
+		const out = await buildCompactionSummary(
 			{ preparation: prep(), reason: "manual", signal: sig() },
-			makeCtx(cwd, async () => textResponse('{"progress":[{"heading":"Work Completed","text":"reconciled"}]}')),
+			makeCtx(cwd, async () => textResponse(okSummary)),
 		);
 
 		expect(out.compaction.firstKeptEntryId).toBe("entry-42");
 		expect(out.compaction.tokensBefore).toBe(12345);
-		expect(out.compaction.summary).toContain("reconciled");
-		const file = fs.readFileSync(path.join(cwd, ".pi/track/progress.md"), "utf8");
-		expect(file).toContain("reconciled");
-		expect(file).toContain("seed entry");
+		expect(out.compaction.summary).toContain("改摘要提示词");
+		expect(out.compaction.summary).toContain("改完提示词跑测试");
+		expect(out.compaction.summary).toContain("src/a.ts — 重写了 reconcile");
+		expect(out.compaction.summary).toContain("src/b.ts");
+		expect(out.compaction.summary).toContain(SESSION_FILE);
+	});
+
+	it("never lists a file the model invented", async () => {
+		const cwd = tmpCwd();
+
+		const out = await buildCompactionSummary(
+			{ preparation: prep(), reason: "manual", signal: sig() },
+			makeCtx(cwd, async () =>
+				textResponse('{"topics":["t"],"fileNotes":[{"path":"src/ghost.ts","note":"x"}],"nextIntent":"go"}'),
+			),
+		);
+
+		expect(out.compaction.summary).toContain("src/a.ts");
+		expect(out.compaction.summary).not.toContain("src/ghost.ts");
 	});
 
 	it("never returns undefined when the model output is unusable", async () => {
 		const cwd = tmpCwd();
-		seedTrack(cwd);
 
-		const out = await buildTrackCompaction(
+		const out = await buildCompactionSummary(
 			{ preparation: prep(), reason: "manual", signal: sig() },
 			makeCtx(cwd, async () => textResponse("I am unable to comply.")),
 		);
 
 		expect(out?.compaction).toBeDefined();
-		expect(out.compaction.summary).toContain("RECONCILE FAILED");
+		expect(out.compaction.summary).toContain("未生成");
+		expect(out.compaction.summary).toContain(SESSION_FILE);
 		expect(out.compaction.firstKeptEntryId).toBe("entry-42");
 	});
 
 	it("records the reason when the model call throws, instead of propagating", async () => {
 		const cwd = tmpCwd();
-		seedTrack(cwd);
 
-		const out = await buildTrackCompaction(
+		const out = await buildCompactionSummary(
 			{ preparation: prep(), reason: "manual", signal: sig() },
 			makeCtx(cwd, async () => {
 				throw new Error("provider exploded");
@@ -161,26 +182,24 @@ describe.skipIf(!piAiPath)("buildTrackCompaction", () => {
 
 	it("classifies an aborted call as an abort, not a crash", async () => {
 		const cwd = tmpCwd();
-		seedTrack(cwd);
 		const ac = new AbortController();
 		ac.abort();
 
-		const out = await buildTrackCompaction(
+		const out = await buildCompactionSummary(
 			{ preparation: prep(), reason: "manual", signal: ac.signal },
 			makeCtx(cwd, async () => {
 				throw new Error("aborted by signal");
 			}),
 		);
 
-		expect(out.compaction.summary).toContain("reconcile was aborted");
+		expect(out.compaction.summary).toContain("aborted");
 	});
 
-	it("takes the fast path on overflow: no model call, Track returned as-is", async () => {
+	it("takes the fast path on overflow: no model call, mechanical orientation only", async () => {
 		const cwd = tmpCwd();
-		seedTrack(cwd);
 		let calls = 0;
 
-		const out = await buildTrackCompaction(
+		const out = await buildCompactionSummary(
 			{ preparation: prep(), reason: "overflow", signal: sig() },
 			makeCtx(cwd, async () => {
 				calls++;
@@ -189,19 +208,20 @@ describe.skipIf(!piAiPath)("buildTrackCompaction", () => {
 		);
 
 		expect(calls).toBe(0);
-		expect(out.compaction.summary).toContain("seed entry");
+		expect(out.compaction.summary).toContain("溢出快路径");
+		expect(out.compaction.summary).toContain("src/a.ts");
+		expect(out.compaction.summary).toContain(SESSION_FILE);
 	});
 
-	it("logs every failure to .pi/track/reconcile.log", async () => {
+	it("logs every failure to .pi/compaction/failures.log", async () => {
 		const cwd = tmpCwd();
-		seedTrack(cwd);
 
-		await buildTrackCompaction(
+		await buildCompactionSummary(
 			{ preparation: prep(), reason: "manual", signal: sig() },
 			makeCtx(cwd, async () => textResponse("nonsense")),
 		);
 
-		const log = fs.readFileSync(path.join(cwd, ".pi/track/reconcile.log"), "utf8");
-		expect(log).toContain("no usable entries");
+		const log = fs.readFileSync(path.join(cwd, ".pi/compaction/failures.log"), "utf8");
+		expect(log).toContain("nothing usable");
 	});
 });

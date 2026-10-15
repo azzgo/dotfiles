@@ -7,8 +7,9 @@ the `/track` command surface, auto-init behavior, and file paths are unchanged.
 The two goal couplings (activation-time Track auto-reset, verify-briefs) died
 with goal-runtime.
 
-Track also **supplies Pi's compaction summary** — see [Compaction](#compaction)
-and `docs/adr/0008-track-sourced-compaction.md`.
+Track used to supply Pi's compaction summary (ADR 0008). That moved to the
+`compaction` extension in ADR 0015; Track is manual working memory now, and an
+agent reaches it through file references rather than through the summary.
 
 ## Public commands
 
@@ -23,7 +24,6 @@ and `docs/adr/0008-track-sourced-compaction.md`.
 .pi/track/
 ├── findings.md    # confirmed constraints, repo/system findings, design decisions, notes
 ├── progress.md    # timeline, work completed, verification, blockers, completion evidence
-└── reconcile.log  # append-only log of failed Compaction Reconciles (local, untracked)
 ```
 
 Flat files, never on any tracker board.
@@ -37,44 +37,9 @@ reset-on-activation, no shared state, no cross-injection.
 
 ## Compaction
 
-Track supplies **Pi's compaction summary** — built-in transcript summarization
-never runs. See `docs/adr/0008-track-sourced-compaction.md`.
-
-On `session_before_compact` the extension:
-
-1. **`reason: "overflow"` — fast path.** Read Track, return it as the summary.
-   No model call, no reconcile: the window is already blown and Pi will retry
-   the aborted turn. Newest un-recorded progress is lost with the compaction.
-2. **Otherwise — reconcile.** A tool-less `modelRegistry.complete()` call takes
-   the current Track files *plus the transcript tail* and returns new entries
-   as JSON. The extension **appends** them (`appendToTrack()`) — never rewrites,
-   because the reconcile only sees the tail and a rewrite would drop what
-   earlier reconciles recorded.
-3. **Read back** both files and return them as `summary`.
-
-`firstKeptEntryId` is passed through unchanged, so recent raw turns survive
-alongside the Track summary. The aggressive variant — Track as the *only*
-surviving context — is not automatic; it is `/track update` + a fresh session.
-
-### Why failures are recorded in-band
-
-Pi's `ExtensionRunner.emit()` catches every handler exception and only logs it;
-`agent-session.js` then treats the `undefined` result exactly like "no extension
-result" and runs `_runDefaultCompaction()`. **Returning `undefined` and throwing
-are the same thing** — both silently reinstate built-in summarization.
-
-So the handler never throws. Any failure returns a `compaction` whose summary is
-an **explicit failure note** carrying the serialized transcript tail, so the
-record survives compaction and the next agent sees it. Failures also raise
-`ui.notify(..., "error")` and append to `.pi/track/reconcile.log`.
-
-### Diagnosing a failed reconcile
-
-| Place | What you get |
-|---|---|
-| The context itself | An in-band failure note with the transcript tail |
-| The UI | An `error` notification at compaction time |
-| `.pi/track/reconcile.log` | Append-only log for counting failures over time |
+Not this extension's job. The compaction summary is owned by `../compaction`
+(`docs/adr/0015-compaction-summary-as-pointer.md`) — Track is manual, and the two
+share nothing but the filesystem.
 
 ## Dotfiles integration
 
@@ -87,20 +52,17 @@ there is no `settings.json` entry to maintain.
 
 ```bash
 just test-track                       # whole suite
-just test-track reconcile.test.ts     # vitest args pass through
+just test-track summary.test.ts        # vitest args pass through
 ```
 
-`reconcile.test.ts` covers the pure parsing logic and needs nothing but vitest.
-`compaction.test.ts` exercises the real reconcile path, so it needs the Pi
-runtime resolvable from `node_modules/@earendil-works/`; it **skips** (rather
-than fails) when that is missing. To run it locally, from the repo root:
+Every suite here is pure — Track needs no Pi runtime, so nothing skips. The
+compaction extension has the Pi-runtime-dependent tests.
 
 ```bash
+PI_NM=~/.pi/agent/install/releases/$(pi --version | head -1)/node_modules/@earendil-works
 mkdir -p pi/agent/extensions/track/node_modules/@earendil-works
-ln -sfn "$(npm root -g)/@earendil-works/pi-coding-agent" \
-  pi/agent/extensions/track/node_modules/@earendil-works/pi-coding-agent
-ln -sfn "$(npm root -g)/@earendil-works/pi-coding-agent/node_modules/@earendil-works/pi-ai" \
-  pi/agent/extensions/track/node_modules/@earendil-works/pi-ai
+ln -sfn "$PI_NM/pi-coding-agent" pi/agent/extensions/track/node_modules/@earendil-works/pi-coding-agent
+ln -sfn "$PI_NM/pi-ai" pi/agent/extensions/track/node_modules/@earendil-works/pi-ai
 ```
 
 Those links live under a gitignored `node_modules/` and are never committed.

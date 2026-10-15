@@ -113,6 +113,8 @@ install-pi:
 
     rm -rf ~/.pi/agent/extensions/track
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/track ~/.pi/agent/extensions/track
+    rm -rf ~/.pi/agent/extensions/compaction
+    ln -s {{ dotfiles_dir }}/pi/agent/extensions/compaction ~/.pi/agent/extensions/compaction
     rm -rf ~/.pi/agent/extensions/workflow-runtime
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/workflow-runtime ~/.pi/agent/extensions/workflow-runtime
     rm -rf ~/.pi/agent/extensions/code-mode ~/.pi/agent/extensions/readonly-mode
@@ -208,15 +210,27 @@ install-all: install-mise install-neovim install-vim install-shell install-termi
 # Development helpers
 
 # Run the track extension's test suite
-# Pass vitest args directly, e.g. `just test-track reconcile.test.ts`
-# Requires the Pi runtime for the compaction integration tests; see
-# pi/agent/extensions/track/README.md to link it (they skip otherwise).
+# Pass vitest args directly, e.g. `just test-track guards.test.ts`
+# Track is pure — no Pi runtime needed, nothing skips.
 test-track *args:
     #!/usr/bin/env bash
     set -euo pipefail
     cd {{ dotfiles_dir }}/pi/agent/extensions/track
     if [ ! -d node_modules ]; then
         echo "📦 Installing track extension dev dependencies..."
+        npm install --silent
+    fi
+    npm test -- {{ args }}
+
+# Run the compaction extension's test suite
+# Requires the Pi runtime for the model-call integration test; see
+# pi/agent/extensions/compaction/README.md to link it (it skips otherwise).
+test-compaction *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd {{ dotfiles_dir }}/pi/agent/extensions/compaction
+    if [ ! -d node_modules ]; then
+        echo "📦 Installing compaction extension dev dependencies..."
         npm install --silent
     fi
     npm test -- {{ args }}

@@ -9,19 +9,23 @@ A decision-oriented planning method for work that is still foggy. It maps a dest
 _Avoid_: implementation plan, task runner, todo list
 
 **Track**:
-The shared, reset-able working-memory scratchpad managed by the standalone `track` extension — the freeform findings and progress narrative that accumulates execution context. Track is the source of compaction summaries (see **Track-Sourced Compaction**) but a stranger to the Workflow runtime: Runs keep their own structured progress logs, Track is the model's freeform memory.
-_Avoid_: goal history, permanent log, per-run notebook
+The shared, reset-able working-memory scratchpad managed by the standalone `track` extension — the freeform findings and progress narrative a session accumulates. Manually maintained: an agent reaches it through file references, not through the Compaction Summary. A stranger to the Workflow runtime: Runs keep their own structured progress logs, Track is the model's freeform memory.
+_Avoid_: compaction source, goal history, permanent log, per-run notebook
 
-**Track-Sourced Compaction**:
-The rule that Pi's compaction summary is supplied by the Track scratchpad instead of Pi's built-in transcript summarizer — so an agent resuming after compaction sees its recorded findings and progress, not a paraphrase of the conversation. Track content is the summary; there is no second summarization pass.
-_Avoid_: built-in compaction, auto-summary, transcript summary
+**Compaction Summary**:
+The text that replaces a compacted span of the conversation. It carries what the agent needs to keep going — topics, next intent, annotated file references — plus a retrieval handle pointing at the untouched session transcript. It is an orientation, not a replacement for history.
+_Avoid_: Track dump, transcript paraphrase, session summary
 
-**Compaction Reconcile**:
-The incremental write of not-yet-recorded findings and progress into the Track files, performed by a tool-less model call at compaction time. It appends only; it never rewrites, because it sees the transcript tail and would otherwise drop what earlier reconciles already recorded.
-_Avoid_: full re-summarization, Track rewrite, session summary
+**Retrieval Handle**:
+The extension-written pointer inside a Compaction Summary that names the session transcript file on disk and how to grep it. It is why a summary may drop detail: whatever is missing can be fetched back from the transcript.
+_Avoid_: pointer, index reference, file list
+
+**Next Intent**:
+The single forward-looking statement in a Compaction Summary — what the agent does next and, when context is missing, what it must go recover first. Replaced wholesale on every compaction, never appended to.
+_Avoid_: next steps list, TODO, action items
 
 **Compaction Failure Record**:
-The explicit note written into the compaction summary when a Compaction Reconcile cannot be produced — carrying the serialized transcript tail so the record survives compaction. Failures are recorded in-band because Pi swallows extension exceptions, so an unrecorded failure is indistinguishable from success.
+The in-band note written into a Compaction Summary when no usable summary can be produced, carrying the retrieval handle so the compacted span stays reachable. Recorded in-band because Pi swallows extension exceptions, so an unrecorded failure is indistinguishable from success.
 _Avoid_: silent fallback, built-in compaction fallback, retry
 
 **Project**:
