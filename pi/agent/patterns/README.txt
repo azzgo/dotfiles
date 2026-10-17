@@ -24,3 +24,13 @@ topic-agnostic workflows (salon — materials in, discuss, converge on a Spec be
 implementation) live at the root as global patterns. suggest refs are bare
 capability names; requires intake, grill-with-docs, prototype, decision-log
 (all in `skills/`).
+2026-10-17: milestone promoted from pi-xfer `.pi/workflows/definitions/milestone.md`
+(upstream: local workflow, no external repo), same convention as salon: stage-shaped and
+topic-agnostic (a release train of features — brainstorm list → per-feature design →
+implement/verify loops → release-note summary), so it lives at the root. Generalizations on
+promotion: project-specific `suggest` paths (`impl-with-spawn`, `setup-code-review`) became
+bare capability names (`impl-with-spawn`, `<project>-code-review`); the pi-xfer-only commit
+rule (rebuilt `web-picker.src/` / `mesh-runtime.src/` artifacts) became "follow the project's
+stated conventions, including generated/build artifacts that must be committed". Requires
+intake, grilling, grill-with-docs, wayfinder, tdd, hunk-review (all in `skills/`) plus a
+project-provided `impl-with-spawn` and `<project>-code-review` (see `/skill:setup-code-review`).

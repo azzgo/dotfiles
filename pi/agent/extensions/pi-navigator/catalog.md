@@ -74,12 +74,15 @@ capability explicitly:
 `/wf start <name>` instantiates a Pattern from `~/.pi/agent/patterns/`. Two kinds
 live there: stage-shaped global patterns (root, directly startable) and `examples/`
 (bugfix, feature, perf) — project-shaped references for drafting a project
-Definition via `/wf new`, not for direct use. Currently one global pattern:
+Definition via `/wf new`, not for direct use. Two global patterns today:
 **salon** — pre-implementation alignment: intake materials → grill/prototype
 discussion → converge on a written Spec; no code changes. When a task maps onto
 salon's shape (materials first, discussion, deliverable is a Spec), suggest
-`/wf start salon`; otherwise suggest `/wf new` and draft a Definition whose node
-`suggest` entries reference the skills above.
+`/wf start salon`. **milestone** — landing a release train: brainstorm the feature
+list → settle each feature's design → implement/verify loops → release-note summary.
+Suggest `/wf start milestone` when the ask is "land the milestone / ship this release",
+not for a single feature (that stays `/wf new` or a bare skill). Otherwise suggest
+`/wf new` and draft a Definition whose node `suggest` entries reference the skills above.
 
 ## Anti-patterns
 
