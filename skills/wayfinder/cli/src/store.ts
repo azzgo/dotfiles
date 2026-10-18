@@ -4,11 +4,21 @@ import path from "node:path";
 import { StoreError, type Ticket } from "./frontmatter.ts";
 import { parseTicket } from "./frontmatter.ts";
 
+const SLUG_KEEP = /[^a-z0-9㐀-䶿一-鿿、-〿！-｠￠-￦]+/g;
+const SLUG_MAX_BYTES = 180;
+
 export function slugify(input: string): string {
-  return input
+  const slug = input
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "untitled";
+    .replace(SLUG_KEEP, "-")
+    .replace(/^-+|-+$/g, "");
+  if (!slug) return "untitled";
+  let out = "";
+  for (const ch of slug) {
+    if (Buffer.byteLength(out + ch, "utf8") > SLUG_MAX_BYTES) break;
+    out += ch;
+  }
+  return out.replace(/-+$/g, "") || "untitled";
 }
 
 export function workspaceId(repoRoot: string): string {

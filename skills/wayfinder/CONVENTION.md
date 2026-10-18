@@ -24,7 +24,7 @@ The CLI resolves this itself; use `--store <dir>` only to point at an explicit d
 
 ## File format
 
-One Ticket (or Map) per file, filename `<id>-<slug>.md`. The slug is computed once at creation and is **stable thereafter** — `set` never renames the file. Slug rules: lowercase ASCII, keep digits, drop everything else, collapse runs to `-`.
+One Ticket (or Map) per file, filename `<id>-<slug>.md`. The slug is computed once at creation and is **stable thereafter** — `set` never renames the file. Slug rules: lowercase; keep ASCII letters, digits and CJK (ideographs plus fullwidth punctuation, so a Chinese title stays greppable); drop everything else; collapse runs to `-`; cap at **180 bytes** so a long CJK title cannot exceed the filesystem's per-name limit; fall back to `untitled` only when nothing is left to slug from.
 
 ```yaml
 ---

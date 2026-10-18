@@ -6,6 +6,7 @@ import test from "node:test";
 import assert from "node:assert";
 import { fileURLToPath } from "node:url";
 import { charUnits, truncateTitle, unitBudget } from "../src/map.ts";
+import { slugify } from "../src/store.ts";
 
 const CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "main.ts");
 
@@ -437,4 +438,37 @@ test("inline script executes: vm + DOM stub renders nodes, collapse works, no Re
   assert.equal(svg.children.filter((c: any) => String(c.attrs.class ?? "").includes("node")).length, 7,
     "second click restores the subtree");
   assert.equal(svg.children.filter((c: any) => String(c.attrs.class ?? "").includes("edge")).length, 8);
+});
+
+
+test("slugify keeps CJK: a pure-Chinese title must not collapse to untitled", () => {
+  assert.equal(slugify("触发与传输方向的候选方案各自代价是什么"), "触发与传输方向的候选方案各自代价是什么");
+  assert.equal(slugify("一致性边界应该定到哪一层"), "一致性边界应该定到哪一层");
+  assert.equal(slugify("  前后有空格  "), "前后有空格");
+  assert.equal(slugify("全　角　空格"), "全-角-空格");
+  assert.equal(slugify("dotfiles 与 pi-xfer 的状态"), "dotfiles-与-pi-xfer-的状态");
+  assert.equal(slugify("30 份 aligned 源"), "30-份-aligned-源");
+  assert.equal(slugify("***"), "untitled", "nothing left to slug from");
+});
+
+test("slugify caps by bytes, not characters, so long CJK titles stay under the filesystem limit", () => {
+  const long = "这".repeat(200);
+  const s = slugify(long);
+  assert.ok(Buffer.byteLength(s, "utf8") <= 180, `slug is ${Buffer.byteLength(s, "utf8")} bytes`);
+  assert.ok(s.length > 0 && s.length < long.length, "actually truncated");
+  assert.equal(slugify("a".repeat(400)).length, 180);
+});
+
+test("add writes a CJK filename, not untitled", () => {
+  const dir = tmpStore();
+  write(dir, "001-a.md", map());
+  const r = run(["add", "触发与传输方向的候选方案各自代价是什么", "--type", "research", "--parent", "001",
+    "--store", dir]);
+  assert.equal(r.status, 0, r.out);
+  const id = r.out.trim();
+  const files = fs.readdirSync(dir).filter((f) => f.startsWith(id + "-"));
+  assert.equal(files.length, 1, "one file for the new Ticket");
+  assert.ok(files[0].includes("触发与传输方向"), `filename kept the CJK title: ${files[0]}`);
+  assert.ok(!files[0].includes("untitled"), `filename did not collapse: ${files[0]}`);
+  assert.equal(run(["check", "--store", dir]).status, 0, "store still valid");
 });
