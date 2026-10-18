@@ -1,4 +1,4 @@
-dotfiles-code-review — 由 setup-code-review 生成（/Users/ison/dev/dotfiles/.pi/skills/setup-code-review）。
+dotfiles-code-review — 由 setup-code-review 生成（仓库内 `.pi/skills/setup-code-review`）。
 
 - Generated: 2026 (setup session)
 - Template version: 11e432e6b5b70a90653d6277ed35b469b106ea4c (dotfiles repo HEAD)

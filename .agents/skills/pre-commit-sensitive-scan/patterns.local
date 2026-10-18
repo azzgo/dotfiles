@@ -1,0 +1,23 @@
+# Repo-specific patterns for pre-commit-sensitive-scan.
+#
+# This file is intentionally TRACKED: the scan is useless if the machine-specific
+# values only exist on one machine. It holds paths and project names, never
+# secret values — a secret here would be the leak, not the defense.
+#
+# Format: one literal per line. Everything after `#` is a comment.
+
+[patterns]
+# ── sibling workspaces reachable from this machine ──────────────────
+# Values discovered during the 2026-10-18 audit (ADR 0016). Add others as they
+# appear; every line here is something that must never reach a public repo.
+Documents/sync
+skill-mgmt
+
+[allow]
+# Known-safe literals: generic examples and documented conventions.
+# Matched as a substring of "<path>:<line>", so an entry can exempt a whole
+# file by naming it.
+#
+# The scanner itself embeds the secret patterns as data, so it must exempt itself.
+pre-commit-sensitive-scan/patterns.local
+pre-commit-sensitive-scan/scripts/scan

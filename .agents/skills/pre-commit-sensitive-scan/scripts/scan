@@ -1,0 +1,191 @@
+#!/usr/bin/env bash
+# pre-commit sensitive scan — detector only, never edits.
+# usage: scan [--head|--all|--diff]   (default: staged changes)
+
+set -uo pipefail
+
+scripts_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+skill_dir="$(dirname "$scripts_dir")"
+local_cfg="$skill_dir/patterns.local"
+repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "not a git repo" >&2; exit 2; }
+
+mode="staged"
+verbose=0
+for arg in "$@"; do
+  case "$arg" in
+    --head) mode="head" ;;
+    --all)  mode="all" ;;
+    --diff) mode="staged"; verbose=1 ;;
+    -h|--help) sed -n '2p' "${BASH_SOURCE[0]}"; exit 0 ;;
+    *) echo "unknown argument: $arg" >&2; exit 2 ;;
+  esac
+done
+
+# ── generic patterns ────────────────────────────────────────────────
+# ERE, one "<class>|<ere>" per line. Leading/trailing blank lines are
+# dropped below — an empty ERE alternative matches every line.
+GENERIC=$(cat <<'EOF'
+machine-identity|/Users/[A-Za-z0-9._-]+/
+machine-identity|/home/[A-Za-z0-9._-]+/
+machine-identity|\.local\.hostname
+secret|BEGIN [A-Z ]*PRIVATE KEY
+secret|ghp_[A-Za-z0-9]{20,}
+secret|gho_[A-Za-z0-9]{20,}
+secret|github_pat_[A-Za-z0-9_]{20,}
+secret|Bearer [A-Za-z0-9._-]{20,}
+secret|(api[_-]?key|apikey|secret[_-]?key)[[:space:]]*[:=][[:space:]]*['\"]?[A-Za-z0-9._-]{16,}
+secret|(password|passwd)[[:space:]]*[:=][[:space:]]*['\"]?[A-Za-z0-9._-]{8,}
+EOF
+)
+
+# ── machine-state paths that must never be tracked ─────────────────
+STATE_PATHS=$(cat <<'EOF'
+\.local/
+node_modules/
+(^|/)\.pi/
+temp_dotfiles/
+\.DS_Store
+auth\.json$
+models\.json$
+\.local\.json$
+nvim/plugged/
+nvim/autoload/
+vim/plugged/
+vim/sessions/
+\.netrwhist$
+EOF
+)
+
+# ── repo-specific additions ────────────────────────────────────────
+LOCAL_LITERALS=""
+ALLOW_LITERALS=""
+if [ -f "$local_cfg" ]; then
+  section=""
+  while IFS= read -r raw || [ -n "$raw" ]; do
+    line="${raw%%#*}"
+    line="$(printf '%s' "$line" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+    [ -z "$line" ] && continue
+    case "$line" in
+      \[*\]) section="$(printf '%s' "$line" | tr -d '[]')"; continue ;;
+    esac
+    case "$section" in
+      patterns) LOCAL_LITERALS="${LOCAL_LITERALS}${line}
+" ;;
+      allow)    ALLOW_LITERALS="${ALLOW_LITERALS}${line}
+" ;;
+    esac
+  done < "$local_cfg"
+fi
+
+# A finding is suppressed when "<path>:<line>" contains any allow literal.
+allowed() {
+  local probe="$1" lit
+  while IFS= read -r lit; do
+    [ -z "$lit" ] && continue
+    case "$probe" in *"$lit"*) return 0 ;; esac
+  done <<< "$ALLOW_LITERALS"
+  return 1
+}
+
+hits=0
+report() { printf '  %-18s %s\n' "$1" "$2"; }
+
+emit() { # class, path, line-number, text
+  local cls="$1" path="$2" num="$3" text="$4"
+  allowed "$path:$text" && return 0
+  hits=$((hits + 1))
+  if [ "$verbose" = 1 ]; then report "$cls" "$path:$num: ${text:1:$((90))}"; else report "$cls" "$path: ${text:1:$((90))}"; fi
+}
+
+# ── mode: staged / head ────────────────────────────────────────────
+if [ "$mode" != "all" ]; then
+  if [ "$mode" = "head" ]; then
+    label="HEAD"
+    diff_cmd=(git show --format= --unified=0 HEAD)
+    paths="$(git show --format= --name-only HEAD 2>/dev/null | grep -v '^$')"
+  else
+    label="staged"
+    diff_cmd=(git diff --cached --unified=0)
+    paths="$(git diff --cached --name-only 2>/dev/null | grep -v '^$')"
+  fi
+  diff_out="$("${diff_cmd[@]}" 2>/dev/null)"
+
+  if [ -z "$diff_out" ] && [ -z "$paths" ]; then
+    echo "clean — no $label changes to scan"
+    exit 0
+  fi
+
+  added_count="$(printf '%s\n' "$diff_out" | grep -c '^+' || true)"
+  path_count="$(printf '%s\n' "$paths" | grep -c . || true)"
+  echo "scanning $label: ${added_count} added line(s), ${path_count} path(s)"
+
+  current_path=""
+  while IFS= read -r line; do
+    case "$line" in
+      "+++ b/"*) current_path="${line#+++ b/}" ;;
+      "+++"*)     current_path="" ;;
+      "+"*)
+        cls=""
+        while IFS='|' read -r c ere; do
+          [ -z "${c:-}" ] && continue
+          if printf '%s' "$line" | grep -qE "$ere" 2>/dev/null; then cls="$c"; break; fi
+        done <<< "$GENERIC"
+        if [ -n "$cls" ]; then emit "$cls" "$current_path" "" "$line"; fi
+        if [ -n "$LOCAL_LITERALS" ]; then
+          while IFS= read -r lit; do
+            [ -z "$lit" ] && continue
+            case "$line" in *"$lit"*) emit "repo-specific" "$current_path" "" "$line"; break ;; esac
+          done <<< "$LOCAL_LITERALS"
+        fi
+        ;;
+    esac
+  done <<< "$diff_out"
+
+  if [ -n "$paths" ]; then
+    while IFS= read -r p; do
+      [ -z "$p" ] && continue
+      printf '%s\n' "$p" | grep -qE "$STATE_PATHS" 2>/dev/null || continue
+      allowed "$p" && continue
+      hits=$((hits + 1))
+      report "machine-state" "$p"
+    done <<< "$paths"
+  fi
+fi
+
+# ── mode: all ──────────────────────────────────────────────────────
+if [ "$mode" = "all" ]; then
+  echo "scanning full history (slow) in $repo_root"
+  scan_lit() {
+    local cls="$1" lit="$2" n
+    [ -z "$lit" ] && return 0
+    n="$(git log --all -S"$lit" --oneline 2>/dev/null | wc -l | tr -d ' ')"
+    if [ "$n" != "0" ]; then
+      report "$cls" "$n commit(s) — $lit"
+      hits=$((hits + n))
+    fi
+  }
+  scan_lit "machine-identity" "/Users/"
+  scan_lit "secret" "BEGIN RSA PRIVATE KEY"
+  scan_lit "secret" "ghp_"
+  scan_lit "secret" "github_pat_"
+  if [ -n "$LOCAL_LITERALS" ]; then
+    while IFS= read -r lit; do scan_lit "repo-specific" "$lit"; done <<< "$LOCAL_LITERALS"
+  fi
+  # git log is newest-first; rewrite cost is driven by the OLDEST hit,
+  # because rewriting a commit re-hashes every descendant.
+  oldest="$(git log --all -S"/Users/" --format=%H 2>/dev/null | tail -1)"
+  if [ -n "$oldest" ]; then
+    echo "  blast radius (measured from the OLDEST hit — that is what a rewrite costs):"
+    echo "    $(git rev-list --count "$oldest"..HEAD 2>/dev/null) commit(s) would be rewritten"
+    echo "    oldest: $(git log -1 --format='%ad %h %s' --date=short "$oldest" 2>/dev/null)"
+    echo "    tags past it: $(git tag --contains "$oldest" 2>/dev/null | tr '\n' ' ')"
+  fi
+fi
+
+if [ "$hits" = "0" ]; then
+  echo "clean — no findings"
+  exit 0
+fi
+echo
+echo "$hits finding(s). Detector only: nothing was modified."
+exit 1
