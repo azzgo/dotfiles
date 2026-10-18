@@ -36,9 +36,9 @@ _Avoid_: workspace (see Wayfinder Workspace), map, global account
 A Pi skill maintained inside this dotfiles repo for personal use on the current machine setup. It optimizes for local usefulness, not packaging or external distribution.
 _Avoid_: package, product, shared extension
 
-**Taskmd Backend**:
-The local task tracker behind Wayfinder's planning layer (Maps, Tickets, dependency edges), exposed through taskmd's CLI and web UI. The Workflow runtime deliberately does not use taskmd — its Definitions and Runs are flat files under `.pi/workflows/` (this amends the goal-era shared-backend decision, ADR 0001).
-_Avoid_: embedded database, custom UI core, workflow storage backend
+**Wayfinder Store**:
+The per-repository storage that Personal Wayfinder owns outright, holding its Maps, its Tickets, and the dependency edges between them. It belongs to Wayfinder alone — it is not one store inside a general-purpose tracker — and the Workflow runtime is a stranger to it, keeping Definitions and Runs as flat files under `.pi/workflows/`.
+_Avoid_: taskmd backend, general-purpose tracker, workflow storage backend
 
 **Personal Wayfinder**:
 A local Wayfinder variant that keeps the original decision-oriented method while removing team coordination ceremony. It recommends only the skills and prompts available in this repo.
@@ -49,8 +49,20 @@ The per-repository storage area for a Personal Wayfinder map and its tickets, st
 _Avoid_: global tracker, shared inbox, project-local .pi directory
 
 **Ticket**:
-A Wayfinder child item that captures one decision, investigation, prototype, or other unit of planning work under a Map. In taskmd it is stored as a task, but Wayfinder prose should call it a Ticket to avoid confusion with taskmd's generic storage primitive.
+A Wayfinder child item that captures one decision, investigation, prototype, or other unit of planning work under a Map. It exists to be advanced through the Wayfinder flow, not maintained by hand.
 _Avoid_: task, todo, card
+
+**Ticket Type**:
+The kind of a Ticket, and the one thing that distinguishes a Map from its children and a grilling from a setup. A Ticket has exactly one kind; anything about it that is not its kind is either a Channel or plain prose.
+_Avoid_: tag, category, priority
+
+**Ticket Channel**:
+How a Ticket's answer is obtained: AFK, where the agent can reach it alone, or HITL, where a human must supply it. A HITL Ticket is never resolved by the agent, no matter how well it can guess.
+_Avoid_: mode, owner, assignee, priority
+
+**Ticket Machine Ownership**:
+The metadata of a Ticket belongs to the tooling that owns the Wayfinder Store, not to whoever has the file open. A human edits a Ticket's prose; nobody hand-edits its metadata, and metadata that the tooling did not write is treated as a fault rather than a convenience.
+_Avoid_: hand-editable frontmatter, wiki-style editing, free-form fields
 
 **Active Map**:
 The single Wayfinder Map in a repository that is currently being worked through. A repository may keep historical Maps, but only one Map may be active at a time.
@@ -65,12 +77,9 @@ A Ticket type for manual preparation work that unlocks later decisions in Wayfin
 _Avoid_: task, chore, planning task
 
 **Map**:
-The canonical overview object for a Wayfinder run. It carries the destination, planning notes, decisions so far, unresolved areas, and explicit out-of-scope items, and is marked specially inside taskmd so it does not get confused with general-purpose tracker items.
+The canonical overview object for a Wayfinder run. It carries the destination, planning notes, decisions so far, unresolved areas, and explicit out-of-scope items, and is distinguished from the Tickets beneath it by kind rather than by naming convention.
 _Avoid_: generic task, plain backlog root, project board
 
-**Wayfinder Tag**:
-A `wayfinder:*` tag used to mark taskmd records as part of the Personal Wayfinder workflow. Only records with these tags participate in map, ticket, and frontier logic.
-_Avoid_: implicit membership, mixed untagged tracker items
 
 **Map Template**:
 The fixed section layout required in a Map body: `Destination`, `Notes`, `Decisions So Far`, `Not Yet Specified`, and `Out of Scope`. All sections must exist even when some are temporarily empty.
@@ -101,8 +110,8 @@ A formal Map section for worthwhile directions that are explicitly excluded from
 _Avoid_: silent scope creep, forgotten side ideas
 
 **Wayfinder Ticket Directory**:
-The default taskmd storage directory inside a Wayfinder Workspace, stored at `.pi/wayfinder/tickets/`. The name follows Wayfinder's human-facing Ticket language instead of taskmd's generic task wording.
-_Avoid_: tasks directory, generic task store
+The directory inside a Wayfinder Workspace that holds every Ticket of that repository. It sits outside the repository, so nothing inside the repository needs ignoring.
+_Avoid_: tasks directory, generic task store, repo-local .pi directory
 
 **Active Map Status**:
 An Active Map is the Map marked with `wayfinder:map` and `status=in-progress`. Historical Maps should move to completed or cancelled states instead of remaining active.
@@ -153,7 +162,7 @@ Every Wayfinder Ticket should use the same lightweight body template: `Question`
 _Avoid_: freeform ticket body, per-ticket improvisation
 
 **Map Title Convention**:
-A Map title should follow the fixed format `Wayfinder: <Destination>` so it is easy to identify inside a general-purpose taskmd workspace.
+A Map title should follow the fixed format `Wayfinder: <Destination>` so it is recognisable at a glance in a Ticket listing or Map Render.
 _Avoid_: bare destination title, ambiguous map naming
 
 **Ticket Title Convention**:
@@ -165,16 +174,16 @@ A Ticket that has been answered reaches `completed` status even when the conclus
 _Avoid_: using cancelled for answered questions, leaving resolved tickets pending
 
 **Agent-Driven Operation**:
-Personal Wayfinder is primarily operated by the agent through taskmd CLI commands. The agent owns routine Map and Ticket updates instead of treating the web interface as the main editing surface.
+Personal Wayfinder is primarily operated by the agent through the tooling that owns the Wayfinder Store. The agent owns routine Map and Ticket updates instead of treating any viewing surface as the editing surface.
 _Avoid_: web-first maintenance, manual-first tracker workflow
 
-**Wayfinder Web UI**:
-The taskmd web interface is the human-facing inspection and optional manual-override surface for a Wayfinder Workspace. It exists for visibility and occasional hand edits, and should be easy to launch from the `/wayfinder` prompt flow.
-_Avoid_: agent backend, primary automation channel
+**Map Render**:
+The human-facing inspection surface for a Wayfinder Workspace: a read-only view of the dependency edges and statuses among Tickets, produced by the tooling that owns the store rather than by the agent. It changes nothing — every state change goes through that tooling.
+_Avoid_: web UI, dashboard, server, agent-drawn diagram
 
-**Wayfinder UI Command**:
-The standard manual command for opening the human-facing taskmd interface should be `/wayfinder ui`. It is part of the prompt shortcut surface, not a separate methodology entrypoint.
-_Avoid_: split web commands, separate UI prompt family
+**Map Render Command**:
+The manual command that produces a Map Render, run as `ticket map`. It is a viewing action only; it is not a separate methodology entrypoint, and it is not where a Ticket is changed.
+_Avoid_: web UI command, dashboard server, split UI prompt family
 
 **Wayfinder Init Command**:
 `/wayfinder init` prepares a repository for Personal Wayfinder by checking prerequisites and creating the local workspace structure. It does not chart a Map by itself.
@@ -213,7 +222,7 @@ Personal Wayfinder produces decisions, clarified destinations, and map advanceme
 _Avoid_: turning Tickets into build backlog, shipping production code under Wayfinder
 
 **Wayfinder Artifact Layout**:
-Personal Wayfinder lives as a generic skill at `skills/wayfinder/SKILL.md` (repo root, installed via `just install-skills`), with taskmd field and command conventions in `skills/wayfinder/TASKMD-CONVENTION.md`, and a thin prompt shortcut at `pi/agent/prompts/wayfinder.md`. Wayfinding state lives outside the repo at `~/.cache/wayfinder/<workspace-id>/`.
+Personal Wayfinder lives as a generic skill at `skills/wayfinder/SKILL.md` (repo root, installed via `just install-skills`), with the store and command conventions in `skills/wayfinder/CONVENTION.md` and the `ticket` CLI that owns the store in `skills/wayfinder/cli/`, plus a thin prompt shortcut at `pi/agent/prompts/wayfinder.md`. Wayfinding state lives outside the repo at `~/.cache/wayfinder/<workspace-id>/`.
 _Avoid_: single mega skill file, methodology inside the prompt
 
 **Wayfinder Doc Language**:

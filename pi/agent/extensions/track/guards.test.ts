@@ -24,7 +24,7 @@ describe("isInTrackDir", () => {
 	});
 
 	it("rejects sibling dirs and traversal escapes", () => {
-		expect(isInTrackDir(".pi/wayfinder/tickets/001.md", "/repo")).toBe(false);
+		expect(isInTrackDir(".pi/workflows/runs/run-1/run.json", "/repo")).toBe(false);
 		expect(isInTrackDir(".pi/track/../other/file.md", "/repo")).toBe(false);
 	});
 });

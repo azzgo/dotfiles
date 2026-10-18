@@ -1,6 +1,6 @@
 ---
 name: wayfinder
-description: Plan foggy, multi-session work as a local decision map of Tickets on taskmd, then resolve one Ticket at a time until the route to the destination is clear. Personal Wayfinder variant — no team claim flow, taskmd backend only.
+description: Plan foggy, multi-session work as a local decision map of Tickets in a local store owned by the ticket CLI, then resolve one Ticket at a time until the route to the destination is clear. Personal Wayfinder variant — no team claim flow, local store only.
 disable-model-invocation: true
 ---
 
@@ -8,13 +8,13 @@ disable-model-invocation: true
 
 A loose idea has arrived — too big for one agent session, and wrapped in fog. Wayfinding finds the **route**, not charges at the destination.
 
-This skill charts a **shared Map** in the local **taskmd** workspace, then works **decision Tickets** one at a time until the route is clear. Tickets resolve **decisions / investigations / prototypes / setup**, not implementation slices.
+This skill charts a **shared Map** in the local Wayfinder store (`~/.cache/wayfinder/`, owned by the `ticket` CLI), then works **decision Tickets** one at a time until the route is clear. Tickets resolve **decisions / investigations / prototypes / setup**, not implementation slices.
 
 This is a **Personal Wayfinder**:
 
 - keeps the original decision-oriented method
 - removes team collaboration ceremony
-- uses **taskmd as an explicit backend** (not built-in, not swapped silently)
+- owns its **local ticket store outright** via the bundled `ticket` CLI (no external backend, not swapped silently)
 - stays **out of the implementation layer** — it never enters implementation-tracking or execution systems; handoff to them is suggestion-only
 - recommends only capabilities available in the current agent/repo environment
 
@@ -53,49 +53,36 @@ When remaining work is mostly "how to implement", exit Wayfinder (see [Exit cond
 | **Wayfinder Workspace** | Per-workspace local storage under `~/.cache/wayfinder/` (outside any repo) |
 | **Task** | Implementation-tracking unit in other systems — different system |
 
-Human-facing prose always says **Ticket**, never "task", except when quoting literal taskmd CLI objects/commands.
+Human-facing prose always says **Ticket**, never "task".
 
 ## Refer by name
 
 Every Map and Ticket has a **name** (title). In everything the human reads — narration, Map decisions — refer by **name**, not bare id. IDs may ride inside a named link, but never stand alone as the reference.
 
-## Prerequisites
-
-Before any workspace mutation:
-
-1. Check that `taskmd` is available (`command -v taskmd` or equivalent).
-2. If missing:
-   - **stop**
-   - explain that taskmd is an explicit prerequisite
-   - offer options:
-     - user installs it
-     - user explicitly authorizes the agent to install it
-   - do **not** invent a fallback tracker
-3. Only continue after taskmd is available.
-
-Details of CLI flags, tags, filters, and templates live in [TASKMD-CONVENTION.md](TASKMD-CONVENTION.md).
-
 ## Workspace
 
 - Root: `~/.cache/wayfinder/`
 - Per-workspace dir: `~/.cache/wayfinder/<workspace-id>/`
-- workspace-id: derived from the repository root — resolve it with `git rev-parse --show-toplevel` (fallback: current directory), take its absolute path, strip any trailing slash, replace every `/` with `-` (the leading slash becomes the leading dash), and append a trailing `-`. Example: `/path/to/repo` → `-path-to-repo-`. Compute it with the canonical command in [TASKMD-CONVENTION.md](TASKMD-CONVENTION.md#paths) — do not hand-transform the path
-- taskmd ticket dir: `~/.cache/wayfinder/<workspace-id>/tickets/`
+- workspace-id: derived from the repository root — resolve it with `git rev-parse --show-toplevel` (fallback: current directory), take its absolute path, strip any trailing slash, replace every `/` with `-` (the leading slash becomes the leading dash), and append a trailing `-`. Example: `/path/to/repo` → `-path-to-repo-`. The `ticket` CLI computes this itself — do not hand-transform the path
+- Ticket dir: `~/.cache/wayfinder/<workspace-id>/tickets/`
 - Per-repository isolation via the workspace-id; data lives **outside** the repo, so nothing needs gitignoring
 - Local only
 - Lazy init: create only on explicit Wayfinder start (`init` / first `chart`), never from mere discussion
 
-**HARD RULE — taskmd scoping:** every taskmd invocation, including one-off
-mutations (`set <id> --status …`), MUST pass the ticket directory explicitly
-(`--task-dir` / `-d`). Never run a bare `taskmd` command: it resolves scope from
-cwd / registered projects and can mutate a different project's tickets (that
-failure has happened). See [TASKMD-CONVENTION.md](TASKMD-CONVENTION.md#paths).
+**HARD RULE — single store:** all reads and writes of the store go through the
+`ticket` CLI (`node <repo>/skills/wayfinder/cli/main.ts <command>`) against the
+resolved workspace directory. Never operate on ticket files with another tool's
+conventions, and never let a second store appear (a parallel directory, a
+repo-local copy, a fallback tracker). Details live in
+[CONVENTION.md](CONVENTION.md).
 
 One **Active Map** per repository at a time.
 
+Details of the schema, CLI flags, and templates live in [CONVENTION.md](CONVENTION.md).
+
 ## Map
 
-The Map is a special taskmd record tagged `wayfinder:map`.
+The Map is a Ticket with `type: map`.
 
 - Title: `Wayfinder: <Destination>`
 - Status while active: `in-progress`
@@ -127,15 +114,11 @@ The Map is an **index**, not a dump of every Ticket body. Open Tickets are disco
 
 ## Tickets
 
-Each Ticket is a taskmd record under the Active Map.
+Each Ticket is a record under the Active Map.
 
 - Parent points to the Map (**membership only**)
 - Dependency edges exist **only between Tickets** (**ordering / blocking**)
-- Type tag is one of:
-  - `wayfinder:research`
-  - `wayfinder:prototype`
-  - `wayfinder:grilling`
-  - `wayfinder:setup`
+- `type` field is one of `research` / `prototype` / `grilling` / `setup` (see [CONVENTION.md](CONVENTION.md#file-format))
 - Title is human-readable and question-focused (**no type prefixes**)
 - Body uses a **fixed light template**:
 
@@ -178,7 +161,7 @@ Channel defaults by type; only `research` and `setup` are genuinely dual-mode:
 | `grilling` | Live decision interview | HITL (fixed) | `grill-with-docs` skill (if available; else any local grilling practice) |
 | `setup` | Prep work that unblocks a later decision | AFK or HITL | no dedicated skill; checklist / shell / manual prep |
 
-Channel is recorded as the tag `wayfinder:hitl` when HITL; its absence means AFK. `prototype`/`grilling` are HITL by nature, so the tag is redundant but harmless.
+Channel is recorded as the `channel` field (`channel: hitl` when HITL); its absence means AFK. `prototype`/`grilling` are HITL by nature, so setting it explicitly there is redundant but allowed.
 
 #### HITL research
 
@@ -240,7 +223,7 @@ Fog is formal. Out of Scope is formal. Neither is a junk drawer.
 4. **Decision Double-Write** — on completing a Ticket: write `## Resolution`, **insert a `## Decision` summary section at the top of the Ticket body** (so a closed Ticket reads as a decision record, not an exploration log), **and** append a one-line gist to Map `Decisions So Far`
 5. **One Active Map**
 6. **Parent = membership; Dependency = ordering**
-7. **No silent tracker fallback**
+7. **No silent tracker fallback / single store** — the Wayfinder store under `~/.cache/wayfinder/<workspace-id>/tickets/` is the only store; never let a second one appear, never operate outside the `ticket` CLI's conventions
 8. **No silent destination invention**
 9. **HITL never auto-resolved** — a HITL-channel Ticket is never resolved by the agent standing in for the human; it gets an intake brief and `waiting-human`
 10. **Implementation entry is user-triggered** — never enter or operate an implementation-tracking / execution system from a Wayfinder session. At Graduate/Exit, **suggest** the fitting capabilities that exist in the current environment (drawn from the agent's own context: local skills, workflows, commands); if several fit, suggest them as options. The agent only recommends — the user pulls the trigger.
@@ -259,8 +242,8 @@ Use when there is no usable Active Map, or the destination has shifted enough to
    - If no clear topic, clarify first; do **not** invent a destination and chart it.
 3. If clarification shows the journey is already small and clear, stop and ask whether a Map is needed at all.
 4. Initialize workspace if needed.
-5. Create the Map with fixed template.
-6. Create the Tickets that are already sharp.
+5. Create the Map: `ticket add "Wayfinder: <Destination>" --type map` (fixed template applied by the CLI).
+6. Create the Tickets that are already sharp: `ticket add "<title>" --type <type> --parent <map-id>`.
 7. Wire Ticket dependencies in a second pass (need ids first).
 8. Leave the rest in `Not Yet Specified` / `Out of Scope`.
 9. Optionally fire parallel **read-only** research sub-agents for fresh `research`-**AFK** Tickets (never research-HITL; see Invariant #9).
@@ -277,7 +260,7 @@ Use when an Active Map already exists.
    - else first/best Frontier Ticket
 3. Mark it Current (`status=in-progress`) before real work.
 4. **Pre-execution gate**, before resolving:
-   - read the Ticket's channel (type + `wayfinder:hitl`)
+   - read the Ticket's channel (type + `channel` field)
    - if **HITL** (`research`+HITL, `prototype`, `grilling`, or `setup`+HITL): the agent does **not** auto-resolve. For `research`+HITL, write the [intake brief](#hitl-research) into `## Notes`, set `status=waiting-human`, and **stop** — resume only when the human returns. For `grilling`/`prototype`, begin the live exchange with the human.
    - if **AFK** (`research` or `setup`): proceed to resolve with the matching local capability.
 5. Resolve it within the Single-Ticket boundary: **downward** exploration is fine; **sideways** questions become new Tickets for a new session, never handled inline.
@@ -332,12 +315,12 @@ Primary methodology lives in this skill. Arguments are appended raw to the skill
 | `wayfinder chart <topic>` | Clarification gate + create Map |
 | `wayfinder work` | Advance one Current Ticket |
 | `wayfinder status` | Report state only; no mutation |
-| `wayfinder ui` | Open taskmd Web UI for human inspection (background by default) |
+| `wayfinder ui` | Run `ticket map` and report the output path for human inspection (static HTML file, no server) |
 | `wayfinder help` | Print the command surface + one-paragraph when-to-use guidance; start no work |
 
 Smart entry routing:
 
-1. taskmd missing → stop / install authorization path
+1. `ticket check` failing → stop / report the named errors
 2. multiple Active Maps → stop and require cleanup
 3. no workspace / no Active Map → chart path
 4. Active Map + Current Ticket → continue that Ticket
@@ -348,7 +331,6 @@ Smart entry routing:
 | System | Role |
 |---|---|
 | Personal Wayfinder | Decision map while foggy |
-| taskmd | Local backend + human Web UI |
 | Implementation spec / execution systems (downstream) | Receive Wayfinder's decision-layer output via Graduate/Exit — **user-chosen and user-triggered**; Wayfinder only suggests, never enters |
 | `grill-with-docs` / `prototype` / `how` skills | Local capabilities used by Ticket types (capability-aware: used only if available) |
 
@@ -356,21 +338,20 @@ Never confuse:
 
 - **Ticket** (Wayfinder decision unit)
 - **Task** (implementation-tracking unit in other systems)
-- taskmd's underlying `task` record (storage primitive only)
 
 ## Do / Don't
 
 ### Do
 
 - keep fog and out-of-scope explicit
-- operate through taskmd CLI as agent backend
-- open Web UI when the human wants inspection/manual override (default: background launch)
+- operate through the `ticket` CLI as agent backend
+- render `ticket map` when the human wants inspection (static HTML file, open it in a browser)
 - recommend only locally available skills on handoff — as **suggestions for the user to run**, never as actions the Wayfinder agent executes
 - keep one Current Ticket focus
 
 ### Don't
 
-- invent a tracker when taskmd is missing
+- invent a second store or a fallback tracker
 - pull Wayfinder into the implementation layer
 - enter or operate implementation-tracking / execution systems from a Wayfinder session — handoff is suggestion-only; the user pulls the trigger
 - implement the destination under Wayfinder

@@ -4,7 +4,7 @@
 给 agent 的方法论与命令约定分别在：
 
 - [SKILL.md](./SKILL.md) — 方法与纪律（英文）
-- [TASKMD-CONVENTION.md](./TASKMD-CONVENTION.md) — taskmd 字段/CLI 约定（英文）
+- [CONVENTION.md](./CONVENTION.md) — Ticket 字段/`ticket` CLI 约定（英文）
 - `pi/agent/prompts/wayfinder.md` —（可选，仅 pi 环境）`/wayfinder` 薄入口
 
 ---
@@ -14,7 +14,7 @@
 > **Wayfinder 管「路线怎么定」；实现层管「路线怎么走完」。**
 > 雾浓用 Wayfinder，雾散就离开它。
 
-它在本地用 **taskmd** 维护一张决策地图（Map）和若干决策票据（Ticket），一次只推进一张 Ticket，直到到达 Destination 的路径足够清楚。
+它在本地（`~/.cache/wayfinder/`，由随 skill 自带的 **`ticket` CLI** 管辖）维护一张决策地图（Map）和若干决策票据（Ticket），一次只推进一张 Ticket，直到到达 Destination 的路径足够清楚。
 
 ---
 
@@ -41,7 +41,6 @@
 | 系统 | 角色 | 数据位置 |
 |---|---|---|
 | **Personal Wayfinder** | 决策期导航 | `~/.cache/wayfinder/<workspace-id>/tickets/`（仓库外，无需 gitignore） |
-| **taskmd** | 本地后端 + 给人看的 Web UI | 同上（CLI/Web 操作） |
 | **实现层**（goal 类工作流、spawn 子代理、直接写代码……按当前环境可用者而定） | 实现期进度与交付 | 各自系统自管 |
 
 ```text
@@ -80,12 +79,12 @@ Work   →  在已有 Map 上前进
 
 ## 前置条件
 
-1. 本机已安装 **taskmd**（`command -v taskmd`）
+1. Node（仓库 mise 钉住的版本即可；`ticket` CLI 无任何运行时依赖、无需构建）
 2. 已执行过 `just install-skills`（技能链到 `~/.agents/skills/`）；pi 环境如需 `/wayfinder` 薄入口，另执行 `just install-pi`
 3. 在**目标仓库**里使用（按仓库路径隔离 workspace，但数据存全局目录）
 
-没有 taskmd 时：skill 会停，并要求你自己装或**明确授权** agent 安装。
-**不会**偷偷换成别的 issue tracker。
+存储完全由 skill 自带的 `ticket` CLI（`skills/wayfinder/cli/main.ts`）读写。
+**不会**偷偷换成别的 issue tracker，也不会出现第二个 store。
 
 ---
 
@@ -98,7 +97,7 @@ Work   →  在已有 Map 上前进
 | `wayfinder chart <topic>` | 开新图（需要 topic；会先短澄清再落盘） |
 | `wayfinder work [名字]` | 推进一张 Current Ticket（可点名） |
 | `wayfinder status` | 只读状态，不改数据 |
-| `wayfinder ui` | 后台开 taskmd Web UI（给人看） |
+| `wayfinder ui` | 生成静态地图 HTML（`ticket map`）并报告路径，给人看 |
 | `wayfinder help` | 命令说明 |
 
 以上是 skill 的参数面；pi 环境下通过 `/wayfinder` 薄入口触发，其它 agent 环境直接调用 skill 并附参数即可。
@@ -147,8 +146,10 @@ wayfinder           # 或 wayfinder work
 wayfinder ui
 ```
 
-默认后台启动，浏览器打开 `http://localhost:8080`（端口以实际为准）。
-**人**用 Web UI 查看/偶尔手改；**agent** 仍用 CLI 改状态。
+`ticket map` 会生成一个**自包含的静态 HTML 文件**（默认在 `$TMPDIR`）并打印路径，
+用浏览器打开即可：默认高亮 Frontier，点节点可追踪上下游链路，点 Map 可折叠子树，
+可按 status/type 过滤。**无服务器、无端口、无常驻进程**。
+**人**只看 HTML（偶尔读 Ticket 原文用 `ticket open`）；**agent** 仍用 CLI 改状态。
 
 ### 决策够清了
 
@@ -229,7 +230,7 @@ wayfinder work  ──(一张)──►  决策变清
 |---|---|---|
 | **README.md（本文件）** | 你 | 何时用、怎么用、边界 |
 | SKILL.md | agent | 完整方法论与纪律 |
-| TASKMD-CONVENTION.md | agent | taskmd 标签/状态/命令 |
+| CONVENTION.md | agent | Ticket 字段/状态/`ticket` 命令 |
 | `../../pi/agent/prompts/wayfinder.md` | 触发（仅 pi） | 薄快捷入口，不重复方法 |
 
 ---
@@ -248,6 +249,6 @@ wayfinder work  ──(一张)──►  决策变清
 ## 版本定位
 
 - **个人本地 skill**，放在本 dotfiles 仓库，不为分发
-- 后端固定为 **taskmd**（显式依赖）
+- 存储由自带的 **`ticket` CLI** 全权管辖（零运行时依赖，无外部后端）
 - **不介入实现层**——对实现类系统保持 suggest-only，由用户触发
 - skill/约定文档为英文；本 README 为中文用户指南
