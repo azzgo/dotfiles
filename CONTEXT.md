@@ -1,6 +1,6 @@
 # Pi Workflow, Track & Wayfinder
 
-This context defines the local workflows maintained in this dotfiles repo for Pi. It distinguishes decision-oriented wayfinding (Wayfinder), execution orchestration (Workflow runtime), and freeform working memory (Track) so future prompts, skills, and automation use consistent terms.
+This context defines the local workflows maintained in this dotfiles repo for Pi. It distinguishes decision-oriented wayfinding (Wayfinder), execution orchestration (Workflow runtime), freeform working memory (Track), and unattended nightly execution (Nightshift) so future prompts, skills, and automation use consistent terms.
 
 ## Language
 
@@ -370,3 +370,47 @@ pi 的 code-mode 扩展把工具目录折叠为单一 `run_code` 工具时的工
 **Result Re-fetch（结果续读）**:
 从 session 持久化的工具结果中按需取回被截断的 run_code 返回值分段。恢复路径无副作用重放——取段是纯读，区别于重跑程序。
 _Avoid_: result pagination（暗示主动分页源）、re-run（重放副作用）、cache（无缓存语义）
+
+## Nightshift（夜间批量执行）
+
+一个脚本驱动的夜间待办队列：白天把已澄清的工作写成 Spec 上板，夜里由一个不依赖 Pi 宿主进程的 CLI 逐条派发 `pi -p` 子进程执行、验证、回写状态并归档。
+
+**Nightshift**:
+夜间批量执行机制的整体名字，指这套板子 + CLI + 技能的合称。它是一个队列，不是状态机：没有节点、没有分支、没有 Driving Session。
+_Avoid_: 无人值守 workflow、夜间 Workflow Run、Ralph loop 框架
+
+**Spec**:
+板上的一条待办单元，由白天澄清产出、由 CLI 派发给一个实现 Agent。自带工作目录、目标变更、边界与验证标准，足够让一个零上下文的 Agent 独立执行。
+_Avoid_: task、ticket、issue、card
+
+**Board**:
+单一全局的 Spec 存放处（`~/.cache/nightshift/board/`），跨所有工作目录共用一块板。它存在的理由就是跨项目排水，而不是每仓一个板。
+_Avoid_: 每仓看板、全局 tracker、多板并行
+
+**Serial Key**:
+决定两条 Spec 能否同时执行的分组键，取值是 Spec 的工作目录（绝对路径规范化后的值）。同键严格串行，不同键可并行；它与 git 仓库边界无关，因此同一仓库的不同 Worktree 是两个可并行的键。
+_Avoid_: repo 键、workspace 键、锁文件
+
+**Nightshift Run**:
+一次夜间排水从启动到退出的完整过程，捕获一个时间窗口与其派发记录。队列排空或窗口用尽即结束，不常驻、不轮询。
+_Avoid_: daemon、守护进程、常驻服务
+
+**Verifier**:
+由一个全新的 Agent 会话仅凭只读工具对已提交工作做出的判决，是 Spec 是否通过的唯一权威来源。它不吃实现者的自述，也不修改代码。
+_Avoid_: 自检、实现者自述、CI、单元测试
+
+**Verdict**:
+Verifier 输出的三值判决（pass / fail / verify-error）。其中 verify-error 表示验证本身没能跑完，属于流程故障，不属于代码失败。
+_Avoid_: 退出码、测试结果、评分
+
+**Report**:
+Nightshift Run 结束后面向人的一份只读检查面，按"该看的顺序"列出每条 Spec 的 baseline 区间、提交数、Verdict 与下一步命令。它不合并、不推送、不改盘。
+_Avoid_: dashboard、Web UI、通知
+
+**Archive**:
+已结束的 Spec 的存放处（`~/.cache/nightshift/archive/<日期>/`），按 Nightshift Run 的日期分批。失败项也必须进来：留在板上就会被下一夜自动重跑，那是无人察觉的烧钱循环。
+_Avoid_: 历史看板、回收站、日志目录
+
+**Baseline**:
+派发前记录的 HEAD 提交，是早上检查成果的唯一锚点。Nightshift 不切分支、不建分支，因此"它改了什么"靠 `baseline..HEAD` 而不是分支名；丢弃不想要的结果就是回到 baseline。
+_Avoid_: 起点分支、快照、tag

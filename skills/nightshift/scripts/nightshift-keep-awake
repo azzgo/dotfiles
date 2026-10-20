@@ -1,0 +1,41 @@
+#!/bin/sh
+# nightshift-keep-awake — wrap `nightshift run` in a platform-appropriate
+# sleep inhibitor. Installed by `just install-nightshift`.
+#
+# Run itself never sleeps and exits as soon as the queue drains or the window
+# closes, so this wrapper's only job is to stop the machine from suspending
+# mid-run on platforms where that is possible.
+#
+#   macOS   caffeinate -i      (idle sleep only; display may still sleep)
+#   Linux   systemd-inhibit    (when available)
+#   other   no inhibitor; rely on the OS power settings
+#
+# Nightshift never installs or manages a scheduler. Use whatever you already
+# run (systemd timer, launchd, cron, tmux, a terminal left open) and point it
+# at this wrapper or at `nightshift run` directly.
+
+set -e
+
+nightshift_bin=${NIGHTSHIFT_BIN:-$(dirname "$0")/nightshift}
+if [ ! -x "$nightshift_bin" ]; then
+  nightshift_bin=$(command -v nightshift || true)
+fi
+if [ -z "$nightshift_bin" ]; then
+  echo "nightshift-keep-awake: nightshift not found on PATH" >&2
+  exit 127
+fi
+
+kernel=$(uname -s)
+if [ "$kernel" = "Darwin" ] && command -v caffeinate >/dev/null 2>&1; then
+  exec caffeinate -i "$nightshift_bin" run "$@"
+fi
+
+if [ "$kernel" = "Linux" ] && command -v systemd-inhibit >/dev/null 2>&1; then
+  exec systemd-inhibit \
+    --what=sleep:idle \
+    --why="nightshift run" \
+    --mode=block \
+    "$nightshift_bin" run "$@"
+fi
+
+exec "$nightshift_bin" run "$@"

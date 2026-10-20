@@ -164,3 +164,13 @@ Because `~/.agents/skills/` is also a pi skill search path, these skills remain 
 | **Source commit** | `5bf2b15` (2026-09-13) — `feat(pstack): setup-pstack budget ask` |
 | **Adjustments** | Installed as-is with one routing note added: unslop targets English technical/general writing; Chinese narrative/fiction stays with the `humanize` pi prompt (author-voice preservation conflicts with unslop's normalize-to-plain-prose rules). Rule ids are cited by other pstack skills; decision-log's "plain words" standard resolves to this skill |
 | **Upstream** | https://github.com/cursor/plugins/tree/main/pstack — check for upstream changes regularly |
+
+### `nightshift`
+
+| Field | Value |
+|-------|-------|
+| **Source** | Repo-owned; design recorded in `docs/adr/0017-nightshift-is-a-script-not-an-extension.md` |
+| **Description** | Nightly batch queue — daytime write settled work as a Spec onto one global board (`~/.cache/nightshift/board/`), night-time `nightshift run` dispatches `pi -p` subprocesses per Spec, a separate read-only Verifier session returns the authoritative verdict, results are archived and inspected the next morning via `nightshift report` |
+| **Installed** | 2026-10-20 |
+| **Adjustments** | Deliberately **not** a pi extension (the repo's default path) — see ADR 0017: in-process dispatch cannot survive TUI exit (ADR 0012), `pi -p` already exposes every needed switch, and scheduling belongs to a scheduler rather than an agent. Files: `SKILL.md` (daytime spec writing), `CONVENTION.md` (board layout / schema / verbs — machine-readable single source), `DESIGN.md` (implementation contract), `scripts/` (PATH wrappers `nightshift` + `nightshift-keep-awake`, installed by `just install-nightshift`; the latter picks caffeinate / systemd-inhibit / nothing per platform, and the repo never installs a scheduler), `cli/` (zero-dependency TypeScript, run by path with `node`: `main.ts` + `src/{spec,board,git,dispatch,prompt,run,report,show}.ts` + `test/`). Serial key is the Spec's working directory (realpath), not the git root — different worktrees run in parallel. Verdict comes from stdout (`VERDICT: pass|fail`), never from the exit code (`--mode json` does not fail the process), a `maxWindowHours` guard so a scheduler catching up in the morning cannot turn `--until 07:00` into a 22-hour run. `-ne` rather than `--exclude-tools dispatch`: no extension discovery at all, so a night agent cannot dispatch. pi side ships only a thin forwarder at `pi/agent/prompts/nightshift.md` |
+| **Upstream** | None (repo-owned; no external upstream to track) |

@@ -1,0 +1,33 @@
+#!/bin/sh
+# nightshift — PATH wrapper installed by `just install-nightshift`.
+#
+# Resolves the CLI through ~/.agents/skills so the target can move with
+# `just install-skills` without editing this file. NIGHTSHIFT_HOME is honoured
+# by the CLI itself; nothing else is configured here.
+set -e
+
+skill_home=${NIGHTSHIFT_SKILL_HOME:-$HOME/.agents/skills/nightshift}
+cli=$skill_home/cli/main.ts
+
+if [ ! -f "$cli" ]; then
+  echo "nightshift: CLI not found at $cli" >&2
+  echo "nightshift: run 'just install-skills' (or set NIGHTSHIFT_SKILL_HOME)" >&2
+  exit 127
+fi
+
+# Node is required to run the TypeScript CLI directly (type stripping, no build
+# step). Prefer an explicit override, then mise/volta/asdf shims, then PATH.
+if [ -n "${NIGHTSHIFT_NODE:-}" ]; then
+  node_bin=$NIGHTSHIFT_NODE
+elif [ -x "$HOME/.local/share/mise/shims/node" ]; then
+  node_bin=$HOME/.local/share/mise/shims/node
+else
+  node_bin=$(command -v node || true)
+fi
+
+if [ -z "$node_bin" ]; then
+  echo "nightshift: node not found; set NIGHTSHIFT_NODE=/path/to/node" >&2
+  exit 127
+fi
+
+exec "$node_bin" "$cli" "$@"

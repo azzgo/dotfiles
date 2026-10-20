@@ -203,8 +203,28 @@ install-skills:
     done
     echo "✅ Generic skills installed (pi sees them via ~/.agents/skills search path)."
 
+# Install the nightshift CLI wrappers into ~/.local/bin (no scheduler is created)
+# Nightshift is a queue, not a daemon: this only puts `nightshift` and
+# `nightshift-keep-awake` on PATH. Point your own scheduler (systemd timer,
+# launchd, cron, tmux) at them; nothing here installs or manages timers.
+install-nightshift:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "🌙 Installing nightshift wrappers into ~/.local/bin..."
+    mkdir -p ~/.local/bin
+    for script in nightshift nightshift-keep-awake; do
+        src="{{ dotfiles_dir }}/skills/nightshift/scripts/$script"
+        dst=~/.local/bin/$script
+        chmod +x "$src"
+        ln -sfn "$src" "$dst"
+        echo "  🔗 $dst -> $src"
+    done
+    echo "✅ nightshift installed. Resolve the CLI with 'just install-skills' (links ~/.agents/skills/nightshift)."
+    echo "   Try: nightshift path && nightshift list"
+    echo "   Nightly: point your own scheduler at 'nightshift-keep-awake --until 07:00'."
+
 # Install all configurations
-install-all: install-mise install-neovim install-vim install-shell install-terminals install-herdr install-skills
+install-all: install-mise install-neovim install-vim install-shell install-terminals install-herdr install-skills install-nightshift
     echo "🎉 All configurations installed!"
 
 # Development helpers
@@ -234,6 +254,13 @@ test-compaction *args:
         npm install --silent
     fi
     npm test -- {{ args }}
+
+# Run the nightshift CLI test suite (zero model calls, no network)
+test-nightshift *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd {{ dotfiles_dir }}/skills/nightshift/cli
+    node --test {{ if args == "" { "test/" } else { args } }}
 
 # Check Neovim health
 nvim-health:
