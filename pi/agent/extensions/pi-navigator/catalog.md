@@ -59,6 +59,8 @@ capability explicitly:
 
 **Review workflow for this project** → `<project>-code-review` skill, generated once by `/skill:setup-code-review` in the project's `.agents/skills/`.
 
+**Repo about to be published, or "was this ever leaked"** → `/skill:secret-scan` (gitleaks installed + probed in pre-commit, project `.gitleaks.toml` for identifier shapes, echo-trap audit, `--all` history sweep with rotate-vs-rewrite decision, manual prose pass). Run it at release/milestone boundaries, not once.
+
 **Fixing a bug with a clear, cheap test target** → `/skill:tdd` (failing regression test first, fail-before/pass-after evidence; skips itself when no practical test path exists).
 
 **Retrospective / 复盘 over agent sessions** → `/skill:retro` (agentview evidence, improvement candidates with repetition counts, grilling gate; distils into rules/skills/hooks for the target project).
