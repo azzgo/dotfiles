@@ -1,6 +1,6 @@
 # pi-navigator: a curated capability router injected on demand
 
-Status: accepted
+Status: superseded by [ADR 0018](./0018-retire-pi-navigator.md) (extension removed 2026-10-20)
 
 ## Context
 

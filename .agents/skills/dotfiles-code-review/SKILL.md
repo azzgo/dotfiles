@@ -13,7 +13,7 @@ Multi-axis review of the diff against a fixed point, tuned for a **configuration
 **Core design**: Spec and Documentation Consistency run as **independent sub-agents** (parallel background dispatches via the dispatch tool — fire-and-forget, no sleep-and-poll; timeout and retry are the dispatch tool's responsibility, not the main agent's). The main agent then aggregates their findings and supplements with **Removal Plan** and **Simplification** analysis.
 
 A change can pass one axis and fail another:
-- A config change that does exactly what was asked but leaves `AGENTS.md` or `catalog.md` stale → **Spec pass, Documentation Consistency fail.**
+- A config change that does exactly what was asked but leaves `AGENTS.md` or `README.md` stale → **Spec pass, Documentation Consistency fail.**
 - A doc edit that describes behaviour the diff doesn't implement → **Doc-Consistency pass, Spec fail.**
 
 Reporting them separately stops one axis from masking the other.
@@ -44,7 +44,7 @@ Before proceeding, confirm the fixed point resolves (`git rev-parse <fixed-point
 
 The "spec" in this repo is what the change claimed it would do, plus the curated docs that state intent:
 
-1. **Commit messages** — `git log <fixed-point>..HEAD` is usually the whole spec here (e.g. `feat(pi-navigator): /nav — curated capability router`).
+1. **Commit messages** — `git log <fixed-point>..HEAD` is usually the whole spec here (e.g. `feat(workflow-runtime): /wf replan — human-approved spine revision`).
 2. **`docs/adr/`** — the decision record if the change touches a designed mechanism (extensions, workflow runtime, skills layout).
 3. **`CONTEXT.md`** — the domain glossary; check the change doesn't redefine a term already defined there.
 4. **Ask the user** — if none apply, the **Spec** sub-agent is **skipped** in step 5 (Doc-Consistency still runs).
@@ -56,20 +56,17 @@ The doc-consistency check has a **hard-coded fixed-point list** — do not re-di
 | # | Source | What must stay in sync |
 |---|---|---|
 | 1 | `AGENTS.md` | 目录速览 vs actual root entries; justfile command list; skills 维护规则 description |
-| 2 | `pi/agent/extensions/pi-navigator/catalog.md` | **Core.** New/renamed/removed skills, extension commands (`/wf`, `/track`, `/xfer`, `/nav`, …), patterns must be reflected |
-| 3 | `skills/README.txt` and `pi/agent/skills/README.txt` | Every maintained skill recorded with source + date |
-| 4 | `docs/adr/*.md` | ADR claims vs actual implementation |
-| 5 | `README.md` | User-facing install entry points vs actual justfile targets |
-| 6 | *(fallback)* other claim-bearing docs | Any README / guide in a touched directory |
-
-**Mandatory trigger rule**: if the diff touches any path under `pi/` or `skills/`, the `catalog.md` check (source #2) is **mandatory regardless of the step-4 trigger computation**, and the final report carries a dedicated `## catalog.md Sync` section (may read "(in sync)").
+| 2 | `skills/README.txt` and `pi/agent/skills/README.txt` | Every maintained skill recorded with source + date |
+| 3 | `docs/adr/*.md` | ADR claims vs actual implementation |
+| 4 | `README.md` | User-facing install entry points vs actual justfile targets |
+| 5 | *(fallback)* other claim-bearing docs | Any README / guide in a touched directory |
 
 ### 4. Decide the Documentation Consistency trigger
 
 Compute `doc_check_triggered = true` if the diff touches any of:
 
 - paths matching `*.md` / `*.txt` / `README*`
-- paths under `docs/`, `skills/`, `pi/` (the `pi/` / `skills/` case also fires the mandatory `catalog.md` section)
+- paths under `docs/`, `skills/`, `pi/`
 - justfile recipe additions/removals/renames
 - file or directory additions/removals/moves at the repo root (the 目录速览 set changed)
 - symlink targets changed in any `justfile` install recipe
@@ -138,7 +135,6 @@ and exit.
 
 === PINNED DOC SOURCES (check in this order) ===
 1. AGENTS.md — 目录速览 vs root entries; justfile command list; skills 维护规则
-2. pi/agent/extensions/pi-navigator/catalog.md — skills / extension commands / patterns sync  ← CORE
 3. skills/README.txt, pi/agent/skills/README.txt — every maintained skill recorded
 4. docs/adr/*.md — ADR claims vs implementation
 5. README.md — install entry points vs justfile targets
@@ -172,7 +168,7 @@ output per OUTPUT FORMAT, ≤ 800 words.
 
 #### 6a. Collect sub-agent reports
 
-Present each sub-agent's report verbatim or lightly cleaned — do **not** merge or rerank findings across axes. Keep them under separate `## Spec` and `## Documentation Consistency` headings, plus the `## catalog.md Sync` section when the mandatory trigger fired.
+Present each sub-agent's report verbatim or lightly cleaned — do **not** merge or rerank findings across axes. Keep them under separate `## Spec` and `## Documentation Consistency` headings.
 
 Per-section empty / failure rendering:
 
@@ -189,7 +185,6 @@ Read `references/removal-plan.md`. Identify config, files, symlinks, or docs in 
 
 - install recipe (`justfile`) still referencing the removed item
 - `AGENTS.md` 目录速览 / 维护规则 mentioning it
-- `pi-navigator` `catalog.md` still routing to it
 - the relevant `README.txt` (skills dirs) still listing it
 - stale symlinks the install recipes would create on a fresh machine
 
@@ -242,11 +237,6 @@ Sub-agent reports stay separate. The aggregated `Findings (P0–P3)` section cov
 <verbatim sub-agent report, "(no documentation-relevant change in diff)",
 or "(sub-agent failed: <error>)">
 
-## catalog.md Sync
-
-<only when the pi/ or skills/ trigger fired: catalog.md sync verdict against the
-diff — "(in sync)" or specific gaps>
-
 ---
 
 ## Findings (Aggregated)
@@ -293,9 +283,8 @@ diff — "(in sync)" or specific gaps>
 
 - **Review-only by default** — do not change files unless the user explicitly asks.
 - **No fabricated rules** — every conclusion traceable to a pinned doc source, the ADR/glossary, or a repo fact.
-- **Pinned sources are authoritative** — check `catalog.md` and `AGENTS.md` directly at the hard-coded paths; no discovery chains (the fallback row is the only exception).
+- **Pinned sources are authoritative** — check the pinned docs and `AGENTS.md` directly at the hard-coded paths; no discovery chains (the fallback row is the only exception).
 - **Don't merge the axes** — sub-agent reports stay distinct; aggregated items carry source-axis tags.
-- **catalog.md is a mandatory trigger** — `pi/` or `skills/` diff paths force the `## catalog.md Sync` section.
 - **No hard quality gates** — verification is suggestion-only; never report a fabricated pass/fail.
 - **Extend context when needed** — read full files when a hunk is insufficient; note the expansion.
 - **Word limits** — Spec ≤ 400, Doc-Consistency ≤ 800; supplementary sections focused but complete.

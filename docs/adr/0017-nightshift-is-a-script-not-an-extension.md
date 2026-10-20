@@ -4,7 +4,7 @@ Status: accepted
 
 ## Context
 
-本仓库的默认路径是"能力 = pi 扩展"：`track`、`workflow-runtime`、`sub-dispatch`、`command-palette`、`pi-navigator`、`project-skills` 全部由 `just install-pi` 链接进 `~/.pi/agent/extensions/`，能力通过工具、斜杠命令、widget 暴露给模型和用户。
+本仓库的默认路径是"能力 = pi 扩展"：`track`、`workflow-runtime`、`sub-dispatch`、`command-palette`、`project-skills` 全部由 `just install-pi` 链接进 `~/.pi/agent/extensions/`，能力通过工具、斜杠命令、widget 暴露给模型和用户。（`pi-navigator` 曾是其中一员，已于 2026-10-20 退役，见 ADR 0018。）
 
 Nightshift（`CONTEXT.md` 的 *Nightshift（夜间批量执行）* 一节）是一个夜间待办队列：白天把澄清好的 Spec 写上单一全局板，夜里由 CLI 逐条派发 `pi -p` 子进程执行、验证、回写状态并归档。它的使用场景与上面所有扩展相反——**没有人在场，也没有宿主 TUI**。
 

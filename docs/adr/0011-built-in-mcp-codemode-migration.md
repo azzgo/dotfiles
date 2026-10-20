@@ -56,5 +56,5 @@ pi 0.99.2 起内置了两块能力，覆盖了本仓库自研扩展与第三方�
 - 系统 prompt 中工具目录折叠为单一 `codemode` + section 化的 `mcp_servers` 摘要，
   缓存行为与原 section 方案（ADR 0001 的 2026-09-21 更新）一致。
 - 失去 `require()`：需要 Node 能力的脚本改走 `tools.bash`。
-- 相关文档已同步：AGENTS.md、`pi-navigator/catalog.md`、skills（how /
-  impl-with-spawn / why）中的 `run_code` / `/code` 表述改为 `codemode`。
+- 相关文档已同步：AGENTS.md、skills（how / impl-with-spawn / why）中的
+  `run_code` / `/code` 表述改为 `codemode`。（原列出的 `pi-navigator/catalog.md` 已随该扩展于 2026-10-20 退役删除。）
