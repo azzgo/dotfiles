@@ -1,56 +1,35 @@
 ---
 name: secret-scan
-description: Set up and run a leak scan that actually fires — gitleaks wired into pre-commit plus a project .gitleaks.toml for the identifiers gitleaks cannot know, an echo-trap check for values the code regenerates at runtime, a history sweep with a rewrite-vs-rotate decision, and a manual pass for the prose leaks no tool sees. Use before publishing a repo, when a milestone ends, or whenever someone says "was this ever leaked".
+description: Set up and run a leak scan that actually fires — gitleaks wired into pre-commit plus a project .gitleaks.toml for the identifiers gitleaks cannot know, an echo-trap check for values the code regenerates at runtime, a history sweep with a rewrite-vs-rotate decision, and a manual pass for the prose leaks no tool sees. Use before publishing a repo, at every release boundary, or whenever someone asks "was this ever leaked".
 disable-model-invocation: true
 ---
 
 # Secret scan
 
-A repo has to be *publishable*, not merely *not obviously secret*. The failure this
-skill exists to prevent is not "we never looked" — it is "we looked once, late,
-by hand, and got lucky".
+## Coverage
 
-The motivating case is a repo that shipped for ~70 commits with the maintainer's own
-infrastructure addresses, machine names and node names in it. Every one of those was
-caught manually during a milestone retrospective: an RFC1918 address and a **public**
-IPv4 in a setup guide, a log sample, a JSON schema's `examples`, and a test fixture
-plus the regex asserting the error message that fixture feeds. The local push hook
-printed `secret scan runs in CI`, so the local layer that would have caught them at
-commit time did not exist, and the CI layer ran after the force-push. That is the
-shape of the problem this skill is for.
-
-Four layers of automation plus a manual pass, because each one misses what the next catches:
-
-| Layer | Catches | Never catches |
+| Layer | Catches | Does not catch |
 |---|---|---|
 | 1 · gitleaks default ruleset | credentials: provider tokens, cloud keys, private keys, JWTs, high-entropy values next to `token` / `secret` / `password` | addresses, hostnames, machine names, bare passwords |
-| 2 · project `.gitleaks.toml` | *your* identifier shapes: IPs, pool/node/host values, endpoint hosts | values the code generates instead of storing |
-| 3 · echo-trap discipline | the value that re-enters through an assertion after you scrubbed the fixture | anything outside the tree |
+| 2 · project `.gitleaks.toml` | identifier shapes: IPs, pool/node/host values, endpoint hosts | values the code generates instead of storing |
+| 3 · echo-trap audit | the value that re-enters through an assertion after the fixture was scrubbed | anything outside the tree |
 | 4 · history sweep | values that were committed and then removed | publication that already happened |
-| 5 · manual prose pass | machine names in docs, real hostnames, rules the rulebook contradicts | — |
+| 5 · manual prose pass | machine names in docs, real hostnames, rulebook claims the tree contradicts | — |
 
-Layers 1–4 are mechanical. Layer 5 is a checklist on purpose: no scanner can tell
-that `arch` is somebody's laptop.
+Run all five. Layers 1–4 are commands; layer 5 is a checklist.
 
 ## Ground rules
 
-- **A scan that silently skips is the failure mode.** If the scanner is missing, say
-  so and fail. Never `command -v gitleaks || echo "runs in CI"`. The scripts here exit
-  non-zero and name the install command; keep that property in any wiring you write.
-- **Local before remote.** The layer that matters is the one that runs before the
-  commit exists, on the machine that has the value in memory.
-- **Calibrate every rule against the real tree.** A rule you never ran either cries
-  wolf (and gets ignored) or gets file-allowlisted wholesale (and goes blind). Both are
-  worse than no rule.
-- **Rotate beats rewrite.** Deleting a committed credential and rewriting history does
-  not un-publish it. Decide rotation first; treat the rewrite as cleanup of the
-  artefact, not as the remediation.
-- **Allowlists carry a reason.** One line above each entry, in the config, saying why.
+- Missing scanner → non-zero exit and an install command. Never a skip, never `|| true`.
+- Every scan runs locally before the commit exists.
+- Every rule is calibrated against the real tree before it is committed
+  (`references/calibration.md`).
+- Rotation is decided before any history rewrite.
+- Every allowlist entry carries a one-line reason, in the config.
 
-## Layer 1 — install the scanner, wire the hook
+## Layer 1 — install, wire, probe
 
-`gitleaks` is a single Go binary. Install it with whatever the machine already uses,
-record which one in the repo's docs so the next machine is not a mystery:
+Install:
 
 ```bash
 pacman -S gitleaks                        # Arch
@@ -59,31 +38,31 @@ mise use -g aqua:gitleaks/gitleaks        # cross-platform, pins a version
 go install github.com/gitleaks/gitleaks/v8@latest
 ```
 
-Verify: `gitleaks version` (this skill was written against **8.30.1**).
+Confirm with `gitleaks version`. Written against **8.30.1**.
 
-Wire the pre-commit hook. The command matters — `protect` and `detect` were deprecated
-in 8.19.0, and `--staged` is what makes the scan see the index rather than history:
+Pre-commit command:
 
 ```bash
 gitleaks git --staged --redact --no-banner
 ```
 
-Use `scripts/scan.sh staged` instead of the bare command — it refuses to run when the
-binary is absent, redacts findings, and prints the decision prompts below. Wire it via
-whatever hook runner the repo already has (husky, pre-commit, lefthook, plain
-`.git/hooks/pre-commit`); do not add a second runner just for this.
+`protect` and `detect` were deprecated in 8.19.0. `--staged` is what points the scan at
+the index instead of history.
+
+Use `scripts/scan.sh staged` rather than the bare command — it fails when the binary is
+absent, redacts output, and prints the triage prompts. Wire it into the hook runner the
+repo already has (husky, pre-commit, lefthook, `.git/hooks/pre-commit`). Do not add a
+second runner.
 
 ```sh
 # .husky/pre-commit (or the equivalent)
 "$REPO/scripts/scan.sh" staged
 ```
 
-Escape hatch: `SKIP_SECRET_SCAN=1` for the legitimate case (recovering a real token
-from a config file that must be committed). If you add one, it is loud and it is
-logged. Never an `|| true`.
+If an escape hatch is needed, name it `SKIP_SECRET_SCAN=1`, make it print a line, and
+keep it out of the default path.
 
-**Verify the hook, do not assume it.** Stage a fake credential, confirm the hook
-blocks the commit, unstage:
+Probe the hook before trusting it:
 
 ```bash
 printf 'token: ghp_16C7e42F292c6912E7710c838347Ae178B4a\n' > /tmp/leak-probe.txt
@@ -92,199 +71,174 @@ git commit -m probe            # must FAIL
 git restore --staged leak-probe.txt && rm leak-probe.txt
 ```
 
-## Layer 2 — the project `.gitleaks.toml`
+## Layer 2 — project `.gitleaks.toml`
 
-Two things live in this file, and they are different jobs:
+The file holds two different things:
 
-1. **Custom rules for the project's own identifier shapes.** gitleaks' default ruleset
-   is keyword-anchored and entropy-based; it finds credentials. It cannot know that
-   `100.64.7.21` is your server or that `"pool": "arch"` names a machine. Those only
-   become detectable once the file names their shape. This is the whole justification
-   for the file — a scanned-but-unfired default ruleset proves nothing about them.
-2. **An allowlist for placeholders that must stay quiet.** Without it the docs
-   placeholders trip every build and someone file-allowlists the docs directory, which
-   is how the scan goes blind.
+1. **Rules for the project's own identifier shapes.** The default ruleset is
+   keyword-anchored and entropy-based; it finds credentials and nothing else. Addresses,
+   pool values, node names and endpoint hosts become detectable only once this file names
+   their shape. A default ruleset that never fired proves nothing about them.
+2. **Allowlists for placeholders that must stay quiet.** Without them the doc placeholders
+   trip every build until someone allowlists a whole directory, and the scan is blind there.
 
-Scaffold from `references/gitleaks.toml.template`, then calibrate — `references/calibration.md`
-holds the two-sided fixture (every line that must fire, every line that must stay quiet, and
-the near-misses in between) and the loop that keeps a config honest:
+Scaffold from `references/gitleaks.toml.template`, then:
 
 1. Replace `{{PROJECT_NAME}}`.
 2. Delete or rename rules for vocabulary the project does not have.
-3. Add rules for the identifiers the project *does* have — its own hostnames, its own
-   `pool=` / `node=` style keys, its own actor names.
-4. Run the fixture from `references/calibration.md`: `trips.md` fully hit, `quiet.md` empty,
+3. Add rules for the identifier shapes it does have — its hostnames, its own `key=value`
+   keys, its actor names.
+4. Run the fixture in `references/calibration.md`: `trips.md` fully hit, `quiet.md` empty,
    `edges.md` exact.
-5. Run `scripts/scan.sh dir .` on the real tree, read **every** hit, and for each one either
-   fix the content or add an allowlist entry with a reason.
+5. Run `scripts/scan.sh dir .` on the real tree. Read every hit. For each one: fix the
+   content, or add a narrow allowlist entry with a reason.
 
-Step 4 is what separates a config from a decoration. Measured on the motivating repo, the
-scaffolded rules caught 9 of 9 real leaks, but an early version fired 800 times on vendored
-Lua — both facts are only visible if you run both sides.
+Repeat step 4 after every config edit.
 
-### The scaffolded rules, and why they are shaped that way
+### Rule shapes
 
-The template carries IP rules, an `identifier-quoted` rule (`"pool": "arch"`,
-`hostname: box-01`), an `identifier-assigned` rule (`pool=arch`, `node=node-b`),
-and an `endpoint-host` rule (`endpoint: engine-a`). Shapes learned the hard way:
+The template carries `local-ip`, `public-ip`, `identifier-quoted`, `identifier-assigned`
+and `endpoint-host`.
 
-- **Split the quoted and assigned forms.** One catch-all rule with a loose value class
-  either eats prose punctuation (`endpoint: engine.`) or nests capture groups. Two
-  narrow rules are calibratable; one clever rule is not.
-- **`(?-i:…)` for the first character.** `(?i)` at the start makes the value class
-  case-insensitive, which then matches `Node: the` in English prose. Lowercase the first
-  character explicitly and the prose noise disappears.
-- **Keyword lists are the performance contract.** gitleaks only runs a rule's regex on
-  lines containing one of its `keywords`. That is why a rule can be this loose without
-  costing a full scan; it is also why a rule with the wrong keywords silently never
-  fires. When a rule "doesn't work", check the keyword list first.
-- **Placeholders must be matched exactly.** `pool=prod` is a placeholder;
-  `pool=prod-blue` is a real pool. Anchor the placeholder allowlist with a terminator
-  class (`(?:[?&\s;,"']|$)`), not `\b`.
-- **Rule-scoped allowlists (`[[rules.allowlists]]`), not global ones.** They cannot blind
-  another rule to a real value on the same line.
-- **Allowlist what the docs must teach.** `example.com`, `engine.example.com`,
-  `127.0.0.1`, `192.0.2.0/24`, `local-test`, `EXAMPLE_TOKEN`: these are the *point* of
-  the docs. They belong in the allowlist; the real values they replaced do not.
-- **RegEx is RE2.** No lookarounds, no backreferences — a `(?!...)` makes gitleaks
-  **panic at config load**, not fail gracefully. Test every regex before committing it.
+- Keep the quoted and assigned forms as separate rules. A shared loose value class either
+  eats prose punctuation (`endpoint: engine.`) or nests capture groups.
+- Anchor the value's first character case-sensitively: `(?-i:[a-z0-9])`. Whether `(?i)`
+  covers it decides if `Node: the` in English prose matches.
+- Keep `keywords` accurate. gitleaks runs a rule's regex only on lines containing one of
+  them; a wrong keyword list means the rule never fires.
+- Match placeholders exactly, terminated by `(?:[?&\s;,"']|$)`. `pool=prod` is a
+  placeholder; `pool=prod-blue` is a real value.
+- Use rule-scoped `[[rules.allowlists]]`, never the global `[allowlist]`, unless the entry
+  is genuinely project-wide.
+- Allowlist what the docs must teach: `example.com`, `engine.example.com`, `127.0.0.1`,
+  `192.0.2.0/24`, `203.0.113.0/24`, `local-test`, `EXAMPLE_TOKEN`.
+- Regex is RE2: no lookarounds, no backreferences. `(?!...)` panics at config load.
+- Mirror optional syntax in `regexTarget = "match"` allowlists. A rule with
+  `(?:https?://)?` needs the allowlist to repeat it.
+- Type annotations (`{ pool: string }`) and module specifiers (`node:fs`) need their own
+  allowlist entries; add them the first time calibration flags them.
 
 ## Layer 3 — the echo trap
 
-The one rule that cannot be automated around: **scrubbing a string in a test file is
-not done until the test that surfaces that string passes.**
+Rule: scrubbing a string in a test file is not done until the test that surfaces that
+string passes.
 
-A test fixture carried a real engine address, and the assertion checked the error
-message produced from it. The fixture was scrubbed and the assertion was updated — but
-the code under test echoed *the caller's own value* back into the message, so the
-address re-entered through a second fixture that nobody had looked at. The test went
-red, and that redness is the only reason it was caught.
-
-The general shape: the value is not only *stored* in the tree, it is *regenerated* at
-runtime by code that interpolates its input. Grep only finds storage.
-
-Run `scripts/echo-audit.sh '<pattern>'` after scrubbing. A pattern that now matches
-only test files means you are standing in the trap. Then:
-
-1. Run the test suite. A test that fails after the scrub is the code under test telling
-   you where the value is generated.
-2. Read that code for every value it interpolates from input — `JSON.stringify`, template
-   literals, `util.inspect`, formatted log lines, error messages.
-3. Re-run the audit with the placeholder you intend to keep.
-
-This is cheap and it is not optional. It is the difference between "I removed the
-string" and "the string is gone".
-
-## Layer 4 — history, and what to do about it
-
-A value can sit in the tree for dozens of commits before anyone looks. Sweep the whole
-history, every time, not just HEAD:
+After any scrub, run:
 
 ```bash
-gitleaks git . --log-opts="--all"       # every reachable commit
-gitleaks git . --log-opts="BASE..HEAD"  # one branch's worth
-git log -S'192.168.31.7' --oneline --all   # when you know the value, find its commits
+scripts/echo-audit.sh '<pattern>'
 ```
 
-Also check what is *still* published elsewhere: release tarballs, container layers,
-package registries, the CI provider's build logs. A rewrite does not touch those.
+Exit status tells you where you are:
+
+| Exit | Meaning | Next |
+|---|---|---|
+| 0 | no match in the rev, working tree, or index | done |
+| 3 | matches only inside test files | the code under test can regenerate the value |
+| 4 | matches outside test files | not done; fix those first |
+
+On exit 3:
+
+1. Run the test suite. A test that fails after the scrub identifies the code that
+   generates the value.
+2. Read that code for everything it interpolates from input: `JSON.stringify`, template
+   literals, `util.inspect`, formatted log lines, error messages.
+3. Re-run the audit with the placeholder that will be kept.
+
+Pattern note: a value inside a regex literal is escaped (`192\.168`), so pass the escaped
+form too when auditing.
+
+## Layer 4 — history
+
+```bash
+gitleaks git . --log-opts="--all"              # every reachable commit
+gitleaks git . --log-opts="BASE..HEAD"         # one branch
+git log -S'<value>' --oneline --all            # when the value is known
+```
+
+Also check what is published elsewhere: release tarballs, container layers, package
+registries, CI build logs. A rewrite does not touch those.
 
 ### Rewrite or rotate
 
-Both, usually. The decision is about **the secret**, not about the diff.
-
 | Situation | Do |
 |---|---|
-| Credential was ever live **and** pushed to a shared remote | **Rotate first.** Then decide whether the history is worth rewriting at all — the value is public whatever you do next |
-| Credential was never live (EXPIRED, EXAMPLE, a fixture that always was fake) | Fix the content; history is untidy, not unsafe. A rewrite is optional |
-| Non-credential identifier that is merely private (an IP, a machine name, an internal hostname) | Rewrite is legitimate *and* the value stays known to anyone who fetched it. Decide by how much you care about it being known |
-| Repo has forks, mirrored clones, open PRs, or package tarballs of the affected commits | Assume every SHA downstream is invalidated and the old objects still exist somewhere. Weigh that cost honestly |
+| Credential was ever live and pushed to a shared remote | Rotate first. Then decide whether the history is worth rewriting; the value is public either way |
+| Credential was never live (EXPIRED, EXAMPLE, always-fake fixture) | Fix the content. Rewrite optional |
+| Non-credential identifier that is merely private (IP, machine name, internal hostname) | Rewrite is legitimate; the value stays known to anyone who fetched it |
+| Repo has forks, mirrored clones, open PRs, or package tarballs of the affected commits | Every downstream SHA is invalidated and the old objects persist somewhere. State that cost before starting |
 
-**Costs of a rewrite, all real:** force-push does not un-publish; every downstream SHA
-breaks; clones, forks and CI caches retain objects; registry tarballs are immutable.
-Write the cost down before starting, not after.
+### If a rewrite is chosen
 
-**If you rewrite:**
+```bash
+git filter-repo --replace-text <file>        # supported tool
+git for-each-ref --format='delete %(refname)' refs/original | git update-ref --stdin
+git reflog expire --expire=now --all
+git gc --prune=now --aggressive
+git push --force-with-lease=<ref>:<expected-sha> origin <ref>
+```
 
-- `git filter-repo --replace-text` (or `--path`) is the supported tool;
-  `filter-branch --tree-filter` works and is brutally slow — the motivating case took a
-  full pass over 268 commits.
-- Purge the safety net: `refs/original`, then
-  `git reflog expire --expire=now --all`, then `git gc --prune=now --aggressive`.
-  A "scrubbed" repo with the old commits still reachable via reflog is not scrubbed.
-- Push with an **exact** lease, never bare `--force`:
-  `git push --force-with-lease=main:<expected-sha> origin main`. The lease is what
-  protects you from someone else's commits on top of the history you did not see.
-- Re-run the layer 4 sweep **after** the rewrite and confirm the pattern returns nothing
-  over `--all`.
+- `filter-branch --tree-filter` works and is slow; prefer `filter-repo`.
+- Purging `refs/original` plus the reflog plus `gc` is part of the rewrite. A repo whose
+  old objects are still reachable has not been rewritten.
+- Push with an exact lease, never bare `--force`.
+- Re-run the `--all` sweep after the rewrite and confirm the pattern returns nothing.
 
-## Layer 5 — the prose pass no scanner sees
+## Layer 5 — manual prose pass
 
-For a repo with docs, a schema, notes and a rulebook (AGENTS.md / CONTRIBUTING / README),
-grep and gitleaks between them will miss most of this class. Read for:
+Read the docs, schema examples, notes and rulebook (AGENTS.md / CONTRIBUTING / README) for:
 
-- **Real IPs.** Public worse than private. Private addresses leak network topology;
-  public ones leak a target.
-- **Real hostnames and domains**, including in `examples` arrays, log samples, and
-  schema defaults.
-- **Machine names, pool names, node names, actor names** used as *values*: a distro name
-  standing in for a machine, a colleague's remote box, an agent name from someone's
-  config. These read as harmless strings and are the reason `identifier-quoted` exists.
-- **Verbatim log samples.** A pasted log line carries everything the log line had.
-- **Test fixtures and the assertions derived from them** (see layer 3).
-- **Counts and enumerations that assert something the tree contradicts.** "Four committed
-  build products" listing three; a rulebook naming a file that no longer exists. Not a
-  secret — the same class of drift, and the same fix: make the claim greppable and check
-  it. If a doc says four, `ls` the four.
+- Real IPs. Public IPs first.
+- Real hostnames and domains, including in `examples` arrays, log samples, schema defaults.
+- Machine names, pool names, node names, actor names used as values: a distro name as a
+  machine, a remote box, an agent name.
+- Verbatim pasted log lines.
+- Test fixtures and the assertions derived from them (layer 3).
+- Counts and enumerations the tree contradicts: "four committed build products" listing
+  three; a rulebook naming a file that no longer exists. Make the claim greppable, then
+  check it.
 
-Make the check concrete rather than vibes: `scripts/scan.sh dir .` covers the mechanical
-half, then read the diff of every doc the change touched with the list above in hand.
+Run `scripts/scan.sh dir .` for the mechanical half, then read every doc the diff touched
+against the list above.
 
 ## Workflow
 
-Default path for a repo that has never had this:
+For a repo that has never had this:
 
-1. **Inventory** — is gitleaks installed? is there a hook? a `.gitleaks.toml`? CI
-   coverage? Note what exists instead of replacing it.
-2. **Layer 1** — install, wire, and *probe* the hook (the fake-PAT commit above).
-3. **Layer 2** — scaffold `.gitleaks.toml`, add the project's own identifier shapes,
-   calibrate against the real tree.
-4. **Layer 4** — sweep `--all`. If dirty, make the rotate-vs-rewrite decision with the
-   maintainer before touching history; nothing here rewrites history unasked.
-5. **Layer 5** — docs pass over the files the sweep and the diff point at.
-6. **Record** — the install path, the hook, the config's rules and every allowlist
-   reason live in the repo, not in this conversation.
+1. **Inventory** — gitleaks installed? hook present? `.gitleaks.toml` present? CI coverage?
+   Note what exists instead of replacing it.
+2. **Layer 1** — install, wire, probe.
+3. **Layer 2** — scaffold, add identifier shapes, run the calibration fixture, run on the
+   real tree.
+4. **Layer 4** — sweep `--all`. If dirty, present the rewrite-vs-rotate decision and wait
+   for the maintainer. Do not rewrite history unasked.
+5. **Layer 5** — prose pass over the files the sweep and the diff point at.
+6. **Record** — install path, hook, config rules, and every allowlist reason go into the
+   repo.
 
-For an *ongoing* repo, step 4 runs at every release or milestone boundary. The motivated
-failure mode is "we last looked at this seventy commits ago".
+For an existing repo, step 4 runs at every release boundary.
 
 ## Reporting
 
-Never paste a live secret into a chat, an issue, or a commit message. Report
-`rule · file · line` and a redacted context line; the full value belongs in the local
-JSON report (`SECRET_SCAN_REPORT=/tmp/scan.json scripts/scan.sh ...`) and nowhere else.
+Report `rule · file · line` plus a redacted context line. The full value goes into the
+local JSON report (`SECRET_SCAN_REPORT=/tmp/scan.json scripts/scan.sh …`) and nowhere else.
+Never paste a live secret into a chat, an issue, or a commit message.
 
-Say plainly which layers ran and which did not. "Scan clean" from a scanner that never
-found the file it was supposed to look at is a lie with a good conscience.
+State which layers ran and which did not.
 
 ## Strict constraints
 
-- **Never report clean from a skipped scan.** Missing scanner → non-zero exit and an
-  install instruction.
-- **Never an allowlisted file where a narrow regex will do.** File-level allowlisting is
-  permanent blindness, and it outlives whoever wrote it.
-- **Never rewrite history as a substitute for rotating a credential.** Rotation first,
-  always.
-- **Never bare `--force`.** `--force-with-lease=<ref>:<exact-sha>`.
-- **Never declare a scrub done without re-running the audit and the tests.** Layer 3 is
-  the reason this skill exists.
+- Never report clean from a skipped scan.
+- Never allowlist a file where a narrow regex will do.
+- Never rewrite history as a substitute for rotating a credential.
+- Never bare `--force`; always `--force-with-lease=<ref>:<exact-sha>`.
+- Never call a scrub done without re-running the echo audit and the tests.
 
 ## References
 
-- `scripts/scan.sh` — the one scanner invocation; modes `staged`, `head`, `range`,
-  `history`, `dir`, `stdin`; fails loud when gitleaks is missing.
-- `scripts/echo-audit.sh` — post-scrub check that distinguishes "gone" from "only
-  removed from the files you remembered".
-- `references/gitleaks.toml.template` — the scaffold, with the rule rationale inline.
-- `references/calibration.md` — the two-sided fixture and the loop for proving a rule both
-  fires and stays quiet; every config edit goes through it before it is committed.
+- `scripts/scan.sh` — modes `staged`, `head`, `range`, `history`, `dir`, `stdin`; fails
+  when gitleaks is missing.
+- `scripts/echo-audit.sh` — post-scrub audit; distinguishes "gone" from "only gone from
+  the files you remembered".
+- `references/gitleaks.toml.template` — the scaffold.
+- `references/calibration.md` — two-sided fixture; every config edit goes through it.

@@ -1,31 +1,30 @@
 # Calibrating a project `.gitleaks.toml`
 
-A rule you never ran is not a rule. Two failure modes, both worse than no rule at all:
+Two-sided fixture for `.gitleaks.toml`. Every config edit runs through it before commit.
 
-- **Cries wolf** — every doc edit trips the scan, someone allows the docs directory, the
-  scan is now blind to docs.
-- **Never fires** — a wrong keyword list, an allowlist that is too broad, or a regex
-  that looks right and matches nothing. The scan reports clean and proves nothing.
+Two failure modes it screens out:
 
-This file is the two-sided test that catches both. Copy it into a scratch directory,
-drop your rules in, and make every line land on the side it belongs.
+- **Cries wolf** — every doc edit trips the scan, then a directory gets allowlisted and
+  the scan is blind there.
+- **Never fires** — wrong `keywords`, an over-broad allowlist, or a regex that matches
+  nothing. The scan reports clean and proves nothing.
 
 ## 1. The fixture files
 
-Create a throwaway repo, then write three files. Keep the real values out of it — the
-point of the fixture is the *shape*, and you can use a value you invented.
+Create a throwaway repo with three files. Use invented values, not real ones: the fixture
+tests shapes, not values.
 
 `trips.md` — every line here must produce a finding:
 
 ```
 Endpoint: 192.168.31.7
 Public: 100.64.7.21
-pool: arch
-node=node-b
-"pool": "local-test"
+pool: acme7
+node=box-lab7
+"pool": "box-mac2"
 actor=agent7
 endpoint: engine-a
-pool=local-test
+pool=box-mac2
 token: ghp_16C7e42F292c6912E7710c838347Ae178B4a
 ```
 
@@ -73,8 +72,7 @@ jq -r '.[] | select(.File=="edges.md") | .StartLine' /tmp/cal.json | sort -n | t
 
 ## 3. Check the thing that actually matters
 
-A config that fires on your fixture can still be wrong on your real tree. Run it there
-and **read every hit**:
+Fixture passing does not clear the real tree. Run it there and read every hit:
 
 ```bash
 gitleaks dir . --config .gitleaks.toml --no-banner -v
@@ -82,25 +80,22 @@ gitleaks dir . --config .gitleaks.toml --no-banner -v
 
 For each hit, exactly one of two things is true:
 
-- it is a leak → fix the content (and see the echo trap in `SKILL.md` if it sat in a
-  test fixture), or
+- it is a leak → fix the content (see the echo trap in `SKILL.md` when it sat in a test
+  fixture), or
 - it is a legitimate placeholder → allowlist **the narrow form** with a reason, in the
   rules section, not the global allowlist.
 
-If a whole file is noise, ask why before allowlisting it. Generated code, vendored
-dependencies and lockfiles belong in the global `paths` allowlist. Source that merely
-happens to have unreplaced config in it does not.
+Whole-file allowlist: only for generated code, vendored dependencies and lockfiles.
+Not for source that happens to hold unreplaced config.
 
 ## 4. Re-run after every rule change
 
-Every edit to `.gitleaks.toml` gets the fixture pass before it is committed. A rule
-change is config code; it gets tested like config code, or it is decoration.
+Every edit to `.gitleaks.toml` gets the fixture pass before commit.
 
-## Two failures worth knowing before you write a rule
+## Rule-writing constraints
 
-- **RE2 has no lookarounds.** `(?!)` makes gitleaks panic at config load with a Go regex
-  error, not a friendly message. Use allowlists for exclusion.
-- **`regexTarget = "match"` on an allowlist compares against the rule's matched text,
-  not the line.** If your rule starts with optional syntax (`(?:https?://)?`), the
-  allowlist must repeat that optional syntax, or it will stop matching exactly when the
-  value is written in the form the docs actually use.
+- **RE2: no lookarounds, no backreferences.** `(?!)` panics at config load. Use allowlists
+  to exclude.
+- **`regexTarget = "match"` compares against the rule's matched text, not the line.** A
+  rule with optional syntax (`(?:https?://)?`) needs the allowlist to repeat it, or the
+  allowlist stops matching whenever the value is written in that form.

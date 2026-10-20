@@ -13,7 +13,7 @@ survives where the code under test can reproduce it at runtime.
 
   echo-audit.sh '10\.0\.0\.5'          # one address
   echo-audit.sh 'pool|node|host-' -    # alternation, all revisions up to HEAD
-  echo-audit.sh 'arch' v1.2.0          # a tag
+  echo-audit.sh 'Acme9' v1.2.0          # a tag
 
 Exit status: 0 clean, 3 test-only, 4 non-test hits remain.
 USAGE

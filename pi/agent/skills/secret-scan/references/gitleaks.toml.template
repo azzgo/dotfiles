@@ -1,30 +1,24 @@
 # .gitleaks.toml — project secret-scan config
 #
-# Scaffolded by the `secret-scan` skill. Keep this file honest: every allowlist entry
-# needs a reason, and every custom rule needs a test that fires it.
+# Scaffolded by the `secret-scan` skill.
+#
+# Rules for editing this file:
+#   - every allowlist entry gets a one-line reason above it
+#   - every rule gets a line in the calibration fixture that fires it
+#   - replace a leaked value with an obvious placeholder; allowlist only what cannot change
 #
 # Verify after editing:
 #   gitleaks dir . --config .gitleaks.toml --no-banner     # working tree
 #   gitleaks git . --config .gitleaks.toml --no-banner     # full history
-#
-# Rule of thumb: replace a leaked value with an obvious placeholder (EXAMPLE, example.com,
-# 127.0.0.1, local-test). Only allowlist what you cannot change, and say why on the line above.
 
 title = "{{PROJECT_NAME}} secret scan"
 
 [extend]
-# The upstream ruleset covers credentials: cloud keys, provider tokens, private keys,
-# JWTs, and high-entropy values next to words like token / secret / password / api key.
-# Do not remove this line — the custom rules below are additive, not a replacement.
+# Keep. Covers credentials; the rules below are additive, not a replacement.
 useDefault = true
 
 # ---------------------------------------------------------------------------
-# Custom rules for THIS project's own identifier shapes.
-#
-# gitleaks' default ruleset is keyword-anchored and entropy-based: it finds credentials.
-# It cannot know that 203.0.113.7 is one of your servers, or that "pool": "arch" names a
-# machine. Those only become detectable once THIS file names their shape — that is the
-# whole reason the file exists.
+# Rules for this project's identifier shapes. Delete what does not apply, add what does.
 # ---------------------------------------------------------------------------
 
 # <!-- GENERATED RULES START -->
@@ -55,21 +49,11 @@ regexes = [
 ]
 
 # ---------------------------------------------------------------------------
-# Shape rules for THIS project's vocabulary.
-#
-# Two rules, on purpose. Shape A catches quoted or bare values in configs and docs
-# (`"pool": "arch"`, `pool: arch`); Shape B catches the `key=value` form. They are
-# separate because the value character class differs: a loose class in Shape A eats
-# the trailing punctuation of prose (`endpoint: engine.`) and a loose one in Shape B
-# nests capture groups. Both need a keyword list — that is what keeps the scan cheap,
-# since gitleaks only runs the regex on lines containing one of them.
-#
-# Always calibrate against the real tree after adding a rule: run it, read every hit,
-# and allowlist the placeholders the project legitimately ships. A rule nobody
-# calibrated is either noise (ignored) or blindness (allowlisted wholesale).
+# Shape rules. Quoted and assigned forms are separate rules; do not merge them.
+# Every rule keeps a keyword list, and every keyword list stays accurate.
 # ---------------------------------------------------------------------------
 
-# Shape A: quoted or bare value — `"pool": "arch"`, `pool: arch`, `hostname: box-01`
+# Shape A: quoted or bare value — `"pool": "acme7"`, `pool: acme7`, `hostname: box-01`
 [[rules]]
 id = "identifier-quoted"
 description = "Machine, host, pool or actor name used as a quoted or bare value"
@@ -91,12 +75,11 @@ regexes = [
   '''(?i)\b(?:pool|node|hostname|machine)\b["']?\s*:\s*["']?(?:default|example|example\.com|local|local-test|test|tests?|workstation|prod|production|staging|dev|pool-a|pool-b|node-a|node-b|host-a|host-b|localhost)\b''',
 ]
 
-# Shape B: `key=value` — `pool=local-test`, `node=node-b`, `pool=x&node=y`
+# Shape B: `key=value` — `pool=box-mac2`, `node=box-lab7`, `pool=x&node=y`
 [[rules]]
 id = "identifier-assigned"
 description = "Machine, host, pool or actor name assigned to a key"
-# Two alternations so an exact placeholder can be matched without swallowing a value that
-# merely starts with it: `pool=prod-blue` is a real pool, `pool=prod` is the placeholder.
+# Two alternations: bare value or quoted value.
 regex = '''(?i)\b(?:pool|node|actor|hostname|machine)=(?:([a-z0-9][a-z0-9._-]{2,})|"([^"]{3,})")'''
 keywords = ["pool", "node", "actor", "hostname", "machine"]
 tags = ["identifier"]
@@ -108,8 +91,7 @@ regexes = [
   '''(?i)\b(?:pool|node|actor|hostname|machine)=(?:"?(?:default|example|local|local-test|test|tests|workstation|prod|production|staging|dev|pool-a|pool-b|node-a|node-b|host-a|host-b)"?)(?:[?&\s;,"']|$)''',
 ]
 
-# Concrete hosts in endpoint values: `endpoint: engine-a`, `endpoint: 203.0.113.7`.
-# IPs also trip the ip rules above; this exists so a hostname-shaped one is not missed.
+# Concrete hosts in endpoint values.
 [[rules]]
 id = "endpoint-host"
 description = "Concrete host committed in an endpoint value"
@@ -118,10 +100,8 @@ keywords = ["endpoint"]
 tags = ["identifier"]
 
 [[rules.allowlists]]
-description = "the endpoint shape itself is not the leak; the host is, and the ip rules cover it"
-# The prefix must mirror the rule exactly — `(?:https?://)?` included. An allowlist that
-# skips the scheme stops matching the moment the value is written as a URL, which is the
-# most common way docs write one, and the rule then fires on every placeholder again.
+description = "placeholder and ip endpoint values"
+# Prefix must mirror the rule exactly, `(?:https?://)?` included.
 regexTarget = "match"
 regexes = [
   '''(?i)\bendpoint\b["']?\s*[:=]\s*["']?(?:https?://)?(?:engine\.example\.com|example\.com|example\.org|localhost|127\.0\.0\.1)''',
@@ -130,26 +110,24 @@ regexes = [
 # <!-- GENERATED RULES END -->
 
 # ---------------------------------------------------------------------------
-# Allowlist for values that legitimately ship: fixtures, docs placeholders, mocks.
-# Blanket-allowlisting a FILE is a last resort — it blinds the scan to that file forever.
-# Prefer a narrow regex, and always in the rules section above when it is rule-specific.
+# Project-wide allowlist. Prefer a narrow regex, and prefer the rule-scoped
+# [[rules.allowlists]] above. Whole-file entries: generated code, vendored trees,
+# lockfiles only.
 # ---------------------------------------------------------------------------
 
 [allowlist]
 description = "project-wide placeholders"
 paths = [
-  # Lockfiles: bundled dependency content, thousands of hashes, no project secrets.
+  # Lockfiles.
   '''(?:^|/)(?:package-lock\.json|pnpm-lock\.yaml|yarn\.lock|Cargo\.lock|poetry\.lock|go\.sum)$''',
-  # Vendored and generated trees. Nothing in them is authored or fixable here, and a
-  # working-tree scan would otherwise drown in them (`.local/`, `node_modules/`).
+  # Vendored and generated trees.
   '''(?:^|/)(?:node_modules|vendor|third_party|plugged|\.venv|\.local)/''',
 ]
 regexes = [
-  # Documentation placeholders that must stay quiet or every doc edit trips the scan.
+  # Documentation placeholders.
   '''(?i)\bEXAMPLE[_-]?(?:KEY|TOKEN|SECRET|PASSWORD)\b''',
   '''sk_(?:test|xxx)_[A-Za-z0-9]*''',
-  # Hostnames under a reserved documentation domain, at any depth. The TLD has to be the
-  # anchor: `api.service0.example.com` is a placeholder, a bare `example` prefix is not.
+  # Hostnames under a reserved documentation domain, at any depth. Anchor on the TLD.
   '''(?i)https?://[^\s:@/"']*\.(?:example\.com|example\.org|example\.net)\b''',
   '''(?i)\b[a-z0-9.-]*\.(?:example\.com|example\.org|example\.net)\b''',
   '''(?i)\b(?:your|my|redacted|placeholder)[_-](?:token|key|secret|password)\b''',
