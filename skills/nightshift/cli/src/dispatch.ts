@@ -18,7 +18,13 @@ export interface ChildResult {
   timedOut: boolean;
 }
 
-export function buildImplArgs(spec: Spec, cfg: Config, base: string, prompt: string): string[] {
+/**
+ * Prompts go over stdin, never argv. Corporate endpoint security intercepts
+ * spawn() calls with large argv and SIGKILLs the child before it starts, with
+ * no stderr and no output — indistinguishable from a crash. Piped stdin is
+ * unaffected, and pi prepends it to the first prompt (docs/cli.md).
+ */
+export function buildImplArgs(spec: Spec, cfg: Config, base: string): string[] {
   const args = ["-p", "--mode", "text", "-ne", "--no-mcp", "-ns"];
   args.push("--session-dir", path.join(sessionsDir(base), spec.id));
   args.push("--name", `nightshift-${spec.id}`);
@@ -36,28 +42,34 @@ export function buildImplArgs(spec: Spec, cfg: Config, base: string, prompt: str
     }
     args.push("-e", ext);
   }
-  args.push("--", prompt);
   return args;
 }
 
-export function buildVerifyArgs(spec: Spec, cfg: Config, prompt: string): string[] {
+export function buildVerifyArgs(spec: Spec, cfg: Config): string[] {
   const args = ["-p", "--mode", "text", "-ne", "--no-mcp", "-ns", "--no-session"];
   args.push("--thinking", cfg.verifyThinking ?? "off");
   const model = cfg.verifyModel ?? spec.model ?? cfg.defaultModel;
   if (model !== null) args.push("--model", model);
   args.push("-a");
   args.push("--tools", "read,bash,grep,find,ls");
-  args.push("--", prompt);
   return args;
 }
 
-export function parseVerdict(stdout: string, exitCode: number | null): { verdict: Verdict; reason: string | null } {
+export function parseVerdict(
+  stdout: string,
+  exitCode: number | null,
+  detail: { signal?: NodeJS.Signals | null; stderr?: string } = {},
+): { verdict: Verdict; reason: string | null } {
   const verdicts = [...stdout.matchAll(/^[ \t]*VERDICT:[ \t]*(pass|fail)[ \t]*$/gm)];
   if (verdicts.length === 0) {
+    const exit = exitCode === null ? "no exit code" : `exit ${exitCode}`;
+    const signal = detail.signal ? `, ${detail.signal}` : "";
+    const tail = (detail.stderr ?? "").trim().split("\n").filter((l) => l.trim() !== "").slice(-1)[0];
+    const body = `${exit}${signal}`;
     const hint =
-      exitCode === null
+      exitCode === null && !detail.signal
         ? "verifier produced no VERDICT line and exited uncleanly"
-        : `verifier produced no VERDICT line (exit ${exitCode})`;
+        : `verifier produced no VERDICT line (${body})${tail ? ` — ${tail.slice(0, 200)}` : ""}`;
     return { verdict: "verify-error", reason: hint };
   }
   const verdict = verdicts[verdicts.length - 1][1] as "pass" | "fail";
@@ -76,6 +88,7 @@ export interface SpawnOptions {
   args: string[];
   cwd: string;
   timeoutMs: number;
+  stdin?: string;
   onStdout?: (chunk: string) => void;
 }
 
@@ -83,11 +96,19 @@ export function runChild(opts: SpawnOptions): Promise<ChildResult> {
   return new Promise((resolve, reject) => {
     let child;
     try {
-      child = spawn(opts.bin, opts.args, { cwd: opts.cwd, stdio: ["ignore", "pipe", "pipe"] });
+      child = spawn(opts.bin, opts.args, {
+        cwd: opts.cwd,
+        stdio: [opts.stdin === undefined ? "ignore" : "pipe", "pipe", "pipe"],
+      });
     } catch (e) {
       reject(new DispatchError(`failed to spawn ${opts.bin}: ${String(e)}`));
       return;
     }
+    if (opts.stdin !== undefined && child.stdin) {
+      child.stdin.on("error", () => {});
+      child.stdin.end(opts.stdin);
+    }
+
     let stdout = "";
     let stderr = "";
     let timedOut = false;

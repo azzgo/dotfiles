@@ -89,32 +89,49 @@ interface Job {
 const MAX_ATTEMPTS = 2;
 
 async function runImpl(spec: Spec, cfg: Config, base: string, attempt: number, feedback: string | null): Promise<{ hint: string | null }> {
+  let output = "";
   const baseline = spec.baseline;
   const prompt = implPrompt({ spec, baseline, attempt, feedback });
-  const args = buildImplArgs(spec, cfg, base, prompt);
+  const args = buildImplArgs(spec, cfg, base);
   const res = await runChild({
     bin: cfg.piBin,
     args,
     cwd: spec.dir,
     timeoutMs: cfg.timeoutSec * 1000,
+    stdin: prompt,
+    onStdout: (chunk) => {
+      output += chunk;
+    },
   });
-  const hint = parseReviewHint(res.stdout);
+  const hint = parseReviewHint(output);
   if (res.timedOut) throw new DispatchError(`implementation timed out after ${cfg.timeoutSec}s`);
+  if (res.exitCode === null) {
+    const tail = res.stderr.trim().split("\n").filter((l) => l.trim() !== "").slice(-1)[0];
+    throw new DispatchError(
+      `implementation died on ${res.signal ?? "a signal"}` + (tail ? ` — ${tail.slice(0, 200)}` : ""),
+    );
+  }
+  if (res.exitCode !== 0 && res.stdout.trim() === "") {
+    const tail = res.stderr.trim().split("\n").filter((l) => l.trim() !== "").slice(-1)[0];
+    const detail = tail ? ` — ${tail.slice(0, 200)}` : "";
+    throw new DispatchError(`implementation exited ${res.exitCode} without producing output${detail}`);
+  }
   return { hint };
 }
 
 async function runVerify(spec: Spec, cfg: Config): Promise<{ verdict: string; reason: string | null }> {
   const head = headOf(spec.dir);
   const prompt = verifyPrompt({ spec, baseline: spec.baseline, head });
-  const args = buildVerifyArgs(spec, cfg, prompt);
+  const args = buildVerifyArgs(spec, cfg);
   const res = await runChild({
     bin: cfg.piBin,
     args,
     cwd: spec.dir,
     timeoutMs: Math.min(cfg.timeoutSec, 1800) * 1000,
+    stdin: prompt,
   });
   if (res.timedOut) return { verdict: "verify-error", reason: "verifier timed out" };
-  return parseVerdict(res.stdout, res.exitCode);
+  return parseVerdict(res.stdout, res.exitCode, { signal: res.signal, stderr: res.stderr });
 }
 
 function persist(spec: Spec, base: string): void {

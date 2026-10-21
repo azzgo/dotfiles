@@ -149,8 +149,8 @@ draft 永不被派发。
 ```sh
 pi -p --mode text -ne --no-mcp -ns \
    --session-dir <base>/sessions/<id> --name nightshift-<id> \
-   --thinking <off> [--model M] -a [--tools +x,+y] [-e <ext>] \
-   -- "<实现 prompt>"
+   --thinking <off> [--model M] -a [--tools +x,+y] [-e <ext>]
+# prompt 不在 argv 里：从 stdin 送入（piped stdin 会被前置到第一个 prompt）
 ```
 
 - `-ne` 不发现任何扩展（`dispatch` 因此不存在，夜里不可能递归派发）
@@ -162,8 +162,8 @@ pi -p --mode text -ne --no-mcp -ns \
 ```sh
 pi -p --mode text -ne --no-mcp -ns --no-session \
    --thinking <off> [--model M] -a \
-   --tools read,bash,grep,find,ls \
-   -- "<verify prompt>"
+   --tools read,bash,grep,find,ls
+# prompt 同样从 stdin 送入
 ```
 
 只读工具集，无法修改代码。必须输出：

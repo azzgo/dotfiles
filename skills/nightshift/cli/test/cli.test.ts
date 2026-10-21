@@ -188,42 +188,50 @@ test("board: stale lock is reclaimed", () => {
 // ── dispatch argv ───────────────────────────────────────────────────────
 
 test("dispatch: impl argv disables extensions, mcp, skills and keeps plain tool set", () => {
-  const args = buildImplArgs(makeSpec({ tools: ["+codemode"] }), DEFAULT_CONFIG, "/base", "PROMPT");
+  const args = buildImplArgs(makeSpec({ tools: ["+codemode"] }), DEFAULT_CONFIG, "/base");
   assert.ok(args.includes("-ne"));
   assert.ok(args.includes("--no-mcp"));
   assert.ok(args.includes("-ns"));
-  assert.strictEqual(args[args.length - 1], "PROMPT");
   const toolsIdx = args.indexOf("--tools");
   assert.strictEqual(args[toolsIdx + 1], "+codemode");
 });
 
+test("dispatch: the prompt never appears in argv", () => {
+  const prompt = "PROMPT-MARKER-" + "x".repeat(5000);
+  for (const args of [buildImplArgs(makeSpec(), DEFAULT_CONFIG, "/base"), buildVerifyArgs(makeSpec(), DEFAULT_CONFIG)]) {
+    assert.ok(!args.some((a) => a.includes("PROMPT-MARKER")), "prompt must travel over stdin, not argv");
+    const argc = args.join(" ").length;
+    assert.ok(argc < 500, `argv must stay short, got ${argc} chars`);
+  }
+});
+
 test("dispatch: tool names without a sign get a plus", () => {
-  const args = buildImplArgs(makeSpec({ tools: ["codemode"] }), DEFAULT_CONFIG, "/base", "P");
+  const args = buildImplArgs(makeSpec({ tools: ["codemode"] }), DEFAULT_CONFIG, "/base");
   assert.strictEqual(args[args.indexOf("--tools") + 1], "+codemode");
 });
 
 test("dispatch: sub-dispatch extension is refused", () => {
   assert.throws(
-    () => buildImplArgs(makeSpec({ extensions: ["/x/pi/agent/extensions/sub-dispatch/index.ts"] }), DEFAULT_CONFIG, "/b", "P"),
+    () => buildImplArgs(makeSpec({ extensions: ["/x/pi/agent/extensions/sub-dispatch/index.ts"] }), DEFAULT_CONFIG, "/b"),
     DispatchError,
   );
 });
 
 test("dispatch: verify argv is read-only and sessionless", () => {
-  const args = buildVerifyArgs(makeSpec(), DEFAULT_CONFIG, "P");
+  const args = buildVerifyArgs(makeSpec(), DEFAULT_CONFIG);
   assert.ok(args.includes("--no-session"));
   assert.ok(args.includes("-ne"));
   assert.strictEqual(args[args.indexOf("--tools") + 1], "read,bash,grep,find,ls");
 });
 
 test("dispatch: model omitted when nothing configured", () => {
-  const args = buildImplArgs(makeSpec(), DEFAULT_CONFIG, "/b", "P");
+  const args = buildImplArgs(makeSpec(), DEFAULT_CONFIG, "/b");
   assert.ok(!args.includes("--model"));
 });
 
 test("dispatch: spec model wins over config default", () => {
   const cfg = { ...DEFAULT_CONFIG, defaultModel: "cfg" };
-  const args = buildImplArgs(makeSpec({ model: "spec-model" }), cfg, "/b", "P");
+  const args = buildImplArgs(makeSpec({ model: "spec-model" }), cfg, "/b");
   assert.strictEqual(args[args.indexOf("--model") + 1], "spec-model");
 });
 
@@ -238,6 +246,18 @@ test("verdict: missing line becomes verify-error, never fail", () => {
   const r = parseVerdict("no verdict here\n", 1);
   assert.strictEqual(r.verdict, "verify-error");
   assert.ok(r.reason.includes("no VERDICT"));
+});
+
+test("verdict: a killed verifier reports the signal, not just a bare exit", () => {
+  const r = parseVerdict("", null, { signal: "SIGKILL", stderr: "" });
+  assert.strictEqual(r.verdict, "verify-error");
+  assert.ok(r.reason.includes("SIGKILL"), r.reason);
+});
+
+test("verdict: the stderr tail is surfaced so a spawn failure is diagnosable", () => {
+  const r = parseVerdict("", 1, { signal: null, stderr: "line a\nError: disk full\n" });
+  assert.ok(r.reason.includes("exit 1"), r.reason);
+  assert.ok(r.reason.includes("Error: disk full"), r.reason);
 });
 
 test("verdict: indented lines are accepted", () => {
@@ -420,6 +440,47 @@ function writeReady(base, id, dir, created) {
     serializeSpec({ ...makeSpec({ id, status: "ready", dir, created }), file: `${id}.md` }),
   );
 }
+
+test("run: both agents receive their prompt over stdin, and argv stays short", async () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const pi = withFakePiScript();
+  const boardDirPath = path.join(base, "board");
+  fs.mkdirSync(boardDirPath, { recursive: true });
+  fs.writeFileSync(
+    path.join(boardDirPath, "ns-0001.md"),
+    serializeSpec({ ...makeSpec({ id: "ns-0001", status: "ready", dir: repo.dir }), file: "ns-0001.md" }),
+  );
+  const cfg = { ...DEFAULT_CONFIG, piBin: pi, timeoutSec: 30 };
+  process.env.FAKE_REQUIRE_STDIN = "1";
+  process.env.FAKE_ASSERT_PROMPT = "## Verify";
+  try {
+    const { result, logs } = await runLoop(base, cfg, 1);
+    assert.strictEqual(result.specs[0].status, "passed", logs.join("\n"));
+  } finally {
+    delete process.env.FAKE_REQUIRE_STDIN;
+    delete process.env.FAKE_ASSERT_PROMPT;
+  }
+});
+
+test("run: a killed impl agent surfaces the signal instead of a bare verify-error", async () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const boardDirPath = path.join(base, "board");
+  fs.mkdirSync(boardDirPath, { recursive: true });
+  fs.writeFileSync(
+    path.join(boardDirPath, "ns-0001.md"),
+    serializeSpec({ ...makeSpec({ id: "ns-0001", status: "ready", dir: repo.dir }), file: "ns-0001.md" }),
+  );
+  const base2 = tmp("ns-fakepi-kill-");
+  const pi = path.join(base2, "pi");
+  fs.writeFileSync(pi, `#!${process.execPath}\nprocess.kill(process.pid, "SIGKILL");\n`);
+  fs.chmodSync(pi, 0o755);
+  const cfg = { ...DEFAULT_CONFIG, piBin: pi, timeoutSec: 30 };
+  const { result, logs } = await runLoop(base, cfg, 1);
+  assert.strictEqual(result.specs[0].status, "verify-error", logs.join("\n"));
+  assert.ok(result.specs[0].reason.includes("SIGKILL"), result.specs[0].reason);
+});
 
 test("run: full pass path archives the spec and leaves a commit", async () => {
   const base = tmp("ns-home-");

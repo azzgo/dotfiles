@@ -5,6 +5,16 @@ import { spawnSync } from "node:child_process";
 const args = process.argv.slice(2);
 const isVerify = args.includes("--no-session");
 
+const prompt = fs.readFileSync(0, "utf8");
+if (process.env.FAKE_REQUIRE_STDIN === "1" && prompt.trim() === "") {
+  process.stderr.write("fake-pi: no prompt on stdin\n");
+  process.exit(2);
+}
+if (process.env.FAKE_ASSERT_PROMPT && !prompt.includes(process.env.FAKE_ASSERT_PROMPT)) {
+  process.stderr.write("fake-pi: prompt missing marker " + process.env.FAKE_ASSERT_PROMPT + "\n");
+  process.exit(2);
+}
+
 function git(argv) {
   return spawnSync("git", argv, { encoding: "utf8" });
 }

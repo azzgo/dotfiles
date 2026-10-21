@@ -28,7 +28,7 @@
     │   ├── report.ts      # Report 渲染
     │   └── show.ts        # 单条详情 + 下一步命令
     └── test/
-        ├── cli.test.ts    # 54 个测试
+        ├── cli.test.ts    # 59 个测试
         └── fake-pi.mjs    # 假 pi，零 token 验证整个调度循环
 <repo>/pi/agent/prompts/nightshift.md   # 薄快捷键，只转发
 ```
@@ -136,16 +136,17 @@ pi -p
    --model <spec.model ?? config.defaultModel>          # 有值才传
    -a
    --tools +replace_match,+insert                       # 只在 spec.tools 非空时追加同名/指定项
-   -- "<实现 prompt>"                                    # 注意 -- 终止位
+   # 没有 -- <prompt>：prompt 从 stdin 送（见下）
 ```
 
 `cwd` 由 spawn 的 `cwd: spec.dir` 提供 —— **pi 没有 `-C` 开关**（`-c` 是 `--continue`）。
 
-三条已核实的事实决定了上面的形状（原文见 pi `docs/cli.md`）：
+四条已核实的事实决定了上面的形状（原文见 pi `docs/cli.md`；第 3 条是本地环境约束，已在真实 pi 上复现）：
 
 1. **裸名字会替换整个工具集。** `--tools read,bash` 不是"加上这两个"，而是"只要这两个"。默认集是 `read,bash,edit,write`。因此这里**不给裸名字**，`spec.tools` 一律以 `+name` 形式追加。
 2. **`-ne` 会连带关掉由扩展提供的工具。** `replace_match` / `insert` / `copy` / `move` / `undo_last_change` 来自 `pi-hashline-edit-pro`（`~/.pi/agent/settings.json` 的 packages），扩展一关就没了。Spec 需要它们时必须 `-e <path>` 显式加载，或改用内置的 `edit`（精确文本替换）。
-3. **prompt 走 argv，不走 stdin。** pi 的 print 模式从 argv 读 prompt；`stdio: ["ignore", "pipe", "pipe"]` 让子进程不持有 stdin，也就不会出现"等待输入"的挂起。长 prompt 由 `--` 终止位保护，避免被当成选项。
+3. **prompt 走 stdin，不走 argv。** pi 会把 piped stdin 前置到第一个 prompt（`docs/cli.md` 的 Input 表）。`runChild` 用 `stdio: ["pipe", "pipe", "pipe"]` 并通过 `child.stdin.end(prompt)` 一次性写入，子进程随后自己 EOF，不会挂起。
+   这一条不是风格偏好，是**环境约束**：`argv` 超过约 990 字符时，企业端点安全软件会把这次 `spawn()` 直接 SIGKILL —— 零输出、零 stderr、`exitCode === null`，现场看起来和「pi 崩了」完全一样。真实 Spec 的 prompt 普遍 5KB+，走 argv 必死。stdin 路径不受该限制（5000/50000 字符实测正常）。
 
 固定纪律写进 prompt（不由 Spec 控制）：
 
@@ -170,7 +171,7 @@ pi -p
    --model <config.verifyModel ?? spec.model ?? config.defaultModel>   # 有值才传
    -a
    --tools read,bash,grep,find,ls        # 裸名字：Verifier 只要这五个
-   -- "<verify prompt>"
+   # 没有 -- <prompt>：prompt 同样从 stdin 送
 ```
 
 verify prompt 自包含：Spec 的 `Verify` 段落 + `dir` + `baseline` + `git diff` 提示 + 强制输出格式。
@@ -252,7 +253,7 @@ node 的解析顺序：`$NIGHTSHIFT_NODE` → mise shim → `PATH`。原因是�
 
 ## 12. 动手顺序
 
-Phase 0–4 已完成（54 个测试全绿，`just test-nightshift`）。
+Phase 0–4 已完成（59 个测试全绿，`just test-nightshift`）。
 
 Phase 0 · 无 pi 依赖
   ✅ A. `cli/src/spec.ts`    frontmatter 解析/序列化 + 五节校验 + 未知 key 报错
@@ -281,10 +282,14 @@ Phase 4 · 文档与接线
   ✅ P. `skills/README.txt` + `AGENTS.md` + 本文件 登记
 
 Phase 5 · 首次真跑（唯一烧 token 的一步）
-  ☐ Q. 手写 1 条真实 Spec → `nightshift run --until +5m` → 看 Report 是否可信
-  ☐ R. 按 Q 的结果回调 A–J 的假设
+  ✅ Q. 手写 1 条真实 Spec → `nightshift run --until +5m` → Report 可信
+  ✅ R. 按 Q 的结果回调：暴露了 argv 长度限制（见 §5 第 3 条），prompt 改走 stdin
 
 已用 `test/fake-pi.mjs` 零成本验证过的路径：全绿通过、fail 后重试至 needs-review、
 缺失 VERDICT 落 verify-error 且不重试、跨目录并行、同目录串行队列按 created 排空、
-同目录前一条 fail/verify-error/skipped 后队列停止并能被 release 重新武装、draft 不派发、
-单实例锁拒绝、超长窗口拒绝、归档搬迁。真跑只需要验证真实的 pi 是否会遵守 prompt 纪律与输出格式。
+同目录前一条 fail/verify-error/skipped 后队列停止并能被 release 重新武装、
+prompt 只走 stdin 且 argv 保持短、子进程被信号杀死时 reason 里带信号名、draft 不派发、
+单实例锁拒绝、超长窗口拒绝、归档搬迁。
+
+2026-10-21 已在真实 pi 上跑通一条最小 Spec（impl 提交 → Verifier 真验证 → pass → 归档）。
+走 argv 的版本在同一天集体失败，原因见 §5 第 3 条。
