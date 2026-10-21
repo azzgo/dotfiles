@@ -144,6 +144,19 @@ Shared Pi setup with:
 
 **Installation**: `just install-pi` or `just link` (per-project skills via `/pi-skills` in the target project)
 
+#### PiG (pi-in-go)
+
+A second, **independent** host for the same extensions — [PiG](https://pi-in-go.dev/) is the Go implementation of pi, built against the same upstream pi release (pi 1.3.0).
+
+- Config root `~/.pig` (agent dir `~/.pig/agent`), project dir `<project>/.pig` — **not shared** with `~/.pi`
+- `models.json` / `auth.json` / `settings.json` are copied once into `~/.pig/agent` and stay local to that config
+- Installed extensions: `pi-xfer` (npm), `sub-dispatch`, `project-skills` — installed as local paths, so repo edits apply after `/reload`
+- `project-skills` and `sub-dispatch` are host-aware: the project skills dir follows the SDK's `CONFIG_DIR_NAME` (`.pi` under pi, `.pig` under PiG) and the dispatch forensic log follows the host agent dir
+
+**Installation**: `just install-pig` (downloads the pinned `pig` release, verifies its SHA-256, writes `~/.pig`, installs the three extensions)
+
+**Not carried over**: pi-only extensions (track, workflow-runtime, command-palette, pi-hashline-edit-pro, pi-web-access), the pi MCP servers, prompts, patterns and the pi-coupled skills (those arrive per project via `/pi-skills`)
+
 ## Available Just Commands
 
 | Command | Description |
@@ -155,6 +168,7 @@ Shared Pi setup with:
 | `just install-terminals` | Install all terminal configurations |
 | `just install-shell` | Install shell, tmux, and starship configurations |
 | `just install-pi` | Link shared Pi configuration files |
+| `just install-pig` | Install the PiG (pi-in-go) binary and a separate `~/.pig` configuration |
 | `just test-track` | Run the track extension's test suite (args pass through to vitest) |
 | `just install-herdr` | Symlink herdr config.toml into ~/.config/herdr |
 | `just link` | Alias for `install-pi` |

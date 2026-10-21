@@ -101,6 +101,9 @@ install-pi:
 
     mkdir -p ~/.pi ~/.pi/agent ~/.pi/agent/extensions
 
+    # prune dangling symlinks (extensions removed from the repo)
+    find ~/.pi/agent/extensions -maxdepth 1 -xtype l -delete 2>/dev/null || true
+
     if [ ! -f ~/.pi/agent/settings.json ]; then
         cp {{ dotfiles_dir }}/pi/agent/settings.json ~/.pi/agent/settings.json
         echo "  📋 Created local copy of settings.json (you can edit it freely)"
@@ -188,6 +191,63 @@ install-mise:
 # Alias for install-pi (link Pi shared config)
 link: install-pi
 
+# Install the PiG (pi-in-go) second configuration: own config root, own agent dir
+pig_version := "0.5.1"
+
+# Install PiG binary + a separate ~/.pig configuration (not shared with pi)
+install-pig:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    version="{{ pig_version }}"
+    pig_home="${PIG_HOME:-$HOME/.pig}"
+    echo "🐷 Installing PiG ${version} (config root: ${pig_home})..."
+
+    case "$(uname -s)-$(uname -m)" in
+      Linux-x86_64) asset="linux-amd64" ;;
+      Linux-aarch64|Linux-arm64) asset="linux-arm64" ;;
+      Darwin-x86_64) asset="darwin-amd64" ;;
+      Darwin-arm64) asset="darwin-arm64" ;;
+      *) echo "❌ Unsupported platform: $(uname -s)-$(uname -m)"; exit 1 ;;
+    esac
+
+    bin_dir="$HOME/.local/bin"
+    mkdir -p "$bin_dir"
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"' EXIT
+    url="https://github.com/MichaelKinsy/PiG/releases/download/v${version}/pig-${version}-${asset}.tar.gz"
+    curl -fsSL "$url" -o "$tmp/pig-${version}-${asset}.tar.gz"
+    curl -fsSL "https://github.com/MichaelKinsy/PiG/releases/download/v${version}/EVIDENCE-SHA256SUMS" -o "$tmp/SHA256SUMS"
+    (cd "$tmp" && grep " pig-${version}-${asset}.tar.gz\$" SHA256SUMS | sha256sum -c -)
+    tar xzf "$tmp/pig-${version}-${asset}.tar.gz" -C "$tmp"
+    install -m 0755 "$tmp/pig-${version}-${asset}/pig" "$bin_dir/pig"
+    echo "  ✅ $(pig --version)"
+
+    agent_dir="$pig_home/agent"
+    mkdir -p "$agent_dir"
+    for f in models.json auth.json; do
+      if [ ! -f "$agent_dir/$f" ] && [ -f "$HOME/.pi/agent/$f" ]; then
+        cp "$HOME/.pi/agent/$f" "$agent_dir/$f"
+        echo "  📋 Copied $f into ${agent_dir}"
+      fi
+    done
+    if [ ! -f "$agent_dir/settings.json" ]; then
+      printf '%s\n' \
+        '{' \
+        '  "defaultProvider": "magpie",' \
+        '  "defaultModel": "nas/deepseek/deepseek-flash",' \
+        '  "defaultThinkingLevel": "off",' \
+        '  "theme": "dark",' \
+        '  "compaction": { "enabled": true }' \
+        '}' > "$agent_dir/settings.json"
+      echo "  📋 Created ${agent_dir}/settings.json"
+    fi
+
+    pig install npm:pi-xfer
+    pig install "{{ dotfiles_dir }}/pi/agent/extensions/sub-dispatch"
+    pig install "{{ dotfiles_dir }}/pi/agent/extensions/project-skills"
+
+    echo "⚠️  Keep local only: ${agent_dir}/models.json ${agent_dir}/auth.json ${agent_dir}/settings.json"
+    echo "✅ PiG configuration ready: pig (config root ${pig_home}, project dir .pig)"
 # Install generic skills (skills/) globally into ~/.agents/skills
 install-skills:
     #!/usr/bin/env bash

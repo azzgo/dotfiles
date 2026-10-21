@@ -16,6 +16,7 @@ Pi 相关约定补充：
 - 命令面板（对所有 slash command 的 fuzzy picker，`alt+.` 呼出，选中后前置插入 composer，不直接执行）由 `command-palette` 扩展承载（`pi/agent/extensions/command-palette/`）。
 - 夜间批量执行由 **`nightshift`** 承载（`skills/nightshift/`，repo-root skill + Node CLI，**不是 pi 扩展**；设计见 `docs/adr/0017-nightshift-is-a-script-not-an-extension.md`）：白天把已谈定的事写成 Spec 挂到单一全局板 `~/.cache/nightshift/board/`，夜里 `nightshift run` 按工作目录串行、跨目录并行地派发 `pi -p` 子进程，独立只读 Verifier 会话给出权威 `VERDICT`，结束后归档，次日 `nightshift report` 检查。pi 侧只有一个薄转发 prompt（`pi/agent/prompts/nightshift.md`）。**新增能力默认仍走扩展；只有「无人值守 / 独立进程 / 调度语义」这类需求才参照 ADR 0017 走脚本。**
 - 在这个仓库的默认共享配置里，实际可依赖的外部 agent 以 `pi` 和 Cursor 的 `agent` 命令为主。
+- **PiG（pi-in-go）作为并行的第二宿主**：`just install-pig` 装出独立的 `~/.pig` 配置根（agent dir `~/.pig/agent`，项目目录 `.pig`），**不与 `~/.pi` 共享**；只装 `pi-xfer`、`sub-dispatch`、`project-skills` 三个扩展（均为本地路径安装，改仓库即生效，`/reload` 后生效）。`project-skills` 的项目 skills 目录取 SDK 的 `CONFIG_DIR_NAME`（pi=`.pi`，PiG=`.pig`），`sub-dispatch` 的取证日志取宿主 agent dir —— 这两个扩展因此**同一份源码双宿主通用**。PiG 与 pi 的差异（进程模型、少数 slash command 缺失）见 README「PiG (pi-in-go)」小节。
 
 仓库以“可单独安装、可组合安装”为目标，安装入口主要由 `justfile` 提供。
 
