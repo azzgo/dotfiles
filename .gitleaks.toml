@@ -129,6 +129,12 @@ paths = [
 ]
 
 [[allowlists]]
+description = "the xfer extension that lived here before it moved to its own repo: bundle noise and a base64 test nonce, not identifiers of anything"
+paths = [
+  '''(?:^|/)pi/agent/extensions/xfer/''',
+]
+
+[[allowlists]]
 description = "the secret-scan skill's own two docs: the invented probe token and the rule examples they teach"
 paths = [
   '''(?:^|/)pi/agent/skills/secret-scan/SKILL\.md$''',
