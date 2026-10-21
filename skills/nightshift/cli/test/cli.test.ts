@@ -7,7 +7,7 @@ import assert from "node:assert";
 import { fileURLToPath } from "node:url";
 
 import { bodyTemplate, checkSpec, missingSections, parseSpec, serializeSpec } from "../src/spec.ts";
-import { nextId, loadBoard, loadConfig, acquireLock, releaseLock, DEFAULT_CONFIG } from "../src/board.ts";
+import { nextId, loadBoard, loadConfig, acquireLock, releaseLock, resolveConfig, DEFAULT_CONFIG } from "../src/board.ts";
 import { buildImplArgs, buildVerifyArgs, parseVerdict, parseReviewHint, DispatchError } from "../src/dispatch.ts";
 import { assertWindowSane, resolveDeadline, runNightshift, WindowTooLongError } from "../src/run.ts";
 import { implPrompt, verifyPrompt, extractSection } from "../src/prompt.ts";
@@ -157,6 +157,15 @@ test("board: loadBoard reports filename mismatch", () => {
 test("board: config defaults when file missing", () => {
   const cfg = loadConfig("/nonexistent/config.json");
   assert.deepStrictEqual(cfg, DEFAULT_CONFIG);
+});
+
+test("board: verifyTimeoutSec is configurable and defaults to 1800", () => {
+  const cfg = loadConfig("/nonexistent/config.json");
+  assert.strictEqual(cfg.verifyTimeoutSec, 1800);
+  const resolved = resolveConfig({ verifyTimeoutSec: 5400 });
+  assert.strictEqual(resolved.verifyTimeoutSec, 5400);
+  const fallback = resolveConfig({ verifyTimeoutSec: 0 });
+  assert.strictEqual(fallback.verifyTimeoutSec, DEFAULT_CONFIG.verifyTimeoutSec);
 });
 
 test("board: lock refuses a second live holder", () => {
@@ -480,6 +489,32 @@ test("run: a killed impl agent surfaces the signal instead of a bare verify-erro
   const { result, logs } = await runLoop(base, cfg, 1);
   assert.strictEqual(result.specs[0].status, "verify-error", logs.join("\n"));
   assert.ok(result.specs[0].reason.includes("SIGKILL"), result.specs[0].reason);
+});
+
+test("run: a timed-out impl reports the residual it left behind", async () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const boardDirPath = path.join(base, "board");
+  fs.mkdirSync(boardDirPath, { recursive: true });
+  fs.writeFileSync(
+    path.join(boardDirPath, "ns-0001.md"),
+    serializeSpec({ ...makeSpec({ id: "ns-0001", status: "ready", dir: repo.dir }), file: "ns-0001.md" }),
+  );
+  const base2 = tmp("ns-fakepi-hang-");
+  const pi = path.join(base2, "pi");
+  fs.writeFileSync(
+    pi,
+    `#!${process.execPath}\n` +
+      `import fs from "node:fs";\n` +
+      `fs.writeFileSync("leftover.txt", "x");\n` +
+      `setTimeout(() => {}, 600000);\n`,
+  );
+  fs.chmodSync(pi, 0o755);
+  const cfg = { ...DEFAULT_CONFIG, piBin: pi, timeoutSec: 1 };
+  const { result, logs } = await runLoop(base, cfg, 1);
+  assert.strictEqual(result.specs[0].status, "verify-error", logs.join("\n"));
+  assert.ok(result.specs[0].reason.includes("timed out after 1s"), result.specs[0].reason);
+  assert.ok(result.specs[0].reason.includes("uncommitted path"), result.specs[0].reason);
 });
 
 test("run: full pass path archives the spec and leaves a commit", async () => {

@@ -47,6 +47,7 @@ export interface Config {
   piBin: string;
   timeoutSec: number;
   maxWindowHours: number;
+  verifyTimeoutSec: number;
 }
 
 export const DEFAULT_CONFIG: Config = {
@@ -58,6 +59,7 @@ export const DEFAULT_CONFIG: Config = {
   piBin: "pi",
   timeoutSec: 3600,
   maxWindowHours: 14,
+  verifyTimeoutSec: 1800,
 };
 
 export function loadConfig(p = configPath()): Config {
@@ -86,6 +88,7 @@ export function resolveConfig(raw: Record<string, unknown>): Config {
     piBin: str("piBin", DEFAULT_CONFIG.piBin) ?? DEFAULT_CONFIG.piBin,
     timeoutSec: num("timeoutSec", DEFAULT_CONFIG.timeoutSec),
     maxWindowHours: num("maxWindowHours", DEFAULT_CONFIG.maxWindowHours),
+    verifyTimeoutSec: num("verifyTimeoutSec", DEFAULT_CONFIG.verifyTimeoutSec),
   };
 }
 

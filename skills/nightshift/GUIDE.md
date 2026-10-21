@@ -306,7 +306,7 @@ pi -r --session-dir ~/.cache/nightshift/sessions/ns-0008
 ## 10. 开发与测试
 
 ```sh
-just test-nightshift       # 59 个测试，全部不需要真调模型
+just test-nightshift       # 61 个测试，全部不需要真调模型
 ```
 
 `test/fake-pi.mjs` 按环境变量返回预设 verdict（`FAKE_VERDICT` / `FAKE_REASON` / `FAKE_NO_VERDICT`），因此调度器、重试、归档、锁都能零 token 验证。

@@ -104,7 +104,11 @@ async function runImpl(spec: Spec, cfg: Config, base: string, attempt: number, f
     },
   });
   const hint = parseReviewHint(output);
-  if (res.timedOut) throw new DispatchError(`implementation timed out after ${cfg.timeoutSec}s`);
+  if (res.timedOut) {
+    const left = residualCount(spec.dir);
+    const detail = left > 0 ? ` (${left} uncommitted path(s) left in the worktree)` : "";
+    throw new DispatchError(`implementation timed out after ${cfg.timeoutSec}s${detail}`);
+  }
   if (res.exitCode === null) {
     const tail = res.stderr.trim().split("\n").filter((l) => l.trim() !== "").slice(-1)[0];
     throw new DispatchError(
@@ -127,10 +131,10 @@ async function runVerify(spec: Spec, cfg: Config): Promise<{ verdict: string; re
     bin: cfg.piBin,
     args,
     cwd: spec.dir,
-    timeoutMs: Math.min(cfg.timeoutSec, 1800) * 1000,
+    timeoutMs: cfg.verifyTimeoutSec * 1000,
     stdin: prompt,
   });
-  if (res.timedOut) return { verdict: "verify-error", reason: "verifier timed out" };
+  if (res.timedOut) return { verdict: "verify-error", reason: `verifier timed out after ${cfg.verifyTimeoutSec}s` };
   return parseVerdict(res.stdout, res.exitCode, { signal: res.signal, stderr: res.stderr });
 }
 

@@ -45,11 +45,14 @@ node 查找顺序：`$NIGHTSHIFT_NODE` → `~/.local/share/mise/shims/node` → 
   "window": "07:00",
   "piBin": "pi",
   "timeoutSec": 3600,
+  "verifyTimeoutSec": 1800,
   "maxWindowHours": 14
 }
 ```
 
 全部可省略。`window` 既接受 `HH:MM`（今天或明天的此刻）也接受 `+30m` / `+2h`。
+
+`timeoutSec` 与 `verifyTimeoutSec` 分别是实现 Agent 与 Verifier 的**单条上界**，两者独立。超时后 `reason` 会写明留下多少未提交路径（`implementation timed out after <n>s (<N> uncommitted path(s) left in the worktree)`）。
 
 `maxWindowHours` 是 `run` 的前置守卫：算出的窗口长度超过它就直接拒绝启动，不碰板子、不派发。作用是在调度器补跑（launchd 睡眠补偿、cron 补跑、手动重放）把 `--until 07:00` 从"今晚 8 小时"变成"明天早上 22 小时"时兜底。
 
@@ -179,3 +182,5 @@ REASON: <一行>
 
 `fail` 且 `attempts < 2` → 带 `REASON` 重派一次。第二次仍 `fail` → `needs-review`。
 `verify-error` 与 `skipped` 不重试。
+
+超时（实现 Agent 或 Verifier 超时）落 `verify-error`，同样不重试 —— 因为超时留下的半成品状态不明，重跑会在不明状态上叠一层。超时后应当由人决定：提交工作区里的残留，还是 `review <id> --drop` 回滚。

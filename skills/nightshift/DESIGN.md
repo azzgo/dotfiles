@@ -28,7 +28,7 @@
     │   ├── report.ts      # Report 渲染
     │   └── show.ts        # 单条详情 + 下一步命令
     └── test/
-        ├── cli.test.ts    # 59 个测试
+        ├── cli.test.ts    # 61 个测试
         └── fake-pi.mjs    # 假 pi，零 token 验证整个调度循环
 <repo>/pi/agent/prompts/nightshift.md   # 薄快捷键，只转发
 ```
@@ -49,10 +49,10 @@
 配置：`~/.pi/agent/nightshift/config.json`
 
 ```json
-{ "defaultModel": "sonnet:high", "jobs": 3, "window": "07:00", "piBin": "pi" }
+{ "defaultModel": "sonnet:high", "jobs": 3, "window": "07:00", "piBin": "pi", "timeoutSec": 7200, "verifyTimeoutSec": 5400 }
 ```
 
-缺省：`jobs: 3`、`window: "07:00"`、`piBin: "pi"`、`defaultModel` 不设（继承 pi 当前默认）。
+缺省：`jobs: 3`、`window: "07:00"`、`piBin: "pi"`、`timeoutSec: 3600`、`verifyTimeoutSec: 1800`、`defaultModel` 不设（继承 pi 当前默认）。
 
 ## 2. Spec schema
 
@@ -123,6 +123,8 @@ exit when: 所有 queue 空 → 归档 → 释放锁
 - **无 sleep 轮询**：用子进程 `exit` 事件驱动，队列空即退出。
 - **窗口到点**：不再启动新任务；在跑的任务等其自然结束；未派发的保持 `ready` 留在板上。
 - **窗口长度守卫**：`assertWindowSane` 在派发前检查 `deadline - startedAt <= maxWindowHours`（默认 14），超出直接抛错。防的是调度器补跑把 `--until 07:00` 从 8 小时变成 22 小时。守卫放在核心而不是 shell 层，因为它与调度器无关。
+- **两条超时独立**：`timeoutSec`（实现 Agent）与 `verifyTimeoutSec`（Verifier）分开配。两者都是「单条 Spec 的上界」，不是「整夜预算」——一条用满上界就意味着当夜跑不完后面几条，所以上界该按「最长的单条 Spec 要多久」设，而不是按窗口时长设。
+- **超时不留悬念**：实现 Agent 超时时，`reason` 写 `implementation timed out after <n>s (<N> uncommitted path(s) left in the worktree)`。超时的典型后果是「工作区留了半成品」，这个数字决定人早上是「提交它」还是「回滚它」，不能只写一句超时。
 
 ## 5. 派发 argv（实现 Agent）
 
@@ -253,7 +255,7 @@ node 的解析顺序：`$NIGHTSHIFT_NODE` → mise shim → `PATH`。原因是�
 
 ## 12. 动手顺序
 
-Phase 0–4 已完成（59 个测试全绿，`just test-nightshift`）。
+Phase 0–4 已完成（61 个测试全绿，`just test-nightshift`）。
 
 Phase 0 · 无 pi 依赖
   ✅ A. `cli/src/spec.ts`    frontmatter 解析/序列化 + 五节校验 + 未知 key 报错
