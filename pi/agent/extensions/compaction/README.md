@@ -67,13 +67,14 @@ So the handler never throws. Unusable model output returns a **Compaction
 Failure Record** that names the reason and points at the transcript — nothing is
 actually lost, so the record does not need to embed the conversation any more.
 Failures also raise `ui.notify(..., "error")` and append to
-`.pi/compaction/failures.log`.
+`.pi/compaction/failures.log` (`.pig/compaction/failures.log` under PiG — the
+directory follows the SDK's `CONFIG_DIR_NAME`).
 
 | Where to look | What you get |
 |---|---|
 | The context itself | An in-band failure record naming the reason |
 | The UI | An `error` notification at compaction time |
-| `.pi/compaction/failures.log` | Append-only log for counting failures over time |
+| `<project>/<config dir>/compaction/failures.log` | Append-only log for counting failures over time |
 
 ## Relationship to track
 

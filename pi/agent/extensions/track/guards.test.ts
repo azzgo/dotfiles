@@ -28,3 +28,11 @@ describe("isInTrackDir", () => {
 		expect(isInTrackDir(".pi/track/../other/file.md", "/repo")).toBe(false);
 	});
 });
+
+describe("host config dir", () => {
+	it("uses the given config dir name", () => {
+		expect(getRedirectPath("findings.md", "/repo", ".pig")).toBe("/repo/.pig/track/findings.md");
+		expect(isInTrackDir(".pig/track/findings.md", "/repo", ".pig")).toBe(true);
+		expect(isInTrackDir(".pi/track/findings.md", "/repo", ".pig")).toBe(false);
+	});
+});

@@ -6,7 +6,7 @@ import { tailLines } from "./utils";
 export function buildTrackUpdatePrompt(snapshot: TrackSnapshot): string {
 	return [
 		"[TRACK UPDATE]",
-		"Refresh Track (.pi/track/findings.md + .pi/track/progress.md) with current workspace context.",
+		`Refresh Track (${snapshot.trackDir}/findings.md + ${snapshot.trackDir}/progress.md) with current workspace context.`,
 		"Track is flat working memory — NOT a tracker board. Do NOT create or write findings.md / progress.md anywhere else.",
 		`- findings.md: ${snapshot.trackDir}/findings.md`,
 		`- progress.md: ${snapshot.trackDir}/progress.md`,

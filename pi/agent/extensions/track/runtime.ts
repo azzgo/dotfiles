@@ -1,4 +1,4 @@
-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { CONFIG_DIR_NAME, type ExtensionAPI, type ExtensionContext } from "@earendil-works/pi-coding-agent";
 
 import { MESSAGE_TYPE_TRACK_CONTEXT, MESSAGE_TYPE_TRACK_STATUS, MESSAGE_TYPE_TRACK_UPDATE, WIDGET_KEY } from "./types";
 import type { TrackSnapshot } from "./types";
@@ -8,7 +8,7 @@ import { buildTrackContextPrompt, buildTrackStatusText, buildTrackUpdatePrompt }
 import { buildWidgetLines } from "./ui";
 
 const TRACK_HELP = [
-	"/track — flat working memory (findings.md + progress.md at .pi/track/; auto-initialized once when missing, otherwise fully manual)",
+	`/track — flat working memory (findings.md + progress.md at ${CONFIG_DIR_NAME}/track/; auto-initialized once when missing, otherwise fully manual)`,
 	"  /track new                 reset/init the scratchpad",
 	"  /track update              reconcile track with current state, then STOP (checkpoint before ending the session; auto-continue is suppressed)",
 	"  /track context             inject track context (findings/progress tails) as a user message; continue only when the user stated an explicit next step",
@@ -19,8 +19,8 @@ export default function trackExtension(pi: ExtensionAPI): void {
 	function getSnapshot(cwd: string, resumedFromPreviousSession = false): TrackSnapshot {
 		return {
 			cwd,
-			trackDir: trackDir(cwd),
-			track: readTrack(cwd),
+			trackDir: trackDir(cwd, CONFIG_DIR_NAME),
+			track: readTrack(cwd, CONFIG_DIR_NAME),
 			resumedFromPreviousSession,
 		};
 	}
@@ -52,7 +52,7 @@ export default function trackExtension(pi: ExtensionAPI): void {
 	// ---- commands ----
 
 	pi.registerCommand("track", {
-		description: "Track: flat working memory (.pi/track/findings.md + progress.md). Commands: new / update / context / status.",
+		description: `Track: flat working memory (${CONFIG_DIR_NAME}/track/findings.md + progress.md). Commands: new / update / context / status.`,
 		handler: async (args, ctx) => {
 			refresh(ctx, false);
 			const [sub] = args.trim().split(/\s+/);
@@ -62,9 +62,9 @@ export default function trackExtension(pi: ExtensionAPI): void {
 					send(buildTrackStatusText(snapshot), MESSAGE_TYPE_TRACK_STATUS);
 					break;
 				case "new":
-					initTrack(ctx.cwd);
+					initTrack(ctx.cwd, CONFIG_DIR_NAME);
 					refresh(ctx, false);
-					ctx.ui.notify("Track reset: .pi/track/findings.md + progress.md initialized fresh.", "info");
+					ctx.ui.notify(`Track reset: ${CONFIG_DIR_NAME}/track/findings.md + progress.md initialized fresh.`, "info");
 					break;
 				case "update":
 					// /track update is a session checkpoint (flush state before a fresh
@@ -92,7 +92,7 @@ export default function trackExtension(pi: ExtensionAPI): void {
 	pi.on("session_start", async (event, ctx) => {
 		const resumed = event.reason === "resume" || event.reason === "fork";
 		refresh(ctx, resumed);
-		const label = resumed ? "Track resumed." : `Track attached (${".pi/track"}).`;
+		const label = resumed ? "Track resumed." : `Track attached (${CONFIG_DIR_NAME}/track).`;
 		ctx.ui.notify(label, "info");
 	});
 
@@ -104,9 +104,9 @@ export default function trackExtension(pi: ExtensionAPI): void {
 		// only when the user runs `/track context`, and reconciliation only via
 		// `/track update`.
 		if (snapshot.track.exists) return;
-		initTrack(ctx.cwd);
+		initTrack(ctx.cwd, CONFIG_DIR_NAME);
 		refresh(ctx, snapshot.resumedFromPreviousSession);
-		ctx.ui.notify("Track initialized: .pi/track/findings.md + progress.md (auto /track new).", "info");
+		ctx.ui.notify(`Track initialized: ${CONFIG_DIR_NAME}/track/findings.md + progress.md (auto /track new).`, "info");
 	});
 
 	pi.on("tool_result", async (event, ctx) => {

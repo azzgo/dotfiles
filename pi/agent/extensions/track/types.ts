@@ -6,7 +6,8 @@ export const MESSAGE_TYPE_TRACK_CONTEXT = "track-context";
 export const MESSAGE_TYPE_TRACK_UPDATE = "track-update";
 export const MESSAGE_TYPE_TRACK_STATUS = "track-status";
 
-export const TRACK_DIR = ".pi/track";
+export const DEFAULT_CONFIG_DIR_NAME = ".pi";
+export const TRACK_DIR_NAME = "track";
 export const TRACK_FILES = ["findings.md", "progress.md"] as const;
 export const TRACK_FILE_NAMES = [...TRACK_FILES] as const;
 

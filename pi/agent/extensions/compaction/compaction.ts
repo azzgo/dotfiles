@@ -1,10 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
-import { convertToLlm, serializeConversation } from "@earendil-works/pi-coding-agent";
+import { CONFIG_DIR_NAME, convertToLlm, serializeConversation } from "@earendil-works/pi-coding-agent";
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { uuidv7 } from "@earendil-works/pi-ai";
 
-import { COMPACTION_LOG_DIR, COMPACTION_LOG_FILE } from "./types";
+import { compactionLogDir, COMPACTION_LOG_FILE } from "./types";
 import { collectFileOps, type FileOps } from "./fileops";
 import { buildCompactionPrompt, buildFailureSummary, buildOverflowSummary, renderSummary } from "./prompts";
 import { parseCompactionSummary } from "./summary";
@@ -25,7 +25,7 @@ import { parseCompactionSummary } from "./summary";
 
 function appendCompactionLog(cwd: string, reason: string): void {
 	try {
-		const target = path.join(cwd, COMPACTION_LOG_DIR, COMPACTION_LOG_FILE);
+		const target = path.join(compactionLogDir(cwd, CONFIG_DIR_NAME), COMPACTION_LOG_FILE);
 		fs.mkdirSync(path.dirname(target), { recursive: true });
 		fs.appendFileSync(target, `[${new Date().toISOString()}] ${reason}\n`, "utf8");
 	} catch {

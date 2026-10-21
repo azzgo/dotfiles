@@ -241,10 +241,20 @@ install-pig:
         '}' > "$agent_dir/settings.json"
       echo "  📋 Created ${agent_dir}/settings.json"
     fi
+    ln -sf "{{ dotfiles_dir }}/pi/agent/keybindings.json" "$agent_dir/keybindings.json"
+    ln -sf "{{ dotfiles_dir }}/pi/agent/APPEND_SYSTEM.md" "$agent_dir/APPEND_SYSTEM.md"
+    ln -sf "{{ dotfiles_dir }}/pi/mcp.json" "$agent_dir/mcp.json"
+    rm -rf "$agent_dir/prompts"
+    ln -s "{{ dotfiles_dir }}/pi/agent/prompts" "$agent_dir/prompts"
+    echo "  🔗 Linked keybindings.json, APPEND_SYSTEM.md, mcp.json, prompts/ into ${agent_dir}"
 
     pig install npm:pi-xfer
+    pig install npm:pi-hashline-edit-pro
     pig install "{{ dotfiles_dir }}/pi/agent/extensions/sub-dispatch"
     pig install "{{ dotfiles_dir }}/pi/agent/extensions/project-skills"
+    pig install "{{ dotfiles_dir }}/pi/agent/extensions/track"
+    pig install "{{ dotfiles_dir }}/pi/agent/extensions/compaction"
+    pig install "{{ dotfiles_dir }}/pi/agent/extensions/command-palette"
 
     echo "⚠️  Keep local only: ${agent_dir}/models.json ${agent_dir}/auth.json ${agent_dir}/settings.json"
     echo "✅ PiG configuration ready: pig (config root ${pig_home}, project dir .pig)"

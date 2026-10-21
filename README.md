@@ -150,12 +150,14 @@ A second, **independent** host for the same extensions — [PiG](https://pi-in-g
 
 - Config root `~/.pig` (agent dir `~/.pig/agent`), project dir `<project>/.pig` — **not shared** with `~/.pi`
 - `models.json` / `auth.json` / `settings.json` are copied once into `~/.pig/agent` and stay local to that config
-- Installed extensions: `pi-xfer` (npm), `sub-dispatch`, `project-skills` — installed as local paths, so repo edits apply after `/reload`
-- `project-skills` and `sub-dispatch` are host-aware: the project skills dir follows the SDK's `CONFIG_DIR_NAME` (`.pi` under pi, `.pig` under PiG) and the dispatch forensic log follows the host agent dir
+- Linked from the repo (shared config): `keybindings.json`, `APPEND_SYSTEM.md`, `mcp.json`, `prompts/`
+- Installed extensions: `pi-xfer` (npm), `pi-hashline-edit-pro` (npm), `sub-dispatch`, `project-skills`, `track`, `compaction`, `command-palette` — the repo ones install as local paths, so repo edits apply after `/reload`
+- `project-skills`, `sub-dispatch` and `track` are host-aware: the project config dir follows the SDK's `CONFIG_DIR_NAME` (`.pi` under pi, `.pig` under PiG) and the dispatch forensic log follows the host agent dir
+- Code Mode: PiG ships `codemode` as a built-in tool but keeps it off by default — enable it in `~/.pig/agent/settings.json` with `"defaultTools": ["+codemode"]`
 
-**Installation**: `just install-pig` (downloads the pinned `pig` release, verifies its SHA-256, writes `~/.pig`, installs the three extensions)
+**Installation**: `just install-pig` (downloads the pinned `pig` release, verifies its SHA-256, writes `~/.pig`, links the shared config files, installs the extensions)
 
-**Not carried over**: pi-only extensions (track, workflow-runtime, command-palette, pi-hashline-edit-pro, pi-web-access), the pi MCP servers, prompts, patterns and the pi-coupled skills (those arrive per project via `/pi-skills`)
+**Not carried over**: `workflow-runtime` (its pattern library and `/wf` stay pi-only for now), `pi-web-access`, `pi-cc-extensions` and the pi-coupled skills (those arrive per project via `/pi-skills`)
 
 ## Available Just Commands
 

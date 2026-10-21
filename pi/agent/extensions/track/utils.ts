@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { TRACK_DIR } from "./types";
+import { DEFAULT_CONFIG_DIR_NAME, TRACK_DIR_NAME } from "./types";
 
 // ---- time ----
 
@@ -35,8 +35,8 @@ export function writeText(target: string, content: string): void {
 	fs.writeFileSync(target, content, "utf8");
 }
 
-export function trackDir(cwd: string): string {
-	return path.join(cwd, TRACK_DIR);
+export function trackDir(cwd: string, configDirName: string = DEFAULT_CONFIG_DIR_NAME): string {
+	return path.join(cwd, configDirName, TRACK_DIR_NAME);
 }
 
 // ---- string / markdown ----

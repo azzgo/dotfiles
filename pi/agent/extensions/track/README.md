@@ -1,9 +1,11 @@
 # track
 
 Track — the standalone Pi extension for flat working-memory scratchpads
-(`.pi/track/findings.md` + `.pi/track/progress.md`). Extracted verbatim from the
-retired `goal-runtime` extension (see `docs/adr/0006-workflow-runtime-replaces-goal-runtime.md`);
-the `/track` command surface, auto-init behavior, and file paths are unchanged.
+(`<project>/.pi/track/findings.md` + `progress.md` under pi, `<project>/.pig/track/`
+under PiG — the directory name follows the SDK's `CONFIG_DIR_NAME`). Extracted
+verbatim from the retired `goal-runtime` extension (see
+`docs/adr/0006-workflow-runtime-replaces-goal-runtime.md`);
+the `/track` command surface and auto-init behavior are unchanged.
 The two goal couplings (activation-time Track auto-reset, verify-briefs) died
 with goal-runtime.
 
@@ -21,7 +23,7 @@ agent reaches it through file references rather than through the summary.
 ## Disk layout
 
 ```text
-.pi/track/
+<project>/<config dir>/track/     # .pi/track under pi, .pig/track under PiG
 ├── findings.md    # confirmed constraints, repo/system findings, design decisions, notes
 ├── progress.md    # timeline, work completed, verification, blockers, completion evidence
 ```
