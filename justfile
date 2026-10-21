@@ -261,6 +261,37 @@ install-skills:
     done
     echo "✅ Generic skills installed (pi sees them via ~/.agents/skills search path)."
 
+# Wire the secret-scan pre-commit hook (core.hooksPath=.githooks)
+install-git-hooks:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "🪝 Wiring git hooks..."
+    git -C {{ dotfiles_dir }} config core.hooksPath .githooks
+    chmod +x {{ dotfiles_dir }}/.githooks/pre-commit
+    echo "  ✅ core.hooksPath=.githooks"
+
+# Secret scan: calibration, working tree, and staged index
+secret-scan:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    scan="{{ dotfiles_dir }}/pi/agent/skills/secret-scan/scripts/scan.sh"
+    echo "🔍 Calibrating the rules against the fixture..."
+    "{{ dotfiles_dir }}/scripts/secret-scan-calibrate.sh"
+    echo "🔍 Scanning the working tree..."
+    "$scan" dir "{{ dotfiles_dir }}"
+    echo "🔍 Scanning the index..."
+    "$scan" staged
+    echo "✅ Secret scan clean"
+
+# Secret scan of the full history — the release-boundary check
+secret-scan-history:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    scan="{{ dotfiles_dir }}/pi/agent/skills/secret-scan/scripts/scan.sh"
+    echo "🔍 Scanning the full history..."
+    "$scan" history "--all"
+    echo "✅ History clean"
+
 # Install the nightshift CLI wrappers into ~/.local/bin (no scheduler is created)
 # Nightshift is a queue, not a daemon: this only puts `nightshift` and
 # `nightshift-keep-awake` on PATH. Point your own scheduler (systemd timer,

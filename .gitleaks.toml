@@ -1,0 +1,136 @@
+# .gitleaks.toml — dotfiles secret-scan config
+#
+# Scaffolded by the `secret-scan` skill, then adapted to this repo:
+#   - every allowlist entry gets a one-line reason above it
+#   - every rule gets a line in the calibration fixture that fires it
+#   - replace a leaked value with an obvious placeholder; allowlist only what cannot change
+#
+# Verify after editing:
+#   just secret-scan
+#
+# Calibration fixture (invented values) and the rule-writing constraints:
+#   refs/secret-scan-fixture/{trips,quiet,edges}.md
+#   pi/agent/skills/secret-scan/references/calibration.md   (the generic baseline)
+#   pi/agent/skills/secret-scan/references/gitleaks.toml.template
+#
+# Adaptation to this repo (dotfiles, not a fleet):
+#   - "node" is NOT an identifier shape here (Node.js, workflow nodes), so it is
+#     not a keyword. The generic baseline fixture uses it; this repo's fixture does not.
+#   - a machine-ish value must carry a digit or a dash. A bare word is prose
+#     ("machine: settle"), and prose must not trip the scan.
+#   - there is no endpoint vocabulary in this repo, so the endpoint-host rule is dropped.
+
+title = "dotfiles secret scan"
+
+[extend]
+# Keep. Covers credentials; the rules below are additive, not a replacement.
+useDefault = true
+
+# ---------------------------------------------------------------------------
+# Rules for this project's identifier shapes. Delete what does not apply, add what does.
+# ---------------------------------------------------------------------------
+
+# <!-- GENERATED RULES START -->
+[[rules]]
+id = "local-ip"
+description = "Private IPv4 address committed as content"
+regex = '''\b(?:192\.168|10\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01]))\.\d{1,3}\.\d{1,3}'''
+keywords = ["192.168", "10.", "172."]
+tags = ["infrastructure", "identifier"]
+
+[[rules]]
+id = "public-ip"
+description = "Public IPv4 address committed as content"
+regex = '''\b(?:[1-9]\d{1,2}|[1-9])\.[1-9]\d{0,2}\.[1-9]\d{0,2}\.[1-9]\d{0,2}\b'''
+keywords = ["."]
+tags = ["infrastructure", "identifier"]
+
+[[rules.allowlists]]
+description = "documentation / test-net / loopback / link-local ranges, and private ranges already covered by local-ip"
+regexTarget = "match"
+regexes = [
+  '''^(?:127\.|0\.|255\.)''',
+  '''^169\.254\.''',
+  '''^192\.0\.2\.''',
+  '''^198\.51\.100\.''',
+  '''^203\.0\.113\.''',
+  '''^(?:10\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.)''',
+]
+
+# ---------------------------------------------------------------------------
+# Shape rules. Quoted and assigned forms are separate rules; do not merge them.
+# Every rule keeps a keyword list, and every keyword list stays accurate.
+# ---------------------------------------------------------------------------
+
+# Shape A: quoted or bare value — `"pool": "acme9"`, `pool: acme9`, `machine: thinkpad-t99`
+[[rules]]
+id = "machine-name-quoted"
+description = "Machine, host, pool or actor name used as a quoted or bare value"
+# The value must carry a digit or a dash: a bare word is prose, not a machine name.
+regex = '''(?i)\b(?:pool|actor|hostname|machine)\b["']?\s*:\s*["']?((?-i:[a-z0-9])[a-z0-9._-]*[0-9-][a-z0-9._-]*)'''
+keywords = ["pool", "actor", "hostname", "machine"]
+tags = ["identifier"]
+
+[[rules.allowlists]]
+description = "neutral placeholders the docs are meant to teach"
+regexTarget = "match"
+regexes = [
+  '''(?i)\b(?:pool|actor|hostname|machine)\b["']?\s*:\s*["']?(?:default|example|example\.com|local|local-test|test|tests?|workstation|prod|production|staging|dev|pool-a|pool-b|node-a|node-b|host-a|host-b|localhost)(?:[?&\s;,"']|$)''',
+]
+
+# Shape B: `key=value` — `pool=box-dev2`, `actor=agent9`, `hostname=lab-box7`
+[[rules]]
+id = "machine-name-assigned"
+description = "Machine, host, pool or actor name assigned to a key"
+# The value must carry a digit or a dash: a bare word is prose, not a machine name.
+regex = '''(?i)\b(?:pool|actor|hostname|machine)=(?:"?([a-z0-9][a-z0-9._-]*[0-9-][a-z0-9._-]*)"?)'''
+keywords = ["pool", "actor", "hostname", "machine"]
+tags = ["identifier"]
+
+[[rules.allowlists]]
+description = "exact neutral placeholders only"
+regexTarget = "match"
+regexes = [
+  '''(?i)\b(?:pool|actor|hostname|machine)=(?:"?(?:default|example|local|local-test|test|tests|workstation|prod|production|staging|dev|pool-a|pool-b|node-a|node-b|host-a|host-b)"?)(?:[?&\s;,"']|$)''',
+]
+
+# <!-- GENERATED RULES END -->
+
+# ---------------------------------------------------------------------------
+# Project-wide allowlist. Prefer a narrow regex, and prefer the rule-scoped
+# [[rules.allowlists]] above. Whole-file entries: generated code, vendored trees,
+# lockfiles only.
+# ---------------------------------------------------------------------------
+
+[[allowlists]]
+description = "project-wide placeholders, lockfiles and vendored trees"
+paths = [
+  # Lockfiles.
+  '''(?:^|/)(?:package-lock\.json|pnpm-lock\.yaml|yarn\.lock|Cargo\.lock|poetry\.lock|go\.sum)$''',
+  # Vendored and generated trees.
+  '''(?:^|/)(?:node_modules|vendor|third_party|plugged|\.venv|\.local)/''',
+]
+regexes = [
+  # Documentation placeholders.
+  '''(?i)\bEXAMPLE[_-]?(?:KEY|TOKEN|SECRET|PASSWORD)\b''',
+  '''sk_(?:test|xxx)_[A-Za-z0-9]*''',
+  # Hostnames under a reserved documentation domain, at any depth. Anchor on the TLD.
+  '''(?i)https?://[^\s:@/"']*\.(?:example\.com|example\.org|example\.net)\b''',
+  '''(?i)\b[a-z0-9.-]*\.(?:example\.com|example\.org|example\.net)\b''',
+  '''(?i)\b(?:your|my|redacted|placeholder)[_-](?:token|key|secret|password)\b''',
+  # The escape hatch the skill mandates. A name, not a credential.
+  '''SKIP_SECRET_SCAN=1''',
+]
+
+[[allowlists]]
+description = "the calibration fixture: invented values whose whole purpose is to fire the rules"
+paths = [
+  '''(?:^|/)refs/secret-scan-fixture/''',
+]
+
+[[allowlists]]
+description = "the secret-scan skill's own two docs: the invented probe token and the rule examples they teach"
+paths = [
+  '''(?:^|/)pi/agent/skills/secret-scan/SKILL\.md$''',
+  '''(?:^|/)pi/agent/skills/secret-scan/references/calibration\.md$''',
+]

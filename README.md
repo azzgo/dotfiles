@@ -169,6 +169,8 @@ A second, **independent** host for the same extensions — [PiG](https://pi-in-g
 | `just install-shell` | Install shell, tmux, and starship configurations |
 | `just install-pi` | Link shared Pi configuration files |
 | `just install-pig` | Install the PiG (pi-in-go) binary and a separate `~/.pig` configuration |
+| `just install-git-hooks` | Wire the secret-scan pre-commit hook (`core.hooksPath=.githooks`) |
+| `just secret-scan` | Calibrate and run the secret scan (fixture, tree, index, history) |
 | `just test-track` | Run the track extension's test suite (args pass through to vitest) |
 | `just install-herdr` | Symlink herdr config.toml into ~/.config/herdr |
 | `just link` | Alias for `install-pi` |
@@ -199,6 +201,24 @@ All configurations are designed to be modular and customizable:
 - **Local overrides**: Most configurations support local customization files
 - **Modular structure**: Individual components can be used independently
 - **Theme consistency**: Coordinated color schemes across tools where supported
+
+## Secret scan
+
+Commits are scanned for secrets before they land. The scanner is the
+[`secret-scan`](pi/agent/skills/secret-scan/) skill's own script; it fails when
+`gitleaks` is missing, so a commit never passes silently unscanned.
+
+| Piece | Where |
+|-------|-------|
+| Scanner | `gitleaks` v8.30.1 (`go install github.com/zricethezav/gitleaks/v8@v8.30.1`, or `mise use -g aqua:gitleaks/gitleaks`) |
+| Rules + allowlists | `.gitleaks.toml` — every allowlist entry carries its reason in the file |
+| Hook | `.githooks/pre-commit` — the only hook runner; wired by `just install-git-hooks` (`core.hooksPath=.githooks`) |
+| Calibration fixture | `refs/secret-scan-fixture/` — invented values that must fire the rules |
+| Full scan | `just secret-scan` — calibration, working tree, index |
+| History sweep | `just secret-scan-history` — every reachable commit; run at release boundaries |
+
+Escape hatch: `SKIP_SECRET_SCAN=1 git commit …` prints a line and skips the index
+scan. It is not part of the default path.
 
 ## Troubleshooting
 

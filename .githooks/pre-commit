@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Pre-commit hook: secret scan of the index.
+#
+# Wired by `just install-git-hooks` (core.hooksPath=.githooks). The scanner is
+# the secret-scan skill's own script; it exits non-zero when gitleaks is
+# missing, so a commit can never pass silently unscanned.
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if [ "${SKIP_SECRET_SCAN:-}" = "1" ]; then
+	echo "secret-scan: SKIP_SECRET_SCAN=1 — index scan skipped on purpose."
+	exit 0
+fi
+
+exec "$repo_root/pi/agent/skills/secret-scan/scripts/scan.sh" staged
