@@ -9,16 +9,17 @@
  * list, and `dispatch` is filtered out of its tools (no recursion).
  *
  * Every dispatch — success, error, abort or timeout — leaves a JSONL forensic
- * dump under `~/.pi/agent/sub-dispatch-logs/` (see LOG_DIR_NAME).
+ * dump under the host agent dir's `sub-dispatch-logs/` (see LOG_DIR_NAME):
+ * ~/.pi/agent/... under pi, ~/.pig/agent/... under PiG.
  */
 import { AsyncLocalStorage } from "node:async_hooks";
 import { appendFile, mkdir, readdir, rm } from "node:fs/promises";
 import { readFileSync } from "node:fs";
-import { homedir } from "node:os";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
 	createAgentSession,
+	getAgentDir,
 	type AgentSession,
 	type ModelRegistry,
 	SessionManager,
@@ -70,7 +71,7 @@ export function resolveAgent(agent: string): ResolvedAgent {
 export const LOG_DIR_NAME = "sub-dispatch-logs";
 
 export function logDir(): string {
-	return path.join(homedir(), ".pi", "agent", LOG_DIR_NAME);
+	return path.join(getAgentDir(), LOG_DIR_NAME);
 }
 
 function timestampSlug(d: Date): string {

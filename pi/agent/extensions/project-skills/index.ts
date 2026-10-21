@@ -1,10 +1,14 @@
 /**
- * project-skills extension for pi.
+ * project-skills extension for pi and PiG.
  *
  * `/pi-skills` links the *pi-coupled* skills maintained by this dotfiles
  * repo into the *current project*:
  *
- *   dotfiles/pi/agent/skills/*  ->  <cwd>/.pi/skills/<name>
+ *   dotfiles/pi/agent/skills/*  ->  <cwd>/<host config dir>/skills/<name>
+ *
+ * The host config dir comes from the SDK's CONFIG_DIR_NAME: ".pi" under pi,
+ * ".pig" under PiG (pi-in-go). The same extension source therefore serves
+ * both hosts without a fork.
  *
  * Generic (pi-independent) skills from dotfiles/skills/ are NOT handled
  * here — they are installed globally via `just install-skills` into
@@ -14,7 +18,7 @@
 import { existsSync, lstatSync, mkdirSync, readdirSync, readlinkSync, realpathSync, symlinkSync, unlinkSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
+import { CONFIG_DIR_NAME, type ExtensionAPI } from '@earendil-works/pi-coding-agent';
 
 // Extension is symlinked into ~/.pi/agent/extensions. Native Node ESM would
 // resolve the symlink, but pi loads extensions via jiti, which keeps the
@@ -31,8 +35,8 @@ function realpathSafe(path: string): string {
 const extensionDir = realpathSafe(dirname(fileURLToPath(import.meta.url)));
 const dotfilesDir = resolve(extensionDir, '..', '..', '..', '..');
 
-const SOURCE_DIR = join(dotfilesDir, 'pi', 'agent', 'skills');
-const TARGET_DIR = '.pi/skills';
+const SOURCE_DIR = process.env.PI_SKILLS_SOURCE_DIR ?? join(dotfilesDir, 'pi', 'agent', 'skills');
+const TARGET_DIR = `${CONFIG_DIR_NAME}/skills`;
 
 function isSymlink(target: string): boolean {
 	return lstatSync(target, { throwIfNoEntry: false })?.isSymbolicLink() ?? false;
@@ -49,7 +53,7 @@ function linkSkill(source: string, target: string): 'linked' | 'kept' {
 
 export default function projectSkills(pi: ExtensionAPI): void {
 		pi.registerCommand('pi-skills', {
-			description: 'Link pi-coupled dotfiles skills into this project (.pi/skills); args = skill names to skip',
+			description: `Link pi-coupled dotfiles skills into this project (${TARGET_DIR}); args = skill names to skip`,
 			handler: async (args: unknown, ctx: { cwd?: string; ui?: { notify(message: string, tone?: string): void } } | undefined) => {
 				const cwd = ctx?.cwd ?? process.cwd();
 				// Args are skill names to exclude: /pi-skills wayfinder show-me
