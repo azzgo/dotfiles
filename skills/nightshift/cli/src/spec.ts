@@ -1,13 +1,13 @@
 export const STATUSES = [
   "draft",
   "ready",
+  "blocked",
   "running",
   "passed",
   "needs-review",
   "verify-error",
   "skipped",
 ] as const;
-
 export type SpecStatus = (typeof STATUSES)[number];
 
 export const SECTIONS = ["Goal", "Change", "Constraints", "Verify", "Out of scope"] as const;

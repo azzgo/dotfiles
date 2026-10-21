@@ -21,6 +21,7 @@ import { renderSpecDetail } from "./src/show.ts";
 import { releaseLock } from "./src/board.ts";
 import { revertTo, shortSha } from "./src/git.ts";
 import { runNightshift } from "./src/run.ts";
+import { blockedBy, compareQueueOrder, queueOnDir, releaseBlockedBy } from "./src/queue.ts";
 
 const USAGE = `nightshift — 夜间批量执行队列
 
@@ -31,10 +32,13 @@ usage:
   nightshift show <id>
   nightshift ready <id>
   nightshift unready <id>
+  nightshift unblock <id>          # 只解掉一条被同目录 fail 挡住的队列项
   nightshift check
   nightshift run [--until HH:MM|+30m] [--jobs N]
   nightshift report [--date YYYY-MM-DD] [--list-dates]
-  nightshift review <id> [--drop]
+  nightshift review <id> [--drop]   # --drop 回滚 baseline，并放行被它挡住的下一条
+  nightshift queue [--dir P]        # 看同目录串行队列（含被挡住的）
+  nightshift release <id>           # 放行被 <id> 挡住（needs-review/verify-error）的下一条
   nightshift path
 
 env:
@@ -124,29 +128,25 @@ function byId(id: string, base: string): { spec: Spec; specs: Spec[] } {
   return { spec, specs: board.specs };
 }
 
+function archivedSpec(id: string, base: string): Spec | null {
+  for (const date of listArchiveDates(base).slice().reverse()) {
+    const spec = readArchiveSpecs(date, base).specs.find((s) => s.id === id);
+    if (spec) return spec;
+  }
+  return null;
+}
+
 function uniqueDir(raw: string): string {
   const dir = fs.realpathSync.native(raw).replace(/\/+$/, "");
-  for (const candidate of [dir, ...(fs.existsSync("/private" + dir) ? ["/private" + dir] : [])]) {
-    if (specsOnDir(candidate).length > 0) {
-      checkDirFree(candidate);
-      return candidate;
-    }
+  const aliases = fs.existsSync("/private" + dir) ? ["/private" + dir] : [];
+  for (const candidate of [dir, ...aliases]) {
+    if (specsOnDir(candidate).length > 0) return candidate;
   }
   return dir;
 }
 
 function specsOnDir(dir: string): Spec[] {
   return loadBoard(homeBase()).specs.filter((s) => s.dir === dir);
-}
-
-function checkDirFree(dir: string): void {
-  const busy = specsOnDir(dir).filter((s) => s.status === "draft" || s.status === "ready");
-  if (busy.length > 0) {
-    die(
-      `error: ${dir} already has unfinished spec(s): ${busy.map((s) => `${s.id}(${s.status})`).join(", ")}\n` +
-        `       同一目录的 Spec 是串行的；先 ready/归档其中一条，或用不同目录（worktree）。`,
-    );
-  }
 }
 
 function cmdAdd(base: string, flags: Map<string, string[]>): void {
@@ -183,6 +183,12 @@ function cmdAdd(base: string, flags: Map<string, string[]>): void {
   ensureLayout(base);
   writeSpec(spec, base);
   console.log(`${id}  ${boardDir(base)}/${id}.md`);
+  const ahead = loadBoardStrict(base).specs.filter(
+    (s) => s.dir === dir && s.id !== id && s.status !== "passed" && s.created < spec.created,
+  );
+  if (ahead.length > 0) {
+    console.log(`queue: ${ahead.length} spec(s) ahead on this dir (${ahead.map((s) => s.id).join(", ")})`);
+  }
 }
 
 function cmdList(base: string, flags: Map<string, string[]>): void {
@@ -200,7 +206,7 @@ function cmdList(base: string, flags: Map<string, string[]>): void {
       s.status.padEnd(13),
       path.basename(s.dir).padEnd(20),
       s.attempts > 0 ? `try:${s.attempts}` : "       ",
-      s.verdict ?? "",
+      s.status === "blocked" ? (blockedBy(s)?.id ?? "") : (s.verdict ?? ""),
     ].join(" ");
     console.log(`${meta}  ${s.title}`);
   }
@@ -223,6 +229,12 @@ function cmdReady(base: string, id: string | undefined, target: "ready" | "draft
   spec.reason = null;
   writeSpec(spec, base);
   console.log(`${spec.id} -> ${target}`);
+  if (target === "ready") {
+    const ahead = queueOnDir(spec.dir, base).filter((s) => s.id !== spec.id && s.created < spec.created);
+    if (ahead.length > 0) {
+      console.log(`queue: ${ahead.length} spec(s) ahead on this dir (${ahead.map((s) => s.id).join(", ")})`);
+    }
+  }
 }
 
 function cmdCheck(base: string): void {
@@ -235,6 +247,45 @@ function cmdCheck(base: string): void {
     process.exit(1);
   }
   console.log(`ok: ${board.specs.length} spec(s) in ${boardDir(base)}`);
+}
+
+function cmdUnblock(base: string, id: string | undefined): void {
+  if (!id) die("error: unblock <id>");
+  const { spec } = byId(id, base);
+  if (spec.status !== "blocked") die(`error: ${spec.id} is ${spec.status}, not blocked`);
+  spec.status = "ready";
+  spec.reason = null;
+  writeSpec(spec, base);
+  console.log(`${spec.id} -> ready (queue re-armed)`);
+}
+
+function cmdRelease(base: string, id: string | undefined): void {
+  if (!id) die("error: release <id>");
+  const released = releaseBlockedBy(id, base);
+  if (released.length === 0) {
+    console.log(`(nothing blocked by ${id})`);
+    return;
+  }
+  for (const s of released) console.log(`${s.id} -> ready`);
+}
+
+function cmdQueue(base: string, flags: Map<string, string[]>): void {
+  const dirRaw = one(flags, "dir");
+  const board = loadBoardStrict(base);
+  const dir = dirRaw === undefined ? null : (fs.existsSync(dirRaw) ? uniqueDir(dirRaw) : dirRaw);
+  const rows =
+    dir === null
+      ? board.specs.filter((s) => s.status === "ready" || s.status === "blocked")
+      : board.specs.filter((s) => s.dir === dir && (s.status === "ready" || s.status === "blocked")).sort(compareQueueOrder);
+  if (rows.length === 0) {
+    console.log("(empty queue)");
+    return;
+  }
+  for (const s of rows) {
+    const blocked = blockedBy(s);
+    const note = blocked === null ? s.status : `blocked by ${blocked.id} (${blocked.status})`;
+    console.log(`${s.id.padEnd(7)} ${s.created}  ${path.basename(s.dir).padEnd(20)} ${note}`);
+  }
 }
 
 async function cmdRun(base: string, flags: Map<string, string[]>): Promise<void> {
@@ -278,7 +329,7 @@ function cmdReport(base: string, flags: Map<string, string[]>): void {
   const today = new Date();
   const pad = (n: number): string => String(n).padStart(2, "0");
   const stamp = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
-  const pending = board.specs.filter((s) => s.status === "ready" || s.status === "draft");
+  const pending = board.specs.filter((s) => s.status === "ready" || s.status === "draft" || s.status === "blocked");
   process.stdout.write(
     renderReport({
       date: `${stamp}（板上待命）`,
@@ -294,7 +345,9 @@ function cmdReport(base: string, flags: Map<string, string[]>): void {
 
 function cmdReview(base: string, id: string | undefined, flags: Map<string, string[]>): void {
   if (!id) die("error: review <id> [--drop]");
-  const { spec } = byId(id, base);
+  const onBoard = loadBoardStrict(base).specs.find((s) => s.id === id);
+  const spec = onBoard ?? archivedSpec(id, base);
+  if (!spec) die(`error: spec ${id} not found in ${boardDir(base)} or the archive`);
   if (!has(flags, "drop")) {
     process.stdout.write(renderSpecDetail(spec, base));
     return;
@@ -303,6 +356,8 @@ function cmdReview(base: string, id: string | undefined, flags: Map<string, stri
   const r = revertTo(spec.dir, spec.baseline);
   if (!r.ok) die(`error: ${r.message}`);
   console.log(`${spec.id}: ${r.message} (baseline ${shortSha(spec.baseline)})`);
+  const released = releaseBlockedBy(spec.id, base);
+  for (const next of released) console.log(`${next.id} -> ready (queue released)`);
 }
 
 function cmdPath(base: string): void {
@@ -335,6 +390,15 @@ async function main(): Promise<void> {
         break;
       case "unready":
         cmdReady(base, positional[0], "draft");
+        break;
+      case "unblock":
+        cmdUnblock(base, positional[0]);
+        break;
+      case "queue":
+        cmdQueue(base, flags);
+        break;
+      case "release":
+        cmdRelease(base, positional[0]);
         break;
       case "check":
         cmdCheck(base);

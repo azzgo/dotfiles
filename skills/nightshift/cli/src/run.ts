@@ -14,6 +14,7 @@ import {
 import { buildImplArgs, buildVerifyArgs, DispatchError, parseReviewHint, parseVerdict, runChild } from "./dispatch.ts";
 import { countCommits, preflight, residualCount, headOf, shortSha } from "./git.ts";
 import { implPrompt, verifyPrompt } from "./prompt.ts";
+import { blockQueue, compareQueueOrder, releaseBlockedBy } from "./queue.ts";
 import { renderReport } from "./report.ts";
 import type { Spec } from "./spec.ts";
 
@@ -198,7 +199,7 @@ export async function runNightshift(opts: RunOptions): Promise<{ archivedTo: str
     if (board.errors.length > 0) {
       for (const e of board.errors) log(`board error: ${e}`);
     }
-    const ready = board.specs.filter((s) => s.status === "ready");
+    const ready = board.specs.filter((s) => s.status === "ready").sort(compareQueueOrder);
     const queues = new Map<string, Job[]>();
     for (const s of ready) {
       const key = s.dir;
@@ -229,6 +230,7 @@ export async function runNightshift(opts: RunOptions): Promise<{ archivedTo: str
           const p = processSpec(job, cfg, base, log).then((spec) => {
             active.delete(key);
             finished.push(spec);
+            settleQueue(key, spec);
             return spec;
           });
           active.set(key, p);
@@ -239,6 +241,21 @@ export async function runNightshift(opts: RunOptions): Promise<{ archivedTo: str
       if (active.size > 0) await Promise.all([...active.values()]);
     };
 
+    const settleQueue = (key: string, spec: Spec): void => {
+      if (spec.status === "passed") {
+        const released = releaseBlockedBy(spec.id, base);
+        for (const next of released) {
+          log(`${next.id} unblocked (${spec.id} passed)`);
+          queues.set(key, [...(queues.get(key) ?? []), { spec: next, serialKey: key }]);
+        }
+        return;
+      }
+      const remaining = queues.get(key) ?? [];
+      queues.set(key, []);
+      if (remaining.length === 0) return;
+      const blocked = blockQueue(key, spec, base);
+      for (const b of blocked) log(`${b.id} blocked: ${spec.id} ${spec.status}`);
+    };
     await pump();
     handled = finished;
 

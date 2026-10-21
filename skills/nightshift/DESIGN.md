@@ -24,10 +24,11 @@
     │   ├── dispatch.ts    # argv 拼装（实现侧 + Verifier 侧）、spawn、Verdict 解析
     │   ├── prompt.ts      # 实现 prompt / verify prompt 模板
     │   ├── run.ts         # 调度：串行键、并发、窗口、归档
+    │   ├── queue.ts       # 同目录串行队列：排序 / 停止 / 放行
     │   ├── report.ts      # Report 渲染
     │   └── show.ts        # 单条详情 + 下一步命令
     └── test/
-        ├── cli.test.ts    # 47 个测试
+        ├── cli.test.ts    # 54 个测试
         └── fake-pi.mjs    # 假 pi，零 token 验证整个调度循环
 <repo>/pi/agent/prompts/nightshift.md   # 薄快捷键，只转发
 ```
@@ -60,7 +61,7 @@ frontmatter 全部由 CLI 写；人/agent 只写正文。
 ```yaml
 ---
 id: ns-0007              # CLI 分配，ns-<4位>
-status: ready            # draft | ready | running | needs-review | passed | verify-error | skipped
+status: ready            # draft | ready | blocked | running | needs-review | passed | verify-error | skipped
 dir: /Users/ison/dev/dotfiles
 title: 夜间看板 CLI
 created: 2026-10-19T14:02:11Z
@@ -81,7 +82,7 @@ reason: null             # CLI 写：Verifier 的一行理由
 
 正文模板固定五节，缺节在 `check` 里报错。`dir` 必须是已存在的 git 仓库（`preflight` 检查 `rev-parse --git-dir` + 有 HEAD），否则该 Spec 在派发前就落 `skipped`。
 
-**同一 `dir` 只允许一条未完成（`draft`/`ready`）的 Spec**，`add` 时即拒绝第二条——因为同目录串行，第二条当夜排不上，留着只会让串行链变复杂。
+**同一 `dir` 允许多条未完成（`draft`/`ready`/`blocked`）的 Spec 共存**：`add` 不再拒绝第二条。同目录的 Spec 构成一条**串行队列**，顺序 = `created` 时间序（相同则按 id）——先入板先跑。队列的推进与停止见 §4。
 
 ## 3. 命令动词
 
@@ -93,10 +94,13 @@ nightshift ready <id>                            # draft → ready（唯一的�
 nightshift check                                  # schema 校验（不写盘）
 nightshift run [--until HH:MM] [--jobs N]        # 夜间排水（持有 run.lock）
 nightshift report [--date YYYY-MM-DD]            # 只读检查面
-nightshift review <id> [--drop]                  # --drop 才动盘：git reset --hard <baseline>
+nightshift review <id> [--drop]                  # --drop 才动盘：git reset --hard <baseline>，并放行被它挡住的下一条
+nightshift queue [--dir P]                       # 看同目录串行队列（ready / blocked）
+nightshift unblock <id>                          # blocked → ready（只放这一条）
+nightshift release <id>                          # 放行所有 reason 里写着 blocked by <id> 的项
 ```
 
-`status` 的转移只发生在：`add→draft`、`draft→ready`（`ready` 动词）、`ready→draft`（`unready`）、`run→running→{passed|needs-review|verify-error}`、`run→skipped`（git 前置失败）、归档时 `passed|needs-review|verify-error|skipped` 移出板。`draft` 永不被派发；窗口用尽未派发的 `ready` 留在板上等下一夜。
+`status` 的转移只发生在：`add→draft`、`draft→ready`（`ready` 动词）、`ready→draft`（`unready`）、`ready→blocked`（同目录前一条未通过）、`blocked→ready`（`unblock` / `release` / `review --drop`）、`run→running→{passed|needs-review|verify-error}`、`run→skipped`（git 前置失败）、归档时 `passed|needs-review|verify-error|skipped` 移出板。`draft` 永不被派发；窗口用尽未派发的 `ready` 留在板上等下一夜。
 
 ## 4. `run` 的调度算法
 
@@ -108,11 +112,13 @@ loop:
   if now >= window: break
   ready = 所有非空 queue 的队首，且其 dir 当前无在跑任务
   launch min(jobs - running, len(ready)) 条（spawn pi -p）
-  wait 任意一条 settle → 落盘 verdict → 该 dir 的 queue 前进/删除
+  wait 任意一条 settle → 落盘 verdict → 该 dir 的 queue 前进 / 停止
 exit when: 所有 queue 空 → 归档 → 释放锁
 ```
 
-- **同 Serial Key 严格串行**：一个 dir 同时最多一条在跑。
+- **队内顺序** = `created` 时间序（同刻按 id）。`ready` 快照进队时即排序。仍为 `draft` 的 Spec 不占队列位置（未 ready = 未获授权，不挡后面的 `ready`）。
+- **同 Serial Key 严格串行**：一个 dir 同时最多一条在跑；前一条 **passed 后**才派发同目录的下一条。
+- **前一条不是 passed 就停止该目录队列**：`needs-review` / `verify-error` / `skipped` 都会把该目录**剩余未派发的 `ready`** 就地改成 `blocked`，`reason` 写 `blocked by <blocker-id> (<blocker-status>)`。避免在坏地基上继续盖楼。跨目录不受影响。
 - **跨 Serial Key 并行**：受 `--jobs` 限制（默认 3）。
 - **无 sleep 轮询**：用子进程 `exit` 事件驱动，队列空即退出。
 - **窗口到点**：不再启动新任务；在跑的任务等其自然结束；未派发的保持 `ready` 留在板上。
@@ -206,7 +212,7 @@ exit code 非零 + 未命中 → 仍是 verify-error（进程挂了，非代码�
 ## 9. Report 格式
 
 ```text
-Nightshift 2026-10-19  窗口 23:10–07:00  派发 5 / 通过 3 / 需看 2
+Nightshift 2026-10-19  窗口 23:10–07:00  派发 5 / 通过 3 / 需看 2 / 队列停止 1
 ────────────────────────────────────────────────────────────
 ✅ ns-0007 dotfiles 3 commits passed
    verdict: pass — 只动了 cli/，未触及 justfile
@@ -215,13 +221,16 @@ Nightshift 2026-10-19  窗口 23:10–07:00  派发 5 / 通过 3 / 需看 2
 ⚠️ ns-0008 dotfiles 2 commits needs-review
    verdict: fail — 缺少空队列路径的测试
    → nightshift show ns-0008
+   → nightshift release ns-0008    # 放行同目录被挡住的下一条
 🟡 ns-0009 dotfiles verify-error
    verdict: verify-error — verifier produced no VERDICT line (exit 1)
-⏸ ns-0010 /Users/ison/dev/other ready
+⛔ ns-0011 dotfiles blocked
+   queue stopped: ns-0009 verify-error — 同目录后续 Spec 停在板上，处理完这条后再跑
+⏸ ns-0010 other ready
    （未派发：窗口用尽，仍在板上）
 ```
 
-纯文本、无 UI、可重定向。`--date` 从 archive 读。
+`blocked` 条目独立计数（标题行的「队列停止 N」），并在条目下显式标出停在哪一条。纯文本、无 UI、可重定向。`--date` 从 archive 读。
 
 ## 10. 单实例锁
 
@@ -243,7 +252,7 @@ node 的解析顺序：`$NIGHTSHIFT_NODE` → mise shim → `PATH`。原因是�
 
 ## 12. 动手顺序
 
-Phase 0–4 已完成（47 个测试全绿，`just test-nightshift`）。
+Phase 0–4 已完成（54 个测试全绿，`just test-nightshift`）。
 
 Phase 0 · 无 pi 依赖
   ✅ A. `cli/src/spec.ts`    frontmatter 解析/序列化 + 五节校验 + 未知 key 报错
@@ -276,5 +285,6 @@ Phase 5 · 首次真跑（唯一烧 token 的一步）
   ☐ R. 按 Q 的结果回调 A–J 的假设
 
 已用 `test/fake-pi.mjs` 零成本验证过的路径：全绿通过、fail 后重试至 needs-review、
-缺失 VERDICT 落 verify-error 且不重试、跨目录并行、同目录队列排队、draft 不派发、
+缺失 VERDICT 落 verify-error 且不重试、跨目录并行、同目录串行队列按 created 排空、
+同目录前一条 fail/verify-error/skipped 后队列停止并能被 release 重新武装、draft 不派发、
 单实例锁拒绝、超长窗口拒绝、归档搬迁。真跑只需要验证真实的 pi 是否会遵守 prompt 纪律与输出格式。

@@ -60,7 +60,7 @@ frontmatter **只由 CLI 写**。手改任何元数据都会被 `parseSpec` 当�
 ```yaml
 ---
 id: ns-0007
-status: draft | ready | running | passed | needs-review | verify-error | skipped
+status: draft | ready | blocked | running | passed | needs-review | verify-error | skipped
 dir: /absolute/workspace/path
 title: "一行标题"
 created: 2026-10-19T14:02:11.000Z
@@ -90,18 +90,24 @@ run: "20261019-231000"
 ## Out of scope
 ```
 
-`status` 为 `draft` 或 `ready` 时，`Goal`、`Change`、`Verify` 三节不得为空。
+`status` 为 `draft`、`ready` 或 `blocked` 时，`Goal`、`Change`、`Verify` 三节不得为空。
+
+`blocked` 是同目录串行队列的**停止标记**，只由 `run` 写入：同目录前一条落 `needs-review` / `verify-error` / `skipped` 时，该目录剩余未派发的 `ready` 全部就地变成 `blocked`，`reason` 写成 `blocked by <blocker-id> (<blocker-status>)`。`blocked` 不会被派发。放行方式有三种：`release <阻挡者 id>`（批量，按 reason 匹配）、`unblock <id>`（只放这一条）、`review <阻挡者 id> --drop`（回滚阻挡者的提交并放行）。`ready <id>` 作用在 `blocked` 上等同于显式人工覆盖，同样会把它放回队列；`unready <id>` 则把它退回 `draft`，退出队列。
 
 ## 状态机
 
 ```
 add ──→ draft ──ready──→ ready ──run──→ running ──┬─→ passed        （归档）
-          │                                       ├─→ needs-review  （归档，attempts=2）
-          └─unready←──ready                     ├─→ verify-error  （归档，不重试）
-                                                  └─→ skipped       （归档，git 前置失败）
+          ↑  │            │                        ├─→ needs-review  （归档，attempts=2）
+          │  └─unready────┘                        ├─→ verify-error  （归档，不重试）
+          │                                        └─→ skipped       （归档，git 前置失败）
+          │
+     blocked ←── ready           （同目录前一条不是 passed 时，run 把剩余 ready 就地锁住）
+          │
+          └─unblock / release / review --drop──→ ready
 
 归档时：passed / needs-review / verify-error / skipped 全部移出 board。
-未派发的 ready（窗口用尽）留在 board 上。
+未派发的 ready（窗口用尽）留在 board 上；blocked 也留在 board 上等人工放行。
 draft 永不被派发。
 ```
 
@@ -117,7 +123,10 @@ draft 永不被派发。
 | `check` | 全板 schema 校验 | 只读 |
 | `run [--until HH:MM\|+30m] [--jobs N]` | 夜间排水 | 板 + git（commit 由 agent 做） |
 | `report [--date YYYY-MM-DD] [--list-dates]` | 检查面 | 只读 |
-| `review <id> [--drop]` | 详情；`--drop` 才 `git reset --hard <baseline>` | 仅 `--drop` |
+| `review <id> [--drop]` | 详情；`--drop` 才 `git reset --hard <baseline>`，并放行被它挡住的下一条 | 仅 `--drop` |
+| `queue [--dir P]` | 同目录串行队列（`ready` / `blocked`），按 `created` 排序 | 只读 |
+| `unblock <id>` | `blocked → ready`（只这一条） | 板 |
+| `release <id>` | 放行所有 `reason` 为 `blocked by <id> (...)` 的项 | 板 |
 | `path` | 打印三个目录 | 只读 |
 | `unlock` | 清掉陈旧锁 | 锁 |
 
@@ -127,6 +136,8 @@ draft 永不被派发。
 
 仓库**不安装也不管理任何定时器产物**——没有 plist、crontab、systemd timer 单元。`run` 的契约是"排空队列或窗口用尽即退出"，交给外部调度：
 
+- **同目录队列**：`add` 不再拒绝同目录第二条；同目录的 `ready` 构成一条按 `created` 排序的串行链，前一条 `passed` 才派下一条
+- **前一条没过就锁住队列**：`needs-review` / `verify-error` / `skipped` 会把同目录剩余 `ready` 改成 `blocked`（`reason: blocked by <id> (<status>)`），跨目录并行不受影响；处理完后用 `release <id>` 或 `review <id> --drop` 放行
 - 想防睡眠：`nightshift-keep-awake`（Darwin → `caffeinate -i`；Linux → `systemd-inhibit`；其它 → 直接跑）
 - 不要写 `while :; do ...; sleep 1800; done`——那需要常驻会话，且重启不恢复
 - 调度环境通常是裸 `PATH`，需要显式配 `PATH` 或在 `ProgramArguments` 里写绝对路径

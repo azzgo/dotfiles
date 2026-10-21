@@ -412,6 +412,15 @@ async function runLoop(base, cfg, jobs = 1, until = "+2m") {
   return { result, logs };
 }
 
+function writeReady(base, id, dir, created) {
+  const boardDirPath = path.join(base, "board");
+  fs.mkdirSync(boardDirPath, { recursive: true });
+  fs.writeFileSync(
+    path.join(boardDirPath, `${id}.md`),
+    serializeSpec({ ...makeSpec({ id, status: "ready", dir, created }), file: `${id}.md` }),
+  );
+}
+
 test("run: full pass path archives the spec and leaves a commit", async () => {
   const base = tmp("ns-home-");
   const repo = makeRepo();
@@ -507,7 +516,7 @@ test("run: different dirs run in parallel", async () => {
   assert.strictEqual(dirs.size, 2);
 });
 
-test("cli: a second spec on the same dir is refused at add time", () => {
+test("cli: a second spec on the same dir is queued instead of refused", () => {
   const base = tmp("ns-home-");
   const repo = makeRepo();
   const first = spawnSync(process.execPath, [CLI, "add", "--dir", repo.dir, "--title", "one"], {
@@ -521,8 +530,11 @@ test("cli: a second spec on the same dir is refused at add time", () => {
     env: { ...process.env, NIGHTSHIFT_HOME: base },
     input: specBody(),
   });
-  assert.notStrictEqual(second.status, 0);
-  assert.ok(second.stderr.includes("already has unfinished spec"), second.stderr);
+  assert.strictEqual(second.status, 0, second.stderr);
+  assert.ok(second.stdout.includes("queue: 1 spec(s) ahead"), second.stdout);
+  const listed = runCli(["list"], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(listed.out.trim().split("\n").length, 2, listed.out);
+  assert.strictEqual(runCli(["check"], { NIGHTSHIFT_HOME: base }).status, 0);
 });
 
 test("run: an over-capacity serial queue drains one at a time", async () => {
@@ -586,4 +598,164 @@ test("window: assertWindowSane boundary", () => {
   const start = new Date("2026-10-20T23:00:00Z");
   assertWindowSane(start, new Date("2026-10-21T07:00:00Z"), 8);
   assert.throws(() => assertWindowSane(start, new Date("2026-10-21T07:00:01Z"), 8), WindowTooLongError);
+});
+
+test("run: same-dir queue drains in created order", async () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const pi = withFakePiScript();
+  writeReady(base, "ns-0001", repo.dir, "2026-10-19T01:00:00.000Z");
+  writeReady(base, "ns-0002", repo.dir, "2026-10-19T02:00:00.000Z");
+  const cfg = { ...DEFAULT_CONFIG, piBin: pi, timeoutSec: 30 };
+  const { result, logs } = await runLoop(base, cfg, 3);
+  assert.deepStrictEqual(result.specs.map((s) => s.id), ["ns-0001", "ns-0002"], logs.join("\n"));
+  assert.ok(result.specs.every((s) => s.status === "passed"), logs.join("\n"));
+  assert.strictEqual(loadBoard(base).specs.length, 0);
+});
+
+test("run: a needs-review spec stops the rest of its dir queue", async () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const other = makeRepo();
+  const pi = withFakePiScript();
+  writeReady(base, "ns-0001", repo.dir, "2026-10-19T01:00:00.000Z");
+  writeReady(base, "ns-0002", repo.dir, "2026-10-19T02:00:00.000Z");
+  writeReady(base, "ns-0003", other.dir, "2026-10-19T03:00:00.000Z");
+  const cfg = { ...DEFAULT_CONFIG, piBin: pi, timeoutSec: 30 };
+  process.env.FAKE_VERDICT = "fail";
+  process.env.FAKE_REASON = "nope";
+  try {
+    const { result, logs } = await runLoop(base, cfg, 3);
+    const byId = new Map(result.specs.map((s) => [s.id, s]));
+    assert.strictEqual(byId.get("ns-0001").status, "needs-review", logs.join("\n"));
+    assert.strictEqual(byId.get("ns-0003").status, "needs-review", logs.join("\n"));
+    assert.ok(!byId.has("ns-0002"), logs.join("\n"));
+    const left = loadBoard(base).specs.find((s) => s.id === "ns-0002");
+    assert.strictEqual(left.status, "blocked", JSON.stringify(left));
+    assert.strictEqual(left.reason, "blocked by ns-0001 (needs-review)");
+    assert.ok(result.report.includes("queue stopped: ns-0001 needs-review"), result.report);
+    assert.ok(result.report.includes("队列停止 1"), result.report);
+  } finally {
+    delete process.env.FAKE_VERDICT;
+    delete process.env.FAKE_REASON;
+  }
+});
+
+test("run: verify-error also stops the dir queue", async () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const pi = withFakePiScript();
+  writeReady(base, "ns-0001", repo.dir, "2026-10-19T01:00:00.000Z");
+  writeReady(base, "ns-0002", repo.dir, "2026-10-19T02:00:00.000Z");
+  const cfg = { ...DEFAULT_CONFIG, piBin: pi, timeoutSec: 30 };
+  process.env.FAKE_NO_VERDICT = "1";
+  try {
+    const { result, logs } = await runLoop(base, cfg, 3);
+    assert.deepStrictEqual(result.specs.map((s) => s.id), ["ns-0001"], logs.join("\n"));
+    assert.strictEqual(result.specs[0].status, "verify-error");
+    const left = loadBoard(base).specs.find((s) => s.id === "ns-0002");
+    assert.strictEqual(left.status, "blocked");
+    assert.strictEqual(left.reason, "blocked by ns-0001 (verify-error)");
+  } finally {
+    delete process.env.FAKE_NO_VERDICT;
+  }
+});
+
+test("run: skipped also stops the dir queue", async () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const noRepo = fs.realpathSync.native(tmp("ns-nogit-"));
+  const pi = withFakePiScript();
+  writeReady(base, "ns-0001", noRepo, "2026-10-19T01:00:00.000Z");
+  writeReady(base, "ns-0002", noRepo, "2026-10-19T02:00:00.000Z");
+  const cfg = { ...DEFAULT_CONFIG, piBin: pi, timeoutSec: 30 };
+  const { result, logs } = await runLoop(base, cfg, 3);
+  assert.deepStrictEqual(result.specs.map((s) => s.id), ["ns-0001"], logs.join("\n"));
+  assert.strictEqual(result.specs[0].status, "skipped");
+  assert.strictEqual(loadBoard(base).specs[0].status, "blocked");
+  void repo;
+});
+
+test("cli: release unblocks the dir queue after a failure", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const boardDirPath = path.join(base, "board");
+  fs.mkdirSync(boardDirPath, { recursive: true });
+  fs.writeFileSync(
+    path.join(boardDirPath, "ns-0001.md"),
+    serializeSpec({
+      ...makeSpec({ id: "ns-0001", status: "blocked", dir: repo.dir }),
+      reason: "blocked by ns-0000 (needs-review)",
+      file: "ns-0001.md",
+    }),
+  );
+  const r = runCli(["release", "ns-0000"], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(r.status, 0, r.err);
+  assert.ok(r.out.includes("ns-0001 -> ready"), r.out);
+  assert.strictEqual(loadBoard(base).specs[0].status, "ready");
+});
+
+test("cli: review --drop releases the blocked queue behind its baseline", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const baseline = preflight(repo.dir).baseline;
+  fs.writeFileSync(path.join(repo.dir, "work.txt"), "x");
+  repo.git(["add", "work.txt"]);
+  repo.git(["commit", "-q", "-m", "work"]);
+  const boardDirPath = path.join(base, "board");
+  fs.mkdirSync(boardDirPath, { recursive: true });
+  fs.writeFileSync(
+    path.join(boardDirPath, "ns-0001.md"),
+    serializeSpec({
+      ...makeSpec({ id: "ns-0001", status: "needs-review", dir: repo.dir }),
+      baseline,
+      file: "ns-0001.md",
+    }),
+  );
+  fs.writeFileSync(
+    path.join(boardDirPath, "ns-0002.md"),
+    serializeSpec({
+      ...makeSpec({ id: "ns-0002", status: "blocked", dir: repo.dir }),
+      reason: "blocked by ns-0001 (needs-review)",
+      file: "ns-0002.md",
+    }),
+  );
+  const r = runCli(["review", "ns-0001", "--drop"], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(r.status, 0, r.err);
+  assert.ok(r.out.includes("ns-0002 -> ready (queue released)"), r.out);
+  assert.ok(!fs.existsSync(path.join(repo.dir, "work.txt")));
+  const ns2 = loadBoard(base).specs.find((s) => s.id === "ns-0002");
+  assert.strictEqual(ns2.status, "ready");
+  assert.strictEqual(ns2.reason, null);
+});
+
+test("cli: review finds an archived spec so a stopped queue can be released", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const baseline = preflight(repo.dir).baseline;
+  fs.mkdirSync(path.join(base, "archive", "2026-10-19"), { recursive: true });
+  fs.writeFileSync(
+    path.join(base, "archive", "2026-10-19", "ns-0001.md"),
+    serializeSpec({
+      ...makeSpec({ id: "ns-0001", status: "needs-review", dir: repo.dir }),
+      baseline,
+      file: "ns-0001.md",
+    }),
+  );
+  fs.mkdirSync(path.join(base, "board"), { recursive: true });
+  fs.writeFileSync(
+    path.join(base, "board", "ns-0002.md"),
+    serializeSpec({
+      ...makeSpec({ id: "ns-0002", status: "blocked", dir: repo.dir }),
+      reason: "blocked by ns-0001 (needs-review)",
+      file: "ns-0002.md",
+    }),
+  );
+  const shown = runCli(["review", "ns-0001"], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(shown.status, 0, shown.err);
+  assert.ok(shown.out.includes("ns-0001 — fake spec"), shown.out);
+  const r = runCli(["review", "ns-0001", "--drop"], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(r.status, 0, r.err);
+  const ns2 = loadBoard(base).specs.find((s) => s.id === "ns-0002");
+  assert.strictEqual(ns2.status, "ready");
 });

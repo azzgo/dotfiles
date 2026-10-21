@@ -89,7 +89,10 @@ nightshift report
 | 早上看结果 | `nightshift report` |
 | 看历史某天 | `nightshift report --date 2026-10-19` |
 | 列出所有归档日期 | `nightshift report --list-dates` |
-| 丢弃某条的提交 | `nightshift review ns-0007 --drop` |
+| 丢弃某条的提交（并放行同目录后续） | `nightshift review ns-0007 --drop` |
+| 看同目录串行队列 | `nightshift queue [--dir /abs/path]` |
+| 放行被某条挡住的下一条 | `nightshift release ns-0007` |
+| 只放行某一条 blocked | `nightshift unblock ns-0008` |
 | 锁卡住了 | `nightshift unlock` |
 | 目录都建在哪 | `nightshift path` |
 
@@ -123,10 +126,13 @@ nightshift report
 ## 4. 工作目录与串行
 
 - `--dir` 必须是**绝对路径**，会规范成 realpath。
-- **同一个目录同时只能有一条未完成的 Spec**（`draft` 或 `ready`）。第二条会被 `add` 直接拒绝，提示已有哪几条。
-- 同一目录的 Spec 之间**严格串行**；不同目录**可以并行**（受 `--jobs` 限制，默认 3）。
-- 串行键是**工作目录**，不是 git 仓库。同一个 repo 开两个 worktree = 两个可并行的目录。
-- 需要并行？先开 worktree，再给每个 worktree 各写一条 Spec。
+- **同一个目录可以挂多条未完成的 Spec**。它们构成一条**串行队列**：一次只跑一条，前一条 `passed` 后才派下一条。`add` 不再拒绝第二条，只会提示队列里有几条在前。
+- 队列顺序 = `created` 时间序（先 `add` 先跑，同刻按 id）。想让 B 排在 A 后面，按顺序 `add` 即可，不必等 A 跑完。
+- **前一条没过（`needs-review` / `verify-error` / `skipped`）就停下整个目录队列**：同目录剩余未派发的 `ready` 会变成 `blocked`，`reason` 写明被谁挡住。这样不会在坏地基上继续盖楼。
+- 处理完阻塞项后：`ns release <阻挡者 id>` 放行同目录后续，或 `ns review <阻挡者 id> --drop` 回滚并放行。`ns queue [--dir P]` 查看队列与阻塞来源。
+- `draft` 不占队列位置：只有 `ready` 会进队列。
+- 不同目录**可以并行**（受 `--jobs` 限制，默认 3）。串行键是**工作目录**，不是 git 仓库；同一个 repo 开两个 worktree = 两条独立队列。
+- 需要真正的内容并行？先开 worktree，再给每个 worktree 各写一条 Spec。
 
 ## 5. 配置
 
@@ -210,7 +216,7 @@ ExecStart=%h/.local/bin/nightshift-keep-awake --until 07:00
 `nightshift report` 就是给你排好序的检查清单：
 
 ```text
-Nightshift 2026-10-19  窗口 23:10–07:00  派发 5 / 通过 3 / 需看 2
+Nightshift 2026-10-19  窗口 23:10–07:00  派发 5 / 通过 3 / 需看 2 / 队列停止 1
 ────────────────────────────────────────────────────────────────
 ✅ ns-0007  dotfiles  3 commits  passed
    verdict: pass — 只改了 cli/，未触及 justfile
@@ -219,8 +225,11 @@ Nightshift 2026-10-19  窗口 23:10–07:00  派发 5 / 通过 3 / 需看 2
 ⚠️ ns-0008  dotfiles  2 commits  needs-review
    verdict: fail — 缺少空队列路径的测试
    → nightshift show ns-0008
+   → nightshift release ns-0008    # 放行同目录被挡住的下一条
 🟡 ns-0009  api   verify-error
    verdict: verify-error — verifier produced no VERDICT line (exit 1)
+⛔ ns-0011  dotfiles  blocked
+   queue stopped: ns-0009 verify-error — 同目录后续 Spec 停在板上，处理完这条后再跑
 ⏸ ns-0010  /Users/ison/dev/other  ready
    （未派发：窗口用尽，仍在板上）
 ```
@@ -233,6 +242,7 @@ Nightshift 2026-10-19  窗口 23:10–07:00  派发 5 / 通过 3 / 需看 2
 | ⚠️ | `needs-review` | 两次实现后仍 `fail` | 看 `reason`，要么重写 Spec，要么手工收尾 |
 | 🟡 | `verify-error` | 验证本身没跑完 | 流程问题，不是代码问题；`show` 看原因后重跑 |
 | ⏭️ | `skipped` | git 前置失败（非仓库/无提交） | 修环境后重上板 |
+| ⛔ | `blocked` | 同目录前一条没过，队列被停下 | 处理完阻挡者后 `release` 或 `review --drop` |
 | ⏸ | `ready` | 窗口用尽，没轮到 | 下一夜会自动继续 |
 | ✏️ | `draft` | 还没标 ready | 补正文后 `ready` |
 
@@ -269,8 +279,11 @@ pi -r --session-dir ~/.cache/nightshift/sessions/ns-0008
 **Q: 我改了正文，需要重新 ready 吗？**
 不需要。正文随时可改（这不是元数据）。但如果 Spec 已经跑过、归档了，就要新开一条。
 
-**Q: 为什么 `add` 拒绝我的第二个 Spec？**
-同一目录已有未完成（`draft`/`ready`）的 Spec。要么先 `ready` 已有的、等它跑完，要么换 worktree。
+**Q: 同目录的第二条 Spec 会被拒绝吗？**
+不会。同目录的 Spec 排成一条串行队列（按 `created`），夜里一条一条跑。`add` 只会提示前面还有几条。
+
+**Q: 同目录前一条挂了，后面还会跑吗？**
+不会。前一条落 `needs-review` / `verify-error` / `skipped` 时，该目录剩余的 `ready` 全部变成 `blocked` 留在板上。处理完那条后用 `nightshift release <id>` 放行（或用 `review <id> --drop` 回滚并放行）。跨目录不受影响。
 
 **Q: 可以手改 frontmatter 吗？**
 不要。元数据归 CLI，未知 key 会直接报错（wayfinder 踩过这个坑：一个手写 key 静默抹掉了整张依赖图）。要改文件属性用命令。
@@ -293,7 +306,7 @@ pi -r --session-dir ~/.cache/nightshift/sessions/ns-0008
 ## 10. 开发与测试
 
 ```sh
-just test-nightshift       # 47 个测试，全部不需要真调模型
+just test-nightshift       # 54 个测试，全部不需要真调模型
 ```
 
 `test/fake-pi.mjs` 按环境变量返回预设 verdict（`FAKE_VERDICT` / `FAKE_REASON` / `FAKE_NO_VERDICT`），因此调度器、重试、归档、锁都能零 token 验证。
