@@ -23,6 +23,8 @@
 import type { AgentSession } from "@earendil-works/pi-coding-agent";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import {
 	generateSessionId,
 	gcLogs,
@@ -221,11 +223,12 @@ export default function (pi: ExtensionAPI) {
 		name: "dispatch",
 		label: "Dispatch",
 		description:
-			"Run a sub-agent (pi) as an in-process session and collect its output. Foreground (default) waits and returns { exitCode, durationMs, output }; background:true returns a sessionId immediately — prefer it for long-running tasks so the turn is not blocked, and the host is notified on completion. Pass an existing sessionId to query it (optionally long-polling with pollMs), plus kill:true to abort it.",
+			"Run a sub-agent (pi) as an in-process session and collect its output. Foreground (default) waits and returns { exitCode, durationMs, output }; background:true returns a sessionId immediately — prefer it for long-running tasks so the turn is not blocked, and the host is notified on completion. Pass an existing sessionId to query it (optionally long-polling with pollMs), plus kill:true to abort it. cwd runs the sub-agent in that directory instead of the current one.",
 		promptSnippet: "Dispatch a sub-agent (pi) in-process and collect its output",
 		parameters: Type.Object({
 			agent: Type.Optional(Type.String({ description: "Agent name; required for a new dispatch, omit when using sessionId." })),
 			prompt: Type.Optional(Type.String({ description: "Task prompt; required for a new dispatch." })),
+			cwd: Type.Optional(Type.String({ description: "Directory the sub-agent works in. Relative paths resolve against the current directory. Defaults to the current directory." })),
 			sessionId: Type.Optional(Type.String({ description: "Background session id to query (or kill with kill:true)." })),
 			pollMs: Type.Optional(Type.Number({ description: "With sessionId: long-poll for up to this many ms, returning early once the session settles. Observation only — the session keeps running regardless; omit for an immediate snapshot." })),
 			kill: Type.Optional(Type.Boolean()),
@@ -247,10 +250,10 @@ export default function (pi: ExtensionAPI) {
 
 		async execute(_toolCallId, params, signal, onUpdate, ctx) {
 			const config = loadConfig();
-			const cwd = ctx.cwd;
 			const p = params as {
 				agent?: string;
 				prompt?: string;
+				cwd?: string;
 				model?: string;
 				sessionId?: string;
 				pollMs?: number;
@@ -343,6 +346,17 @@ export default function (pi: ExtensionAPI) {
 
 			const timeoutSec = p.timeout ?? config.defaultTimeoutSec;
 
+			// The sub-agent's working directory: an explicit cwd, else the
+			// session's own directory. Relative paths resolve against it.
+			const cwd = p.cwd ? path.resolve(ctx.cwd, p.cwd) : ctx.cwd;
+			if (!fs.existsSync(cwd)) {
+				return {
+					content: [{ type: "text", text: `Dispatch directory does not exist: ${cwd}` }],
+					isError: true,
+					details: {},
+					structuredContent: { complete: false },
+				};
+			}
 			if (p.background) {
 				const session = runBackground({
 					agent: resolved.agent,

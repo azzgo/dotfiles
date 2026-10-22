@@ -43,6 +43,7 @@ dependency: dispatches run in-process.
 |--------------|---------|---------|--------------------------------------------------------------|
 | `agent`      | string  | —       | required for a new dispatch; **`pi` only** (in-process sub-session) |
 | `prompt`     | string  | —       | required for a new dispatch; task prompt for the sub-agent   |
+| `cwd`        | string  | session cwd | directory the sub-agent works in; relative paths resolve against the session cwd |
 | `background` | boolean | false   | true → return `{ sessionId }` immediately; query/kill later   |
 | `timeout`    | number  | 600     | seconds; aborts the in-process sub-session on expiry         |
 | `reason`     | string  | —       | UI label shown in the footer status while foreground-running  |
@@ -82,6 +83,25 @@ dependency: dispatches run in-process.
 - **Abort / timeout**: `AbortSignal` and the timeout timer both call
   `session.abort()` on the in-process session; the status lands on `killed` or
   `timeout` and the forensic dump is still written.
+
+### Working directory
+
+`cwd` chooses the directory the sub-agent works in. It becomes the sub-session's
+cwd, so relative paths, `bash`, and pi's file tools all resolve inside it.
+
+- A relative `cwd` resolves against the host session's cwd.
+- An absolute `cwd` is used as-is.
+- A directory that does not exist is refused before the sub-agent starts.
+- Without `cwd` the sub-agent works in the host session's directory.
+
+Two things to know about a different cwd:
+
+- **Context discovery follows it.** Pi loads `AGENTS.md` and skills from the
+  sub-session's cwd and its ancestors. A cwd outside the project tree therefore
+  loses the project's context files.
+- **It is not a sandbox.** The sub-agent can still write outside the directory
+  with an absolute path. `cwd` sets where work happens; it does not confine
+  what the agent may touch.
 
 ### Visualization surfaces (all program-side, zero tokens)
 
