@@ -1,0 +1,390 @@
+#!/usr/bin/env bash
+# Start a long-running command in a detached tmux session, or hand work to a
+# neighbouring agent pane when Herdr is managing this terminal.
+#
+# Usage:
+#   bg start [--name NAME] [--cwd DIR] -- <command...>
+#   bg start --agent KIND [--name NAME] [--cwd DIR] -- "<prompt>"
+#   bg capture [--name NAME] [--lines N]
+#   bg send [--name NAME] -- "<text>"
+#   bg list
+#   bg kill [--name NAME]
+#   bg attach [--name NAME]
+#
+# Every run writes two files under ~/.cache/bg-run/<name>/:
+#   out.log  everything the command printed
+#   rc       the exit code, once the command has finished
+# A run is finished when rc exists. Nothing is inferred from the prompt.
+
+set -euo pipefail
+
+STATE_ROOT="${BG_STATE_ROOT:-$HOME/.cache/bg-run}"
+HERDR_ENV="${HERDR_ENV:-}"
+
+usage() {
+	sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'
+}
+
+die() {
+	printf 'bg: %s\n' "$1" >&2
+	exit 1
+}
+
+have_tmux() {
+	command -v tmux >/dev/null 2>&1
+}
+
+have_herdr() {
+	[ "$HERDR_ENV" = "1" ] && command -v herdr >/dev/null 2>&1
+}
+
+state_dir() {
+	printf '%s/%s' "$STATE_ROOT" "$1"
+}
+
+read_state() {
+	local name="$1" file="$2"
+	local path
+	path="$(state_dir "$name")/$file"
+	[ -f "$path" ] || return 1
+	cat "$path"
+}
+
+
+default_name() {
+	date +%Y%m%d-%H%M%S
+}
+
+session_exists() {
+	tmux has-session -t "bgrun-$1" 2>/dev/null
+}
+
+# ── tmux plumbing ────────────────────────────────────────────────────────────
+
+tmux_start() {
+	local name="$1" cwd="$2"
+	shift 2
+	local dir
+	dir="$(state_dir "$name")"
+	mkdir -p "$dir"
+
+	local wrapper="$dir/run.sh"
+	local quoted=""
+	local arg
+	for arg in "$@"; do
+		quoted="$quoted $(printf '%q' "$arg")"
+	done
+	{
+		printf '#!/usr/bin/env bash\n'
+		printf 'set -o pipefail\n'
+		printf 'cd %q || exit 127\n' "$cwd"
+		printf '{ %s; } 2>&1 | tee -a %q\n' "$quoted" "$dir/out.log"
+		printf 'printf "%%s\\n" "${PIPESTATUS[0]}" > %q\n' "$dir/rc"
+	} >"$wrapper"
+	chmod +x "$wrapper"
+
+	tmux kill-session -t "bgrun-$name" 2>/dev/null || true
+	tmux new-session -d -s "bgrun-$name" -c "$cwd" "$wrapper"
+	tmux set-option -w -t "bgrun-$name" remain-on-exit on >/dev/null
+
+	printf '%s\n' "$name"
+}
+
+tmux_capture() {
+	local name="$1" lines="$2"
+	local dir
+	dir="$(state_dir "$name")"
+
+	if session_exists "$name"; then
+		local status="running"
+		local dead
+		dead="$(tmux list-panes -t "bgrun-$name" -F '#{pane_dead}' 2>/dev/null | head -1)"
+		if [ "$dead" = "1" ]; then
+			status="finished"
+		fi
+		printf '== status: %s\n' "$status"
+	else
+		printf '== status: no session\n'
+	fi
+
+	if [ -f "$dir/rc" ]; then
+		printf '== exit code: %s\n' "$(cat "$dir/rc")"
+	else
+		printf '== exit code: (still running)\n'
+	fi
+
+	printf '== output (last %s lines)\n' "$lines"
+	if [ -f "$dir/out.log" ]; then
+		tail -n "$lines" "$dir/out.log"
+	else
+		printf '(no output yet)\n'
+	fi
+}
+
+tmux_send() {
+	local name="$1"
+	shift
+	local text="$*"
+	session_exists "$name" || die "no run named $name"
+	printf '%s' "$text" | tmux load-buffer -b "bgrun-send-$name" -
+	tmux paste-buffer -b "bgrun-send-$name" -t "bgrun-$name" -d
+	tmux send-keys -t "bgrun-$name" Enter
+}
+
+tmux_list() {
+	local found=0
+	local dir
+	for dir in "$STATE_ROOT"/*/; do
+		[ -d "$dir" ] || continue
+		found=1
+		local name
+		name="$(basename "$dir")"
+		local status="running"
+		if [ -f "$dir/rc" ]; then
+			status="done(rc=$(cat "$dir/rc"))"
+		elif ! session_exists "$name"; then
+			status="no session"
+		fi
+		local kind="tmux"
+		[ -f "$dir/pane" ] && kind="herdr"
+		printf '%s\t%s\t%s\n' "$name" "$kind" "$status"
+	done
+	[ "$found" = "1" ] || printf '(no runs)\n'
+}
+
+tmux_kill() {
+	local name="$1"
+	session_exists "$name" && tmux kill-session -t "bgrun-$name" 2>/dev/null && printf 'killed %s\n' "$name"
+	session_exists "$name" || printf 'no session %s\n' "$name"
+	return 0
+}
+
+tmux_attach() {
+	local name="$1"
+	session_exists "$name" || die "no run named $name"
+	tmux attach-session -t "bgrun-$name"
+}
+
+# ── herdr plumbing ───────────────────────────────────────────────────────────
+
+herdr_start() {
+	local name="$1" cwd="$2" kind="$3" prompt="$4"
+	local dir
+	dir="$(state_dir "$name")"
+	mkdir -p "$dir"
+	local tab
+	tab="$(herdr tab create --cwd "$cwd" --label "$name" --no-focus)" ||
+		die "herdr tab create failed"
+	local pane
+	pane="$(printf '%s' "$tab" | jq -r '.result.root_pane.pane_id')"
+	local tab_id
+	tab_id="$(printf '%s' "$tab" | jq -r '.result.tab.tab_id')"
+	[ "$pane" != "null" ] && [ -n "$pane" ] || die "could not read pane id from herdr response"
+
+	local start_out
+	start_out="$(herdr agent start "$name" --kind "$kind" --pane "$pane")" ||
+		die "herdr agent start failed: $start_out"
+
+	printf '%s\n' "$pane" >"$dir/pane"
+	printf '%s\n' "$tab_id" >"$dir/tab"
+	printf '%s\n' "$cwd" >"$dir/cwd"
+
+	herdr agent prompt "$name" "$prompt" >/dev/null ||
+		die "herdr agent prompt failed"
+
+	printf '%s\n' "$name"
+}
+
+herdr_capture() {
+	local name="$1" lines="$2"
+	local info
+	info="$(herdr agent get "$name" 2>/dev/null)" || die "no agent named $name"
+	printf '%s\n' "$info" | jq -r '"== status: " + (.result.agent.agent_status // "unknown")'
+	printf '%s\n' "$info" | jq -r '"== pane: " + (.result.agent.pane_id // "?") + "  cwd: " + (.result.agent.cwd // "?")'
+	printf '== output (last %s lines)\n' "$lines"
+	herdr agent read "$name" --source recent-unwrapped --lines "$lines"
+}
+
+herdr_send() {
+	local name="$1"
+	shift
+	herdr agent send-keys "$name" "$@"
+}
+
+
+herdr_kill() {
+	local name="$1"
+	local tab_id
+	tab_id="$(read_state "$name" tab 2>/dev/null || true)"
+	if [ -n "${tab_id:-}" ] && [ "$tab_id" != "null" ]; then
+		herdr tab close "$tab_id" >/dev/null 2>&1 || true
+		printf 'closed tab %s for %s\n' "$tab_id" "$name"
+	else
+		local pane
+		pane="$(herdr agent get "$name" 2>/dev/null | jq -r '.result.agent.pane_id // empty')"
+		if [ -n "${pane:-}" ]; then
+			herdr pane close "$pane" >/dev/null 2>&1 || true
+			printf 'closed pane %s for %s\n' "$pane" "$name"
+		else
+			printf 'no agent named %s\n' "$name"
+		fi
+	fi
+}
+
+herdr_attach() {
+	local name="$1"
+	herdr agent attach "$name"
+}
+
+# ── command ──────────────────────────────────────────────────────────────────
+
+cmd="${1:-}"
+[ -n "$cmd" ] || {
+	usage
+	exit 1
+}
+shift
+
+case "$cmd" in
+start)
+	name=""
+	cwd="$PWD"
+	kind=""
+	prompt=""
+	while [ $# -gt 0 ]; do
+		case "$1" in
+		--name)
+			name="$2"
+			shift 2
+			;;
+		--cwd)
+			cwd="$2"
+			shift 2
+			;;
+		--agent)
+			kind="$2"
+			shift 2
+			;;
+		--)
+			shift
+			break
+			;;
+		*)
+			break
+			;;
+		esac
+	done
+	[ -n "$name" ] || name="$(default_name)"
+	if [ -n "$kind" ]; then
+		[ -n "$prompt" ] || prompt="$*"
+		have_herdr || die "--agent needs Herdr (HERDR_ENV=1); use plain tmux otherwise"
+		herdr_start "$name" "$cwd" "$kind" "$prompt"
+	else
+		[ $# -gt 0 ] || die "start needs a command: bg start -- <command...>"
+		have_tmux || die "tmux not found"
+		tmux_start "$name" "$cwd" "$@"
+	fi
+	;;
+capture)
+	name=""
+	lines=60
+	while [ $# -gt 0 ]; do
+		case "$1" in
+		--name)
+			name="$2"
+			shift 2
+			;;
+		--lines)
+			lines="$2"
+			shift 2
+			;;
+		*)
+			shift
+			;;
+		esac
+	done
+	[ -n "$name" ] || name="$(ls -1t "$STATE_ROOT" 2>/dev/null | head -1)"
+	[ -n "$name" ] || die "no runs"
+	if [ -f "$(state_dir "$name")/pane" ]; then
+		herdr_capture "$name" "$lines"
+	else
+		tmux_capture "$name" "$lines"
+	fi
+	;;
+send)
+	name=""
+	while [ $# -gt 0 ]; do
+		case "$1" in
+		--name)
+			name="$2"
+			shift 2
+			;;
+		--)
+			shift
+			break
+			;;
+		*)
+			break
+			;;
+		esac
+	done
+	[ -n "$name" ] || name="$(ls -1t "$STATE_ROOT" 2>/dev/null | head -1)"
+	[ -n "$name" ] || die "no runs"
+	if [ -f "$(state_dir "$name")/pane" ]; then
+		herdr_send "$name" "$@"
+	else
+		tmux_send "$name" "$@"
+	fi
+	;;
+list)
+	tmux_list
+	;;
+kill)
+	name=""
+	while [ $# -gt 0 ]; do
+		case "$1" in
+		--name)
+			name="$2"
+			shift 2
+			;;
+		*)
+			shift
+			;;
+		esac
+	done
+	[ -n "$name" ] || name="$(ls -1t "$STATE_ROOT" 2>/dev/null | head -1)"
+	[ -n "$name" ] || die "no runs"
+	if [ -f "$(state_dir "$name")/pane" ]; then
+		herdr_kill "$name"
+	else
+		tmux_kill "$name"
+	fi
+	;;
+attach)
+	name=""
+	while [ $# -gt 0 ]; do
+		case "$1" in
+		--name)
+			name="$2"
+			shift 2
+			;;
+		*)
+			shift
+			;;
+		esac
+	done
+	[ -n "$name" ] || name="$(ls -1t "$STATE_ROOT" 2>/dev/null | head -1)"
+	[ -n "$name" ] || die "no runs"
+	if [ -f "$(state_dir "$name")/pane" ]; then
+		herdr_attach "$name"
+	else
+		tmux_attach "$name"
+	fi
+	;;
+-h | --help | help)
+	usage
+	;;
+*)
+	die "unknown command: $cmd"
+	;;
+esac

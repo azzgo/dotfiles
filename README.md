@@ -132,6 +132,16 @@ Terminal multiplexer configuration with:
 - Session management
 - Integration with other tools
 
+
+#### Background runs
+`skills/bg-run/` — start work that outlives the current turn:
+- A detached tmux session for a long command, or a Herdr pane for another coding agent
+- Completion is decided by the exit code file, never by parsing output
+- Opt-in only (`disable-model-invocation`), and agent-agnostic — usable from any agent that reads `~/.agents/skills/`
+- Sits beside `sub-dispatch`: dispatch is in-process with a hard timeout and dies with the host TUI; this survives it
+
+**Installation**: `just install-skills` (links `~/.agents/skills/bg-run`)
+
 #### Pi
 Shared Pi setup with:
 - Version-controlled `settings.json`, `keybindings.json`, `mcp.json`, `prompts/`, `skills/`, `extensions/`
