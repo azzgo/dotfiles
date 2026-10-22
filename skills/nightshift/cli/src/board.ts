@@ -59,6 +59,7 @@ export interface Config {
   window: string;
   piBin: string;
   timeoutSec: number;
+  /** 0 = 不限（默认）。>0 时，超过这个长度的窗口直接拒绝启动。 */
   maxWindowHours: number;
   verifyTimeoutSec: number;
 }
@@ -71,7 +72,7 @@ export const DEFAULT_CONFIG: Config = {
   window: "07:00",
   piBin: "pi",
   timeoutSec: 3600,
-  maxWindowHours: 14,
+  maxWindowHours: 0,
   verifyTimeoutSec: 1800,
 };
 
@@ -92,6 +93,11 @@ export function resolveConfig(raw: Record<string, unknown>): Config {
     const v = raw[k];
     return typeof v === "number" && Number.isFinite(v) && v > 0 ? Math.trunc(v) : d;
   };
+  // 0 有意义（maxWindowHours: 0 = 不限），所以这里允许 0
+  const numOrZero = (k: string, d: number): number => {
+    const v = raw[k];
+    return typeof v === "number" && Number.isFinite(v) && v >= 0 ? Math.trunc(v) : d;
+  };
   return {
     defaultModel: str("defaultModel", DEFAULT_CONFIG.defaultModel),
     verifyModel: str("verifyModel", DEFAULT_CONFIG.verifyModel),
@@ -100,7 +106,7 @@ export function resolveConfig(raw: Record<string, unknown>): Config {
     window: str("window", DEFAULT_CONFIG.window) ?? DEFAULT_CONFIG.window,
     piBin: str("piBin", DEFAULT_CONFIG.piBin) ?? DEFAULT_CONFIG.piBin,
     timeoutSec: num("timeoutSec", DEFAULT_CONFIG.timeoutSec),
-    maxWindowHours: num("maxWindowHours", DEFAULT_CONFIG.maxWindowHours),
+    maxWindowHours: numOrZero("maxWindowHours", DEFAULT_CONFIG.maxWindowHours),
     verifyTimeoutSec: num("verifyTimeoutSec", DEFAULT_CONFIG.verifyTimeoutSec),
   };
 }

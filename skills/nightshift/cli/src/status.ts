@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { homeBase, loadBoard, pidAlive, runsDir, sessionsDir, type RunLock } from "./board.ts";
+import { homeBase, loadBoard, loadConfig, pidAlive, runsDir, sessionsDir, type RunLock } from "./board.ts";
+import { fmtDur, localHM } from "./time.ts";
 import type { Spec, SpecStatus } from "./spec.ts";
 
 export type Liveness = "alive" | "stalled" | "orphaned" | "gone" | "-";
@@ -14,6 +15,7 @@ export interface StatusRow {
   elapsedMs: number | null;
   lastOutputAgeMs: number | null;
   liveness: Liveness;
+  worstEndAt: number | null;
   note: string;
 }
 
@@ -171,14 +173,26 @@ export function specLiveness(
   return { phase, pid, elapsedMs, lastOutputAgeMs, liveness: "alive", note: "" };
 }
 
+/**
+ * 一条在跑的 Spec 最晚几点结束：实现阶段 = 派发时刻 + 实现预算 + 验证预算；
+ * 验证阶段 = 开始时刻 + 验证预算。超了就说明它拖过头了。
+ */
+export function worstEndAt(rec: PidRecord, cfg: { timeoutSec: number; verifyTimeoutSec: number }): number {
+  const start = new Date(rec.startedAt).getTime();
+  const budgetMs = (rec.phase === "verify" ? cfg.verifyTimeoutSec : cfg.timeoutSec + cfg.verifyTimeoutSec) * 1000;
+  return start + budgetMs;
+}
+
 export function collectStatus(opts: StatusOptions = {}): StatusRow[] {
   const base = opts.base ?? homeBase();
   const nowMs = (opts.now ?? (() => Date.now()))();
   const stallMs = (opts.stallMinutes ?? 15) * 60_000;
   const lock = lockInfo(base);
+  const cfg = loadConfig();
   const board = loadBoard(base);
   return board.specs.map((spec) => {
     const l = specLiveness(spec, base, lock, nowMs, stallMs);
+    const rec = latestPidRecord(spec.id, base);
     return {
       id: spec.id,
       status: spec.status,
@@ -188,6 +202,7 @@ export function collectStatus(opts: StatusOptions = {}): StatusRow[] {
       elapsedMs: l.elapsedMs,
       lastOutputAgeMs: l.lastOutputAgeMs,
       liveness: l.liveness,
+      worstEndAt: rec === null ? null : worstEndAt(rec, cfg),
       note: l.note,
     };
   });

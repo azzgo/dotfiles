@@ -39,6 +39,10 @@ if (isVerify) {
   process.exit(0);
 }
 
+if (process.env.FAKE_SLEEP_MS && !isVerify) {
+  await new Promise((r) => setTimeout(r, Number(process.env.FAKE_SLEEP_MS)));
+}
+
 const marker = process.env.FAKE_TOUCH ?? "nightshift-fake.txt";
 fs.writeFileSync(marker, `written at ${new Date().toISOString()}\n`);
 git(["add", marker]);

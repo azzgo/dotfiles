@@ -15,6 +15,7 @@ import { buildImplArgs, buildVerifyArgs, DispatchError, parseReviewHint, parseVe
 import { inboxPath, runDir } from "./board.ts";
 import { countCommits, isAncestor, preflight, residualCount, headOf, shortSha, updateRef } from "./git.ts";
 import { implPrompt, verifyPrompt } from "./prompt.ts";
+import { fmtDur, localHM } from "./time.ts";
 import { blockQueue, compareQueueOrder, isBlockReason, orderedSpecs, releaseBlockedBy } from "./queue.ts";
 import { renderReport } from "./report.ts";
 import type { Spec } from "./spec.ts";
@@ -29,17 +30,22 @@ export interface RunOptions {
 }
 
 const WINDOW_RE = /^(\d{1,2}):(\d{2})$/;
-const RELATIVE_RE = /^\+(\d+)(m|min|h)$/i;
+const RELATIVE_RE = /^\+(\d+)(s|sec|secs|second|seconds|m|min|minute|minutes|h|hr|hour|hours)$/i;
 
 /**
- * `+30m` / `+2h` → 从 now 起算的绝对时刻。
+ * `+30m` / `+2h` / `+45s` → 从 now 起算的绝对时刻。
  * `07:00` → 今天的 07:00；已过则视为明天。
  */
 export function resolveDeadline(window: string, jobsDate: Date): Date | null {
   const rel = window.match(RELATIVE_RE);
   if (rel) {
     const n = Number(rel[1]);
-    const ms = rel[2].toLowerCase() === "h" ? n * 3600_000 : n * 60_000;
+    const unit = rel[2].toLowerCase();
+    const ms = unit.startsWith("h")
+      ? n * 3600_000
+      : unit.startsWith("s")
+        ? n * 1000
+        : n * 60_000;
     return new Date(jobsDate.getTime() + ms);
   }
   const m = window.match(WINDOW_RE);
@@ -60,7 +66,8 @@ export class WindowTooLongError extends Error {
     super(
       `window would run ${hours.toFixed(1)}h, over maxWindowHours=${maxHours}. ` +
         `A scheduler that fires at the wrong time (e.g. a missed launchd/cron run caught up the next morning) ` +
-        `would otherwise start a day-long run. Refusing; check how you are invoking this.`,
+        `would otherwise start a day-long run. Refusing; check how you are invoking this. ` +
+        `要放开：在 ~/.pi/agent/nightshift/config.json 里设 "maxWindowHours": 0（0 = 不限）。`,
     );
     this.hours = hours;
     this.maxHours = maxHours;
@@ -68,6 +75,7 @@ export class WindowTooLongError extends Error {
 }
 
 export function assertWindowSane(startedAt: Date, deadline: Date, maxHours: number): void {
+  if (maxHours <= 0) return; // 0 = 不限
   const hours = (deadline.getTime() - startedAt.getTime()) / 3600_000;
   if (hours > maxHours) throw new WindowTooLongError(hours, maxHours);
 }
@@ -188,7 +196,14 @@ function voidVerdict(spec: Spec, base: string, log: (s: string) => void, when: s
   return spec;
 }
 
-async function processSpec(job: Job, cfg: Config, base: string, log: (s: string) => void, runId: string): Promise<Spec> {
+async function processSpec(
+  job: Job,
+  cfg: Config,
+  base: string,
+  log: (s: string) => void,
+  runId: string,
+  deadline: Date,
+): Promise<Spec> {
   const spec = job.spec;
   const pf = preflight(spec.dir);
   if (!pf.ok) {
@@ -208,7 +223,12 @@ async function processSpec(job: Job, cfg: Config, base: string, log: (s: string)
   spec.reason = null;
   spec.status = "running";
   persist(spec, base);
-  log(`${spec.id} dispatch (baseline ${shortSha(pf.baseline)})`);
+  const nowMs = Date.now();
+  const perSpecWorstMs = MAX_ATTEMPTS * (cfg.timeoutSec + cfg.verifyTimeoutSec) * 1000;
+  log(
+    `${spec.id} dispatch (baseline ${shortSha(pf.baseline)}, 窗口剩 ${fmtDur(deadline.getTime() - nowMs)}, ` +
+      `本条最晚 ${localHM(new Date(nowMs + perSpecWorstMs))} 结束)`,
+  );
 
   let feedback: string | null = isBlockReason(priorReason) ? null : priorReason;
   let hint: string | null = null;
@@ -266,7 +286,13 @@ export async function runNightshift(opts: RunOptions): Promise<{ archivedTo: str
   const lock = acquireLock(base);
   const runId = makeRunId(startedAt);
   updateLock(lock, { runId }, base);
-  log(`run ${runId} started, deadline ${deadline.toISOString()}`);
+  // 窗口只管“还能不能派新活”；在飞的任务照跑到底，所以最坏结束时间 = 窗口关 + 单条最坏耗时
+  const perSpecWorstMs = MAX_ATTEMPTS * (cfg.timeoutSec + cfg.verifyTimeoutSec) * 1000;
+  const worstEnd = new Date(deadline.getTime() + perSpecWorstMs);
+  log(
+    `run ${runId} started, 窗口 ${localHM(startedAt)}–${localHM(deadline)} (${fmtDur(deadline.getTime() - startedAt.getTime())})` +
+      `, 最坏结束 ${localHM(worstEnd)}`,
+  );
 
   let handled: Spec[] = [];
   try {
@@ -305,7 +331,7 @@ export async function runNightshift(opts: RunOptions): Promise<{ archivedTo: str
         if (slots <= 0) break;
         for (const key of freeKeys.slice(0, slots)) {
           const job = queues.get(key)!.shift()!;
-          const p = processSpec(job, cfg, base, log, runId).then((spec) => {
+          const p = processSpec(job, cfg, base, log, runId, deadline).then((spec) => {
             active.delete(key);
             finished.push(spec);
             settleQueue(key, spec);
@@ -340,9 +366,13 @@ export async function runNightshift(opts: RunOptions): Promise<{ archivedTo: str
     const dispatchedIds = new Set(handled.map((s) => s.id));
     const date = dateStamp(startedAt);
     const leftover = loadBoard(base).specs.filter((s) => !dispatchedIds.has(s.id));
+    const finishedAt = now();
+    const overrunMs = Math.max(0, finishedAt.getTime() - deadline.getTime());
     const report = renderReport({
       date,
-      windowText: `窗口 ${startedAt.toISOString().slice(11, 16)}–${deadline.toISOString().slice(11, 16)}`,
+      windowText:
+        `窗口 ${localHM(startedAt)}–${localHM(deadline)}` +
+        (overrunMs > 0 ? ` · 实际结束 ${localHM(finishedAt)} · 超窗 ${fmtDur(overrunMs)}` : ""),
       specs: [...handled, ...leftover],
     });
 

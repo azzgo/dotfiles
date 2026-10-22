@@ -1225,3 +1225,78 @@ test("cli: lint exits non-zero when a spec has an error", () => {
   const r = runCli(["lint"], { NIGHTSHIFT_HOME: base });
   assert.ok(r.out.includes("ns-0001"), r.out);
 });
+
+// ── 窗口预算 / tail ─────────────────────────────────────────────────────
+
+test("window: there is no cap by default (maxWindowHours = 0)", () => {
+  assert.strictEqual(DEFAULT_CONFIG.maxWindowHours, 0, "默认不设上限");
+  assert.strictEqual(resolveConfig({}).maxWindowHours, 0);
+  const start = new Date("2026-10-20T23:00:00Z");
+  assert.doesNotThrow(() => assertWindowSane(start, new Date("2026-10-22T07:00:00Z"), 0));
+  assert.throws(() => assertWindowSane(start, new Date("2026-10-22T07:00:00Z"), 14), /maxWindowHours=14/);
+});
+
+test("run: the report shows a local-time window and the overrun", async () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const pi = withFakePiScript();
+  writeReady(base, "ns-0001", repo.dir, "2026-10-19T01:00:00.000Z");
+  const cfg = { ...DEFAULT_CONFIG, piBin: pi, timeoutSec: 30 };
+  process.env.FAKE_SLEEP_MS = "1500";
+  try {
+    // 窗口 1 秒，任务跑 1.5 秒 ⇒ 必然超窗
+    const { result, logs } = await runLoop(base, cfg, 1, "+1s");
+    assert.ok(/窗口 \d{2}:\d{2}–\d{2}:\d{2}/.test(result.report), result.report);
+    assert.ok(result.report.includes("超窗"), result.report);
+    // 报告里的窗口必须是本地时间：与 run.json 的 startedAt 对得上
+    const runsDir = path.join(base, "runs");
+    const runDir = fs.readdirSync(runsDir).sort().pop();
+    const runJson = JSON.parse(fs.readFileSync(path.join(runsDir, runDir, "run.json"), "utf8"));
+    const started = new Date(runJson.startedAt);
+    const hm = `${String(started.getHours()).padStart(2, "0")}:${String(started.getMinutes()).padStart(2, "0")}`;
+    assert.ok(result.report.includes(hm), `${result.report} (期望本地时间 ${hm})`);
+  } finally {
+    delete process.env.FAKE_SLEEP_MS;
+  }
+});
+
+test("run: the start log states the window length and the worst-case end", async () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const pi = withFakePiScript();
+  writeReady(base, "ns-0001", repo.dir, "2026-10-19T01:00:00.000Z");
+  const cfg = { ...DEFAULT_CONFIG, piBin: pi, timeoutSec: 30, verifyTimeoutSec: 30 };
+  const { logs } = await runLoop(base, cfg, 1, "+2h");
+  const start = logs.find((l) => l.includes("started"));
+  assert.ok(start !== undefined, logs.join("\n"));
+  assert.ok(/窗口 \d{2}:\d{2}–\d{2}:\d{2} \(/.test(start), start);
+  assert.ok(start.includes("最坏结束"), start);
+  const dispatch = logs.find((l) => l.includes("dispatch"));
+  assert.ok(/窗口剩 .*本条最晚 \d{2}:\d{2} 结束/.test(dispatch ?? ""), dispatch);
+});
+
+test("cli: tail renders the recent agent events", () => {
+  const base = tmp("ns-home-");
+  const sess = path.join(base, "sessions", "ns-0001");
+  fs.mkdirSync(sess, { recursive: true });
+  const ev = (role, content, toolName) =>
+    JSON.stringify({
+      type: "message",
+      id: "x",
+      timestamp: "2026-10-19T01:00:00.000Z",
+      message: { role, content, toolName },
+    });
+  fs.writeFileSync(
+    path.join(sess, "a.jsonl"),
+    [
+      ev("assistant", [{ type: "thinking", thinking: "先想一下" }]),
+      ev("assistant", [{ type: "toolCall", name: "bash", arguments: { command: "ls" } }]),
+      ev("toolResult", [{ type: "text", text: "file.txt" }], "bash"),
+    ].join("\n") + "\n",
+  );
+  const r = runCli(["tail", "ns-0001", "-n", "5"], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(r.status, 0, r.err);
+  assert.ok(r.out.includes("[思考] 先想一下"), r.out);
+  assert.ok(r.out.includes("[调用 bash]"), r.out);
+  assert.ok(r.out.includes("[结果 bash]"), r.out);
+});

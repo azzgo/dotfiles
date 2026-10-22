@@ -95,6 +95,7 @@ nightshift report
 | 丢弃某条的提交（并放行同目录后续） | `nightshift review ns-0007 --drop` |
 | 某条判错了，想换个基线重跑 | `nightshift rearm ns-0007`（基线重锚到当前 HEAD，上一轮理由会带上） |
 | 夜里的任务现在什么状态 | `nightshift status`（● 活着 / ◐ 很久没动静 / ☠ 成了僵尸） |
+| 看它此刻在干什么 | `nightshift tail ns-0007`（`-f` 跟着刷） |
 | 给正在跑的任务递句话 | `nightshift nudge ns-0007 "基线变了，从 abc123 继续"` |
 | 不想让它继续跑了 | `nightshift stop ns-0007`（`--all` 连整个 run 一起停） |
 | 看同目录串行队列 | `nightshift queue [--dir /abs/path]`（左边那个数字就是队列位次）|
@@ -151,25 +152,33 @@ nightshift report
   "verifyModel": null,             // 验证用更强的模型？填这里（避免自己判自己）
   "verifyThinking": null,          // 缺省 off
   "jobs": 3,                       // 跨目录并发上限
-  "window": "07:00",               // 截止时间；也接受 "+30m" / "+2h"
+  "window": "07:00",               // 截止时间；也接受 "+45s" / "+30m" / "+2h"
   "piBin": "pi",
   "timeoutSec": 3600,              // 单条实现超时
-  "maxWindowHours": 14             // 窗口上限，见下
+  "maxWindowHours": 0              // 窗口上限；0 = 不限（默认），见下
 }
 ```
 
 时间窗口语义：`07:00` 表示"今天 07:00 或明天 07:00（若已过）"，到点后不再派发新任务，在跑的任务等它自然结束。`+30m` 表示从现在起 30 分钟。
 
+### 窗口管什么，不管什么
+
+**窗口只管"还能不能派新活"**，不管在跑的任务：到点就不再派新活，已经在跑的照跑到底（不砍）。所以：
+
+- 派发时那行日志会告诉你这条要跑多久：`ns-0010 dispatch (baseline db58ec4, 窗口剩 2h19m, 本条最晚 01:41 结束)`
+- 报告里会写实际几点结束、超窗多久（窗口一律本地时间）
+- `nightshift status` 里也有一列「最晚」
+
 ### `maxWindowHours` 守护的是什么
 
 `07:00` 这个写法在夜里启动时是 8 小时窗口，但如果调度器在**上午 9 点**才把它补跑起来（launchd 睡眠后补偿、cron 补跑、你手动重放），`07:00` 会被解析成"明天早上"，变成 **22 小时**窗口——整台机器被占一天。
 
-所以 `run` 在派发任何东西之前先算窗口长度，超过 `maxWindowHours`（默认 14）直接拒绝，板子一个字节都不动：
+所以如果你要这道保险，把 `maxWindowHours` 设成 >0（**默认 0 = 不限**），`run` 会在派发任何东西之前先算窗口长度，超了直接拒绝，板子一个字节都不动：
 
 ```
 error: window would run 22.0h, over maxWindowHours=14. A scheduler that fires at the
 wrong time ... would otherwise start a day-long run. Refusing; check how you are
-invoking this.
+invoking this. 要放开：在 ~/.pi/agent/nightshift/config.json 里设 "maxWindowHours": 0
 ```
 
 这条守卫是**平台无关**的——它不关心你用什么调度器，只关心"这次到底要跑多久"。所以下面不需要任何 shell 层的时间闸门。

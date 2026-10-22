@@ -48,15 +48,25 @@ node 查找顺序：`$NIGHTSHIFT_NODE` → `~/.local/share/mise/shims/node` → 
   "piBin": "pi",
   "timeoutSec": 3600,
   "verifyTimeoutSec": 1800,
-  "maxWindowHours": 14
+  "maxWindowHours": 0
 }
 ```
 
-全部可省略。`window` 既接受 `HH:MM`（今天或明天的此刻）也接受 `+30m` / `+2h`。
+全部可省略。`window` 既接受 `HH:MM`（今天或明天的此刻）也接受 `+45s` / `+30m` / `+2h`。
 
 `timeoutSec` 与 `verifyTimeoutSec` 分别是实现 Agent 与 Verifier 的**单条上界**，两者独立。超时后 `reason` 会写明留下多少未提交路径（`implementation timed out after <n>s (<N> uncommitted path(s) left in the worktree)`）。
 
-`maxWindowHours` 是 `run` 的前置守卫：算出的窗口长度超过它就直接拒绝启动，不碰板子、不派发。作用是在调度器补跑（launchd 睡眠补偿、cron 补跑、手动重放）把 `--until 07:00` 从"今晚 8 小时"变成"明天早上 22 小时"时兜底。
+`maxWindowHours` 是 `run` 的前置守卫：算出的窗口长度超过它就直接拒绝启动，不碰板子、不派发。**默认 0 = 不限**（不设上限）；设成 >0 就是给调度器补跑（launchd 睡眠补偿、cron 补跑、手动重放）兜底——那种情况下 `--until 07:00` 可能变成"明天早上 22 小时"。
+
+### 窗口到底管什么
+
+**窗口只管"还能不能派新活"**，不管在跑的任务。窗口一到，不再派新活；已经在跑的任务照跑到底（不砍）。所以：
+
+- **窗口关** = `--until` 指定的时刻
+- **最坏结束** = 窗口关 + 单条最坏耗时（`2 × (timeoutSec + verifyTimeoutSec)`）——窗口关时派出去的那条，最多还能跑这么久
+- **实际结束** = 真的跑完的时刻，报告里写出来；比窗口关晚就算**超窗**
+
+派发时那行日志会把这三个数说清楚：`ns-0010 dispatch (baseline db58ec4, 窗口剩 2h19m, 本条最晚 01:41 结束)`。报告里的窗口一律是**本地时间**（以前用 UTC 显示，差 8 小时，早上对不上）。
 
 ## Spec schema
 
@@ -130,11 +140,12 @@ draft 永不被派发。
 | `unready <id>` | `ready → draft` | 板 |
 | `check` | 全板 schema 校验 | 只读 |
 | `lint [<id>]` | Spec 正文静态自检：路径漂移 / 旧 SHA / 不可判定措辞 / 空 Out of scope | 只读 |
-| `run [--until HH:MM\|+30m] [--jobs N]` | 夜间排水 | 板 + git（commit 由 agent 做） |
+| `run [--until HH:MM\|+45s\|+30m\|+2h] [--jobs N]` | 夜间排水 | 板 + git（commit 由 agent 做） |
 | `report [--date YYYY-MM-DD] [--list-dates]` | 检查面 | 只读 |
 | `review <id> [--drop]` | 详情；`--drop` 才 `git reset --hard <baseline>`，并放行被它挡住的下一条。基线悬空 ⇒ 拒绝；reset 前备份 HEAD 到 `refs/nightshift/backup/<id>` 并列出将丢弃的提交 | 仅 `--drop` |
 | `rearm <id>` | 重新装填：`ready` + 基线重锚当前 HEAD + **保留上一轮理由**（下一轮作为 feedback）。归档件也能搬回板上 | 板 |
 | `status [--stall MIN]` | 板子活性：● alive / ◐ stalled / ☠ orphaned（run 没了但板上还是 running）/ ○ gone | 只读 |
+| `tail <id> [-n N] [-f]` | 看正在跑的 Agent 的实时进展（读它的 session jsonl）；`-f` 跟着刷 | 只读 |
 | `nudge <id> <text>` | 给正在跑的 Agent 递一句话（追加到 `inbox/<id>.md`） | inbox |
 | `stop <id> \| --all` | 杀掉在跑的子进程；`--all` 连 run 一起停并释放锁 | 进程 + 锁 |
 | `queue [--dir P]` | 同目录串行队列（`ready` / `blocked`），按 `order` 秩排序 | 只读 |

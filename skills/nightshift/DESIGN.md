@@ -99,6 +99,7 @@ nightshift report [--date YYYY-MM-DD]            # 只读检查面
 nightshift review <id> [--drop]                  # --drop 才动盘：git reset --hard <baseline>，并放行被它挡住的下一条
 nightshift rearm <id>                           # 重新装填：回到 ready，基线重锚当前 HEAD，保留上一轮理由
 nightshift status [--stall MIN]                 # 板子活性：alive / stalled / orphaned / gone
+nightshift tail <id> [-n N] [-f]                # 看正在跑的 Agent 的实时进展（-f 跟着刷）
 nightshift nudge <id> <text>                    # 给正在跑的 Agent 递一句话（inbox/<id>.md）
 nightshift stop <id> | --all                    # 停掉在跑的子进程（--all 连 run 一起停）
 nightshift queue [--dir P]                       # 看同目录串行队列（ready / blocked）
@@ -129,7 +130,8 @@ exit when: 所有 queue 空 → 归档 → 释放锁
 - **跨 Serial Key 并行**：受 `--jobs` 限制（默认 3）。
 - **无 sleep 轮询**：用子进程 `exit` 事件驱动，队列空即退出。
 - **窗口到点**：不再启动新任务；在跑的任务等其自然结束；未派发的保持 `ready` 留在板上。
-- **窗口长度守卫**：`assertWindowSane` 在派发前检查 `deadline - startedAt <= maxWindowHours`（默认 14），超出直接抛错。防的是调度器补跑把 `--until 07:00` 从 8 小时变成 22 小时。守卫放在核心而不是 shell 层，因为它与调度器无关。
+- **窗口长度守卫**：`assertWindowSane` 在派发前检查 `deadline - startedAt <= maxWindowHours`。**默认 0 = 不限**；设成 >0 时超出直接抛错（防的是调度器补跑把 `--until 07:00` 从 8 小时变成 22 小时）。守卫放在核心而不是 shell 层，因为它与调度器无关。
+- **窗口只管派发，不管在飞的任务**：窗口一到就不再派新活，在跑的任务照跑到底。所以 run 的结束时间是 `窗口关 + 单条最坏耗时`；派发日志会打出「窗口剩 X · 本条最晚 Y 结束」，报告里打出「实际结束 · 超窗 Z」。
 - **两条超时独立**：`timeoutSec`（实现 Agent）与 `verifyTimeoutSec`（Verifier）分开配。两者都是「单条 Spec 的上界」，不是「整夜预算」——一条用满上界就意味着当夜跑不完后面几条，所以上界该按「最长的单条 Spec 要多久」设，而不是按窗口时长设。
 - **超时不留悬念**：实现 Agent 超时时，`reason` 写 `implementation timed out after <n>s (<N> uncommitted path(s) left in the worktree)`。超时的典型后果是「工作区留了半成品」，这个数字决定人早上是「提交它」还是「回滚它」，不能只写一句超时。
 

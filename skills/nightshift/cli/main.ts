@@ -23,6 +23,8 @@ import {
 import { SpecError, bodyTemplate, checkSpec, parseSpec, type Spec } from "./src/spec.ts";
 import { headOf, listRange } from "./src/git.ts";
 import { collectStatus, fmtDuration, LIVENESS_ICON } from "./src/status.ts";
+import { latestSessionFile, readTail, renderEvent, summarizeEvent, type TailEvent } from "./src/tail.ts";
+import { localHM } from "./src/time.ts";
 import { lintSpec } from "./src/lint.ts";
 import { renderReport } from "./src/report.ts";
 import { renderSpecDetail } from "./src/show.ts";
@@ -49,6 +51,7 @@ usage:
   nightshift review <id> [--drop]   # --drop 回滚 baseline，并放行被它挡住的下一条
   nightshift rearm <id>            # 重新装填：回到 ready，基线重锚当前 HEAD，保留上一轮理由
   nightshift status [--stall MIN]  # 板子活性：哪些活着 / 卡住 / 成了僵尸
+  nightshift tail <id> [-n N] [-f]  # 看正在跑的 Agent 的实时进展（-f 跟着刷）
   nightshift nudge <id> <text>     # 给正在跑的 Agent 递一句话（写进 inbox/<id>.md）
   nightshift stop <id> | --all     # 停掉在跑的子进程（--all 连 run 一起停）
   nightshift queue [--dir P]        # 看同目录串行队列（含被挡住的）
@@ -463,6 +466,54 @@ function cmdLint(base: string, id: string | undefined): void {
   }
 }
 
+/**
+ * 看正在跑的 Agent 的实时进展（tail 它的 session）。
+ * `-f` 跟着刷。
+ */
+function cmdTail(base: string, positional: string[], flags: Map<string, string[]>): void {
+  const id = positional[0];
+  if (!id) die("error: tail <id> [-n N] [-f]");
+  const nRaw = one(flags, "n");
+  const n = nRaw === undefined ? 20 : Number(nRaw);
+  if (!Number.isFinite(n) || n < 1) die("error: -n must be a positive integer");
+  const follow = has(flags, "f") || has(flags, "follow");
+  const file = latestSessionFile(id, base);
+  if (file === null) die(`error: ${id} 还没有 session（它还没被派发过？）`);
+  const print = (events: TailEvent[]): void => {
+    for (const e of events) console.log(renderEvent(e));
+  };
+  print(readTail(file, n));
+  if (!follow) return;
+  // 跟随：按字节偏移增量读
+  let offset = fs.statSync(file).size;
+  process.stdout.write(`── 跟随 ${file} （Ctrl-C 停止）──\n`);
+  const timer = setInterval(() => {
+    let size: number;
+    try {
+      size = fs.statSync(file).size;
+    } catch {
+      return;
+    }
+    if (size < offset) offset = 0; // 文件被截断/重建
+    if (size === offset) return;
+    const fd = fs.openSync(file, "r");
+    const buf = Buffer.alloc(size - offset);
+    fs.readSync(fd, buf, 0, buf.length, offset);
+    fs.closeSync(fd);
+    offset = size;
+    for (const line of buf.toString("utf8").split("\n")) {
+      if (line.trim() === "") continue;
+      const e = summarizeEvent(line);
+      if (e !== null) console.log(renderEvent(e));
+    }
+  }, 1500);
+  timer.unref?.();
+  process.on("SIGINT", () => {
+    clearInterval(timer);
+    process.exit(0);
+  });
+}
+
 function cmdPath(base: string): void {
   console.log(`board:    ${boardDir(base)}`);
   console.log(`archive:  ${archiveDir(base)}`);
@@ -490,8 +541,9 @@ function cmdStatus(base: string, flags: Map<string, string[]>): void {
     const pid = r.pid === null ? "-" : String(r.pid);
     const elapsed = fmtDuration(r.elapsedMs);
     const lastOut = r.lastOutputAgeMs === null ? "-" : `${fmtDuration(r.lastOutputAgeMs)} 前`;
+    const worst = r.worstEndAt === null ? "-" : `最晚 ${localHM(new Date(r.worstEndAt))}`;
     console.log(
-      `${icon} ${r.id.padEnd(7)} ${r.status.padEnd(13)} ${phase.padEnd(6)} pid ${pid.padEnd(7)} ${elapsed.padStart(6)}  最后产出 ${lastOut}` +
+      `${icon} ${r.id.padEnd(7)} ${r.status.padEnd(13)} ${phase.padEnd(6)} pid ${pid.padEnd(7)} ${elapsed.padStart(6)}  最后产出 ${lastOut.padEnd(12)} ${worst}` +
         (r.note === "" ? "" : `\n    ↳ ${r.note}`),
     );
   }
@@ -615,6 +667,9 @@ async function main(): Promise<void> {
         break;
       case "status":
         cmdStatus(base, flags);
+        break;
+      case "tail":
+        cmdTail(base, positional, flags);
         break;
       case "nudge":
         cmdNudge(base, positional);
