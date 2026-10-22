@@ -933,3 +933,123 @@ test("run: the dispatch order follows the explicit order, not created", async ()
   const { result, logs } = await runLoop(base, cfg, 3);
   assert.deepStrictEqual(result.specs.map((s) => s.id), ["ns-0002", "ns-0001"], logs.join("\n"));
 });
+
+// ── baseline integrity / rearm / drop guardrails ────────────────────────
+
+test("run: a rewritten history voids the verdict instead of judging a wrong range", async () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const pi = withFakePiScript();
+  writeReady(base, "ns-0001", repo.dir, "2026-10-19T01:00:00.000Z");
+  const cfg = { ...DEFAULT_CONFIG, piBin: pi, timeoutSec: 30 };
+  process.env.FAKE_REWRITE_HISTORY = "1";
+  try {
+    const { result, logs } = await runLoop(base, cfg, 1);
+    const spec = result.specs[0];
+    assert.strictEqual(spec.status, "verify-error", logs.join("\n"));
+    assert.strictEqual(spec.verdict, null);
+    assert.ok(/祖先链/.test(spec.reason ?? ""), spec.reason);
+    assert.ok(/判决作废/.test(spec.reason ?? ""), spec.reason);
+    assert.ok(logs.some((l) => l.includes("verdict voided")), logs.join("\n"));
+  } finally {
+    delete process.env.FAKE_REWRITE_HISTORY;
+  }
+});
+
+test("cli: review --drop refuses when the baseline is dangling", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const git = (args) => spawnSync("git", ["-C", repo.dir, ...args], { encoding: "utf8" }).stdout.trim();
+  fs.writeFileSync(path.join(repo.dir, "b.txt"), "b\n");
+  git(["add", "b.txt"]);
+  git(["commit", "-q", "-m", "second"]);
+  const dangling = git(["rev-parse", "HEAD"]);
+  git(["reset", "--hard", "HEAD~1"]);
+  const headBefore = git(["rev-parse", "HEAD"]);
+  fs.mkdirSync(path.join(base, "board"), { recursive: true });
+  fs.writeFileSync(
+    path.join(base, "board", "ns-0001.md"),
+    serializeSpec({
+      ...makeSpec({ id: "ns-0001", status: "needs-review", dir: repo.dir }),
+      baseline: dangling,
+      file: "ns-0001.md",
+    }),
+  );
+  const r = runCli(["review", "ns-0001", "--drop"], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(r.status, 1, r.out);
+  assert.ok(/祖先链/.test(r.err), r.err);
+  assert.strictEqual(git(["rev-parse", "HEAD"]), headBefore, "HEAD must not move");
+});
+
+test("cli: review --drop leaves a backup ref of the discarded head", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const git = (args) => spawnSync("git", ["-C", repo.dir, ...args], { encoding: "utf8" }).stdout.trim();
+  const baseline = git(["rev-parse", "HEAD"]);
+  fs.writeFileSync(path.join(repo.dir, "b.txt"), "b\n");
+  git(["add", "b.txt"]);
+  git(["commit", "-q", "-m", "second"]);
+  const headBefore = git(["rev-parse", "HEAD"]);
+  fs.mkdirSync(path.join(base, "board"), { recursive: true });
+  fs.writeFileSync(
+    path.join(base, "board", "ns-0001.md"),
+    serializeSpec({
+      ...makeSpec({ id: "ns-0001", status: "needs-review", dir: repo.dir }),
+      baseline,
+      file: "ns-0001.md",
+    }),
+  );
+  const r = runCli(["review", "ns-0001", "--drop"], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(r.status, 0, r.err);
+  assert.ok(r.out.includes("将丢弃 1 个提交"), r.out);
+  assert.strictEqual(git(["rev-parse", "HEAD"]), baseline);
+  assert.strictEqual(git(["rev-parse", "refs/nightshift/backup/ns-0001"]), headBefore);
+});
+
+test("cli: rearm restores an archived spec, re-anchors the baseline and keeps the reason", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const git = (args) => spawnSync("git", ["-C", repo.dir, ...args], { encoding: "utf8" }).stdout.trim();
+  const head = git(["rev-parse", "HEAD"]);
+  fs.mkdirSync(path.join(base, "archive", "2026-10-19"), { recursive: true });
+  fs.writeFileSync(
+    path.join(base, "archive", "2026-10-19", "ns-0001.md"),
+    serializeSpec({
+      ...makeSpec({ id: "ns-0001", status: "needs-review", dir: repo.dir }),
+      baseline: "deadbeef",
+      verdict: "fail",
+      reason: "V2 链仍经共享 coordinator 加载 V1 模块",
+      file: "ns-0001.md",
+    }),
+  );
+  const r = runCli(["rearm", "ns-0001"], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(r.status, 0, r.err);
+  assert.ok(r.out.includes("-> ready"), r.out);
+  const spec = loadBoard(base).specs.find((s) => s.id === "ns-0001");
+  assert.ok(spec, "spec must be back on the board");
+  assert.strictEqual(spec.status, "ready");
+  assert.strictEqual(spec.baseline, head, "baseline must be re-anchored to the current HEAD");
+  assert.strictEqual(spec.reason, "V2 链仍经共享 coordinator 加载 V1 模块");
+  assert.strictEqual(spec.verdict, null);
+});
+
+test("run: a rearmed spec hands the previous reason to the agent as feedback", async () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const pi = withFakePiScript();
+  writeReady(base, "ns-0001", repo.dir, "2026-10-19T01:00:00.000Z");
+  fs.mkdirSync(path.join(base, "board"), { recursive: true });
+  const file = path.join(base, "board", "ns-0001.md");
+  const spec = parseSpec(fs.readFileSync(file, "utf8"), "ns-0001.md");
+  spec.reason = "上一轮：V2 链仍引用 V1 runtime";
+  spec.verdict = "fail";
+  fs.writeFileSync(file, serializeSpec(spec));
+  const cfg = { ...DEFAULT_CONFIG, piBin: pi, timeoutSec: 30 };
+  process.env.FAKE_ASSERT_IMPL_PROMPT = "上一轮：V2 链仍引用 V1 runtime";
+  try {
+    const { result, logs } = await runLoop(base, cfg, 1);
+    assert.strictEqual(result.specs[0].status, "passed", logs.join("\n"));
+  } finally {
+    delete process.env.FAKE_ASSERT_IMPL_PROMPT;
+  }
+});

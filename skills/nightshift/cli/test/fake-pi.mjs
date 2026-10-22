@@ -14,6 +14,14 @@ if (process.env.FAKE_ASSERT_PROMPT && !prompt.includes(process.env.FAKE_ASSERT_P
   process.stderr.write("fake-pi: prompt missing marker " + process.env.FAKE_ASSERT_PROMPT + "\n");
   process.exit(2);
 }
+if (
+  !isVerify &&
+  process.env.FAKE_ASSERT_IMPL_PROMPT &&
+  !prompt.includes(process.env.FAKE_ASSERT_IMPL_PROMPT)
+) {
+  process.stderr.write("fake-pi: impl prompt missing marker " + process.env.FAKE_ASSERT_IMPL_PROMPT + "\n");
+  process.exit(2);
+}
 
 function git(argv) {
   return spawnSync("git", argv, { encoding: "utf8" });
@@ -35,4 +43,9 @@ const marker = process.env.FAKE_TOUCH ?? "nightshift-fake.txt";
 fs.writeFileSync(marker, `written at ${new Date().toISOString()}\n`);
 git(["add", marker]);
 git(["commit", "-m", `fake nightshift work (${marker})`]);
+if (process.env.FAKE_REWRITE_HISTORY === "1") {
+  // 把基线那个提交重写掉：基线不再是 HEAD 的祖先（模拟 rebase / pull --rebase）
+  git(["reset", "--soft", "HEAD~1"]);
+  git(["commit", "--amend", "-m", "rewritten history"]);
+}
 process.stdout.write(`did the work\nREVIEW-HINT: look at ${marker}\n`);

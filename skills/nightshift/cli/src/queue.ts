@@ -14,6 +14,11 @@ export function blockedBy(spec: Spec): { id: string; status: SpecStatus } | null
   return { id: m[1], status: m[2] as SpecStatus };
 }
 
+/** `reason` 是不是"被前一条挡住"这种队列标记（而不是验证者给的理由）。 */
+export function isBlockReason(reason: string | null): boolean {
+  return reason !== null && BLOCK_REASON_RE.test(reason);
+}
+
 /**
  * 队列顺序 = 同目录内的 `order` 秩（1,2,3…）。`order` 为 null 的老板子按
  * (created, id) 排，并在 `orderedSpecs` 里一次性迁移成显式秩。

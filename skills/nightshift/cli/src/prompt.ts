@@ -63,8 +63,11 @@ export function verifyPrompt(input: VerifyPromptInput): string {
     spec.body.trim(),
     "",
     "── 检查建议 ──",
-    `- 用 \`git -C ${spec.dir} log --oneline ${shortSha(baseline)}..HEAD\` 看它到底改了什么。`,
-    `- 用 \`git -C ${spec.dir} diff ${shortSha(baseline)}..HEAD\` 看具体改动。`,
+    "- 验收标准是**对当前工作区的状态判断**（文件在不在、引用指向谁、门禁过不过），这是判决依据。",
+    `- 用 \`git -C ${spec.dir} log --oneline ${shortSha(baseline)}..HEAD\` 看它到底改了什么（仅作参考）。`,
+    `- 用 \`git -C ${spec.dir} diff ${shortSha(baseline)}..HEAD\` 看具体改动（仅作参考）。`,
+    `- 若 \`git -C ${spec.dir} merge-base --is-ancestor ${shortSha(baseline)} HEAD\` 失败，说明历史被改写，` +
+      "**忽略上面的 diff 范围**，只按验收标准判断，并在 REASON 里写明历史被改写。",
     "- 逐条核对验收标准，必要时真跑命令。",
     "",
     "── 输出格式（必须严格照做）──",

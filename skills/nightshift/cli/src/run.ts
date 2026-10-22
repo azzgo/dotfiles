@@ -12,9 +12,9 @@ import {
   type Config,
 } from "./board.ts";
 import { buildImplArgs, buildVerifyArgs, DispatchError, parseReviewHint, parseVerdict, runChild } from "./dispatch.ts";
-import { countCommits, preflight, residualCount, headOf, shortSha } from "./git.ts";
+import { countCommits, isAncestor, preflight, residualCount, headOf, shortSha, updateRef } from "./git.ts";
 import { implPrompt, verifyPrompt } from "./prompt.ts";
-import { blockQueue, compareQueueOrder, orderedSpecs, releaseBlockedBy } from "./queue.ts";
+import { blockQueue, compareQueueOrder, isBlockReason, orderedSpecs, releaseBlockedBy } from "./queue.ts";
 import { renderReport } from "./report.ts";
 import type { Spec } from "./spec.ts";
 
@@ -142,6 +142,27 @@ function persist(spec: Spec, base: string): void {
   writeSpec(spec, base);
 }
 
+/**
+ * 历史被改写（rebase / pull --rebase / reset）会让基线脱离 HEAD 的祖先链，
+ * 此时 `baseline..HEAD` 已经不是"本任务改了什么"——拿它去判必然出假判决。
+ * 与其判错，不如作废：明确说"本轮判决不可信"，并告诉人怎么重新装填。
+ */
+function voidVerdict(spec: Spec, base: string, log: (s: string) => void, when: string): Spec {
+  const anchor = `refs/nightshift/base/${spec.id}`;
+  spec.status = "verify-error";
+  spec.verdict = null;
+  spec.reason =
+    `baseline ${shortSha(spec.baseline)} 已不在 HEAD 的祖先链上（历史在${when}被改写：` +
+    "rebase / pull --rebase / reset）；本轮判决作废——baseline..HEAD 已不代表本任务的改动。" +
+    `请 nightshift rearm ${spec.id} 重新装填（会把基线重锚到当前 HEAD，并带上本轮理由）。` +
+    `原基线仍钉在 ${anchor}。`;
+  spec.commits = null;
+  spec.residual = residualCount(spec.dir);
+  persist(spec, base);
+  log(`${spec.id} baseline rewritten (${when}) — verdict voided`);
+  return spec;
+}
+
 async function processSpec(job: Job, cfg: Config, base: string, log: (s: string) => void): Promise<Spec> {
   const spec = job.spec;
   const pf = preflight(spec.dir);
@@ -153,20 +174,24 @@ async function processSpec(job: Job, cfg: Config, base: string, log: (s: string)
     return spec;
   }
   spec.baseline = pf.baseline;
-  spec.attempts = 0;
+  // 把基线钉在非分支 ref 上：历史被改写后仍可查、不会被 gc 剪掉
+  updateRef(spec.dir, `refs/nightshift/base/${spec.id}`, pf.baseline);
+  // 上一轮的理由（重新装填后仍然有效）当作本轮的初始反馈
+  const priorReason = spec.reason;
+  const lifetimeAttempts = spec.attempts;
   spec.verdict = null;
   spec.reason = null;
   spec.status = "running";
   persist(spec, base);
   log(`${spec.id} dispatch (baseline ${shortSha(pf.baseline)})`);
 
-  let feedback: string | null = null;
+  let feedback: string | null = isBlockReason(priorReason) ? null : priorReason;
   let hint: string | null = null;
   let verdict = "verify-error";
   let reason: string | null = null;
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    spec.attempts = attempt + 1;
+    spec.attempts = lifetimeAttempts + attempt + 1;
     persist(spec, base);
     try {
       const impl = await runImpl(spec, cfg, base, attempt, feedback);
@@ -180,6 +205,10 @@ async function processSpec(job: Job, cfg: Config, base: string, log: (s: string)
       persist(spec, base);
       log(`${spec.id} impl error: ${spec.reason}`);
       return spec;
+    }
+    // 验证之前先验基线：基线一旦脱离祖先链，判决就不可信
+    if (!isAncestor(spec.dir, spec.baseline ?? pf.baseline)) {
+      return voidVerdict(spec, base, log, "实现过程中");
     }
     const v = await runVerify(spec, cfg);
     verdict = v.verdict;

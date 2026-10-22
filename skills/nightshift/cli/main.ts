@@ -13,15 +13,18 @@ import {
   nextId,
   readArchiveSpecs,
   sessionsDir,
+  specPath,
   writeSpec,
+  writeSpecTo,
 } from "./src/board.ts";
 import { SpecError, bodyTemplate, checkSpec, parseSpec, type Spec } from "./src/spec.ts";
+import { headOf, listRange } from "./src/git.ts";
 import { renderReport } from "./src/report.ts";
 import { renderSpecDetail } from "./src/show.ts";
 import { releaseLock } from "./src/board.ts";
 import { revertTo, shortSha } from "./src/git.ts";
 import { runNightshift } from "./src/run.ts";
-import { blockedBy, compareQueueOrder, moveSpec, orderedSpecs, placeSpec, queueOnDir, releaseBlockedBy } from "./src/queue.ts";
+import { blockedBy, compareQueueOrder, isBlockReason, moveSpec, orderedSpecs, placeSpec, queueOnDir, releaseBlockedBy } from "./src/queue.ts";
 
 const USAGE = `nightshift — 夜间批量执行队列
 
@@ -38,6 +41,7 @@ usage:
   nightshift run [--until HH:MM|+30m] [--jobs N]
   nightshift report [--date YYYY-MM-DD] [--list-dates]
   nightshift review <id> [--drop]   # --drop 回滚 baseline，并放行被它挡住的下一条
+  nightshift rearm <id>            # 重新装填：回到 ready，基线重锚当前 HEAD，保留上一轮理由
   nightshift queue [--dir P]        # 看同目录串行队列（含被挡住的）
   nightshift queue --move <id> [--before id | --after id]   # 在队列里挪位置
   nightshift release <id>           # 放行被 <id> 挡住（needs-review/verify-error）的下一条
@@ -369,11 +373,54 @@ function cmdReview(base: string, id: string | undefined, flags: Map<string, stri
     return;
   }
   if (spec.baseline === null) die(`error: ${spec.id} has no baseline recorded; refusing to reset`);
-  const r = revertTo(spec.dir, spec.baseline);
+  const discarded = listRange(spec.dir, spec.baseline);
+  if (discarded.length > 0) {
+    console.log(`${spec.id}: 将丢弃 ${discarded.length} 个提交（备份在 refs/nightshift/backup/${spec.id}）:`);
+    for (const line of discarded) console.log(`  ${line}`);
+  }
+  const r = revertTo(spec.dir, spec.baseline, spec.id);
   if (!r.ok) die(`error: ${r.message}`);
   console.log(`${spec.id}: ${r.message} (baseline ${shortSha(spec.baseline)})`);
   const released = releaseBlockedBy(spec.id, base);
   for (const next of released) console.log(`${next.id} -> ready (queue released)`);
+}
+
+/**
+ * 重新装填一条 Spec：把它放回 `ready`，基线重锚到当前 HEAD，并**保留上一轮的理由**
+ * （下一轮派发时它会作为 feedback 喂给 Agent）。
+ *
+ * 为什么需要它：基线悬空（历史被改写）时，判决本身不可信；但重派发会把 `attempts`
+ * 归零、把 `feedback` 清空——于是"上一轮到底为什么失败"就丢了。这个动词把
+ * 「停机 → unlock → unready → 补上下文 → ready」那一串手工步骤收成一条命令。
+ */
+function cmdRearm(base: string, id: string | undefined): void {
+  if (!id) die("error: rearm <id>");
+  const onBoard = loadBoardStrict(base).specs.find((s) => s.id === id);
+  const spec = onBoard ?? archivedSpec(id, base);
+  if (!spec) die(`error: spec ${id} not found in ${boardDir(base)} or the archive`);
+  if (spec.status === "running") die(`error: ${spec.id} 正在跑；先停掉那一次派发再 rearm`);
+  const errors = checkSpec(spec, spec.file);
+  if (errors.length > 0) die(errors.map((e) => `error: ${e}`).join("\n"));
+  if (!onBoard) {
+    // 从归档搬回板上
+    writeSpecTo(specPath(id, base), spec);
+  }
+  const head = headOf(spec.dir);
+  const kept = isBlockReason(spec.reason) ? null : spec.reason;
+  spec.status = "ready";
+  spec.verdict = null;
+  spec.reason = kept;
+  spec.baseline = head;
+  spec.commits = null;
+  spec.residual = null;
+  spec.finished = null;
+  writeSpec(spec, base);
+  console.log(`${spec.id} -> ready (baseline ${shortSha(head)})`);
+  if (kept !== null) console.log(`  保留上一轮理由作为下一轮的反馈: ${kept.slice(0, 160)}`);
+  const ahead = queueOnDir(spec.dir, base).filter((s) => s.id !== spec.id && compareQueueOrder(s, spec) < 0);
+  if (ahead.length > 0) {
+    console.log(`queue: ${ahead.length} spec(s) ahead on this dir (${ahead.map((s) => s.id).join(", ")})`);
+  }
 }
 
 function cmdPath(base: string): void {
@@ -427,6 +474,9 @@ async function main(): Promise<void> {
         break;
       case "review":
         cmdReview(base, positional[0], flags);
+        break;
+      case "rearm":
+        cmdRearm(base, positional[0]);
         break;
       case "path":
         cmdPath(base);

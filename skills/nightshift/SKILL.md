@@ -117,12 +117,14 @@ ns add --dir /abs/path \
 ns run --until 07:00            # 夜间排水；队列空或窗口尽即退出，可反复由 cron 调用
 ns report                       # 早上第一眼看这个
 ns show ns-0007                 # 单条详情 + 下一步命令
+ns rearm ns-0007                # 换个基线重跑：基线重锚当前 HEAD，上一轮理由会带上
 ns review ns-0007 --drop        # 丢弃该条提交，回到 baseline
 ```
 
 - 失败项**也会归档**，不会留在板上被第二夜自动重跑。
 - 同目录队列被前一条阻塞时，后续项**留在板上但不跑**（`blocked`），需要 `ns release` / `ns review --drop` 手动放行——不会自动重试。
 - 结果靠 `baseline..HEAD` 看，脚本不切分支、不推送、不合并。清理用 `review --drop`。
+- ⚠️ **共享工作区里历史被改写会让判决不可信**（`pull --rebase` / 别的会话 rebase）。`run` 会查基线是否还在 HEAD 的祖先链上，不在就**作废本轮判决**并说清原因——这时候用 `ns rearm <id>` 换个基线重跑，别直接重跑。
 
 ## 硬规则
 

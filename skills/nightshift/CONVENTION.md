@@ -129,7 +129,8 @@ draft 永不被派发。
 | `check` | 全板 schema 校验 | 只读 |
 | `run [--until HH:MM\|+30m] [--jobs N]` | 夜间排水 | 板 + git（commit 由 agent 做） |
 | `report [--date YYYY-MM-DD] [--list-dates]` | 检查面 | 只读 |
-| `review <id> [--drop]` | 详情；`--drop` 才 `git reset --hard <baseline>`，并放行被它挡住的下一条 | 仅 `--drop` |
+| `review <id> [--drop]` | 详情；`--drop` 才 `git reset --hard <baseline>`，并放行被它挡住的下一条。基线悬空 ⇒ 拒绝；reset 前备份 HEAD 到 `refs/nightshift/backup/<id>` 并列出将丢弃的提交 | 仅 `--drop` |
+| `rearm <id>` | 重新装填：`ready` + 基线重锚当前 HEAD + **保留上一轮理由**（下一轮作为 feedback）。归档件也能搬回板上 | 板 |
 | `queue [--dir P]` | 同目录串行队列（`ready` / `blocked`），按 `order` 秩排序 | 只读 |
 | `queue --move <id> [--before ID \| --after ID]` | 在同目录队列里挪位置（不改变 `status`） | 板 |
 | `unblock <id>` | `blocked → ready`（只这一条） | 板 |
@@ -187,4 +188,21 @@ REASON: <一行>
 `fail` 且 `attempts < 2` → 带 `REASON` 重派一次。第二次仍 `fail` → `needs-review`。
 `verify-error` 与 `skipped` 不重试。
 
+`attempts` 是**生命周期累计**的尝试次数（重新装填不清零），所以早上看一眼就知道这条被试过几回。每一轮派发内部仍有 2 次重试额度。
+
+**反馈不会因为重新派发而丢**：派发时，Spec 上已有的理由（上一轮 Verifier 给的 `REASON`，或上一轮的失败原因）会作为初始 feedback 喂给实现 Agent；`rearm` 保留这个理由，`run` 读取它。被队列挡住时写的 `blocked by <id> (...)` 不算反馈。
+
 超时（实现 Agent 或 Verifier 超时）落 `verify-error`，同样不重试 —— 因为超时留下的半成品状态不明，重跑会在不明状态上叠一层。超时后应当由人决定：提交工作区里的残留，还是 `review <id> --drop` 回滚。
+
+## 基线与历史改写
+
+`baseline` 是派发时 `HEAD` 的裸 SHA。**共享工作区里历史随时可能被改写**（`pull --rebase`、别的会话 rebase、切分支）。改写之后 `baseline` 不再是 HEAD 的祖先，`baseline..HEAD` 就不再代表"本任务改了什么"。
+
+因此 `run` 在**验证之前**查一次祖先关系：
+
+- 成立 ⇒ 正常验证；
+- 不成立 ⇒ **本轮判决作废**，落 `verify-error`，`reason` 写明"历史被改写，本轮判决不可信"，并指向 `rearm`。
+
+派发时基线同时被钉在 `refs/nightshift/base/<id>`（非分支 ref，gc 不会剪掉），供事后查证。
+
+人要重跑时：`nightshift rearm <id>` —— 回到 `ready`、基线重锚到当前 HEAD、上一轮的理由作为 feedback 重新带上。

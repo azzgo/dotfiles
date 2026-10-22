@@ -96,6 +96,7 @@ nightshift check                                  # schema 校验（不写盘）
 nightshift run [--until HH:MM] [--jobs N]        # 夜间排水（持有 run.lock）
 nightshift report [--date YYYY-MM-DD]            # 只读检查面
 nightshift review <id> [--drop]                  # --drop 才动盘：git reset --hard <baseline>，并放行被它挡住的下一条
+nightshift rearm <id>                           # 重新装填：回到 ready，基线重锚当前 HEAD，保留上一轮理由
 nightshift queue [--dir P]                       # 看同目录串行队列（ready / blocked）
 nightshift queue --move <id> [--before id | --after id]   # 在同目录队列里挪位置
 nightshift unblock <id>                          # blocked → ready（只放这一条）
@@ -207,12 +208,31 @@ exit code 非零 + 未命中 → 仍是 verify-error（进程挂了，非代码�
 
 | 时刻 | 动作 |
 |---|---|
-| 派发前 | `git -C dir rev-parse HEAD` → `baseline`；不是仓库/无提交则落 `skipped`，不派发 |
+| 派发前 | `git -C dir rev-parse HEAD` → `baseline`；不是仓库/无提交则落 `skipped`，不派发。同时把基线钉在 `refs/nightshift/base/<id>`（非分支 ref，gc 不会剪掉，历史被改写后仍可查） |
 | 执行中 | agent 在当前分支提交，不切不移 |
+| 验证前 | `git merge-base --is-ancestor <baseline> HEAD` —— 不成立则说明历史被改写（rebase / pull --rebase / reset），**本轮判决作废**（落 `verify-error`），不跑 Verifier |
 | 结束后 | 报告对比 `baseline..HEAD` 的提交数与 `git status --porcelain` 剩余项 |
-| `review --drop` | `git reset --hard <baseline>`；`baseline` 为 null 时拒绝 |
+| `review --drop` | `git reset --hard <baseline>`；`baseline` 为 null 时拒绝；**基线悬空时拒绝**（历史被改写，reset 会把分支甩到另一条历史上）；reset 前先把 HEAD 备份到 `refs/nightshift/backup/<id>` |
 
 `git add -A` 的禁区由 prompt 纪律 + 报告里的 `git status` 剩余项共同兜底（漏 add 会显形在报告里）。
+
+### 8.1 基线是会腐烂的引用
+
+`baseline` 是一个裸 SHA，而**共享工作区里历史随时可能被改写**（`pull --rebase`、切分支、别的会话 rebase）。一旦它不再是 HEAD 的祖先，`baseline..HEAD` 就不再代表"本任务改了什么"——拿它去判只会得到假判决。
+
+因此：
+
+- 派发时把基线钉成 ref（`refs/nightshift/base/<id>`），保证对象不被 gc；
+- 验证前查一次祖先关系，不成立就**作废本轮判决**并说清楚原因，而不是照判；
+- 人要重跑时用 `rearm`：基线重锚到当前 HEAD，上一轮的理由作为 feedback 带给 Agent。
+
+## 8.2 `review --drop` 的护栏
+
+`git reset --hard <baseline>` 会丢掉 `baseline..HEAD` 里的**所有**提交——包括别的会话在同一工作区里产生的。所以：
+
+1. `baseline` 不在 HEAD 的祖先链上 ⇒ **拒绝**（那不是"回滚本任务"，那是"把分支甩到另一条历史上"）；
+2. reset 前把当前 HEAD 备份到 `refs/nightshift/backup/<id>`，丢掉的提交永远找得回来；
+3. reset 前把将被丢弃的提交列出来。
 
 ## 9. Report 格式
 
@@ -291,6 +311,8 @@ Phase 5 · 首次真跑（唯一烧 token 的一步）
 
 已用 `test/fake-pi.mjs` 零成本验证过的路径：全绿通过、fail 后重试至 needs-review、
 缺失 VERDICT 落 verify-error 且不重试、跨目录并行、同目录串行队列按 order 秩排空、
+历史被改写时判决作废（不照判错范围）、基线悬空时 review --drop 拒绝且留备份 ref、
+rearm 把归档件搬回 ready 并把上一轮理由当 feedback 喂给 Agent、
 同目录前一条 fail/verify-error/skipped 后队列停止并能被 release 重新武装、
 prompt 只走 stdin 且 argv 保持短、子进程被信号杀死时 reason 里带信号名、draft 不派发、
 单实例锁拒绝、超长窗口拒绝、归档搬迁。
