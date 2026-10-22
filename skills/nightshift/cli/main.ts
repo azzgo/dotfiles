@@ -23,6 +23,7 @@ import {
 import { SpecError, bodyTemplate, checkSpec, parseSpec, type Spec } from "./src/spec.ts";
 import { headOf, listRange } from "./src/git.ts";
 import { collectStatus, fmtDuration, LIVENESS_ICON } from "./src/status.ts";
+import { lintSpec } from "./src/lint.ts";
 import { renderReport } from "./src/report.ts";
 import { renderSpecDetail } from "./src/show.ts";
 import { releaseLock } from "./src/board.ts";
@@ -42,6 +43,7 @@ usage:
   nightshift unready <id>
   nightshift unblock <id>          # 只解掉一条被同目录 fail 挡住的队列项
   nightshift check
+  nightshift lint [<id>]         # Spec 正文静态自检（路径漂移 / 旧 SHA / 约束与验收互斥 / 不可判定措辞）
   nightshift run [--until HH:MM|+30m] [--jobs N]
   nightshift report [--date YYYY-MM-DD] [--list-dates]
   nightshift review <id> [--drop]   # --drop 回滚 baseline，并放行被它挡住的下一条
@@ -430,6 +432,37 @@ function cmdRearm(base: string, id: string | undefined): void {
   }
 }
 
+/**
+ * Spec 正文的静态自检（不需要模型）。把“约束与验收标准互斥”这类问题在入板前
+ * 挑出来——夜里的 Agent 花一个半小时才发现的，入板前一句话就能说清。
+ */
+function cmdLint(base: string, id: string | undefined): void {
+  const board = loadBoardStrict(base);
+  const targets = id === undefined ? board.specs : board.specs.filter((s) => s.id === id);
+  if (targets.length === 0) die(`error: spec ${id} not found in ${boardDir(base)}`);
+  let errors = 0;
+  let warns = 0;
+  for (const spec of targets) {
+    const findings = lintSpec(spec, spec.dir);
+    if (findings.length === 0) {
+      console.log(`${spec.id}: ok`);
+      continue;
+    }
+    console.log(`${spec.id}  ${spec.title}`);
+    for (const f of findings) {
+      if (f.level === "error") errors++;
+      else warns++;
+      console.log(`  ${f.level === "error" ? "✖ error" : "⚠ warn "} [${f.code}] ${f.message}`);
+    }
+  }
+  if (errors > 0) {
+    console.log(`\n${errors} error(s), ${warns} warning(s)`);
+    process.exitCode = 1;
+  } else if (warns > 0) {
+    console.log(`\n${warns} warning(s)`);
+  }
+}
+
 function cmdPath(base: string): void {
   console.log(`board:    ${boardDir(base)}`);
   console.log(`archive:  ${archiveDir(base)}`);
@@ -564,6 +597,9 @@ async function main(): Promise<void> {
         break;
       case "check":
         cmdCheck(base);
+        break;
+      case "lint":
+        cmdLint(base, positional[0]);
         break;
       case "run":
         await cmdRun(base, flags);

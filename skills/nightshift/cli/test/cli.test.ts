@@ -13,6 +13,7 @@ import { assertWindowSane, resolveDeadline, runNightshift, WindowTooLongError } 
 import { implPrompt, verifyPrompt, extractSection } from "../src/prompt.ts";
 import { preflight, revertTo, countCommits } from "../src/git.ts";
 import { collectStatus } from "../src/status.ts";
+import { lintSpec } from "../src/lint.ts";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CLI = path.join(HERE, "..", "main.ts");
@@ -1159,4 +1160,68 @@ test("run: the impl prompt points the agent at its inbox", async () => {
   } finally {
     delete process.env.FAKE_ASSERT_IMPL_PROMPT;
   }
+});
+
+// ── lint ────────────────────────────────────────────────────────────────
+
+test("lint: a stale SHA and a missing path are flagged", () => {
+  const repo = makeRepo();
+  const body = [
+    "",
+    "## Goal",
+    "g",
+    "",
+    "## Change",
+    "把 `does-not-exist.ts` 改成别的，参考 `deadbeefcafe1234` 的做法。",
+    "",
+    "## Constraints",
+    "不改 `README.md`",
+    "",
+    "## Verify",
+    "跑测试就行",
+    "",
+    "## Out of scope",
+    "无",
+    "",
+  ].join("\n");
+  const spec = { ...makeSpec({ body }), dir: repo.dir };
+  const findings = lintSpec(spec, repo.dir);
+  const codes = findings.map((f) => f.code);
+  assert.ok(codes.includes("stale-sha"), JSON.stringify(findings));
+  assert.ok(codes.includes("missing-path"), JSON.stringify(findings));
+  assert.ok(codes.includes("unverifiable"), JSON.stringify(findings));
+  assert.ok(!codes.includes("empty-out-of-scope"), JSON.stringify(findings));
+});
+
+test("lint: an empty Out of scope is flagged", () => {
+  const repo = makeRepo();
+  const body = specBody({ "Out of scope": "" });
+  const findings = lintSpec({ ...makeSpec({ body }), dir: repo.dir }, repo.dir);
+  assert.ok(findings.some((f) => f.code === "empty-out-of-scope"), JSON.stringify(findings));
+});
+
+test("lint: a well-formed spec is clean", () => {
+  const repo = makeRepo();
+  const body = specBody({
+    Goal: "README.md 里出现一行 hello",
+    Change: "在 `README.md` 末尾加一行 hello",
+    Constraints: "不改 `README.md` 以外的东西",
+    Verify: "`README.md` 的最后一行是 hello",
+    "Out of scope": "不加别的文件",
+  });
+  const findings = lintSpec({ ...makeSpec({ body }), dir: repo.dir }, repo.dir);
+  assert.deepStrictEqual(findings, [], JSON.stringify(findings));
+});
+
+test("cli: lint exits non-zero when a spec has an error", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const body = specBody({ "Out of scope": "" });
+  fs.mkdirSync(path.join(base, "board"), { recursive: true });
+  fs.writeFileSync(
+    path.join(base, "board", "ns-0001.md"),
+    serializeSpec({ ...makeSpec({ id: "ns-0001", status: "ready", dir: repo.dir, body }), file: "ns-0001.md" }),
+  );
+  const r = runCli(["lint"], { NIGHTSHIFT_HOME: base });
+  assert.ok(r.out.includes("ns-0001"), r.out);
 });

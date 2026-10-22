@@ -85,6 +85,7 @@ nightshift report
 | 看看板上有什么 | `nightshift list` / `nightshift list --all` / `nightshift list --status ready` |
 | 看一条的详情 | `nightshift show ns-0007` |
 | 校验全板格式 | `nightshift check` |
+| 看看某条 Spec 写得好不好 | `nightshift lint ns-0007`（路径漂移 / 旧 SHA / 不可判定措辞） |
 | 标成"可以夜里跑" | `nightshift ready ns-0007` |
 | 撤回，先不跑 | `nightshift unready ns-0007` |
 | 跑一夜 | `nightshift run [--until 07:00] [--jobs 3]` |

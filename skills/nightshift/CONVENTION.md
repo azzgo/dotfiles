@@ -129,6 +129,7 @@ draft 永不被派发。
 | `ready <id>` | `draft → ready`，先跑校验 | 板 |
 | `unready <id>` | `ready → draft` | 板 |
 | `check` | 全板 schema 校验 | 只读 |
+| `lint [<id>]` | Spec 正文静态自检：路径漂移 / 旧 SHA / 不可判定措辞 / 空 Out of scope | 只读 |
 | `run [--until HH:MM\|+30m] [--jobs N]` | 夜间排水 | 板 + git（commit 由 agent 做） |
 | `report [--date YYYY-MM-DD] [--list-dates]` | 检查面 | 只读 |
 | `review <id> [--drop]` | 详情；`--drop` 才 `git reset --hard <baseline>`，并放行被它挡住的下一条。基线悬空 ⇒ 拒绝；reset 前备份 HEAD 到 `refs/nightshift/backup/<id>` 并列出将丢弃的提交 | 仅 `--drop` |

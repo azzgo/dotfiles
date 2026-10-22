@@ -93,6 +93,7 @@ nightshift list [--status ready]                 # 一行一条
 nightshift show <id>                             # 渲染 Spec + 最近一次日志
 nightshift ready <id>                            # draft → ready（唯一的状态升级动作）
 nightshift check                                  # schema 校验（不写盘）
+nightshift lint [<id>]                           # Spec 正文静态自检（不写盘、不用模型）
 nightshift run [--until HH:MM] [--jobs N]        # 夜间排水（持有 run.lock）
 nightshift report [--date YYYY-MM-DD]            # 只读检查面
 nightshift review <id> [--drop]                  # --drop 才动盘：git reset --hard <baseline>，并放行被它挡住的下一条
@@ -265,6 +266,20 @@ exit code 非零 + 未命中 → 仍是 verify-error（进程挂了，非代码�
 1. `baseline` 不在 HEAD 的祖先链上 ⇒ **拒绝**（那不是"回滚本任务"，那是"把分支甩到另一条历史上"）；
 2. reset 前把当前 HEAD 备份到 `refs/nightshift/backup/<id>`，丢掉的提交永远找得回来；
 3. reset 前把将被丢弃的提交列出来。
+
+## 8.5 `lint`：Spec 正文的静态自检
+
+`check` 只看格式（五节齐全、非空）。`lint` 看**内容**，全是机械判断，不用模型：
+
+| 检查 | 报什么 |
+|---|---|
+| `missing-path` | Change / Verify 点名的路径在仓库里找不到（路径漂移、改名、写错） |
+| `stale-sha` | 正文里的 SHA 已经不在历史里（典型：rebase 之后的旧 SHA） |
+| `unverifiable` | Verify 里有「跑测试」「没有报错」这种不可判定的措辞 |
+| `empty-out-of-scope` | Out of scope 是空的 |
+| `constraint-conflict` | Constraints 说「不许动 X」，Verify 说「不得引用 X」，而 Change 里没有 X 的替代品 |
+
+最后一条是**能机械判的那一类**。语义层的错（"Verify 的口径比 Change 严"——比如要求"V2 链不引用任何 V1 runtime 模块"，但泄漏发生在共用领域服务里）lint 判不了，那要靠闭包分析脚本（仓库里的 `.pi/track/closure.mjs`）或人眼。
 
 ## 9. Report 格式
 
