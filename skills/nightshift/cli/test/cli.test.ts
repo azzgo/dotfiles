@@ -68,6 +68,7 @@ function makeSpec(over = {}) {
     extensions: [],
     baseline: null,
     attempts: 0,
+    order: null,
     verdict: null,
     reason: null,
     commits: null,
@@ -854,4 +855,81 @@ test("cli: review finds an archived spec so a stopped queue can be released", ()
   assert.strictEqual(r.status, 0, r.err);
   const ns2 = loadBoard(base).specs.find((s) => s.id === "ns-0002");
   assert.strictEqual(ns2.status, "ready");
+});
+
+// ── queue order ─────────────────────────────────────────────────────────
+
+test("spec: order round-trips through the frontmatter", () => {
+  const parsed = parseSpec(serializeSpec(makeSpec({ order: 3 })), "ns-0001.md");
+  assert.strictEqual(parsed.order, 3);
+  const back = parseSpec(serializeSpec(makeSpec({ order: null })), "ns-0001.md");
+  assert.strictEqual(back.order, null);
+});
+
+test("queue: a spec added with --before lands in front of the existing queue", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const env = { ...process.env, NIGHTSHIFT_HOME: base };
+  for (const title of ["one", "two"]) {
+    const r = spawnSync(process.execPath, [CLI, "add", "--dir", repo.dir, "--title", title], {
+      encoding: "utf8",
+      env,
+      input: specBody(),
+    });
+    assert.strictEqual(r.status, 0, r.stderr);
+  }
+  const third = spawnSync(
+    process.execPath,
+    [CLI, "add", "--dir", repo.dir, "--title", "three", "--before", "ns-0001"],
+    { encoding: "utf8", env, input: specBody() },
+  );
+  assert.strictEqual(third.status, 0, third.stderr);
+  for (const id of ["ns-0001", "ns-0002", "ns-0003"]) {
+    const r = runCli(["ready", id], { NIGHTSHIFT_HOME: base });
+    assert.strictEqual(r.status, 0, r.err);
+  }
+  const q = runCli(["queue", "--dir", repo.dir], { NIGHTSHIFT_HOME: base });
+  const ids = q.out.trim().split("\n").map((l) => l.trim().split(/\s+/)[1]);
+  assert.deepStrictEqual(ids, ["ns-0003", "ns-0001", "ns-0002"], q.out);
+  const ranks = loadBoard(base).specs
+    .slice()
+    .sort((a, b) => a.order - b.order)
+    .map((s) => s.order);
+  assert.deepStrictEqual(ranks, [1, 2, 3]);
+});
+
+test("queue: --move relocates a spec inside its dir queue", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const env = { ...process.env, NIGHTSHIFT_HOME: base };
+  for (const title of ["one", "two", "three"]) {
+    const r = spawnSync(process.execPath, [CLI, "add", "--dir", repo.dir, "--title", title], {
+      encoding: "utf8",
+      env,
+      input: specBody(),
+    });
+    assert.strictEqual(r.status, 0, r.stderr);
+  }
+  const moved = runCli(["queue", "--move", "ns-0003", "--before", "ns-0001"], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(moved.status, 0, moved.err);
+  for (const id of ["ns-0001", "ns-0002", "ns-0003"]) {
+    const r = runCli(["ready", id], { NIGHTSHIFT_HOME: base });
+    assert.strictEqual(r.status, 0, r.err);
+  }
+  const q = runCli(["queue", "--dir", repo.dir], { NIGHTSHIFT_HOME: base });
+  const ids = q.out.trim().split("\n").map((l) => l.trim().split(/\s+/)[1]);
+  assert.deepStrictEqual(ids, ["ns-0003", "ns-0001", "ns-0002"], q.out);
+});
+
+test("run: the dispatch order follows the explicit order, not created", async () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const pi = withFakePiScript();
+  writeReady(base, "ns-0001", repo.dir, "2026-10-19T01:00:00.000Z");
+  writeReady(base, "ns-0002", repo.dir, "2026-10-19T02:00:00.000Z");
+  const moved = runCli(["queue", "--move", "ns-0002", "--before", "ns-0001"], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(moved.status, 0, moved.err);
+  const cfg = { ...DEFAULT_CONFIG, piBin: pi, timeoutSec: 30 };
+  const { result, logs } = await runLoop(base, cfg, 3);
+  assert.deepStrictEqual(result.specs.map((s) => s.id), ["ns-0002", "ns-0001"], logs.join("\n"));
 });

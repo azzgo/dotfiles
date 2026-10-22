@@ -24,6 +24,7 @@ const KNOWN_KEYS = [
   "extensions",
   "baseline",
   "attempts",
+  "order",
   "verdict",
   "reason",
   "commits",
@@ -52,6 +53,7 @@ export interface Spec {
   extensions: string[];
   baseline: string | null;
   attempts: number;
+  order: number | null;
   verdict: string | null;
   reason: string | null;
   commits: number | null;
@@ -143,7 +145,7 @@ export function parseSpec(text: string, file: string): Spec {
 
   for (const key of fields.keys()) {
     if (NULLABLE_KEYS.has(key) || LIST_KEYS.has(key)) continue;
-    if (["id", "status", "dir", "title", "created", "attempts", "commits", "residual"].includes(key)) continue;
+    if (["id", "status", "dir", "title", "created", "attempts", "commits", "residual", "order"].includes(key)) continue;
     throw new SpecError(`${file}: unexpected key: ${key}`);
   }
 
@@ -159,6 +161,7 @@ export function parseSpec(text: string, file: string): Spec {
     extensions: list("extensions"),
     baseline: opt("baseline"),
     attempts: num("attempts") ?? 0,
+    order: num("order"),
     verdict: opt("verdict"),
     reason: opt("reason"),
     commits: num("commits"),
@@ -198,6 +201,7 @@ export function serializeSpec(s: Spec): string {
     `extensions: ${listLit(s.extensions)}`,
     `baseline: ${val(s.baseline, true)}`,
     `attempts: ${s.attempts}`,
+    `order: ${s.order ?? "null"}`,
     `verdict: ${val(s.verdict, true)}`,
     `reason: ${val(s.reason, true)}`,
     `commits: ${s.commits ?? "null"}`,

@@ -70,6 +70,7 @@ tools: []                # 可选，追加到默认工具面
 extensions: []           # 可选，绝对路径；拒绝 sub-dispatch
 baseline: 275dd85        # CLI 派发前写入
 attempts: 0              # CLI 写
+order: 1                 # CLI 写：同目录队列里的秩（1,2,3…），可 null
 verdict: null            # CLI 写：pass | fail | verify-error | null
 reason: null             # CLI 写：Verifier 的一行理由
 ---
@@ -82,12 +83,12 @@ reason: null             # CLI 写：Verifier 的一行理由
 
 正文模板固定五节，缺节在 `check` 里报错。`dir` 必须是已存在的 git 仓库（`preflight` 检查 `rev-parse --git-dir` + 有 HEAD），否则该 Spec 在派发前就落 `skipped`。
 
-**同一 `dir` 允许多条未完成（`draft`/`ready`/`blocked`）的 Spec 共存**：`add` 不再拒绝第二条。同目录的 Spec 构成一条**串行队列**，顺序 = `created` 时间序（相同则按 id）——先入板先跑。队列的推进与停止见 §4。
+**同一 `dir` 允许多条未完成（`draft`/`ready`/`blocked`）的 Spec 共存**：`add` 不再拒绝第二条。同目录的 Spec 构成一条**串行队列**，顺序 = `order` 秩（缺省按 `created`，相同则按 id）——先入板先跑，但 `add --before/--after` 与 `queue --move` 可以把新任务插到前面。队列的推进与停止见 §4。
 
 ## 3. 命令动词
 
 ```text
-nightshift add --dir <path> [--title <t>]        # 从 stdin 读正文，写 draft
+nightshift add --dir <path> [--title <t>] [--before id | --after id]   # 从 stdin 读正文，写 draft；--before/--after 决定队列位置
 nightshift list [--status ready]                 # 一行一条
 nightshift show <id>                             # 渲染 Spec + 最近一次日志
 nightshift ready <id>                            # draft → ready（唯一的状态升级动作）
@@ -96,6 +97,7 @@ nightshift run [--until HH:MM] [--jobs N]        # 夜间排水（持有 run.loc
 nightshift report [--date YYYY-MM-DD]            # 只读检查面
 nightshift review <id> [--drop]                  # --drop 才动盘：git reset --hard <baseline>，并放行被它挡住的下一条
 nightshift queue [--dir P]                       # 看同目录串行队列（ready / blocked）
+nightshift queue --move <id> [--before id | --after id]   # 在同目录队列里挪位置
 nightshift unblock <id>                          # blocked → ready（只放这一条）
 nightshift release <id>                          # 放行所有 reason 里写着 blocked by <id> 的项
 ```
@@ -116,7 +118,7 @@ loop:
 exit when: 所有 queue 空 → 归档 → 释放锁
 ```
 
-- **队内顺序** = `created` 时间序（同刻按 id）。`ready` 快照进队时即排序。仍为 `draft` 的 Spec 不占队列位置（未 ready = 未获授权，不挡后面的 `ready`）。
+- **队内顺序** = `order` 秩（同目录内 1,2,3…，缺 `order` 的按 `created` 排并一次性补齐）。`status` 只决定**是否被派发**，不改变位置：`draft` 不占派发位，但保留自己的秩，所以它变 `ready` 时回到原位。仍为 `draft` 的 Spec 不挡后面的 `ready`（未 ready = 未获授权）。
 - **同 Serial Key 严格串行**：一个 dir 同时最多一条在跑；前一条 **passed 后**才派发同目录的下一条。
 - **前一条不是 passed 就停止该目录队列**：`needs-review` / `verify-error` / `skipped` 都会把该目录**剩余未派发的 `ready`** 就地改成 `blocked`，`reason` 写 `blocked by <blocker-id> (<blocker-status>)`。避免在坏地基上继续盖楼。跨目录不受影响。
 - **跨 Serial Key 并行**：受 `--jobs` 限制（默认 3）。
@@ -288,7 +290,7 @@ Phase 5 · 首次真跑（唯一烧 token 的一步）
   ✅ R. 按 Q 的结果回调：暴露了 argv 长度限制（见 §5 第 3 条），prompt 改走 stdin
 
 已用 `test/fake-pi.mjs` 零成本验证过的路径：全绿通过、fail 后重试至 needs-review、
-缺失 VERDICT 落 verify-error 且不重试、跨目录并行、同目录串行队列按 created 排空、
+缺失 VERDICT 落 verify-error 且不重试、跨目录并行、同目录串行队列按 order 秩排空、
 同目录前一条 fail/verify-error/skipped 后队列停止并能被 release 重新武装、
 prompt 只走 stdin 且 argv 保持短、子进程被信号杀死时 reason 里带信号名、draft 不派发、
 单实例锁拒绝、超长窗口拒绝、归档搬迁。

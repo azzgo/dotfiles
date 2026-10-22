@@ -14,7 +14,7 @@ import {
 import { buildImplArgs, buildVerifyArgs, DispatchError, parseReviewHint, parseVerdict, runChild } from "./dispatch.ts";
 import { countCommits, preflight, residualCount, headOf, shortSha } from "./git.ts";
 import { implPrompt, verifyPrompt } from "./prompt.ts";
-import { blockQueue, compareQueueOrder, releaseBlockedBy } from "./queue.ts";
+import { blockQueue, compareQueueOrder, orderedSpecs, releaseBlockedBy } from "./queue.ts";
 import { renderReport } from "./report.ts";
 import type { Spec } from "./spec.ts";
 
@@ -220,7 +220,10 @@ export async function runNightshift(opts: RunOptions): Promise<{ archivedTo: str
     if (board.errors.length > 0) {
       for (const e of board.errors) log(`board error: ${e}`);
     }
-    const ready = board.specs.filter((s) => s.status === "ready").sort(compareQueueOrder);
+    // 队列顺序 = 同目录内的 order 秩。先把缺秩的目录补齐（一次性迁移，会写盘），再重新读板。
+    const dirs = [...new Set(board.specs.filter((s) => s.status === "ready").map((s) => s.dir))];
+    for (const dir of dirs) orderedSpecs(dir, base);
+    const ready = loadBoard(base).specs.filter((s) => s.status === "ready").sort(compareQueueOrder);
     const queues = new Map<string, Job[]>();
     for (const s of ready) {
       const key = s.dir;

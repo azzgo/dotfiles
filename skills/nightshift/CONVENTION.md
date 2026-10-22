@@ -73,6 +73,7 @@ tools: ["+codemode"]        # 可空列表
 extensions: []              # 可空列表；含 sub-dispatch 的会被拒绝
 baseline: "275dd85..."      # CLI 派发前写入，可 null
 attempts: 0                 # CLI 写
+order: 3                    # 同目录队列里的秩（1,2,3…），CLI 写；可 null
 verdict: "pass"             # pass|fail|verify-error|null
 reason: "一行理由"           # Verifier 的 REASON
 commits: 3                  # 结束后 CLI 写
@@ -97,6 +98,8 @@ run: "20261019-231000"
 
 `blocked` 是同目录串行队列的**停止标记**，只由 `run` 写入：同目录前一条落 `needs-review` / `verify-error` / `skipped` 时，该目录剩余未派发的 `ready` 全部就地变成 `blocked`，`reason` 写成 `blocked by <blocker-id> (<blocker-status>)`。`blocked` 不会被派发。放行方式有三种：`release <阻挡者 id>`（批量，按 reason 匹配）、`unblock <id>`（只放这一条）、`review <阻挡者 id> --drop`（回滚阻挡者的提交并放行）。`ready <id>` 作用在 `blocked` 上等同于显式人工覆盖，同样会把它放回队列；`unready <id>` 则把它退回 `draft`，退出队列。
 
+`order` 是**同目录队列的位置键**。同目录内所有 Spec（含 `draft`）按 `order` 升序排成一条链；秩连续（1,2,3…），`run` 按这条链派发。`order` 缺省时按 `(created, id)` 排，并由 CLI 在首次触碰该目录时一次性补齐。`add --before <id>` / `add --after <id>` 与 `queue --move <id> --before|--after <id>` 用来把新任务插到队列前面或调整次序——**新加的高优先级任务不必等已排队的旧任务跑完**。状态（`draft`/`ready`/`blocked`）只决定**是否被派发**，不改变它在链上的位置。
+
 ## 状态机
 
 ```
@@ -118,7 +121,7 @@ draft 永不被派发。
 
 | 动词 | 作用 | 动盘 |
 |---|---|---|
-| `add --dir P [--title T] [--model M] [--thinking L] [--tools a,b] [--extensions p]` | 从 stdin 读正文，新建 `draft` | 板 |
+| `add --dir P [--title T] [--model M] [--thinking L] [--tools a,b] [--extensions p] [--before ID \| --after ID]` | 从 stdin 读正文，新建 `draft`；`--before/--after` 决定它在同目录队列里的位置 | 板 |
 | `list [--status S] [--all]` | 一行一条 | 只读 |
 | `show <id>` | 详情 + 下一步命令 | 只读 |
 | `ready <id>` | `draft → ready`，先跑校验 | 板 |
@@ -127,7 +130,8 @@ draft 永不被派发。
 | `run [--until HH:MM\|+30m] [--jobs N]` | 夜间排水 | 板 + git（commit 由 agent 做） |
 | `report [--date YYYY-MM-DD] [--list-dates]` | 检查面 | 只读 |
 | `review <id> [--drop]` | 详情；`--drop` 才 `git reset --hard <baseline>`，并放行被它挡住的下一条 | 仅 `--drop` |
-| `queue [--dir P]` | 同目录串行队列（`ready` / `blocked`），按 `created` 排序 | 只读 |
+| `queue [--dir P]` | 同目录串行队列（`ready` / `blocked`），按 `order` 秩排序 | 只读 |
+| `queue --move <id> [--before ID \| --after ID]` | 在同目录队列里挪位置（不改变 `status`） | 板 |
 | `unblock <id>` | `blocked → ready`（只这一条） | 板 |
 | `release <id>` | 放行所有 `reason` 为 `blocked by <id> (...)` 的项 | 板 |
 | `path` | 打印三个目录 | 只读 |
@@ -139,7 +143,7 @@ draft 永不被派发。
 
 仓库**不安装也不管理任何定时器产物**——没有 plist、crontab、systemd timer 单元。`run` 的契约是"排空队列或窗口用尽即退出"，交给外部调度：
 
-- **同目录队列**：`add` 不再拒绝同目录第二条；同目录的 `ready` 构成一条按 `created` 排序的串行链，前一条 `passed` 才派下一条
+- **同目录队列**：`add` 不再拒绝同目录第二条；同目录的 Spec 按 `order` 秩排成一条链（缺省按 `created`），其中 `ready` 的按序派发，前一条 `passed` 才派下一条
 - **前一条没过就锁住队列**：`needs-review` / `verify-error` / `skipped` 会把同目录剩余 `ready` 改成 `blocked`（`reason: blocked by <id> (<status>)`），跨目录并行不受影响；处理完后用 `release <id>` 或 `review <id> --drop` 放行
 - 想防睡眠：`nightshift-keep-awake`（Darwin → `caffeinate -i`；Linux → `systemd-inhibit`；其它 → 直接跑）
 - 不要写 `while :; do ...; sleep 1800; done`——那需要常驻会话，且重启不恢复

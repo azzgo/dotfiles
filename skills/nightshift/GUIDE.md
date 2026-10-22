@@ -80,6 +80,8 @@ nightshift report
 | 我想…… | 命令 |
 |---|---|
 | 记下一条已经谈定的事 | `nightshift add --dir <abs> [--title T]`，正文走 stdin |
+| 把新任务插到队列最前面 | `nightshift add --dir <abs> --before ns-0007`，正文走 stdin |
+| 调整某条在队列里的位置 | `nightshift queue --move ns-0008 --before ns-0007` |
 | 看看板上有什么 | `nightshift list` / `nightshift list --all` / `nightshift list --status ready` |
 | 看一条的详情 | `nightshift show ns-0007` |
 | 校验全板格式 | `nightshift check` |
@@ -90,7 +92,7 @@ nightshift report
 | 看历史某天 | `nightshift report --date 2026-10-19` |
 | 列出所有归档日期 | `nightshift report --list-dates` |
 | 丢弃某条的提交（并放行同目录后续） | `nightshift review ns-0007 --drop` |
-| 看同目录串行队列 | `nightshift queue [--dir /abs/path]` |
+| 看同目录串行队列 | `nightshift queue [--dir /abs/path]`（左边那个数字就是队列位次）|
 | 放行被某条挡住的下一条 | `nightshift release ns-0007` |
 | 只放行某一条 blocked | `nightshift unblock ns-0008` |
 | 锁卡住了 | `nightshift unlock` |

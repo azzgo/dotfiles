@@ -21,13 +21,14 @@ import { renderSpecDetail } from "./src/show.ts";
 import { releaseLock } from "./src/board.ts";
 import { revertTo, shortSha } from "./src/git.ts";
 import { runNightshift } from "./src/run.ts";
-import { blockedBy, compareQueueOrder, queueOnDir, releaseBlockedBy } from "./src/queue.ts";
+import { blockedBy, compareQueueOrder, moveSpec, orderedSpecs, placeSpec, queueOnDir, releaseBlockedBy } from "./src/queue.ts";
 
 const USAGE = `nightshift — 夜间批量执行队列
 
 usage:
   nightshift add --dir <path> [--title <t>] [--model m] [--thinking lvl]
-                           [--tools a,b] [--extensions p]   # 正文从 stdin 读
+                           [--tools a,b] [--extensions p] [--before id | --after id]
+                           # 正文从 stdin 读；--before/--after 决定它在同目录队列里的位置
   nightshift list [--status S] [--all]
   nightshift show <id>
   nightshift ready <id>
@@ -38,6 +39,7 @@ usage:
   nightshift report [--date YYYY-MM-DD] [--list-dates]
   nightshift review <id> [--drop]   # --drop 回滚 baseline，并放行被它挡住的下一条
   nightshift queue [--dir P]        # 看同目录串行队列（含被挡住的）
+  nightshift queue --move <id> [--before id | --after id]   # 在队列里挪位置
   nightshift release <id>           # 放行被 <id> 挡住（needs-review/verify-error）的下一条
   nightshift path
 
@@ -170,6 +172,7 @@ function cmdAdd(base: string, flags: Map<string, string[]>): void {
     extensions: csv(flags, "extensions"),
     baseline: null,
     attempts: 0,
+    order: null,
     verdict: null,
     reason: null,
     commits: null,
@@ -181,10 +184,13 @@ function cmdAdd(base: string, flags: Map<string, string[]>): void {
     file: `${id}.md`,
   };
   ensureLayout(base);
-  writeSpec(spec, base);
+  const beforeId = one(flags, "before") ?? null;
+  const afterId = one(flags, "after") ?? null;
+  if (beforeId !== null && afterId !== null) die("error: --before 与 --after 只能给一个");
+  placeSpec(spec, dir, base, beforeId, afterId);
   console.log(`${id}  ${boardDir(base)}/${id}.md`);
   const ahead = loadBoardStrict(base).specs.filter(
-    (s) => s.dir === dir && s.id !== id && s.status !== "passed" && s.created < spec.created,
+    (s) => s.dir === dir && s.id !== id && s.status !== "passed" && compareQueueOrder(s, spec) < 0,
   );
   if (ahead.length > 0) {
     console.log(`queue: ${ahead.length} spec(s) ahead on this dir (${ahead.map((s) => s.id).join(", ")})`);
@@ -230,7 +236,7 @@ function cmdReady(base: string, id: string | undefined, target: "ready" | "draft
   writeSpec(spec, base);
   console.log(`${spec.id} -> ${target}`);
   if (target === "ready") {
-    const ahead = queueOnDir(spec.dir, base).filter((s) => s.id !== spec.id && s.created < spec.created);
+    const ahead = queueOnDir(spec.dir, base).filter((s) => s.id !== spec.id && compareQueueOrder(s, spec) < 0);
     if (ahead.length > 0) {
       console.log(`queue: ${ahead.length} spec(s) ahead on this dir (${ahead.map((s) => s.id).join(", ")})`);
     }
@@ -270,12 +276,21 @@ function cmdRelease(base: string, id: string | undefined): void {
 }
 
 function cmdQueue(base: string, flags: Map<string, string[]>): void {
+  const moveId = one(flags, "move") ?? null;
+  const beforeId = one(flags, "before") ?? null;
+  const afterId = one(flags, "after") ?? null;
+  if (moveId !== null) {
+    if (beforeId !== null && afterId !== null) die("error: --before 与 --after 只能给一个");
+    const { spec } = byId(moveId, base);
+    moveSpec(spec, spec.dir, base, beforeId, afterId);
+    console.log(`${spec.id} moved in ${spec.dir}`);
+  }
   const dirRaw = one(flags, "dir");
   const board = loadBoardStrict(base);
   const dir = dirRaw === undefined ? null : (fs.existsSync(dirRaw) ? uniqueDir(dirRaw) : dirRaw);
   const rows =
     dir === null
-      ? board.specs.filter((s) => s.status === "ready" || s.status === "blocked")
+      ? board.specs.filter((s) => s.status === "ready" || s.status === "blocked").sort(compareQueueOrder)
       : board.specs.filter((s) => s.dir === dir && (s.status === "ready" || s.status === "blocked")).sort(compareQueueOrder);
   if (rows.length === 0) {
     console.log("(empty queue)");
@@ -284,7 +299,8 @@ function cmdQueue(base: string, flags: Map<string, string[]>): void {
   for (const s of rows) {
     const blocked = blockedBy(s);
     const note = blocked === null ? s.status : `blocked by ${blocked.id} (${blocked.status})`;
-    console.log(`${s.id.padEnd(7)} ${s.created}  ${path.basename(s.dir).padEnd(20)} ${note}`);
+    const rank = s.order === null ? "?" : String(s.order);
+    console.log(`${rank.padStart(3)}. ${s.id.padEnd(7)} ${s.created}  ${path.basename(s.dir).padEnd(20)} ${note}`);
   }
 }
 
