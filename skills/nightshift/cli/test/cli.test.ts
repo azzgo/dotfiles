@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -12,6 +12,7 @@ import { buildImplArgs, buildVerifyArgs, parseVerdict, parseReviewHint, Dispatch
 import { assertWindowSane, resolveDeadline, runNightshift, WindowTooLongError } from "../src/run.ts";
 import { implPrompt, verifyPrompt, extractSection } from "../src/prompt.ts";
 import { preflight, revertTo, countCommits } from "../src/git.ts";
+import { collectStatus } from "../src/status.ts";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CLI = path.join(HERE, "..", "main.ts");
@@ -1046,6 +1047,112 @@ test("run: a rearmed spec hands the previous reason to the agent as feedback", a
   fs.writeFileSync(file, serializeSpec(spec));
   const cfg = { ...DEFAULT_CONFIG, piBin: pi, timeoutSec: 30 };
   process.env.FAKE_ASSERT_IMPL_PROMPT = "上一轮：V2 链仍引用 V1 runtime";
+  try {
+    const { result, logs } = await runLoop(base, cfg, 1);
+    assert.strictEqual(result.specs[0].status, "passed", logs.join("\n"));
+  } finally {
+    delete process.env.FAKE_ASSERT_IMPL_PROMPT;
+  }
+});
+
+// ── status / nudge / stop ───────────────────────────────────────────────
+
+function writePidRecord(base, id, pid, phase = "impl") {
+  const dir = path.join(base, "runs", "20261019-010000");
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(
+    path.join(dir, `${id}.pid`),
+    JSON.stringify({ pid, phase, startedAt: new Date().toISOString() }),
+  );
+}
+
+function writeLock(base, pid) {
+  fs.writeFileSync(
+    path.join(base, "run.lock"),
+    JSON.stringify({ pid, startedAt: new Date().toISOString(), runId: "20261019-010000" }),
+  );
+}
+
+test("status: a running spec with a live child and fresh output reads as alive", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const boardDirPath = path.join(base, "board");
+  fs.mkdirSync(boardDirPath, { recursive: true });
+  fs.writeFileSync(
+    path.join(boardDirPath, "ns-0001.md"),
+    serializeSpec({ ...makeSpec({ id: "ns-0001", status: "running", dir: repo.dir }), file: "ns-0001.md" }),
+  );
+  writePidRecord(base, "ns-0001", process.pid, "impl");
+  writeLock(base, process.pid);
+  const sess = path.join(base, "sessions", "ns-0001");
+  fs.mkdirSync(sess, { recursive: true });
+  fs.writeFileSync(path.join(sess, "a.jsonl"), "{}\n");
+  const rows = collectStatus({ base });
+  assert.strictEqual(rows.length, 1);
+  assert.strictEqual(rows[0].liveness, "alive", JSON.stringify(rows[0]));
+  assert.strictEqual(rows[0].pid, process.pid);
+});
+
+test("status: a running spec whose supervisor is gone reads as orphaned", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const boardDirPath = path.join(base, "board");
+  fs.mkdirSync(boardDirPath, { recursive: true });
+  fs.writeFileSync(
+    path.join(boardDirPath, "ns-0001.md"),
+    serializeSpec({ ...makeSpec({ id: "ns-0001", status: "running", dir: repo.dir }), file: "ns-0001.md" }),
+  );
+  writePidRecord(base, "ns-0001", process.pid, "impl");
+  writeLock(base, 2147483646); // 不存在的 pid
+  const rows = collectStatus({ base });
+  assert.strictEqual(rows[0].liveness, "orphaned", JSON.stringify(rows[0]));
+  assert.ok(/僵尸/.test(rows[0].note), rows[0].note);
+});
+
+test("cli: nudge writes the text into the spec inbox", () => {
+  const base = tmp("ns-home-");
+  const r = runCli(["nudge", "ns-0001", "基线变了，从 db58ec4d4 继续"], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(r.status, 0, r.err);
+  const file = path.join(base, "inbox", "ns-0001.md");
+  assert.ok(fs.existsSync(file), file);
+  const body = fs.readFileSync(file, "utf8");
+  assert.ok(body.includes("基线变了，从 db58ec4d4 继续"), body);
+  const r2 = runCli(["nudge", "ns-0001", "第二条"], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(r2.status, 0, r2.err);
+  const body2 = fs.readFileSync(file, "utf8");
+  assert.ok(body2.includes("第一条") === false && body2.includes("基线变了") && body2.includes("第二条"), body2);
+});
+
+test("cli: stop kills the child process of a running spec", async () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const child = spawn(process.execPath, ["-e", "setTimeout(() => {}, 120000)"], { stdio: "ignore" });
+  const boardDirPath = path.join(base, "board");
+  fs.mkdirSync(boardDirPath, { recursive: true });
+  fs.writeFileSync(
+    path.join(boardDirPath, "ns-0001.md"),
+    serializeSpec({ ...makeSpec({ id: "ns-0001", status: "running", dir: repo.dir }), file: "ns-0001.md" }),
+  );
+  writePidRecord(base, "ns-0001", child.pid, "impl");
+  const exited = new Promise((resolve) => child.on("exit", (code, signal) => resolve({ code, signal })));
+  const r = runCli(["stop", "ns-0001"], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(r.status, 0, r.err);
+  assert.ok(r.out.includes("SIGTERM"), r.out);
+  const result = await Promise.race([
+    exited,
+    new Promise((resolve) => setTimeout(() => resolve(null), 5000)),
+  ]);
+  assert.ok(result !== null, "child process survived ns stop");
+  assert.strictEqual(result.signal, "SIGTERM");
+});
+
+test("run: the impl prompt points the agent at its inbox", async () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const pi = withFakePiScript();
+  writeReady(base, "ns-0001", repo.dir, "2026-10-19T01:00:00.000Z");
+  const cfg = { ...DEFAULT_CONFIG, piBin: pi, timeoutSec: 30 };
+  process.env.FAKE_ASSERT_IMPL_PROMPT = path.join(base, "inbox", "ns-0001.md");
   try {
     const { result, logs } = await runLoop(base, cfg, 1);
     assert.strictEqual(result.specs[0].status, "passed", logs.join("\n"));

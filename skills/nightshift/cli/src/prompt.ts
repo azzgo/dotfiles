@@ -6,6 +6,8 @@ export interface ImplPromptInput {
   baseline: string | null;
   attempt: number;
   feedback: string | null;
+  /** 收件箱路径：Agent 每轮动手前读一次，人可以往里写临时交代。 */
+  inbox: string | null;
 }
 
 const IMPL_DISCIPLINE = [
@@ -20,7 +22,7 @@ const IMPL_DISCIPLINE = [
 ].join("\n");
 
 export function implPrompt(input: ImplPromptInput): string {
-  const { spec, baseline, attempt, feedback } = input;
+  const { spec, baseline, attempt, feedback, inbox } = input;
   const parts = [
     `Spec ${spec.id} — ${spec.title}`,
     `工作目录: ${spec.dir}`,
@@ -31,6 +33,14 @@ export function implPrompt(input: ImplPromptInput): string {
     "",
     IMPL_DISCIPLINE,
   ];
+  if (inbox !== null) {
+    parts.push(
+      "",
+      "── 临时交代 ──",
+      `每轮动手前先读一次 \`${inbox}\`（不存在就跳过）。`,
+      "那里可能有人给你临时交代（例如基线变了、范围收窄了）。读完就按它办。",
+    );
+  }
   if (feedback !== null && feedback.trim() !== "") {
     parts.push("", "── 上一轮验证失败的理由（请针对性修正）──", feedback.trim());
   }

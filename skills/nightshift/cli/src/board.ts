@@ -26,6 +26,19 @@ export function runsDir(base = homeBase()): string {
   return path.join(base, RUNS_DIRNAME);
 }
 
+export function runDir(runId: string, base = homeBase()): string {
+  return path.join(runsDir(base), runId);
+}
+
+export function inboxDir(base = homeBase()): string {
+  return path.join(base, "inbox");
+}
+
+/** 派发中的 Agent 会被告知：每轮动手前先读这个文件（不存在就跳过）。 */
+export function inboxPath(id: string, base = homeBase()): string {
+  return path.join(inboxDir(base), `${id}.md`);
+}
+
 export function sessionsDir(base = homeBase()): string {
   return path.join(base, SESSIONS_DIRNAME);
 }

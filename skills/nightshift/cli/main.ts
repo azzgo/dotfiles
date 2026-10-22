@@ -16,9 +16,13 @@ import {
   specPath,
   writeSpec,
   writeSpecTo,
+  inboxDir,
+  inboxPath,
+  pidAlive,
 } from "./src/board.ts";
 import { SpecError, bodyTemplate, checkSpec, parseSpec, type Spec } from "./src/spec.ts";
 import { headOf, listRange } from "./src/git.ts";
+import { collectStatus, fmtDuration, LIVENESS_ICON } from "./src/status.ts";
 import { renderReport } from "./src/report.ts";
 import { renderSpecDetail } from "./src/show.ts";
 import { releaseLock } from "./src/board.ts";
@@ -42,6 +46,9 @@ usage:
   nightshift report [--date YYYY-MM-DD] [--list-dates]
   nightshift review <id> [--drop]   # --drop 回滚 baseline，并放行被它挡住的下一条
   nightshift rearm <id>            # 重新装填：回到 ready，基线重锚当前 HEAD，保留上一轮理由
+  nightshift status [--stall MIN]  # 板子活性：哪些活着 / 卡住 / 成了僵尸
+  nightshift nudge <id> <text>     # 给正在跑的 Agent 递一句话（写进 inbox/<id>.md）
+  nightshift stop <id> | --all     # 停掉在跑的子进程（--all 连 run 一起停）
   nightshift queue [--dir P]        # 看同目录串行队列（含被挡住的）
   nightshift queue --move <id> [--before id | --after id]   # 在队列里挪位置
   nightshift release <id>           # 放行被 <id> 挡住（needs-review/verify-error）的下一条
@@ -429,6 +436,98 @@ function cmdPath(base: string): void {
   console.log(`sessions: ${sessionsDir(base)}`);
 }
 
+/**
+ * 板子活性。回答“它到底活着还是 zombie 了”：
+ * - ● alive    子进程在，最近有产出
+ * - ◐ stalled  子进程在，但很久没产出
+ * - ☠ orphaned 板上写着 running，但派发它的 run 已经没了（真正的僵尸）
+ */
+function cmdStatus(base: string, flags: Map<string, string[]>): void {
+  const stallRaw = one(flags, "stall");
+  const stallMinutes = stallRaw === undefined ? 15 : Number(stallRaw);
+  if (!Number.isFinite(stallMinutes) || stallMinutes <= 0) die("error: --stall must be a positive number of minutes");
+  const rows = collectStatus({ base, stallMinutes });
+  if (rows.length === 0) {
+    console.log("(empty board)");
+    return;
+  }
+  for (const r of rows) {
+    const icon = LIVENESS_ICON[r.liveness];
+    const phase = r.phase === "-" ? "-" : r.phase;
+    const pid = r.pid === null ? "-" : String(r.pid);
+    const elapsed = fmtDuration(r.elapsedMs);
+    const lastOut = r.lastOutputAgeMs === null ? "-" : `${fmtDuration(r.lastOutputAgeMs)} 前`;
+    console.log(
+      `${icon} ${r.id.padEnd(7)} ${r.status.padEnd(13)} ${phase.padEnd(6)} pid ${pid.padEnd(7)} ${elapsed.padStart(6)}  最后产出 ${lastOut}` +
+        (r.note === "" ? "" : `\n    ↳ ${r.note}`),
+    );
+  }
+}
+
+/**
+ * 给正在跑的 Agent 递一句话。
+ *
+ * 无人值守的 Agent 没有别的输入通道（stdin 启动时就用完了、steering 只能走 RPC、
+ * 扩展也被关了），它能读到的只有仓库和 bash 输出。所以这个动词把文字写进
+ * `inbox/<id>.md`，而实现 Agent 的 prompt 里已经写明“每轮动手前先读一次这个文件”。
+ */
+function cmdNudge(base: string, positional: string[]): void {
+  const id = positional[0];
+  if (!id) die("error: nudge <id> <text>");
+  const text = positional.slice(1).join(" ").trim() || readStdin().trim();
+  if (text === "") die("error: nudge <id> <text>  (正文也可以走 stdin)");
+  fs.mkdirSync(inboxDir(base), { recursive: true });
+  const file = inboxPath(id, base);
+  const stamp = new Date().toISOString();
+  const header = fs.existsSync(file) ? "" : `# 给 ${id} 的临时交代\n\n`;
+  fs.appendFileSync(file, `${header}## ${stamp}\n\n${text}\n\n`);
+  console.log(`${id}: 已递到 ${file}`);
+  console.log("（Agent 会在下一轮动手前读到）");
+}
+
+/**
+ * 停掉在跑的东西。
+ * - `ns stop <id>`：杀掉那条 Spec 的子进程，run 会把它落成 verify-error 并继续排下一条
+ * - `ns stop --all`：连 run 自己一起停，释放锁；板上残留的 running 用 `ns rearm` 收尸
+ */
+function cmdStop(base: string, positional: string[], flags: Map<string, string[]>): void {
+  const all = has(flags, "all");
+  const id = positional[0];
+  if (!all && !id) die("error: stop <id> | stop --all");
+  const rows = collectStatus({ base });
+  const targets = rows.filter((r) => r.pid !== null && (all || r.id === id));
+  if (targets.length === 0) {
+    console.log(all ? "没有在跑的子进程" : `${id} 没有在跑的子进程`);
+  }
+  for (const t of targets) {
+    if (t.pid === null) continue;
+    try {
+      process.kill(t.pid, "SIGTERM");
+      console.log(`SIGTERM -> ${t.id} (pid ${t.pid}, ${t.phase})`);
+    } catch {
+      console.log(`${t.id} (pid ${t.pid}) 已经不在了`);
+    }
+  }
+  if (all) {
+    const lockPath = path.join(base, "run.lock");
+    try {
+      const lock = JSON.parse(fs.readFileSync(lockPath, "utf8")) as { pid?: number };
+      if (typeof lock.pid === "number" && pidAlive(lock.pid)) {
+        try {
+          process.kill(lock.pid, "SIGTERM");
+          console.log(`SIGTERM -> run supervisor (pid ${lock.pid})`);
+        } catch {
+          console.log(`run supervisor (pid ${lock.pid}) 已经不在了`);
+        }
+      }
+    } catch {
+      // 没有锁文件
+    }
+    releaseLock(base);
+    console.log("锁已释放；板上残留的 running 用 nightshift rearm <id> 收尸");
+  }
+}
+
 async function main(): Promise<void> {
   const [verb, ...rest] = process.argv.slice(2);
   if (!verb || verb === "-h" || verb === "--help" || verb === "help") {
@@ -477,6 +576,15 @@ async function main(): Promise<void> {
         break;
       case "rearm":
         cmdRearm(base, positional[0]);
+        break;
+      case "status":
+        cmdStatus(base, flags);
+        break;
+      case "nudge":
+        cmdNudge(base, positional);
+        break;
+      case "stop":
+        cmdStop(base, positional, flags);
         break;
       case "path":
         cmdPath(base);

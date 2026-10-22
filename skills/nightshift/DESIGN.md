@@ -97,6 +97,9 @@ nightshift run [--until HH:MM] [--jobs N]        # 夜间排水（持有 run.loc
 nightshift report [--date YYYY-MM-DD]            # 只读检查面
 nightshift review <id> [--drop]                  # --drop 才动盘：git reset --hard <baseline>，并放行被它挡住的下一条
 nightshift rearm <id>                           # 重新装填：回到 ready，基线重锚当前 HEAD，保留上一轮理由
+nightshift status [--stall MIN]                 # 板子活性：alive / stalled / orphaned / gone
+nightshift nudge <id> <text>                    # 给正在跑的 Agent 递一句话（inbox/<id>.md）
+nightshift stop <id> | --all                    # 停掉在跑的子进程（--all 连 run 一起停）
 nightshift queue [--dir P]                       # 看同目录串行队列（ready / blocked）
 nightshift queue --move <id> [--before id | --after id]   # 在同目录队列里挪位置
 nightshift unblock <id>                          # blocked → ready（只放这一条）
@@ -226,7 +229,36 @@ exit code 非零 + 未命中 → 仍是 verify-error（进程挂了，非代码�
 - 验证前查一次祖先关系，不成立就**作废本轮判决**并说清楚原因，而不是照判；
 - 人要重跑时用 `rearm`：基线重锚到当前 HEAD，上一轮的理由作为 feedback 带给 Agent。
 
-## 8.2 `review --drop` 的护栏
+## 8.2 活性：怎么知道它活着还是成了僵尸
+
+`status` 里写着 `running` 的 Spec 可能处在四种状态：
+
+| 判定 | 含义 | 依据 |
+|---|---|---|
+| ● alive | 子进程在，最近有产出 | pid 活着 + session jsonl 的 mtime 是新的 |
+| ◐ stalled | 子进程在，但很久没产出 | pid 活着，但 mtime 超过阈值（默认 15 分钟） |
+| ☠ orphaned | **僵尸**：板上写着 running，但派发它的 run 已经不在了 | run.lock 里的 pid 已死 |
+| ○ gone | 子进程已经不在了，run 稍后会接手 | pid 文件里的 pid 已死 |
+
+`orphaned` 尤其重要：run 被 kill 后，Spec 会永远停在 `running` 没人管——今天就是这么发现的。收尸用 `rearm`。
+
+## 8.3 怎么给正在跑的 Agent 递话
+
+无人值守的 Agent 没有别的输入通道：
+
+- stdin 在启动时就用完了（piped stdin 只拼进**第一个** prompt）；
+- steering / follow-up 队列只能走 **RPC 模式**（`--mode rpc`），而夜里跑的是 `-p --mode text`；
+- 扩展被关了（`-ne`），所以连 xfer 这样的外部通道都没有。
+
+**它能读到的只有仓库和 bash 输出。** 所以 `nudge` 就写进它读得到的地方：
+
+- `nudge <id> <text>` 把文字追加到 `inbox/<id>.md`；
+- 实现 Agent 的 prompt 里写明「每轮动手前先读一次这个文件（不存在就跳过）」；
+- 于是下一轮工具调用时，交代就进对话了。
+
+`rearm` 之后，Agent 下一轮会同时看到：新的基线、上一轮的验证理由、inbox 里的临时交代。
+
+## 8.4 `review --drop` 的护栏
 
 `git reset --hard <baseline>` 会丢掉 `baseline..HEAD` 里的**所有**提交——包括别的会话在同一工作区里产生的。所以：
 

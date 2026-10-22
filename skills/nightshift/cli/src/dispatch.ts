@@ -90,6 +90,8 @@ export interface SpawnOptions {
   timeoutMs: number;
   stdin?: string;
   onStdout?: (chunk: string) => void;
+  /** 子进程起来后的回调（拿 pid）——用于落 pid 文件，好让 `ns status` / `ns stop` 能找到它。 */
+  onSpawn?: (pid: number) => void;
 }
 
 export function runChild(opts: SpawnOptions): Promise<ChildResult> {
@@ -104,6 +106,7 @@ export function runChild(opts: SpawnOptions): Promise<ChildResult> {
       reject(new DispatchError(`failed to spawn ${opts.bin}: ${String(e)}`));
       return;
     }
+    if (opts.onSpawn && child.pid !== undefined) opts.onSpawn(child.pid);
     if (opts.stdin !== undefined && child.stdin) {
       child.stdin.on("error", () => {});
       child.stdin.end(opts.stdin);

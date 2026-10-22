@@ -116,8 +116,11 @@ ns add --dir /abs/path \
 ```sh
 ns run --until 07:00            # 夜间排水；队列空或窗口尽即退出，可反复由 cron 调用
 ns report                       # 早上第一眼看这个
+ns status                       # 夜里瞄一眼：哪些活着 / 卡住 / 成了僵尸
 ns show ns-0007                 # 单条详情 + 下一步命令
 ns rearm ns-0007                # 换个基线重跑：基线重锚当前 HEAD，上一轮理由会带上
+ns nudge ns-0007 "基线变了"      # 给正在跑的那条递句话（它下轮动手前会读到）
+ns stop ns-0007                 # 不想让它跑下去了
 ns review ns-0007 --drop        # 丢弃该条提交，回到 baseline
 ```
 

@@ -30,6 +30,8 @@ node 查找顺序：`$NIGHTSHIFT_NODE` → `~/.local/share/mise/shims/node` → 
 │   ├── <id>.md                # 已结束的 Spec（含 verdict 元数据）
 │   └── report.txt             # 该夜 Report 快照
 ├── runs/<run-id>/run.json     # 每次 Run 的派发记录
+│   └── <id>.pid               # 该次派发的子进程 pid（status/stop 用）
+├── inbox/<id>.md              # 人的临时交代（Agent 每轮动手前读一次）
 ├── sessions/<id>/             # pi --session-dir，早上可 pi -r 回看
 └── run.lock                   # 单实例锁
 ```
@@ -131,6 +133,9 @@ draft 永不被派发。
 | `report [--date YYYY-MM-DD] [--list-dates]` | 检查面 | 只读 |
 | `review <id> [--drop]` | 详情；`--drop` 才 `git reset --hard <baseline>`，并放行被它挡住的下一条。基线悬空 ⇒ 拒绝；reset 前备份 HEAD 到 `refs/nightshift/backup/<id>` 并列出将丢弃的提交 | 仅 `--drop` |
 | `rearm <id>` | 重新装填：`ready` + 基线重锚当前 HEAD + **保留上一轮理由**（下一轮作为 feedback）。归档件也能搬回板上 | 板 |
+| `status [--stall MIN]` | 板子活性：● alive / ◐ stalled / ☠ orphaned（run 没了但板上还是 running）/ ○ gone | 只读 |
+| `nudge <id> <text>` | 给正在跑的 Agent 递一句话（追加到 `inbox/<id>.md`） | inbox |
+| `stop <id> \| --all` | 杀掉在跑的子进程；`--all` 连 run 一起停并释放锁 | 进程 + 锁 |
 | `queue [--dir P]` | 同目录串行队列（`ready` / `blocked`），按 `order` 秩排序 | 只读 |
 | `queue --move <id> [--before ID \| --after ID]` | 在同目录队列里挪位置（不改变 `status`） | 板 |
 | `unblock <id>` | `blocked → ready`（只这一条） | 板 |

@@ -12,6 +12,7 @@ import {
   type Config,
 } from "./board.ts";
 import { buildImplArgs, buildVerifyArgs, DispatchError, parseReviewHint, parseVerdict, runChild } from "./dispatch.ts";
+import { inboxPath, runDir } from "./board.ts";
 import { countCommits, isAncestor, preflight, residualCount, headOf, shortSha, updateRef } from "./git.ts";
 import { implPrompt, verifyPrompt } from "./prompt.ts";
 import { blockQueue, compareQueueOrder, isBlockReason, orderedSpecs, releaseBlockedBy } from "./queue.ts";
@@ -88,10 +89,17 @@ interface Job {
 
 const MAX_ATTEMPTS = 2;
 
-async function runImpl(spec: Spec, cfg: Config, base: string, attempt: number, feedback: string | null): Promise<{ hint: string | null }> {
+async function runImpl(
+  spec: Spec,
+  cfg: Config,
+  base: string,
+  attempt: number,
+  feedback: string | null,
+  runId: string,
+): Promise<{ hint: string | null }> {
   let output = "";
   const baseline = spec.baseline;
-  const prompt = implPrompt({ spec, baseline, attempt, feedback });
+  const prompt = implPrompt({ spec, baseline, attempt, feedback, inbox: inboxPath(spec.id, base) });
   const args = buildImplArgs(spec, cfg, base);
   const res = await runChild({
     bin: cfg.piBin,
@@ -99,6 +107,7 @@ async function runImpl(spec: Spec, cfg: Config, base: string, attempt: number, f
     cwd: spec.dir,
     timeoutMs: cfg.timeoutSec * 1000,
     stdin: prompt,
+    onSpawn: (pid) => writePidFile(base, runId, spec.id, pid, "impl"),
     onStdout: (chunk) => {
       output += chunk;
     },
@@ -123,7 +132,12 @@ async function runImpl(spec: Spec, cfg: Config, base: string, attempt: number, f
   return { hint };
 }
 
-async function runVerify(spec: Spec, cfg: Config): Promise<{ verdict: string; reason: string | null }> {
+async function runVerify(
+  spec: Spec,
+  cfg: Config,
+  base: string,
+  runId: string,
+): Promise<{ verdict: string; reason: string | null }> {
   const head = headOf(spec.dir);
   const prompt = verifyPrompt({ spec, baseline: spec.baseline, head });
   const args = buildVerifyArgs(spec, cfg);
@@ -133,6 +147,7 @@ async function runVerify(spec: Spec, cfg: Config): Promise<{ verdict: string; re
     cwd: spec.dir,
     timeoutMs: cfg.verifyTimeoutSec * 1000,
     stdin: prompt,
+    onSpawn: (pid) => writePidFile(base, runId, spec.id, pid, "verify"),
   });
   if (res.timedOut) return { verdict: "verify-error", reason: `verifier timed out after ${cfg.verifyTimeoutSec}s` };
   return parseVerdict(res.stdout, res.exitCode, { signal: res.signal, stderr: res.stderr });
@@ -140,6 +155,16 @@ async function runVerify(spec: Spec, cfg: Config): Promise<{ verdict: string; re
 
 function persist(spec: Spec, base: string): void {
   writeSpec(spec, base);
+}
+
+/** 落 pid 文件：`ns status` 看活性、`ns stop` 找得到要杀的那个进程。 */
+function writePidFile(base: string, runId: string, id: string, pid: number, phase: string): void {
+  const dir = runDir(runId, base);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(
+    path.join(dir, `${id}.pid`),
+    JSON.stringify({ pid, phase, startedAt: new Date().toISOString() }, null, 2),
+  );
 }
 
 /**
@@ -163,7 +188,7 @@ function voidVerdict(spec: Spec, base: string, log: (s: string) => void, when: s
   return spec;
 }
 
-async function processSpec(job: Job, cfg: Config, base: string, log: (s: string) => void): Promise<Spec> {
+async function processSpec(job: Job, cfg: Config, base: string, log: (s: string) => void, runId: string): Promise<Spec> {
   const spec = job.spec;
   const pf = preflight(spec.dir);
   if (!pf.ok) {
@@ -194,7 +219,7 @@ async function processSpec(job: Job, cfg: Config, base: string, log: (s: string)
     spec.attempts = lifetimeAttempts + attempt + 1;
     persist(spec, base);
     try {
-      const impl = await runImpl(spec, cfg, base, attempt, feedback);
+      const impl = await runImpl(spec, cfg, base, attempt, feedback, runId);
       if (impl.hint !== null) hint = impl.hint;
     } catch (e) {
       spec.status = "verify-error";
@@ -210,7 +235,7 @@ async function processSpec(job: Job, cfg: Config, base: string, log: (s: string)
     if (!isAncestor(spec.dir, spec.baseline ?? pf.baseline)) {
       return voidVerdict(spec, base, log, "实现过程中");
     }
-    const v = await runVerify(spec, cfg);
+    const v = await runVerify(spec, cfg, base, runId);
     verdict = v.verdict;
     reason = v.reason;
     log(`${spec.id} verify ${verdict}${reason ? ` — ${reason}` : ""}`);
@@ -280,7 +305,7 @@ export async function runNightshift(opts: RunOptions): Promise<{ archivedTo: str
         if (slots <= 0) break;
         for (const key of freeKeys.slice(0, slots)) {
           const job = queues.get(key)!.shift()!;
-          const p = processSpec(job, cfg, base, log).then((spec) => {
+          const p = processSpec(job, cfg, base, log, runId).then((spec) => {
             active.delete(key);
             finished.push(spec);
             settleQueue(key, spec);

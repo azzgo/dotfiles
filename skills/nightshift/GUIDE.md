@@ -93,6 +93,9 @@ nightshift report
 | 列出所有归档日期 | `nightshift report --list-dates` |
 | 丢弃某条的提交（并放行同目录后续） | `nightshift review ns-0007 --drop` |
 | 某条判错了，想换个基线重跑 | `nightshift rearm ns-0007`（基线重锚到当前 HEAD，上一轮理由会带上） |
+| 夜里的任务现在什么状态 | `nightshift status`（● 活着 / ◐ 很久没动静 / ☠ 成了僵尸） |
+| 给正在跑的任务递句话 | `nightshift nudge ns-0007 "基线变了，从 abc123 继续"` |
+| 不想让它继续跑了 | `nightshift stop ns-0007`（`--all` 连整个 run 一起停） |
 | 看同目录串行队列 | `nightshift queue [--dir /abs/path]`（左边那个数字就是队列位次）|
 | 放行被某条挡住的下一条 | `nightshift release ns-0007` |
 | 只放行某一条 blocked | `nightshift unblock ns-0008` |
