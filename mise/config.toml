@@ -16,6 +16,7 @@ jq = "latest"
 lazygit = "latest"
 starship = "latest"
 tmux = "latest"
+fnox = "latest"
 
 [settings]
 log_level = "warn"
