@@ -1,7 +1,8 @@
 # 0015-compaction-summary-as-pointer
 
-Status: accepted. Supersedes [ADR 0008](0008-track-sourced-compaction.md). Refined by [ADR 0020](0020-compaction-summary-handoff.md) — 其中两条决定被推翻：「待压消息全量交给模型」与「下一步意图只来自被丢弃的旧窗口」。
-压缩摘要从「Track 的全文」改为「模型写的主题 / 下一步意图 / 文件注释 + 扩展写的原始记录指针」；Track 退出摘要来源，回归手动维护。触发这次改动的是一个新场景：**单会话连续运行的常在线 agent**。在这种场景下 ADR 0008 的两个隐含前提都不成立——会话很长，Track 只增不减且无人维护；而压缩的目的不是"保住这段对话"，而是"让压缩后的 agent 知道自己在哪、下一步干什么、缺什么可以去哪里找"。
+Status: accepted — superseded in part by [ADR 0020](0020-compaction-summary-handoff.md). Supersedes [ADR 0008](0008-track-sourced-compaction.md).
+
+本 ADR 的九条决定里，ADR 0020 **推翻一条**（「待压消息全量交给模型」）、**修订一条**（「摘要由四块组成」→ 五块，连带文件清单从中间挪到末尾）、**补上一条约束**（下一步意图必须与压缩后仍留在上下文里的保留窗口一致）、**细化一条**（失败兜底不再只是一句「指路」）；其余仍然有效——模型写主题 / 下一步 / 文件注释、文件路径机械提取、指针是扩展写的常量、Track 回归手动维护、overflow 走快路径。被修订的四处已在正文里就地标注。
 
 ## Context
 
@@ -19,7 +20,7 @@ Status: accepted. Supersedes [ADR 0008](0008-track-sourced-compaction.md). Refin
 
 **摘要由四块组成，其中三块模型写、一块扩展写。**
 
-| 块 | 谁写 | 更新语义 | 上限 |
+> **已被 ADR 0020 修订**：现在是五块——多了一块「请求线」（最近 5 条用户请求，由扩展机械写入），扩展块因此变成两块（请求线 + 指针），模型块仍是主题 / 下一步 / 文件注释三块。块的排布改为「请求线 → 下一步 → 主题 → 旧记录 → 文件」：机械的文件清单从中间挪到末尾，理由是它可能已经过时，不该挤在 orientation 中间。
 |---|---|---|---|
 | 主题 | 模型 | 可整条重写 | ≤ 5 条，一行一条 |
 | 下一步意图 | 模型 | **整条替换** | 1 条 |
@@ -36,12 +37,15 @@ Status: accepted. Supersedes [ADR 0008](0008-track-sourced-compaction.md). Refin
 
 **待压消息全量交给模型，不再截尾。** ADR 0008 用 `tailLines(..., 200)`，会漏掉密集工具调用下的中段决策。有了指针之后，漏记的代价从"永久丢失"降级为"多花一次 grep"。
 
+> **已被 ADR 0020 推翻**：改为喂**骨架**（逐条一行的机械摘要），不再喂原文。实测同一会话 767,619 token → 19,876 token。ADR 0015 当初担心的「漏掉中段决策」由骨架里的 assistant 文本行与请求线兜住——决策出现在这两处，不在 grep 输出里。
 **失败兜底从"嵌入 200 行对话尾部"降为"指路"。** 解析失败或模型无可用输出时，摘要正文只写一句"本次压缩未生成摘要，原始记录在 `<jsonl 路径>`"。兜底文本从 200 行降到 30 token，且信息没有丢——这正是指针存在的意义。
 
+> **已被 ADR 0020 细化**：兜底不再是「只有一句指路」，而是**机械兜底摘要**（请求线 + 文件清单 + 指针），失败路径也带 orientation。解析失败时先做一次 repair 重试，仍失败才落到兜底。术语随之从 **Compaction Failure Record** 更名为 **Compaction Fallback**。
 **overflow 走快路径，不调模型。** 窗口已经超限时 Pi 会重试被中断的那轮（`willRetry`），此时花时间做摘要是纯粹的延迟。而 ADR 0008 的快路径要"读 Track 返回"，现在没有 Track 可读了——所以快路径改为**只写机械信息**（文件列表 + 指针 + 一句"先回到旧记录确认自己在做什么"）。这比旧方案更好：往一个已经爆掉的窗口里塞 Track 是净损失，而这份快路径摘要只有十几行。
 
 **摘要提示词是本次改动的全部实现。** 摘要文本由扩展拼装：模型的三块排在首尾，机械的文件列表夹在中间（防止中间的长列表吃掉模型对首尾的注意力）。
 
+> **已被 ADR 0020 修订**：模型的三块不再"首尾夹住"文件清单——文件清单整体挪到最后，取而代之的是首位的请求线。
 ## Durable 上的落地
 压缩机制的实现仍留在 `pi-coding-agent` 扩展层，但**契约按两层都能接受的形状定**：摘要是"模型写的结构化字段 + 扩展写的指针"，不依赖同步阻塞的 `session_before_compact`，也不依赖任何 coding-agent 特有的文件布局。迁到 durable 时，指针那部分会变成平台职责（storage 本来就保留旧消息），模型写的三块不变。
 
@@ -56,7 +60,6 @@ Status: accepted. Supersedes [ADR 0008](0008-track-sourced-compaction.md). Refin
 ## Consequences
 
 - 压缩机制已从 `track` 扩展拆到新的 `compaction` 扩展（`pi/agent/extensions/compaction/`）；失败日志从 `.pi/track/compaction.log` 迁到 `.pi/compaction/failures.log`。ADR 0008 的 compaction 路径已重写。**它最贵的那条约束仍然成立且必须继承**：`ExtensionRunner.emit()` 吞掉 handler 异常，把 `undefined` 当作"没有扩展结果"并静默回落到内置摘要。所以新实现仍然永不 throw、永不返回 `undefined`（`compaction/compaction.ts` 的 `failureSummary`）。
-- `CONTEXT.md` 里 **Track-Sourced Compaction**、**Compaction Reconcile**、**Compaction Failure Record** 三个词条失效，由 **Compaction Summary** / **Retrieval Handle** / **Next Intent** 取代；**Track** 的定义要改（不再是摘要来源）。
-- `track` 扩展的 README 与代码在实现之前不动——ADR 记录决定，不记录尚未存在的实现。
+- `CONTEXT.md` 里 **Track-Sourced Compaction**、**Compaction Reconcile**、**Compaction Failure Record** 三个词条失效，由 **Compaction Summary** / **Retrieval Handle** / **Next Intent** 取代；**Track** 的定义要改（不再是摘要来源）。ADR 0020 又把 **Compaction Failure Record** 更名为 **Compaction Fallback**，并新增 **Compaction Skeleton** / **Request Line** / **Compaction Notice** / **Summary Model** 四条。
 - 摘要不再随会话长度增长，之前那个"每次压缩都把整个 Track 重新喂一遍模型"的成本问题自然消失。
 - 模型获得了捞回权，因此**指针必须写清楚**：路径写错或漏写，整套机制静默空转，而且没有任何报错。

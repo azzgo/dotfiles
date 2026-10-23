@@ -1,6 +1,6 @@
 /**
  * Pure parsing of the Compaction Summary model output
- * (docs/adr/0015-compaction-summary-as-pointer.md, refined by ADR 0020).
+ * (docs/adr/0015-compaction-summary-as-pointer.md, superseded in part by ADR 0020).
  *
  * Deliberately free of any Pi runtime import so it stays unit-testable without
  * the pi package present, and so a malformed model response can never throw

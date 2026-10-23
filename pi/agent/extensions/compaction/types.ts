@@ -1,6 +1,6 @@
 import path from "node:path";
 
-/** Append-only log of failed Compaction Summary calls (see ADR 0015). */
+/** Append-only log of Compaction Summary failures and fallbacks (see ADR 0020). */
 export const DEFAULT_CONFIG_DIR_NAME = ".pi";
 export const COMPACTION_LOG_FILE = "failures.log";
 

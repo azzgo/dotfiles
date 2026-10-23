@@ -1,7 +1,6 @@
 # 0020-compaction-summary-handoff
 
-Status: accepted. Refines [ADR 0015](0015-compaction-summary-as-pointer.md) — 推翻其中两条决定，其余保留。
-
+Status: accepted — supersedes [ADR 0015](0015-compaction-summary-as-pointer.md) **in part**：推翻一条决定（待压消息全量交给模型）、修订一条决定（四块组成 → 五块）、补上一条约束（下一步意图必须与保留窗口一致）、细化一条决定（失败兜底不再是「只有一句指路」）；ADR 0015 的其余决定继续有效。经由 0015 继承对 [ADR 0008](0008-track-sourced-compaction.md) 的取代关系。
 ADR 0015 把压缩摘要定义成「模型写的主题 / 下一步意图 / 文件注释 + 扩展写的原始记录指针」，并且**把待压消息全量交给模型**。用真实会话量过一次之后，这个形状有两处站不住：
 
 - **摘要调用喂了 767,619 token**（被压缩窗口 3,070,474 字符，其中 67% 是工具输出），`cacheRetention: "none"`，是整个会话最贵的一次请求；而它产出的 6,198 字符摘要里，**81% 是文件清单**（33 个「改过」+ 53 个「读过」，其中 8 个是早已消失的 `/var/folders/...` 临时文件）。
@@ -40,6 +39,6 @@ ADR 0015 把压缩摘要定义成「模型写的主题 / 下一步意图 / 文�
 ## Consequences
 
 - `pi/agent/extensions/compaction/` 新增 `skeleton.ts`（骨架与请求线）、`session-grep.ts`（transcript 检索）、`model-config.ts`（摘要模型配置）；`prompts.ts` 改为渲染新形状，`fileops.ts` 加去噪与上限，`compaction.ts` 负责 repair / 兜底 / usage / stats。
-- ADR 0015 的「待压消息全量交给模型」与「下一步意图只来自被丢弃的旧窗口」两条不再成立；其余（模型写三块、扩展写指针、overflow 快路径、失败带在上下文里）继续有效。
+- ADR 0015 的「待压消息全量交给模型」不再成立，改为骨架；它的四块摘要变为五块（多一块请求线，文件清单挪到末尾）；失败兜底从「只有一句指路」细化为机械兜底摘要；下一步意图多了一条约束（必须与保留窗口一致）。其余（模型写主题 / 下一步 / 文件注释三块、扩展写指针、overflow 快路径、失败带在上下文里）继续有效。
 - 摘要的**长度不再是会话长度的函数**，而是固定的几块：请求线（≤5 条）、下一步（1 条）、主题（≤3 条）、文件清单（≤30 行）、旧记录（1 行）。
-- `CONTEXT.md` 的 Compaction Summary / Next Intent / Retrieval Handle 三条随之改写，新增 Compaction Skeleton / Request Line / Compaction Fallback / Compaction Notice / Summary Model。
+- `CONTEXT.md` 的 Compaction Summary / Next Intent / Retrieval Handle 三条随之改写，Compaction Failure Record 更名为 Compaction Fallback，新增 Compaction Skeleton / Request Line / Compaction Notice / Summary Model。

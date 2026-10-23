@@ -1,6 +1,6 @@
 /**
  * Mechanical file-operation extraction for the Compaction Summary
- * (docs/adr/0015-compaction-summary-as-pointer.md, refined by ADR 0020).
+ * (docs/adr/0015-compaction-summary-as-pointer.md, superseded in part by ADR 0020).
  *
  * The model never lists files — it only annotates the paths found here. Letting
  * it recall paths is the one failure this design can avoid outright.

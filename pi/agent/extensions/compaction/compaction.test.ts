@@ -8,7 +8,7 @@ import { pathToFileURL } from "node:url";
 import type { SessionEntry } from "@earendil-works/pi-coding-agent";
 
 /**
- * Integration tests for the Compaction Summary path (ADR 0015, refined by ADR 0020).
+ * Integration tests for the Compaction Summary path (ADR 0015, superseded in part by ADR 0020).
  *
  * These exercise the real `buildCompactionSummary`, so the Pi runtime values it
  * imports are stubbed via a loader hook (pattern from ../../xfer/commands.test.ts).

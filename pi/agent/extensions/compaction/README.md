@@ -1,7 +1,7 @@
 # compaction
 
 Pi's compaction summary as an **orientation plus a retrieval handle** — see
-`docs/adr/0015-compaction-summary-as-pointer.md`, refined by
+`docs/adr/0015-compaction-summary-as-pointer.md`, superseded in part by
 `docs/adr/0020-compaction-summary-handoff.md`. Built-in transcript
 summarization never runs.
 
@@ -13,7 +13,7 @@ look for the rest.
 
 ## Shape
 
-Five blocks. Three written by the model, two by the extension:
+Five blocks. The model writes the next intent and the topics (and only annotates the file list); the extension writes the request line, the retrieval handle and the file lists themselves:
 
 | Block | Written by | Update |
 |---|---|---|

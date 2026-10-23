@@ -14,7 +14,7 @@ import { compactionFailureFile, compactionStatsFile, REQUEST_LINE_LIMIT } from "
 
 /**
  * Compaction Summary as pointer + handoff (docs/adr/0015-compaction-summary-as-pointer.md,
- * refined by docs/adr/0020-compaction-summary-handoff.md).
+ * superseded in part by docs/adr/0020-compaction-summary-handoff.md).
  *
  * The summary is an orientation, not a replacement for history: the model writes
  * topics / next intent / file notes, the extension contributes the mechanical
