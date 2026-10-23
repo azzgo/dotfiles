@@ -1,12 +1,17 @@
 /**
  * Mechanical file-operation extraction for the Compaction Summary
- * (docs/adr/0015-compaction-summary-as-pointer.md).
+ * (docs/adr/0015-compaction-summary-as-pointer.md, refined by ADR 0020).
  *
  * The model never lists files — it only annotates the paths found here. Letting
  * it recall paths is the one failure this design can avoid outright.
  *
+ * ADR 0020 caps and de-noises the lists: the measured session produced 86 paths
+ * (81% of the summary), eight of them temp files that no longer exist.
+ *
  * Pure and Pi-import-free so it stays unit-testable.
  */
+
+import { MODIFIED_LIST_LIMIT, READ_LIST_LIMIT } from "./types";
 
 const READ_TOOLS = new Set(["read", "view"]);
 const WRITE_TOOLS = new Set([
@@ -18,6 +23,16 @@ const WRITE_TOOLS = new Set([
 	"apply_patch",
 	"notebook_edit",
 ]);
+
+/** Paths that carry no lasting information: temp files, tool scratch dirs, track scratchpads. */
+const NOISE_PATH_PATTERNS: RegExp[] = [
+	/^\/var\/folders\//,
+	/^\/private\/var\/folders\//,
+	/^\/tmp\//,
+	/^\/private\/tmp\//,
+	/\/\.pi\/track\//,
+	/\/\.pig\/track\//,
+];
 
 export type FileOps = {
 	read: string[];
@@ -58,10 +73,24 @@ export function collectFileOps(messages: readonly unknown[]): FileOps {
 	for (const message of messages) {
 		collectFromMessage(message, record);
 	}
-	// A file read before it was edited is only a read up to that point; once it
+	// A file read before it is edited is only a read up to that point; once it
 	// appears in `modified` the read record is noise.
 	const touched = new Set(modified);
-	return { read: read.filter((filePath) => !touched.has(filePath)), modified };
+	return {
+		read: cap(read.filter((filePath) => !touched.has(filePath) && !isNoisePath(filePath)), READ_LIST_LIMIT),
+		modified: cap(modified.filter((filePath) => !isNoisePath(filePath)), MODIFIED_LIST_LIMIT),
+	};
+}
+
+/** Temp files and scratch dirs never survive the session; listing them is noise. */
+export function isNoisePath(filePath: string): boolean {
+	return NOISE_PATH_PATTERNS.some((pattern) => pattern.test(filePath));
+}
+
+/** Keep the most recent entries — the recent ones are the ones still in play. */
+function cap(paths: string[], limit: number): string[] {
+	if (paths.length <= limit) return paths;
+	return paths.slice(paths.length - limit);
 }
 
 type ToolRecorder = (toolName: unknown, args: unknown) => void;

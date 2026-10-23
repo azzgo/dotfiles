@@ -1,13 +1,13 @@
 /**
  * Pure parsing of the Compaction Summary model output
- * (docs/adr/0015-compaction-summary-as-pointer.md).
+ * (docs/adr/0015-compaction-summary-as-pointer.md, refined by ADR 0020).
  *
  * Deliberately free of any Pi runtime import so it stays unit-testable without
  * the pi package present, and so a malformed model response can never throw
  * into the compaction path.
  */
 
-export const MAX_TOPICS = 5;
+export const MAX_TOPICS = 3;
 
 export type FileNote = {
 	path: string;
@@ -23,9 +23,9 @@ export type CompactionSummaryParts = {
 
 /**
  * Parse the summary model call's JSON output. Returns undefined only when
- * nothing usable came back — callers treat that as a failure and emit the
- * in-band failure record. File notes alone are not a summary: the model
- * echoing back the file list it was given is not an orientation.
+ * nothing usable came back — callers treat that as a failure and fall back to
+ * the mechanical Compaction Fallback. File notes alone are not a summary: the
+ * model echoing back the file list it was given is not an orientation.
  */
 export function parseCompactionSummary(raw: string): CompactionSummaryParts | undefined {
 	const json = extractJsonObject(raw);
