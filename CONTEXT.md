@@ -13,21 +13,36 @@ The shared, reset-able working-memory scratchpad managed by the standalone `trac
 _Avoid_: compaction source, goal history, permanent log, per-run notebook
 
 **Compaction Summary**:
-The text that replaces a compacted span of the conversation. It carries what the agent needs to keep going — topics, next intent, annotated file references — plus a retrieval handle pointing at the untouched session transcript. It is an orientation, not a replacement for history.
+The text that replaces a compacted span of the conversation. It carries what the agent needs to keep going — the request line, next intent, topics, annotated file references — plus a retrieval handle pointing at the untouched session transcript. It is an orientation, not a replacement for history, and its length is fixed rather than a function of session length.
 _Avoid_: Track dump, transcript paraphrase, session summary
 
 **Retrieval Handle**:
-The extension-written pointer inside a Compaction Summary that names the session transcript file on disk and how to grep it. It is why a summary may drop detail: whatever is missing can be fetched back from the transcript.
+The extension-written pointer inside a Compaction Summary that names the session transcript file on disk and gives a command that fetches from it. It is why a summary may drop detail: whatever is missing can be fetched back from the transcript.
 _Avoid_: pointer, index reference, file list
 
 **Next Intent**:
-The single forward-looking statement in a Compaction Summary — what the agent does next and, when context is missing, what it must go recover first. Replaced wholesale on every compaction, never appended to.
+The single forward-looking statement in a Compaction Summary — what the agent does next and, when context is missing, what it must go recover first. It is written against the kept window as well as the skeleton, so it never describes a state older than the session it summarises. Replaced wholesale on every compaction, never appended to.
 _Avoid_: next steps list, TODO, action items
 
-**Compaction Failure Record**:
-The in-band note written into a Compaction Summary when no usable summary can be produced, carrying the retrieval handle so the compacted span stays reachable. Recorded in-band because Pi swallows extension exceptions, so an unrecorded failure is indistinguishable from success.
-_Avoid_: silent fallback, built-in compaction fallback, retry
+**Compaction Fallback**:
+The mechanical summary written in-band when no usable model summary can be produced — request line, file lists and the retrieval handle. Recorded in-band because Pi swallows extension exceptions, so an unrecorded failure is indistinguishable from success.
+_Avoid_: failure record, silent fallback, built-in compaction fallback
 
+**Compaction Skeleton**:
+The one-line-per-message digest of a compacted span that the summary model reads instead of the raw transcript. Mechanical, bounded, and never the conversation itself.
+_Avoid_: transcript, summary, context window
+
+**Request Line**:
+The recent user requests preserved inside a Compaction Summary. The intent of a session is scarce and short, so it is kept verbatim while the rest of the span is summarized.
+_Avoid_: recent window, conversation tail, prompt history
+
+**Compaction Notice**:
+The one-time hint that the context window is filling up. Compacting stays a human decision; the notice never compacts by itself.
+_Avoid_: auto compact, threshold, warning banner
+
+**Summary Model**:
+The model that writes a Compaction Summary. Configured separately from the session model, and never hardcoded.
+_Avoid_: compaction model, default model
 **Project**:
 The repository scope that owns the local automation workspaces — the Workflow storage (`.pi/workflows/`), the Track scratchpad (`.pi/track/`), and a Wayfinder workspace. Many non-terminal Runs may coexist in a Project; nothing is exclusive.
 _Avoid_: workspace (see Wayfinder Workspace), map, global account

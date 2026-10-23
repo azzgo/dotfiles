@@ -1,7 +1,6 @@
 # 0015-compaction-summary-as-pointer
 
-Status: accepted. Supersedes [ADR 0008](0008-track-sourced-compaction.md).
-
+Status: accepted. Supersedes [ADR 0008](0008-track-sourced-compaction.md). Refined by [ADR 0020](0020-compaction-summary-handoff.md) — 其中两条决定被推翻：「待压消息全量交给模型」与「下一步意图只来自被丢弃的旧窗口」。
 压缩摘要从「Track 的全文」改为「模型写的主题 / 下一步意图 / 文件注释 + 扩展写的原始记录指针」；Track 退出摘要来源，回归手动维护。触发这次改动的是一个新场景：**单会话连续运行的常在线 agent**。在这种场景下 ADR 0008 的两个隐含前提都不成立——会话很长，Track 只增不减且无人维护；而压缩的目的不是"保住这段对话"，而是"让压缩后的 agent 知道自己在哪、下一步干什么、缺什么可以去哪里找"。
 
 ## Context

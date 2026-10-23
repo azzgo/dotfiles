@@ -1,7 +1,8 @@
 # compaction
 
 Pi's compaction summary as an **orientation plus a retrieval handle** — see
-`docs/adr/0015-compaction-summary-as-pointer.md`. Built-in transcript
+`docs/adr/0015-compaction-summary-as-pointer.md`, refined by
+`docs/adr/0020-compaction-summary-handoff.md`. Built-in transcript
 summarization never runs.
 
 The summary is not a replacement for history. Compaction drops raw messages out
@@ -10,71 +11,91 @@ everything, including the pre-compaction span. So the summary only has to say
 where the agent is, what it does next, which files it touched, and where to go
 look for the rest.
 
-Four blocks — three written by the model, one by the extension:
+## Shape
+
+Five blocks. Three written by the model, two by the extension:
 
 | Block | Written by | Update |
 |---|---|---|
-| 主题 topics | model | rewritten wholesale, ≤ 5 |
-| 下一步 nextIntent | model | **replaced** wholesale, 1 entry |
-| file notes | model | annotated onto mechanically extracted paths |
+| 请求线 request line | extension | mechanical, last 5 user requests |
+| 下一步 next intent | model | **replaced** wholesale, 1 entry |
+| 主题 topics | model | rewritten wholesale, ≤ 3 |
 | 旧记录 retrieval handle | extension | constant (~30 tokens) |
+| 文件 file lists | extension | mechanical, ≤ 20 modified / ≤ 10 read |
+
+The file lists sit last: they are mechanical fact that may already be stale, and
+they must not crowd out the orientation.
 
 ## Flow
 
 On `session_before_compact` (`runtime.ts`):
 
-1. **Extract file operations mechanically** from the tool calls in
-   `preparation.messagesToSummarize` — `readFiles` / `modifiedFiles`, the same
-   extraction built-in compaction does (`fileops.ts`). The model never lists
-   paths; it only annotates paths it was given. A file read before being edited
-   counts as modified only.
-2. **`reason: "overflow"` — fast path.** No model call: the window is already
-   blown and Pi will retry the aborted turn. The summary is mechanical
-   information only (file lists + retrieval handle), which is deliberately tiny.
-3. **Otherwise — one tool-less `modelRegistry.complete()` call** (`compaction.ts`)
-   with the previous summary, the full messages being summarized, the mechanical
-   file lists, and the session transcript path. It returns JSON:
-   `{topics, nextIntent, restore, fileNotes}`. `restore` is optional and only
-   used when the model knows which earlier context is missing.
-4. **Assemble** the four blocks into the summary text (`prompts.ts`). Model-written
-   blocks come first so the mechanical file list cannot crowd them out.
+1. **Build the Compaction Skeleton** (`skeleton.ts`) — one line per message of
+   the span being dropped, instead of the raw transcript. The measured session
+   fed 767,619 tokens to the summary model; the skeleton brings that to
+   19,876.
+2. **Rebuild the kept window** — `branchEntries` + `sessionEntryToContextMessages()`
+   recover the turns that stay in context after the compaction. The summary
+   model sees them too, so its next intent cannot predate the session it
+   summarises.
+3. **Extract file operations mechanically** from the tool calls
+   (`fileops.ts`). The model never lists paths; it only annotates paths it was
+   given. Temp paths and track scratchpads are filtered out.
+4. **`reason: "overflow"` — fast path.** No model call: the window is already
+   blown and Pi will retry the aborted turn.
+5. **Otherwise — one tool-less `modelRegistry.complete()` call** (`compaction.ts`)
+   with the skeleton, the kept window, the request line and the file lists. It
+   returns JSON: `{topics, nextIntent, restore, fileNotes}`.
+6. **Unparseable output → one repair retry**, then the mechanical
+   **Compaction Fallback** (request line + file lists + handle). The failure path
+   always has orientation.
 
 `firstKeptEntryId` passes through unchanged, so recent raw turns survive
 alongside the summary.
 
-## Why the model never writes the file list
+## Summary model
 
-Letting the model recall paths is the one failure this design can avoid outright:
-it would silently drop a file the agent is still relying on, and nothing
-downstream would notice. `fileops.ts` also reads `nestedCalls` on tool results,
-so files written by a codemode script are counted.
+The model that writes the summary is configurable and never hardcoded:
 
-## The retrieval handle
+```bash
+/compaction-model                                   # show the current setup
+/compaction-model magpie/nas/deepseek/deepseek-flash
+/compaction-model reset                             # fall back to the session model
+```
 
-`ctx.sessionManager.getSessionFile()` names the transcript, and the summary says
-to grep it. That is what makes a pointer-style summary safe, and it is why the
-summary no longer grows with session length — the thing that made ADR 0008's
-Track-as-summary approach expensive.
+The choice lives in `compaction.json` next to the agent dir
+(`~/.pi/agent/compaction.json`, `~/.pig/agent/compaction.json` under PiG), so it
+survives reloads and is per-machine. With nothing configured the session model
+writes the summary and the extension records a note in `failures.log`.
 
-## Why failures are recorded in-band
+## Retrieving what was dropped
 
-Pi's `ExtensionRunner.emit()` catches every handler exception and only logs it;
-`agent-session.js` then treats the `undefined` result exactly like "no extension
-result" and runs `_runDefaultCompaction()`. **Returning `undefined` and throwing
-are the same thing** — both silently reinstate built-in summarization.
+The summary carries a runnable command, and the extension registers a
+codemode-only `session_grep` tool:
 
-So the handler never throws. Unusable model output returns a **Compaction
-Failure Record** that names the reason and points at the transcript — nothing is
-actually lost, so the record does not need to embed the conversation any more.
-Failures also raise `ui.notify(..., "error")` and append to
-`.pi/compaction/failures.log` (`.pig/compaction/failures.log` under PiG — the
-directory follows the SDK's `CONFIG_DIR_NAME`).
+```bash
+grep -n '"role":"user"' "<session file>" | tail -20
+```
 
-| Where to look | What you get |
+`session_grep` takes a query (text or regex), an optional `role`
+(`user` / `assistant` / `toolResult`), an optional `since` / `until` ISO bound
+and an optional `limit`. It is registered with `exposure: "codemode"`, so it
+never enters the tool schema of the main conversation.
+
+## Compaction Notice
+
+When context usage crosses 60%, the extension notifies once per session that
+`/compact` may be worth running. It never compacts by itself — the automatic
+trigger in Pi fires at `window - reserveTokens` (98.4% on a 1M window), which is
+too late to have room left for the summary call.
+
+## Where the numbers are
+
+| Where | What you get |
 |---|---|
-| The context itself | An in-band failure record naming the reason |
-| The UI | An `error` notification at compaction time |
-| `<project>/<config dir>/compaction/failures.log` | Append-only log for counting failures over time |
+| `<project>/<config dir>/compaction/failures.log` | Append-only log of failures and fallbacks |
+| `<project>/<config dir>/compaction/stats.log` | One line per compaction: model, tokens, cost, duration, outcome |
+| The footer | Summary usage is returned to Pi, so it counts towards the session cost |
 
 ## Relationship to track
 
@@ -96,10 +117,11 @@ just test-compaction                     # whole suite
 just test-compaction summary.test.ts     # vitest args pass through
 ```
 
-`summary.test.ts` and `fileops.test.ts` are pure and need nothing but vitest.
-`compaction.test.ts` exercises the real model-call path, so it needs the Pi
-runtime resolvable from `node_modules/@earendil-works/`; it **skips** (rather
-than fails) when that is missing. To run it locally, from the repo root:
+`summary.test.ts`, `fileops.test.ts`, `skeleton.test.ts` and `session-grep.test.ts`
+are pure and need nothing but vitest. `compaction.test.ts` exercises the real
+model-call path, so it needs the Pi runtime resolvable from
+`node_modules/@earendil-works/`; it **skips** (rather than fails) when that is
+missing. To run it locally, from the repo root:
 
 ```bash
 PI_NM=~/.pi/agent/install/releases/$(pi --version | head -1)/node_modules/@earendil-works
