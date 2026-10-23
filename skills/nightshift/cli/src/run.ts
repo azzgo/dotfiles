@@ -17,6 +17,7 @@ import { countCommits, isAncestor, preflight, residualCount, headOf, shortSha, u
 import { implPrompt, verifyPrompt } from "./prompt.ts";
 import { fmtDur, localHM } from "./time.ts";
 import { blockQueue, compareQueueOrder, isBlockReason, orderedSpecs, releaseBlockedBy } from "./queue.ts";
+import { classifyDispatchError, classifyVerifyError, markInfra } from "./infra.ts";
 import { renderReport } from "./report.ts";
 import type { Spec } from "./spec.ts";
 
@@ -96,6 +97,8 @@ interface Job {
 }
 
 const MAX_ATTEMPTS = 2;
+/** 基础设施故障的额外重试次数——不计入 attempts。 */
+const MAX_INFRA_RETRIES = 2;
 
 async function runImpl(
   spec: Spec,
@@ -224,7 +227,7 @@ async function processSpec(
   spec.status = "running";
   persist(spec, base);
   const nowMs = Date.now();
-  const perSpecWorstMs = MAX_ATTEMPTS * (cfg.timeoutSec + cfg.verifyTimeoutSec) * 1000;
+  const perSpecWorstMs = (MAX_ATTEMPTS + MAX_INFRA_RETRIES) * (cfg.timeoutSec + cfg.verifyTimeoutSec) * 1000;
   log(
     `${spec.id} dispatch (baseline ${shortSha(pf.baseline)}, 窗口剩 ${fmtDur(deadline.getTime() - nowMs)}, ` +
       `本条最晚 ${localHM(new Date(nowMs + perSpecWorstMs))} 结束)`,
@@ -234,23 +237,51 @@ async function processSpec(
   let hint: string | null = null;
   let verdict = "verify-error";
   let reason: string | null = null;
+  // 本轮真正烧掉的尝试次数。基础设施错误不算（见下面的 catch 分支）。
+  let burnedAttempts = 0;
+  // 基础设施故障的额外重试额度：网关抽风不该吃掉实现的重试额度。
+  let infraRetries = 0;
+  let attempt = 0;
 
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    spec.attempts = lifetimeAttempts + attempt + 1;
+  while (attempt < MAX_ATTEMPTS) {
+    spec.attempts = lifetimeAttempts + burnedAttempts + 1;
     persist(spec, base);
     try {
       const impl = await runImpl(spec, cfg, base, attempt, feedback, runId);
       if (impl.hint !== null) hint = impl.hint;
     } catch (e) {
+      const message = e instanceof DispatchError ? e.message : String(e);
+      if (classifyDispatchError(message) === "infra") {
+        // 基础设施坏了，不是实现没写对：这一轮不算一次尝试，也不该被读成判决。
+        infraRetries += 1;
+        spec.attempts = lifetimeAttempts + burnedAttempts;
+        if (infraRetries <= MAX_INFRA_RETRIES) {
+          spec.status = "running";
+          spec.reason = markInfra(message);
+          persist(spec, base);
+          log(`${spec.id} infra error (不消耗尝试次数，重试): ${message}`);
+          continue;
+        }
+        spec.status = "verify-error";
+        spec.verdict = null;
+        spec.reason = markInfra(message);
+        spec.commits = countCommits(spec.dir, pf.baseline);
+        spec.residual = residualCount(spec.dir);
+        persist(spec, base);
+        log(`${spec.id} infra error (尝试次数不计入): ${message}`);
+        return spec;
+      }
       spec.status = "verify-error";
       spec.verdict = null;
-      spec.reason = e instanceof DispatchError ? e.message : String(e);
+      spec.reason = message;
       spec.commits = countCommits(spec.dir, pf.baseline);
       spec.residual = residualCount(spec.dir);
       persist(spec, base);
       log(`${spec.id} impl error: ${spec.reason}`);
       return spec;
     }
+    burnedAttempts += 1;
+    attempt += 1;
     // 验证之前先验基线：基线一旦脱离祖先链，判决就不可信
     if (!isAncestor(spec.dir, spec.baseline ?? pf.baseline)) {
       return voidVerdict(spec, base, log, "实现过程中");
@@ -258,6 +289,9 @@ async function processSpec(
     const v = await runVerify(spec, cfg, base, runId);
     verdict = v.verdict;
     reason = v.reason;
+    if (verdict === "verify-error" && reason !== null && classifyVerifyError(reason) === "infra") {
+      reason = markInfra(reason);
+    }
     log(`${spec.id} verify ${verdict}${reason ? ` — ${reason}` : ""}`);
     if (verdict === "pass") break;
     if (verdict === "verify-error") break;
@@ -287,7 +321,7 @@ export async function runNightshift(opts: RunOptions): Promise<{ archivedTo: str
   const runId = makeRunId(startedAt);
   updateLock(lock, { runId }, base);
   // 窗口只管“还能不能派新活”；在飞的任务照跑到底，所以最坏结束时间 = 窗口关 + 单条最坏耗时
-  const perSpecWorstMs = MAX_ATTEMPTS * (cfg.timeoutSec + cfg.verifyTimeoutSec) * 1000;
+  const perSpecWorstMs = (MAX_ATTEMPTS + MAX_INFRA_RETRIES) * (cfg.timeoutSec + cfg.verifyTimeoutSec) * 1000;
   const worstEnd = new Date(deadline.getTime() + perSpecWorstMs);
   log(
     `run ${runId} started, 窗口 ${localHM(startedAt)}–${localHM(deadline)} (${fmtDur(deadline.getTime() - startedAt.getTime())})` +

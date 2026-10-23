@@ -92,7 +92,7 @@ ns ready ns-0007                    ← 唯一的状态升级；只有 ready 会
 2. **前一条没过就停下整个目录队列**。前一条落 `needs-review` / `verify-error` / `skipped` 时，该目录剩余未派发的 `ready` 会被就地改成 `blocked`（`reason: blocked by <id> (<status>)`），避免在坏地基上继续盖楼。跨目录并行不受影响。
 3. **`draft` 不占队列位置**。只有 `ready` 才会进队列；同目录一条 `draft` 不会挡住后面的 `ready`。
 
-早上处理完阻塞项后，用 `ns release <阻挡者 id>` 一次放行同目录后续，或 `ns review <阻挡者 id> --drop` 回滚它的提交并放行。`ns queue [--dir P]` 看当前队列与阻塞来源。
+早上处理完阻塞项后，用 `ns release <阻挡者 id>` 一次放行同目录后续，`ns pass <阻挡者 id>` 判它通过并放行，或 `ns review <阻挡者 id> --drop` 回滚它的提交并放行。`ns queue [--dir P]` 看当前队列与阻塞来源。
 
 同一仓库的多个 git worktree 是**不同目录**，因此是**不同的队列**——这才是真正的内容并行手段。不要为了凑并行去改 Spec 的 `dir`。
 
@@ -119,12 +119,15 @@ ns report                       # 早上第一眼看这个
 ns status                       # 夜里瞄一眼：哪些活着 / 卡住 / 成了僵尸
 ns show ns-0007                 # 单条详情 + 下一步命令
 ns rearm ns-0007                # 换个基线重跑：基线重锚当前 HEAD，上一轮理由会带上
+ns pass ns-0007 --reason "看过 diff，做完了"   # 人工判通过：不回滚提交，放行被挡住的下一条
 ns nudge ns-0007 "基线变了"      # 给正在跑的那条递句话（它下轮动手前会读到）
 ns stop ns-0007                 # 不想让它跑下去了
 ns review ns-0007 --drop        # 丢弃该条提交，回到 baseline
 ```
 
 - 失败项**也会归档**，不会留在板上被第二夜自动重跑。
+- 早上人工看过 diff、确认某条其实做完了，用 `ns pass <id>` 把它判为通过——它**不回滚提交**，只翻案判决并放行被挡住的队列。想丢弃提交仍然是 `ns review <id> --drop`。
+- 报告里带 `[infra]` 的 `verify-error` 是**基础设施故障**（网关 502 / 连接被拒 / 进程被打死），不是代码问题：它不消耗尝试次数，`ns rearm <id>` 重跑即可。
 - 同目录队列被前一条阻塞时，后续项**留在板上但不跑**（`blocked`），需要 `ns release` / `ns review --drop` 手动放行——不会自动重试。
 - 结果靠 `baseline..HEAD` 看，脚本不切分支、不推送、不合并。清理用 `review --drop`。
 - ⚠️ **共享工作区里历史被改写会让判决不可信**（`pull --rebase` / 别的会话 rebase）。`run` 会查基线是否还在 HEAD 的祖先链上，不在就**作废本轮判决**并说清原因——这时候用 `ns rearm <id>` 换个基线重跑，别直接重跑。

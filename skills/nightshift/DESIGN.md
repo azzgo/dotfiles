@@ -98,6 +98,7 @@ nightshift run [--until HH:MM] [--jobs N]        # 夜间排水（持有 run.loc
 nightshift report [--date YYYY-MM-DD]            # 只读检查面
 nightshift review <id> [--drop]                  # --drop 才动盘：git reset --hard <baseline>，并放行被它挡住的下一条
 nightshift rearm <id>                           # 重新装填：回到 ready，基线重锚当前 HEAD，保留上一轮理由
+nightshift pass <id> [--reason R]                # 人工判通过：needs-review/verify-error/running → passed，不回滚提交，放行被挡住的下一条
 nightshift status [--stall MIN]                 # 板子活性：alive / stalled / orphaned / gone
 nightshift tail <id> [-n N] [-f]                # 看正在跑的 Agent 的实时进展（-f 跟着刷）
 nightshift nudge <id> <text>                    # 给正在跑的 Agent 递一句话（inbox/<id>.md）
@@ -108,7 +109,7 @@ nightshift unblock <id>                          # blocked → ready（只放这
 nightshift release <id>                          # 放行所有 reason 里写着 blocked by <id> 的项
 ```
 
-`status` 的转移只发生在：`add→draft`、`draft→ready`（`ready` 动词）、`ready→draft`（`unready`）、`ready→blocked`（同目录前一条未通过）、`blocked→ready`（`unblock` / `release` / `review --drop`）、`run→running→{passed|needs-review|verify-error}`、`run→skipped`（git 前置失败）、归档时 `passed|needs-review|verify-error|skipped` 移出板。`draft` 永不被派发；窗口用尽未派发的 `ready` 留在板上等下一夜。
+`status` 的转移只发生在：`add→draft`、`draft→ready`（`ready` 动词）、`ready→draft`（`unready`）、`ready→blocked`（同目录前一条未通过）、`blocked→ready`（`unblock` / `release` / `review --drop`）、`run→running→{passed|needs-review|verify-error}`、`run→skipped`（git 前置失败）、归档时 `passed|needs-review|verify-error|skipped` 移出板。`draft` 永不被派发；窗口用尽未派发的 `ready` 留在板上等下一夜。、`needs-review|verify-error|running→passed`（`pass` 动词，人工判决）。`draft` 永不被派发；窗口用尽未派发的 `ready` 留在板上等下一夜。
 
 ## 4. `run` 的调度算法
 
@@ -206,6 +207,8 @@ exit code 非零 + 未命中 → 仍是 verify-error（进程挂了，非代码�
 
 失败重试：`fail` 且 `attempts < 2` → 重派实现 Agent，把 `REASON` 作为反馈附加进 prompt；第二次仍 `fail` → `needs-review`（`attempts = 2`）。
 
+**infra 分类**：派发阶段的报错（502 / connection refused / SIGKILL 等）被归类为**基础设施故障**——它不是实现没写对，所以不消耗 `attempts`、当场重试（`MAX_INFRA_RETRIES = 2`），用尽后落 `verify-error` 且 `reason` 带 `[infra]` 前缀。我们自己预算内的超时不算 infra（那是实现跑太久）。
+
 **`SELF-CHECK` 不入协议。** 实现者自检完全自主：CLI 不要求、不解析、不判定。上一版曾设计实现者输出 `SELF-CHECK:` 供 CLI 抓取，已被否决——判决只认 Verifier，多一个被抓取的自由文本字段只会制造第二个"看起来像权威"的信号。
 
 **`REVIEW-HINT:` 同处理。** 它是给 Report 用的提示，抓不到就是没有，不影响 verdict，不影响重试。
@@ -296,6 +299,7 @@ Nightshift 2026-10-19  窗口 23:10–07:00  派发 5 / 通过 3 / 需看 2 / �
    verdict: fail — 缺少空队列路径的测试
    → nightshift show ns-0008
    → nightshift release ns-0008    # 放行同目录被挡住的下一条
+   → nightshift pass ns-0008         # 人工判通过（不回滚提交）
 🟡 ns-0009 dotfiles verify-error
    verdict: verify-error — verifier produced no VERDICT line (exit 1)
 ⛔ ns-0011 dotfiles blocked

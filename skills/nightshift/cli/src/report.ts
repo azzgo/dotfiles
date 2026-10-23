@@ -1,6 +1,7 @@
 import type { Spec } from "./spec.ts";
 import { shortSha } from "./git.ts";
 import { blockedBy } from "./queue.ts";
+import { isInfraReason } from "./infra.ts";
 
 const ICONS: Record<string, string> = {
   passed: "✅",
@@ -55,6 +56,10 @@ export function renderReport(input: ReportInput): string {
     if (s.status === "needs-review" || s.status === "verify-error") {
       lines.push(`   → nightshift show ${s.id}`);
       lines.push(`   → nightshift release ${s.id}    # 放行同目录被挡住的下一条`);
+      lines.push(`   → nightshift pass ${s.id}         # 人工判通过（不回滚提交）`);
+    }
+    if (s.status === "verify-error" && isInfraReason(s.reason)) {
+      lines.push(`   ↳ 基础设施错误（不是代码问题）：建议 nightshift rearm ${s.id} 重跑（不消耗尝试次数）`);
     }
     if (s.status === "skipped") lines.push(`   （未派发：${s.reason ?? "队列未轮到"}）`);
     if (s.status === "ready") lines.push("   （未派发：窗口用尽，仍在板上）");

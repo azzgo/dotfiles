@@ -31,12 +31,21 @@ if (isVerify) {
   const verdict = process.env.FAKE_VERDICT ?? "pass";
   const reason = process.env.FAKE_REASON ?? "fake verifier";
   const complain = process.env.FAKE_NO_VERDICT === "1";
+  if (process.env.FAKE_VERIFY_FAIL_WITH) {
+    process.stderr.write(process.env.FAKE_VERIFY_FAIL_WITH + "\n");
+    process.exit(1);
+  }
   if (complain) {
     process.stdout.write("I could not decide.\n");
     process.exit(0);
   }
   process.stdout.write(`checked the diff\nVERDICT: ${verdict}\nREASON: ${reason}\n`);
   process.exit(0);
+}
+
+if (!isVerify && process.env.FAKE_FAIL_WITH) {
+  process.stderr.write(process.env.FAKE_FAIL_WITH + "\n");
+  process.exit(1);
 }
 
 if (process.env.FAKE_SLEEP_MS && !isVerify) {

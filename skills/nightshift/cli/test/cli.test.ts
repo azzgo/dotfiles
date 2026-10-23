@@ -7,13 +7,14 @@ import assert from "node:assert";
 import { fileURLToPath } from "node:url";
 
 import { bodyTemplate, checkSpec, missingSections, parseSpec, serializeSpec } from "../src/spec.ts";
-import { nextId, loadBoard, loadConfig, acquireLock, releaseLock, resolveConfig, DEFAULT_CONFIG } from "../src/board.ts";
+import { nextId, loadBoard, loadConfig, acquireLock, releaseLock, resolveConfig, readArchiveSpecs, DEFAULT_CONFIG } from "../src/board.ts";
 import { buildImplArgs, buildVerifyArgs, parseVerdict, parseReviewHint, DispatchError } from "../src/dispatch.ts";
 import { assertWindowSane, resolveDeadline, runNightshift, WindowTooLongError } from "../src/run.ts";
 import { implPrompt, verifyPrompt, extractSection } from "../src/prompt.ts";
 import { preflight, revertTo, countCommits } from "../src/git.ts";
 import { collectStatus } from "../src/status.ts";
 import { lintSpec } from "../src/lint.ts";
+import { classifyDispatchError, classifyVerifyError } from "../src/infra.ts";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CLI = path.join(HERE, "..", "main.ts");
@@ -1299,4 +1300,282 @@ test("cli: tail renders the recent agent events", () => {
   assert.ok(r.out.includes("[思考] 先想一下"), r.out);
   assert.ok(r.out.includes("[调用 bash]"), r.out);
   assert.ok(r.out.includes("[结果 bash]"), r.out);
+});
+
+// ── 人工判 pass ───────────────────────────────────────────────────────────
+
+test("cli: pass marks a verify-error spec as passed without touching git", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const git = (args) => spawnSync("git", ["-C", repo.dir, ...args], { encoding: "utf8" }).stdout.trim();
+  const baseline = git(["rev-parse", "HEAD"]);
+  fs.writeFileSync(path.join(repo.dir, "b.txt"), "b\n");
+  git(["add", "b.txt"]);
+  git(["commit", "-q", "-m", "work"]);
+  const headBefore = git(["rev-parse", "HEAD"]);
+  fs.mkdirSync(path.join(base, "board"), { recursive: true });
+  fs.writeFileSync(
+    path.join(base, "board", "ns-0001.md"),
+    serializeSpec({
+      ...makeSpec({ id: "ns-0001", status: "verify-error", dir: repo.dir }),
+      baseline,
+      reason: "[infra] 502 Bad Gateway",
+      file: "ns-0001.md",
+    }),
+  );
+  const r = runCli(["pass", "ns-0001", "--reason", "人看过 diff，确实做完了"], {
+    NIGHTSHIFT_HOME: base,
+  });
+  assert.strictEqual(r.status, 0, r.err);
+  assert.ok(r.out.includes("ns-0001 -> passed (manually)"), r.out);
+  const spec = loadBoard(base).specs.find((s) => s.id === "ns-0001");
+  assert.strictEqual(spec.status, "passed");
+  assert.strictEqual(spec.verdict, "pass");
+  assert.strictEqual(spec.reason, "人看过 diff，确实做完了");
+  assert.strictEqual(spec.run, "manual");
+  assert.ok(spec.finished !== null);
+  assert.strictEqual(spec.commits, 1);
+  assert.strictEqual(git(["rev-parse", "HEAD"]), headBefore, "pass must not move HEAD");
+});
+
+test("cli: pass without --reason writes a default reason", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  fs.mkdirSync(path.join(base, "board"), { recursive: true });
+  fs.writeFileSync(
+    path.join(base, "board", "ns-0001.md"),
+    serializeSpec({
+      ...makeSpec({ id: "ns-0001", status: "needs-review", dir: repo.dir }),
+      file: "ns-0001.md",
+    }),
+  );
+  const r = runCli(["pass", "ns-0001"], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(r.status, 0, r.err);
+  const spec = loadBoard(base).specs.find((s) => s.id === "ns-0001");
+  assert.strictEqual(spec.status, "passed");
+  assert.strictEqual(spec.reason, "manually passed");
+});
+
+test("cli: pass releases the blocked queue behind it", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  fs.mkdirSync(path.join(base, "board"), { recursive: true });
+  fs.writeFileSync(
+    path.join(base, "board", "ns-0001.md"),
+    serializeSpec({
+      ...makeSpec({ id: "ns-0001", status: "needs-review", dir: repo.dir }),
+      file: "ns-0001.md",
+    }),
+  );
+  fs.writeFileSync(
+    path.join(base, "board", "ns-0002.md"),
+    serializeSpec({
+      ...makeSpec({ id: "ns-0002", status: "blocked", dir: repo.dir }),
+      reason: "blocked by ns-0001 (needs-review)",
+      file: "ns-0002.md",
+    }),
+  );
+  const r = runCli(["pass", "ns-0001"], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(r.status, 0, r.err);
+  assert.ok(r.out.includes("ns-0002 -> ready (queue released)"), r.out);
+  const ns2 = loadBoard(base).specs.find((s) => s.id === "ns-0002");
+  assert.strictEqual(ns2.status, "ready");
+  assert.strictEqual(ns2.reason, null);
+});
+
+test("cli: pass works on an archived spec and updates it in place", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  fs.mkdirSync(path.join(base, "archive", "2026-10-19"), { recursive: true });
+  fs.writeFileSync(
+    path.join(base, "archive", "2026-10-19", "ns-0001.md"),
+    serializeSpec({
+      ...makeSpec({ id: "ns-0001", status: "verify-error", dir: repo.dir }),
+      file: "ns-0001.md",
+    }),
+  );
+  const r = runCli(["pass", "ns-0001", "--reason", "归档件人工放行"], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(r.status, 0, r.err);
+  const board = loadBoard(base).specs;
+  assert.strictEqual(board.length, 0, "an archived spec must not move onto the board");
+  const archived = readArchiveSpecs("2026-10-19", base).specs.find((s) => s.id === "ns-0001");
+  assert.strictEqual(archived.status, "passed");
+  assert.strictEqual(archived.verdict, "pass");
+  assert.strictEqual(archived.reason, "归档件人工放行");
+});
+
+test("cli: pass refuses a spec that was never judged", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  fs.mkdirSync(path.join(base, "board"), { recursive: true });
+  fs.writeFileSync(
+    path.join(base, "board", "ns-0001.md"),
+    serializeSpec({
+      ...makeSpec({ id: "ns-0001", status: "ready", dir: repo.dir }),
+      file: "ns-0001.md",
+    }),
+  );
+  const r = runCli(["pass", "ns-0001"], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(r.status, 1, r.out);
+  assert.ok(/only verify-error \/ needs-review \/ running/.test(r.err), r.err);
+  const spec = loadBoard(base).specs.find((s) => s.id === "ns-0001");
+  assert.strictEqual(spec.status, "ready");
+});
+
+test("cli: pass refuses an unknown spec", () => {
+  const base = tmp("ns-home-");
+  const r = runCli(["pass", "ns-9999"], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(r.status, 1, r.out);
+  assert.ok(/not found/.test(r.err), r.err);
+});
+
+// ── infra 分类 ────────────────────────────────────────────────────────────
+
+test("infra: network and 5xx failures are infra, plain failures are not", () => {
+  assert.strictEqual(classifyDispatchError("502 Bad Gateway"), "infra");
+  assert.strictEqual(classifyDispatchError("connection refused"), "infra");
+  assert.strictEqual(classifyDispatchError("fetch failed"), "infra");
+  assert.strictEqual(classifyDispatchError("dial tcp api.internal:443"), "infra");
+  assert.strictEqual(classifyDispatchError("implementation died on SIGKILL — oom"), "infra");
+  assert.strictEqual(classifyDispatchError("implementation exited 1 without producing output"), "impl");
+  assert.strictEqual(classifyDispatchError("implementation timed out after 3600s"), "impl");
+  assert.strictEqual(classifyVerifyError("verifier timed out after 1800s"), "impl");
+  assert.strictEqual(classifyVerifyError("verifier produced no VERDICT line (exit 1) — 503"), "infra");
+});
+
+test("run: an infra failure is tagged and does not burn an attempt", async () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const pi = withFakePiScript();
+  writeReady(base, "ns-0001", repo.dir, "2026-10-19T00:00:00.000Z");
+  const cfg = { ...DEFAULT_CONFIG, piBin: pi, timeoutSec: 30 };
+  process.env.FAKE_FAIL_WITH = "502 Bad Gateway";
+  try {
+    const { result } = await runLoop(base, cfg, 1);
+    const spec = result.specs.find((s) => s.id === "ns-0001");
+    assert.strictEqual(spec.status, "verify-error");
+    assert.ok(spec.reason.startsWith("[infra] "), spec.reason);
+    assert.ok(spec.reason.includes("502"), spec.reason);
+    assert.strictEqual(spec.attempts, 0, "an infra failure must not count as an attempt");
+  } finally {
+    delete process.env.FAKE_FAIL_WITH;
+  }
+});
+
+test("run: the report points at rearm when the failure was infra", async () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const pi = withFakePiScript();
+  writeReady(base, "ns-0001", repo.dir, "2026-10-19T00:00:00.000Z");
+  const cfg = { ...DEFAULT_CONFIG, piBin: pi, timeoutSec: 30 };
+  process.env.FAKE_FAIL_WITH = "connection refused";
+  try {
+    const { result } = await runLoop(base, cfg, 1);
+    assert.ok(result.report.includes("基础设施错误"), result.report);
+    assert.ok(result.report.includes("nightshift rearm ns-0001"), result.report);
+  } finally {
+    delete process.env.FAKE_FAIL_WITH;
+  }
+});
+
+test("cli: pass refuses a spec that is still running, and accepts a zombie one", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  fs.mkdirSync(path.join(base, "board"), { recursive: true });
+  fs.writeFileSync(
+    path.join(base, "board", "ns-0001.md"),
+    serializeSpec({
+      ...makeSpec({ id: "ns-0001", status: "running", dir: repo.dir }),
+      file: "ns-0001.md",
+    }),
+  );
+  writePidRecord(base, "ns-0001", process.pid, "impl");
+  writeLock(base, process.pid);
+  const alive = runCli(["pass", "ns-0001"], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(alive.status, 1, alive.out);
+  assert.ok(/还在跑/.test(alive.err), alive.err);
+  writeLock(base, 2147483646);
+  const zombie = runCli(["pass", "ns-0001"], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(zombie.status, 0, zombie.err);
+  const spec = loadBoard(base).specs.find((s) => s.id === "ns-0001");
+  assert.strictEqual(spec.status, "passed");
+});
+
+test("cli: passing an archived spec releases the queue it blocked", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  fs.mkdirSync(path.join(base, "archive", "2026-10-19"), { recursive: true });
+  fs.writeFileSync(
+    path.join(base, "archive", "2026-10-19", "ns-0001.md"),
+    serializeSpec({
+      ...makeSpec({ id: "ns-0001", status: "needs-review", dir: repo.dir }),
+      file: "ns-0001.md",
+    }),
+  );
+  fs.mkdirSync(path.join(base, "board"), { recursive: true });
+  fs.writeFileSync(
+    path.join(base, "board", "ns-0002.md"),
+    serializeSpec({
+      ...makeSpec({ id: "ns-0002", status: "blocked", dir: repo.dir }),
+      reason: "blocked by ns-0001 (needs-review)",
+      file: "ns-0002.md",
+    }),
+  );
+  const r = runCli(["pass", "ns-0001"], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(r.status, 0, r.err);
+  assert.ok(r.out.includes("ns-0002 -> ready (queue released)"), r.out);
+  const ns2 = loadBoard(base).specs.find((s) => s.id === "ns-0002");
+  assert.strictEqual(ns2.status, "ready");
+});
+
+test("status: an infra verify-error is called out as not-a-code-problem", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  fs.mkdirSync(path.join(base, "board"), { recursive: true });
+  fs.writeFileSync(
+    path.join(base, "board", "ns-0001.md"),
+    serializeSpec({
+      ...makeSpec({ id: "ns-0001", status: "verify-error", dir: repo.dir }),
+      reason: "[infra] 502 Bad Gateway",
+      file: "ns-0001.md",
+    }),
+  );
+  const rows = collectStatus({ base });
+  assert.strictEqual(rows.length, 1);
+  assert.ok(/基础设施错误/.test(rows[0].note), rows[0].note);
+});
+
+test("run: a verifier-side infra failure is tagged too", async () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const pi = withFakePiScript();
+  writeReady(base, "ns-0001", repo.dir, "2026-10-19T00:00:00.000Z");
+  const cfg = { ...DEFAULT_CONFIG, piBin: pi, timeoutSec: 30 };
+  process.env.FAKE_VERIFY_FAIL_WITH = "503 Service Unavailable";
+  try {
+    const { result } = await runLoop(base, cfg, 1);
+    const spec = result.specs.find((s) => s.id === "ns-0001");
+    assert.strictEqual(spec.status, "verify-error");
+    assert.ok(spec.reason.startsWith("[infra] "), spec.reason);
+    assert.strictEqual(spec.attempts, 1, "the implementation attempt itself did happen");
+  } finally {
+    delete process.env.FAKE_VERIFY_FAIL_WITH;
+  }
+});
+
+test("run: an infra failure is retried in place before it lands", async () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const pi = withFakePiScript();
+  writeReady(base, "ns-0001", repo.dir, "2026-10-19T00:00:00.000Z");
+  const cfg = { ...DEFAULT_CONFIG, piBin: pi, timeoutSec: 30 };
+  process.env.FAKE_FAIL_WITH = "502 Bad Gateway";
+  try {
+    const { logs } = await runLoop(base, cfg, 1);
+    const infraLogs = logs.filter((l) => l.includes("infra error"));
+    assert.ok(infraLogs.length >= 2, logs.join("\n"));
+    assert.ok(infraLogs.some((l) => l.includes("重试")), logs.join("\n"));
+  } finally {
+    delete process.env.FAKE_FAIL_WITH;
+  }
 });

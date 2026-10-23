@@ -20,8 +20,8 @@ import {
   inboxPath,
   pidAlive,
 } from "./src/board.ts";
-import { SpecError, bodyTemplate, checkSpec, parseSpec, type Spec } from "./src/spec.ts";
-import { headOf, listRange } from "./src/git.ts";
+import { SpecError, bodyTemplate, checkSpec, parseSpec, type Spec, type SpecStatus } from "./src/spec.ts";
+import { countCommits, headOf, listRange, residualCount } from "./src/git.ts";
 import { collectStatus, fmtDuration, LIVENESS_ICON } from "./src/status.ts";
 import { latestSessionFile, readTail, renderEvent, summarizeEvent, type TailEvent } from "./src/tail.ts";
 import { localHM } from "./src/time.ts";
@@ -50,6 +50,7 @@ usage:
   nightshift report [--date YYYY-MM-DD] [--list-dates]
   nightshift review <id> [--drop]   # --drop 回滚 baseline，并放行被它挡住的下一条
   nightshift rearm <id>            # 重新装填：回到 ready，基线重锚当前 HEAD，保留上一轮理由
+  nightshift pass <id> [--reason "..."]  # 人工判通过：不回滚提交，放行被挡住的下一条
   nightshift status [--stall MIN]  # 板子活性：哪些活着 / 卡住 / 成了僵尸
   nightshift tail <id> [-n N] [-f]  # 看正在跑的 Agent 的实时进展（-f 跟着刷）
   nightshift nudge <id> <text>     # 给正在跑的 Agent 递一句话（写进 inbox/<id>.md）
@@ -146,12 +147,16 @@ function byId(id: string, base: string): { spec: Spec; specs: Spec[] } {
   return { spec, specs: board.specs };
 }
 
-function archivedSpec(id: string, base: string): Spec | null {
+function archivedSpecWithDate(id: string, base: string): { spec: Spec; date: string } | null {
   for (const date of listArchiveDates(base).slice().reverse()) {
     const spec = readArchiveSpecs(date, base).specs.find((s) => s.id === id);
-    if (spec) return spec;
+    if (spec) return { spec, date };
   }
   return null;
+}
+
+function archivedSpec(id: string, base: string): Spec | null {
+  return archivedSpecWithDate(id, base)?.spec ?? null;
 }
 
 function uniqueDir(raw: string): string {
@@ -436,6 +441,52 @@ function cmdRearm(base: string, id: string | undefined): void {
 }
 
 /**
+ * 人工判 pass：把一条已经被机器判成"没过"的 Spec 直接标成通过。
+ *
+ * 为什么需要它：机器判决只是"这一轮 Verifier 没认可"，不等于"这件事没做成"。
+ * 早上人看过 diff、确认改动其实是对的，判决却卡在那里，同目录的队列也一整夜停着。
+ * 这个动词给人工判决一个正式入口——写进 Spec 的元数据（而不是只留在人脑里），
+ * 顺手把被它挡住的队列放行。
+ *
+ * 它**不回滚任何提交**：机器判决的产物原样保留，只是判决被翻案。
+ * 想丢弃提交用 `review <id> --drop`。
+ */
+const PASSABLE: SpecStatus[] = ["verify-error", "needs-review", "running"];
+function cmdPass(base: string, id: string | undefined, flags: Map<string, string[]>): void {
+  if (!id) die('error: pass <id> [--reason "..."]');
+  const onBoard = loadBoardStrict(base).specs.find((s) => s.id === id);
+  const archived = onBoard === undefined ? archivedSpecWithDate(id, base) : null;
+  const spec = onBoard ?? archived?.spec ?? null;
+  if (spec === null) die(`error: spec ${id} not found in ${boardDir(base)} or the archive`);
+  if (!PASSABLE.includes(spec.status)) {
+    die(`error: ${spec.id} is ${spec.status}; only ${PASSABLE.join(" / ")} can be passed manually`);
+  }
+  if (spec.status === "running") {
+    const row = collectStatus({ base }).find((r) => r.id === spec.id);
+    if (row !== undefined && (row.liveness === "alive" || row.liveness === "stalled")) {
+      die(`error: ${spec.id} 还在跑（${row.liveness}）；先 nightshift stop ${spec.id} 再判`);
+    }
+  }
+  const reason = one(flags, "reason") ?? "manually passed";
+  spec.status = "passed";
+  spec.verdict = "pass";
+  spec.reason = reason;
+  spec.finished = new Date().toISOString();
+  if (spec.baseline !== null) spec.commits = countCommits(spec.dir, spec.baseline);
+  spec.residual = residualCount(spec.dir);
+  spec.run = "manual";
+  if (onBoard !== undefined) {
+    writeSpec(spec, base);
+  } else {
+    writeSpecTo(path.join(archiveDir(base), archived!.date, `${spec.id}.md`), spec);
+  }
+  console.log(`${spec.id} -> passed (manually)`);
+  console.log(`  reason: ${reason}`);
+  const released = releaseBlockedBy(spec.id, base);
+  for (const next of released) console.log(`${next.id} -> ready (queue released)`);
+}
+
+/**
  * Spec 正文的静态自检（不需要模型）。把“约束与验收标准互斥”这类问题在入板前
  * 挑出来——夜里的 Agent 花一个半小时才发现的，入板前一句话就能说清。
  */
@@ -664,6 +715,9 @@ async function main(): Promise<void> {
         break;
       case "rearm":
         cmdRearm(base, positional[0]);
+        break;
+      case "pass":
+        cmdPass(base, positional[0], flags);
         break;
       case "status":
         cmdStatus(base, flags);

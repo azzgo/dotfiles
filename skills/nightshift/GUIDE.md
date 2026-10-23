@@ -94,6 +94,7 @@ nightshift report
 | 列出所有归档日期 | `nightshift report --list-dates` |
 | 丢弃某条的提交（并放行同目录后续） | `nightshift review ns-0007 --drop` |
 | 某条判错了，想换个基线重跑 | `nightshift rearm ns-0007`（基线重锚到当前 HEAD，上一轮理由会带上） |
+| 某条其实做完了，人工判通过 | `nightshift pass ns-0007 [--reason "看过 diff，做完了"]`（不回滚提交，顺带放行被挡住的下一条） |
 | 夜里的任务现在什么状态 | `nightshift status`（● 活着 / ◐ 很久没动静 / ☠ 成了僵尸） |
 | 看它此刻在干什么 | `nightshift tail ns-0007`（`-f` 跟着刷） |
 | 给正在跑的任务递句话 | `nightshift nudge ns-0007 "基线变了，从 abc123 继续"` |
@@ -137,7 +138,7 @@ nightshift report
 - **同一个目录可以挂多条未完成的 Spec**。它们构成一条**串行队列**：一次只跑一条，前一条 `passed` 后才派下一条。`add` 不再拒绝第二条，只会提示队列里有几条在前。
 - 队列顺序 = `created` 时间序（先 `add` 先跑，同刻按 id）。想让 B 排在 A 后面，按顺序 `add` 即可，不必等 A 跑完。
 - **前一条没过（`needs-review` / `verify-error` / `skipped`）就停下整个目录队列**：同目录剩余未派发的 `ready` 会变成 `blocked`，`reason` 写明被谁挡住。这样不会在坏地基上继续盖楼。
-- 处理完阻塞项后：`ns release <阻挡者 id>` 放行同目录后续，或 `ns review <阻挡者 id> --drop` 回滚并放行。`ns queue [--dir P]` 查看队列与阻塞来源。
+- 处理完阻塞项后：`ns release <阻挡者 id>` 放行同目录后续，`ns pass <阻挡者 id>` 判它通过并放行，或 `ns review <阻挡者 id> --drop` 回滚并放行。`ns queue [--dir P]` 查看队列与阻塞来源。
 - `draft` 不占队列位置：只有 `ready` 会进队列。
 - 不同目录**可以并行**（受 `--jobs` 限制，默认 3）。串行键是**工作目录**，不是 git 仓库；同一个 repo 开两个 worktree = 两条独立队列。
 - 需要真正的内容并行？先开 worktree，再给每个 worktree 各写一条 Spec。
@@ -242,6 +243,7 @@ Nightshift 2026-10-19  窗口 23:10–07:00  派发 5 / 通过 3 / 需看 2 / �
    verdict: fail — 缺少空队列路径的测试
    → nightshift show ns-0008
    → nightshift release ns-0008    # 放行同目录被挡住的下一条
+   → nightshift pass ns-0008         # 人工判通过（不回滚提交）
 🟡 ns-0009  api   verify-error
    verdict: verify-error — verifier produced no VERDICT line (exit 1)
 ⛔ ns-0011  dotfiles  blocked
@@ -256,7 +258,7 @@ Nightshift 2026-10-19  窗口 23:10–07:00  派发 5 / 通过 3 / 需看 2 / �
 |---|---|---|---|
 | ✅ | `passed` | 验证通过 | 看 diff，满意就合并/推进 |
 | ⚠️ | `needs-review` | 两次实现后仍 `fail` | 看 `reason`，要么重写 Spec，要么手工收尾 |
-| 🟡 | `verify-error` | 验证本身没跑完 | 流程问题，不是代码问题；`show` 看原因后重跑 |
+| 🟡 | `verify-error` | 验证本身没跑完 | 流程问题，不是代码问题；`show` 看原因后重跑。理由带 `[infra]` 的是基础设施故障（网关 502 / 连接被拒），不消耗尝试次数，`rearm` 重跑即可 |
 | ⏭️ | `skipped` | git 前置失败（非仓库/无提交） | 修环境后重上板 |
 | ⛔ | `blocked` | 同目录前一条没过，队列被停下 | 处理完阻挡者后 `release` 或 `review --drop` |
 | ⏸ | `ready` | 窗口用尽，没轮到 | 下一夜会自动继续 |
@@ -306,6 +308,9 @@ pi -r --session-dir ~/.cache/nightshift/sessions/ns-0008
 
 **Q: `needs-review` 会自动重试吗？**
 不会。已经归档。重试只有当夜那一次（`fail` 后带 `REASON` 重派一次）。要再来一遍就新开一条 Spec，把失败原因写进 `Change`。
+
+**Q: 机器判错了，但我确认这事做完了怎么办？**
+`nightshift pass ns-0007`——它把判决翻成 `passed`、写明理由、并放行被它挡住的同目录队列。提交原样保留（它不 reset 任何东西）；确实想丢弃那些提交再用 `nightshift review ns-0007 --drop`。
 
 **Q: 夜里 Agent 能不能自己再派子 agent？**
 不能。实现 Agent 用 `-ne` 启动——不发现任何扩展，`dispatch` 工具根本不存在。Spec 里写 `extensions:` 想加回 `sub-dispatch` 会被直接拒绝。

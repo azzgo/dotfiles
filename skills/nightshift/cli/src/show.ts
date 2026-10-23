@@ -2,6 +2,7 @@ import { shortSha } from "./git.ts";
 import type { Spec } from "./spec.ts";
 import { sessionsDir } from "./board.ts";
 import path from "node:path";
+import { isInfraReason } from "./infra.ts";
 
 export function renderSpecDetail(spec: Spec, base: string): string {
   const lines: string[] = [];
@@ -36,5 +37,9 @@ export function renderSpecDetail(spec: Spec, base: string): string {
     lines.push(`  pi -r --session-dir ${path.join(sessionsDir(base), spec.id)}`);
   }
   if (spec.baseline) lines.push(`  nightshift review ${spec.id} --drop    # 丢弃本轮提交，回到 baseline`);
+  if (spec.status === "needs-review" || spec.status === "verify-error") {
+    lines.push(`  nightshift pass ${spec.id}    # 人工判通过：不回滚提交，放行被挡住的下一条`);
+  }
+  if (isInfraReason(spec.reason)) lines.push(`  nightshift rearm ${spec.id}    # 基础设施错误，换个基线重跑（不消耗尝试次数）`);
   return lines.join("\n") + "\n";
 }

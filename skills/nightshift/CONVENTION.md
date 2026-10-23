@@ -92,7 +92,7 @@ commits: 3                  # 结束后 CLI 写
 residual: 0                 # 结束后未提交路径数
 hint: "重点看 cli/"          # 实现者的 REVIEW-HINT
 finished: 2026-10-20T06:11:02.000Z
-run: "20261019-231000"
+run: "20261019-231000"     # 派发批次 id；人工判 pass 时写 "manual"
 ---
 ```
 
@@ -129,6 +129,11 @@ add ──→ draft ──ready──→ ready ──run──→ running ──
 draft 永不被派发。
 ```
 
+人工判决：`needs-review` / `verify-error` / `running` ──`pass`──→ `passed`（不回滚提交）。
+
+例外：人工 `pass` 一条**板上**的 Spec 时它就地变成 passed 并留在板上（run 正常结束的 passed 会归档，
+人工翻案的不归档——它是给人看的记录）。板上残留的 passed 不会被再次派发。
+
 ## 动词
 
 | 动词 | 作用 | 动盘 |
@@ -144,6 +149,7 @@ draft 永不被派发。
 | `report [--date YYYY-MM-DD] [--list-dates]` | 检查面 | 只读 |
 | `review <id> [--drop]` | 详情；`--drop` 才 `git reset --hard <baseline>`，并放行被它挡住的下一条。基线悬空 ⇒ 拒绝；reset 前备份 HEAD 到 `refs/nightshift/backup/<id>` 并列出将丢弃的提交 | 仅 `--drop` |
 | `rearm <id>` | 重新装填：`ready` + 基线重锚当前 HEAD + **保留上一轮理由**（下一轮作为 feedback）。归档件也能搬回板上 | 板 |
+| `pass <id> [--reason R]` | 人工判通过：入口状态限 `verify-error` / `needs-review` / `running`；写 `status=passed`、`verdict=pass`、`reason`（缺省 `manually passed`）、`run=manual`，并放行被它挡住的下一条。**不回滚任何提交**（要丢弃用 `review --drop`）。归档件就地改写，不搬回板上 | 板 / 归档 |
 | `status [--stall MIN]` | 板子活性：● alive / ◐ stalled / ☠ orphaned（run 没了但板上还是 running）/ ○ gone | 只读 |
 | `tail <id> [-n N] [-f]` | 看正在跑的 Agent 的实时进展（读它的 session jsonl）；`-f` 跟着刷 | 只读 |
 | `nudge <id> <text>` | 给正在跑的 Agent 递一句话（追加到 `inbox/<id>.md`） | inbox |
@@ -203,13 +209,30 @@ REASON: <一行>
 ## 重试
 
 `fail` 且 `attempts < 2` → 带 `REASON` 重派一次。第二次仍 `fail` → `needs-review`。
-`verify-error` 与 `skipped` 不重试。
+`verify-error` 与 `skipped` 不重试（infra 故障除外——它当场重试，见下节）。
 
 `attempts` 是**生命周期累计**的尝试次数（重新装填不清零），所以早上看一眼就知道这条被试过几回。每一轮派发内部仍有 2 次重试额度。
 
 **反馈不会因为重新派发而丢**：派发时，Spec 上已有的理由（上一轮 Verifier 给的 `REASON`，或上一轮的失败原因）会作为初始 feedback 喂给实现 Agent；`rearm` 保留这个理由，`run` 读取它。被队列挡住时写的 `blocked by <id> (...)` 不算反馈。
 
 超时（实现 Agent 或 Verifier 超时）落 `verify-error`，同样不重试 —— 因为超时留下的半成品状态不明，重跑会在不明状态上叠一层。超时后应当由人决定：提交工作区里的残留，还是 `review <id> --drop` 回滚。
+
+### 基础设施错误（infra）
+
+不是所有失败都是"实现没写对"。网关 502、连接被拒、socket 断掉、子进程被 SIGKILL 打死——这些是**基础设施故障**，与代码无关。CLI 按报错文本分类（`cli/src/infra.ts`）：
+
+- 强信号：`502/503/504`、`connection refused`、`ECONNRESET`、`ETIMEDOUT`、`fetch failed`、`dial tcp`、`no such host`、进程被 `SIGKILL` 打死等。
+- 我们自己预算内的超时（`implementation timed out after Ns`）**不算** infra——那是实现跑太久，属于实现问题。
+
+infra 错误的三条规则：
+
+1. **不消耗 attempts**。`attempts` 只累计真正的实现尝试，infra 故障不计入。
+2. **`reason` 带 `[infra]` 前缀**。`status` 仍是 `verify-error`（它确实没跑完），但一眼能看出不是代码问题。
+3. **当场重试，不直接落终局**。派发阶段的 infra 故障会原地重试（额度 `MAX_INFRA_RETRIES = 2`，同样不计 attempts）；用尽后才落 `verify-error`。
+
+`report` / `show` 看到 `[infra]` 的 `verify-error` 会提示"基础设施错误，建议 `rearm` 重跑"——`rearm` 不清零 attempts，所以这类故障不会让一条 Spec 反复"用光额度"。
+
+注意：infra 落地的 `verify-error` 与普通 `verify-error` 一样会**停住同目录队列**（它确实没跑完）。区别只在"这次失败不该算进实现的质量分"，以及人一看就知道该 `rearm` 而不是改 Spec。
 
 ## 基线与历史改写
 

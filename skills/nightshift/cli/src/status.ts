@@ -3,6 +3,7 @@ import path from "node:path";
 import { homeBase, loadBoard, loadConfig, pidAlive, runsDir, sessionsDir, type RunLock } from "./board.ts";
 import { fmtDur, localHM } from "./time.ts";
 import type { Spec, SpecStatus } from "./spec.ts";
+import { isInfraReason } from "./infra.ts";
 
 export type Liveness = "alive" | "stalled" | "orphaned" | "gone" | "-";
 
@@ -193,6 +194,10 @@ export function collectStatus(opts: StatusOptions = {}): StatusRow[] {
   return board.specs.map((spec) => {
     const l = specLiveness(spec, base, lock, nowMs, stallMs);
     const rec = latestPidRecord(spec.id, base);
+    const infraNote =
+      spec.status === "verify-error" && isInfraReason(spec.reason)
+        ? "基础设施错误（不是代码问题）：建议 nightshift rearm 重跑（不消耗尝试次数）"
+        : "";
     return {
       id: spec.id,
       status: spec.status,
@@ -203,7 +208,7 @@ export function collectStatus(opts: StatusOptions = {}): StatusRow[] {
       lastOutputAgeMs: l.lastOutputAgeMs,
       liveness: l.liveness,
       worstEndAt: rec === null ? null : worstEndAt(rec, cfg),
-      note: l.note,
+      note: infraNote === "" ? l.note : infraNote,
     };
   });
 }
