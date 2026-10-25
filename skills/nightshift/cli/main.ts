@@ -50,6 +50,7 @@ usage:
   nightshift report [--date YYYY-MM-DD] [--list-dates]
   nightshift review <id> [--drop]   # --drop 回滚 baseline，并放行被它挡住的下一条
   nightshift rearm <id>            # 重新装填：回到 ready，基线重锚当前 HEAD，保留上一轮理由
+                                   # 板上写着 running 但进程已死（僵尸）时也接受，直接收尸
   nightshift pass <id> [--reason "..."]  # 人工判通过：不回滚提交，放行被挡住的下一条
   nightshift status [--stall MIN]  # 板子活性：哪些活着 / 卡住 / 成了僵尸
   nightshift tail <id> [-n N] [-f]  # 看正在跑的 Agent 的实时进展（-f 跟着刷）
@@ -415,7 +416,21 @@ function cmdRearm(base: string, id: string | undefined): void {
   const onBoard = loadBoardStrict(base).specs.find((s) => s.id === id);
   const spec = onBoard ?? archivedSpec(id, base);
   if (!spec) die(`error: spec ${id} not found in ${boardDir(base)} or the archive`);
-  if (spec.status === "running") die(`error: ${spec.id} 正在跑；先停掉那一次派发再 rearm`);
+  if (spec.status === "running") {
+    // `running` 有两种：真的还在跑，和 run 被杀后留下的尸体。前者要拦，后者正是
+    // rearm 的用途——`ns status` 把僵尸指到这里，这里再拒绝就是死循环。
+    const row = collectStatus({ base }).find((r) => r.id === spec.id);
+    const live = row !== undefined && (row.liveness === "alive" || row.liveness === "stalled");
+    if (live) {
+      die(
+        `error: ${spec.id} 正在跑（${row!.liveness}，pid ${row!.pid}）；先 nightshift stop ${spec.id} 再 rearm`,
+      );
+    }
+    console.log(
+      `${spec.id}: 板上写着 running，但${row?.liveness === "gone" ? "子进程已经不在" : "派发它的 run 已经不在了"}` +
+        `（${row?.liveness ?? "无活性信息"}）——按僵尸收尸`,
+    );
+  }
   const errors = checkSpec(spec, spec.file);
   if (errors.length > 0) die(errors.map((e) => `error: ${e}`).join("\n"));
   if (!onBoard) {
@@ -593,7 +608,7 @@ function cmdStatus(base: string, flags: Map<string, string[]>): void {
     const elapsed = fmtDuration(r.elapsedMs);
     const lastOut =
       r.heartbeatAgeMs !== null
-        ? `心跳 ${fmtDuration(r.heartbeatAgeMs)} 前`
+        ? `心跳 ${fmtDuration(r.heartbeatAgeMs)} 前${r.heartbeatSource === "session-mtime" ? " (session)" : ""}`
         : r.lastOutputAgeMs === null
           ? "-"
           : `${fmtDuration(r.lastOutputAgeMs)} 前 (mtime)`;
@@ -629,7 +644,7 @@ function cmdNudge(base: string, positional: string[]): void {
 /**
  * 停掉在跑的东西。
  * - `ns stop <id>`：杀掉那条 Spec 的子进程，run 会把它落成 verify-error 并继续排下一条
- * - `ns stop --all`：连 run 自己一起停，释放锁；板上残留的 running 用 `ns rearm` 收尸
+ * - `ns stop --all`：连 run 自己一起停，释放锁；板上残留的 running 已经死了，直接 `ns rearm` 收尸
  */
 function cmdStop(base: string, positional: string[], flags: Map<string, string[]>): void {
   const all = has(flags, "all");
@@ -665,7 +680,7 @@ function cmdStop(base: string, positional: string[], flags: Map<string, string[]
       // 没有锁文件
     }
     releaseLock(base);
-    console.log("锁已释放；板上残留的 running 用 nightshift rearm <id> 收尸");
+    console.log("锁已释放；板上残留的 running 已经死了，直接用 nightshift rearm <id> 收尸");
   }
 }
 

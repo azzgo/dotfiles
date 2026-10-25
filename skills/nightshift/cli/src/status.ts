@@ -118,13 +118,21 @@ export function specLiveness(
   const elapsedMs = rec === null ? null : Math.max(0, nowMs - new Date(rec.startedAt).getTime());
   const session = lastSessionFile(spec.id, base);
   const lastOutputAgeMs = session === null ? null : Math.max(0, nowMs - session.mtimeMs);
-  // 心跳优先（pid 文件的 lastActivityAt），session mtime 只是降级信号：
-  // verifier 阶段会话落盘节奏和 impl 不同，mtime 沉默曾把正常 verify 误判成卡死。
+  // 两种心跳：pid 文件的 lastActivityAt（子进程有 stdout 才刷新）与 session jsonl 的 mtime。
+  // pi 这类 agent 在 -p --mode text 下几乎不写 stdout，只落 session 文件——所以 impl 阶段
+  // 必须取两者中**更新**的那个：lastActivityAt 一旦写入就永不为空，只看它会让降级路径不可达，
+  // 一个正在长思考的正常 agent 会被显示成"心跳很久没动"。
+  // verify 阶段是 --no-session，session 文件属于上一轮 impl、不代表 verifier 的进展，
+  // 所以那个阶段只认 pid 心跳（这正是当初把 mtime 降级成次选信号的原因）。
   const lastActivityIso = rec?.lastActivityAt;
-  const heartbeatAgeMs =
+  const outputHeartbeatAgeMs =
     lastActivityIso === undefined ? null : Math.max(0, nowMs - new Date(lastActivityIso).getTime());
+  const sessionHeartbeatAgeMs = rec?.phase === "impl" ? lastOutputAgeMs : null;
+  const useSessionHeartbeat =
+    sessionHeartbeatAgeMs !== null && (outputHeartbeatAgeMs === null || sessionHeartbeatAgeMs < outputHeartbeatAgeMs);
+  const heartbeatAgeMs = useSessionHeartbeat ? sessionHeartbeatAgeMs : outputHeartbeatAgeMs;
+  const heartbeatSource = useSessionHeartbeat ? "session-mtime" : outputHeartbeatAgeMs !== null ? "heartbeat" : "-";
   const silenceMs = heartbeatAgeMs ?? lastOutputAgeMs;
-  const heartbeatSource = heartbeatAgeMs !== null ? "heartbeat" : session === null ? "-" : "session-mtime";
   const supervisorAlive = lock !== null && pidAlive(lock.pid);
   const childAlive = pid !== null && pidAlive(pid);
 
@@ -139,7 +147,7 @@ export function specLiveness(
         heartbeatAgeMs,
         heartbeatSource,
         liveness: "orphaned",
-        note: "板上写着 running，但派发它的 run 已经不在了 —— 僵尸状态，需要 ns rearm 收尸",
+        note: "板上写着 running，但派发它的 run 已经不在了 —— 僵尸状态，用 ns rearm 收尸（不会拒绝）",
       };
     }
     if (silenceMs !== null && silenceMs > stallMs) {
@@ -161,8 +169,10 @@ export function specLiveness(
       pid,
       elapsedMs,
       lastOutputAgeMs,
+      heartbeatAgeMs,
+      heartbeatSource,
       liveness: "orphaned",
-      note: "板上写着 running，但派发它的 run 已经不在了 —— 僵尸状态，需要 ns rearm 收尸",
+      note: "板上写着 running，但派发它的 run 已经不在了 —— 僵尸状态，用 ns rearm 收尸（不会拒绝）",
     };
   }
   if (!childAlive) {
@@ -188,8 +198,8 @@ export function specLiveness(
       liveness: "stalled",
       note:
         heartbeatSource === "heartbeat"
-          ? "进程还在，心跳（子进程输出）已停超过 stall 阈值"
-          : "进程还在，但很久没有新产出",
+          ? "进程还在，但子进程输出已停超过 stall 阈值"
+          : "进程还在，session 文件也停写超过 stall 阈值（impl 阶段）",
     };
   }
   return { phase, pid, elapsedMs, lastOutputAgeMs, heartbeatAgeMs, heartbeatSource, liveness: "alive", note: "" };
@@ -236,8 +246,9 @@ export function collectStatus(opts: StatusOptions = {}): StatusRow[] {
   });
 }
 
-export function fmtDuration(ms: number | null): string {
-  if (ms === null) return "-";
+export function fmtDuration(ms: number | null | undefined): string {
+  // NaN 一律当成"无从判断"：一个缺失的字段不该在表里显示成 `NaNh 前`。
+  if (ms === null || ms === undefined || !Number.isFinite(ms)) return "-";
   const s = Math.floor(ms / 1000);
   if (s < 60) return `${s}s`;
   const m = Math.floor(s / 60);
@@ -245,7 +256,6 @@ export function fmtDuration(ms: number | null): string {
   const h = Math.floor(m / 60);
   return `${h}h${m % 60 > 0 ? String(m % 60).padStart(2, "0") : ""}`;
 }
-
 export const LIVENESS_ICON: Record<Liveness, string> = {
   alive: "●",
   stalled: "◐",

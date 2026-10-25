@@ -241,12 +241,21 @@ exit code 非零 + 未命中 → 仍是 verify-error（进程挂了，非代码�
 
 | 判定 | 含义 | 依据 |
 |---|---|---|
-| ● alive | 子进程在，最近有产出 | pid 活着 + session jsonl 的 mtime 是新的 |
-| ◐ stalled | 子进程在，但很久没产出 | pid 活着，但 mtime 超过阈值（默认 15 分钟） |
-| ☠ orphaned | **僵尸**：板上写着 running，但派发它的 run 已经不在了 | run.lock 里的 pid 已死 |
+| ● alive | 子进程在，最近有产出 | pid 活着 + 心跳是新的 |
+| ◐ stalled | 子进程在，但很久没产出 | pid 活着，但心跳超过阈值（默认 15 分钟） |
+| ☠ orphaned | **僵尸**：板上写着 running，但派发它的 run 已经不在了 | run.lock 里的 pid 已死（含僵尸进程） |
 | ○ gone | 子进程已经不在了，run 稍后会接手 | pid 文件里的 pid 已死 |
 
-`orphaned` 尤其重要：run 被 kill 后，Spec 会永远停在 `running` 没人管——今天就是这么发现的。收尸用 `rearm`。
+**心跳有两个来源**，取两者中更新的那个（`status` 用 `(session)` 后缀标出后者）：
+
+- `lastActivityAt`：pid 文件里的字段，子进程 stdout/stderr 每有输出就刷新；
+- session jsonl 的 mtime：Agent 自己的会话文件落盘时间。
+
+第二个来源不是可选的：`pi` 在 `-p --mode text` 下几乎不往 stdout 写东西，只落 session 文件。只看第一个，`lastActivityAt` 一旦写入就永不为空，降级路径不可达，一个正常干活的长思考 Agent 会在启动 N 分钟后被显示成"心跳很久没动"。
+
+`verify` 阶段（`--no-session`）只看 pid 心跳：那时的 session 文件属于上一轮 impl，不代表 verifier 的进展——这正是当初把 mtime 降级成次选信号的原因。
+
+`orphaned` 尤其重要：run 被 kill 后，Spec 会永远停在 `running` 没人管——今天就是这么发现的。收尸用 `rearm`，它对 `orphaned` / `gone` 直接放行，只在 `alive` / `stalled` 时拒绝并提示 `ns stop <id>`。
 
 ## 8.3 怎么给正在跑的 Agent 递话
 
@@ -312,7 +321,9 @@ Nightshift 2026-10-19  窗口 23:10–07:00  派发 5 / 通过 3 / 需看 2 / �
 
 ## 10. 单实例锁
 
-`~/.cache/nightshift/run.lock` 写 `{pid, startedAt, runId}`。启动时若文件存在：读 pid，`kill -0` 存活则拒绝并打印；不存活则视为陈旧锁，覆盖。
+`~/.cache/nightshift/run.lock` 写 `{pid, startedAt, runId}`。启动时若文件存在：读 pid，存活则拒绝并打印；不存活则视为陈旧锁，**自动接管**并打一行 `stale lock from pid N (...), taking over`。
+
+"存活"不能只靠 `kill(pid, 0)`：它对**僵尸**（已退出、父进程还没 wait）也返回成功，而僵尸恰恰是"supervisor 被杀但父进程还在"的常见形态（agent 的 bash tool、CI 包装层杀掉进程组却不回收）。所以存活之后还要看 `ps -o state=` 是不是 `Z`。把僵尸当活着，锁就永远解不开，报错还会把用户指向一个不存在的进程。
 
 ## 11. 安装与调度边界
 

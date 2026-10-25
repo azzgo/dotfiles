@@ -148,7 +148,7 @@ draft 永不被派发。
 | `run [--until HH:MM\|+45s\|+30m\|+2h] [--jobs N]` | 夜间排水 | 板 + git（commit 由 agent 做） |
 | `report [--date YYYY-MM-DD] [--list-dates]` | 检查面 | 只读 |
 | `review <id> [--drop]` | 详情；`--drop` 才 `git reset --hard <baseline>`，并放行被它挡住的下一条。基线悬空 ⇒ 拒绝；reset 前备份 HEAD 到 `refs/nightshift/backup/<id>` 并列出将丢弃的提交 | 仅 `--drop` |
-| `rearm <id>` | 重新装填：`ready` + 基线重锚当前 HEAD + **保留上一轮理由**（下一轮作为 feedback）。归档件也能搬回板上 | 板 |
+| `rearm <id>` | 重新装填：`ready` + 基线重锚当前 HEAD + **保留上一轮理由**（下一轮作为 feedback）。归档件也能搬回板上。`running` 时按活性裁决：`orphaned` / `gone` 直接收尸，`alive` / `stalled` 拒绝并提示 `stop` | 板 |
 | `pass <id> [--reason R]` | 人工判通过：入口状态限 `verify-error` / `needs-review` / `running`；写 `status=passed`、`verdict=pass`、`reason`（缺省 `manually passed`）、`run=manual`，并放行被它挡住的下一条。**不回滚任何提交**（要丢弃用 `review --drop`）。归档件就地改写，不搬回板上 | 板 / 归档 |
 | `status [--stall MIN]` | 板子活性：● alive / ◐ stalled / ☠ orphaned（run 没了但板上还是 running）/ ○ gone | 只读 |
 | `tail <id> [-n N] [-f]` | 看正在跑的 Agent 的实时进展（读它的 session jsonl）；`-f` 跟着刷 | 只读 |

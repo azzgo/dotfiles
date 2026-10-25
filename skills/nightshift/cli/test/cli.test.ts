@@ -7,7 +7,7 @@ import assert from "node:assert";
 import { fileURLToPath } from "node:url";
 
 import { bodyTemplate, checkSpec, missingSections, parseSpec, serializeSpec } from "../src/spec.ts";
-import { nextId, loadBoard, loadConfig, acquireLock, releaseLock, resolveConfig, readArchiveSpecs, DEFAULT_CONFIG } from "../src/board.ts";
+import { nextId, loadBoard, loadConfig, acquireLock, releaseLock, resolveConfig, readArchiveSpecs, pidAlive, DEFAULT_CONFIG } from "../src/board.ts";
 import { buildImplArgs, buildVerifyArgs, parseVerdict, parseReviewHint, DispatchError } from "../src/dispatch.ts";
 import { assertWindowSane, resolveDeadline, runNightshift, WindowTooLongError } from "../src/run.ts";
 import { implPrompt, verifyPrompt, extractSection } from "../src/prompt.ts";
@@ -196,6 +196,50 @@ test("board: stale lock is reclaimed", () => {
   const lock = acquireLock(base);
   assert.strictEqual(lock.pid, process.pid);
   releaseLock(base);
+});
+
+test("board: taking over a stale lock says whose lock it took", () => {
+  const base = tmp("ns-base-");
+  fs.mkdirSync(base, { recursive: true });
+  fs.writeFileSync(path.join(base, "run.lock"), JSON.stringify({ pid: 999999, startedAt: "x", runId: "old" }));
+  const lines = [];
+  acquireLock(base, (l) => lines.push(l));
+  assert.strictEqual(lines.length, 1, JSON.stringify(lines));
+  assert.ok(/stale lock from pid 999999/.test(lines[0]), lines[0]);
+  assert.ok(/taking over/.test(lines[0]), lines[0]);
+  releaseLock(base);
+});
+
+test("board: a zombie holder does not keep the lock (kill(pid,0) alone would say alive)", async (t) => {
+  const base = tmp("ns-base-");
+  fs.mkdirSync(base, { recursive: true });
+  const python = spawnSync("python3", ["--version"], { encoding: "utf8" });
+  if (python.error !== undefined || python.status !== 0) {
+    t.skip("python3 not available to fork a non-reaping parent");
+    return;
+  }
+  // 造一个真僵尸：父进程 fork 出孩子后**不 wait**（sh / node 都会 reap，所以用 python）。
+  const parent = spawn(
+    "python3",
+    ["-c", "import os,sys,time\np=os.fork()\nif p==0: os._exit(0)\nopen(sys.argv[1],'w').write(str(p))\ntime.sleep(60)", path.join(base, "zpid")],
+    { stdio: "ignore" },
+  );
+  try {
+    await new Promise((r) => setTimeout(r, 1200));
+    const zombiePid = Number(fs.readFileSync(path.join(base, "zpid"), "utf8").trim());
+    const state = spawnSync("ps", ["-o", "state=", "-p", String(zombiePid)], { encoding: "utf8" }).stdout.trim();
+    assert.ok(state.startsWith("Z"), `expected pid ${zombiePid} to be a zombie, got "${state}"`);
+    assert.strictEqual(pidAlive(zombiePid), false, "a zombie must not count as alive");
+    fs.writeFileSync(
+      path.join(base, "run.lock"),
+      JSON.stringify({ pid: zombiePid, startedAt: "x", runId: "crashed" }),
+    );
+    const lock = acquireLock(base);
+    assert.strictEqual(lock.pid, process.pid);
+    releaseLock(base);
+  } finally {
+    parent.kill("SIGKILL");
+  }
 });
 
 // ── dispatch argv ───────────────────────────────────────────────────────
@@ -1109,6 +1153,102 @@ test("status: a running spec whose supervisor is gone reads as orphaned", () => 
   const rows = collectStatus({ base });
   assert.strictEqual(rows[0].liveness, "orphaned", JSON.stringify(rows[0]));
   assert.ok(/僵尸/.test(rows[0].note), rows[0].note);
+});
+
+test("status: an orphaned row still carries a heartbeat, so ns status never prints NaN", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  writeRunningSpec(base, "ns-0001", repo.dir);
+  const startedAt = new Date(Date.now() - 5 * 60_000).toISOString();
+  writePidRecordAt(base, "ns-0001", { pid: process.pid, phase: "impl", startedAt, lastActivityAt: startedAt });
+  writeLock(base, 2147483646); // supervisor 已死
+  const rows = collectStatus({ base });
+  assert.strictEqual(rows[0].liveness, "orphaned", JSON.stringify(rows[0]));
+  assert.ok(rows[0].heartbeatAgeMs !== null && Number.isFinite(rows[0].heartbeatAgeMs), JSON.stringify(rows[0]));
+  const out = runCli(["status"], { NIGHTSHIFT_HOME: base });
+  assert.ok(!/NaN/.test(out.out), out.out);
+});
+
+function writeRunningSpec(base, id, dir, extra = {}) {
+  const boardDirPath = path.join(base, "board");
+  fs.mkdirSync(boardDirPath, { recursive: true });
+  fs.writeFileSync(
+    path.join(boardDirPath, `${id}.md`),
+    serializeSpec({ ...makeSpec({ id, status: "running", dir }), ...extra, file: `${id}.md` }),
+  );
+}
+
+function writePidRecordAt(base, id, rec) {
+  const dir = path.join(base, "runs", "20261019-010000");
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, `${id}.pid`), JSON.stringify(rec));
+}
+
+test("status: an impl agent that writes no stdout still gets a session-mtime heartbeat", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  writeRunningSpec(base, "ns-0001", repo.dir);
+  const startedAt = new Date(Date.now() - 10 * 60_000).toISOString();
+  writePidRecordAt(base, "ns-0001", { pid: process.pid, phase: "impl", startedAt, lastActivityAt: startedAt });
+  writeLock(base, process.pid);
+  const sess = path.join(base, "sessions", "ns-0001");
+  fs.mkdirSync(sess, { recursive: true });
+  const file = path.join(sess, "a.jsonl");
+  fs.writeFileSync(file, "{}\n");
+  fs.utimesSync(file, new Date(), new Date(Date.now() - 20_000));
+  const rows = collectStatus({ base, stallMinutes: 15 });
+  assert.strictEqual(rows[0].liveness, "alive", JSON.stringify(rows[0]));
+  assert.strictEqual(rows[0].heartbeatSource, "session-mtime", JSON.stringify(rows[0]));
+  assert.ok(rows[0].heartbeatAgeMs < 60_000, String(rows[0].heartbeatAgeMs));
+});
+
+test("status: a verify phase ignores session mtime (that file is the previous impl's)", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  writeRunningSpec(base, "ns-0001", repo.dir);
+  const startedAt = new Date(Date.now() - 30 * 60_000).toISOString();
+  writePidRecordAt(base, "ns-0001", { pid: process.pid, phase: "verify", startedAt, lastActivityAt: startedAt });
+  writeLock(base, process.pid);
+  const sess = path.join(base, "sessions", "ns-0001");
+  fs.mkdirSync(sess, { recursive: true });
+  const file = path.join(sess, "a.jsonl");
+  fs.writeFileSync(file, "{}\n");
+  fs.utimesSync(file, new Date(), new Date(Date.now() - 10_000));
+  const rows = collectStatus({ base, stallMinutes: 15 });
+  assert.strictEqual(rows[0].heartbeatSource, "heartbeat", JSON.stringify(rows[0]));
+  assert.strictEqual(rows[0].liveness, "stalled", JSON.stringify(rows[0]));
+});
+
+test("cli: rearm takes over a zombie running spec instead of refusing", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  writeRunningSpec(base, "ns-0001", repo.dir, { reason: "上一轮的验证理由" });
+  writePidRecord(base, "ns-0001", process.pid, "impl");
+  writeLock(base, 2147483646); // supervisor 已死 ⇒ orphaned
+  const r = runCli(["rearm", "ns-0001"], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(r.status, 0, r.err);
+  assert.ok(/收尸/.test(r.out), r.out);
+  assert.ok(r.out.includes("-> ready"), r.out);
+  const spec = loadBoard(base).specs.find((s) => s.id === "ns-0001");
+  assert.strictEqual(spec.status, "ready");
+  assert.strictEqual(spec.reason, "上一轮的验证理由", "the previous reason must survive");
+});
+
+test("cli: rearm still refuses a running spec whose process is alive", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  writeRunningSpec(base, "ns-0001", repo.dir);
+  writePidRecord(base, "ns-0001", process.pid, "impl");
+  writeLock(base, process.pid);
+  const sess = path.join(base, "sessions", "ns-0001");
+  fs.mkdirSync(sess, { recursive: true });
+  fs.writeFileSync(path.join(sess, "a.jsonl"), "{}\n");
+  const r = runCli(["rearm", "ns-0001"], { NIGHTSHIFT_HOME: base });
+  assert.notStrictEqual(r.status, 0, r.out);
+  assert.ok(/正在跑/.test(r.err), r.err);
+  assert.ok(/nightshift stop ns-0001/.test(r.err), r.err);
+  const spec = loadBoard(base).specs.find((s) => s.id === "ns-0001");
+  assert.strictEqual(spec.status, "running");
 });
 
 test("cli: nudge writes the text into the spec inbox", () => {

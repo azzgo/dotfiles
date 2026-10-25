@@ -93,7 +93,7 @@ nightshift report
 | 看历史某天 | `nightshift report --date 2026-10-19` |
 | 列出所有归档日期 | `nightshift report --list-dates` |
 | 丢弃某条的提交（并放行同目录后续） | `nightshift review ns-0007 --drop` |
-| 某条判错了，想换个基线重跑 | `nightshift rearm ns-0007`（基线重锚到当前 HEAD，上一轮理由会带上） |
+| 某条判错了，想换个基线重跑 | `nightshift rearm ns-0007`（基线重锚到当前 HEAD，上一轮理由会带上；`☠ 僵尸` 也接受，直接收尸） |
 | 某条其实做完了，人工判通过 | `nightshift pass ns-0007 [--reason "看过 diff，做完了"]`（不回滚提交，顺带放行被挡住的下一条） |
 | 夜里的任务现在什么状态 | `nightshift status`（● 活着 / ◐ 很久没动静 / ☠ 成了僵尸） |
 | 看它此刻在干什么 | `nightshift tail ns-0007`（`-f` 跟着刷） |
@@ -102,7 +102,7 @@ nightshift report
 | 看同目录串行队列 | `nightshift queue [--dir /abs/path]`（左边那个数字就是队列位次）|
 | 放行被某条挡住的下一条 | `nightshift release ns-0007` |
 | 只放行某一条 blocked | `nightshift unblock ns-0008` |
-| 锁卡住了 | `nightshift unlock` |
+| 锁卡住了 | 先直接 `nightshift run`：陈旧锁（持有进程已死，含僵尸）会自动接管。仍拒绝时 `nightshift unlock` |
 | 目录都建在哪 | `nightshift path` |
 
 ## 3. 五节怎么填（唯一真正要学的东西）
@@ -221,7 +221,7 @@ ExecStart=%h/.local/bin/nightshift-keep-awake --until 07:00
 # 因此调度频次可以放宽：跑几次、错过几次都无所谓，队列空就秒退
 ```
 
-**单实例锁**：同一时刻只允许一个 `run`。第二个启动会立刻拒绝并打印现有实例的 pid 与 run id。陈旧锁（进程已死）会被自动接管；实在卡住用 `nightshift unlock`。
+**单实例锁**：同一时刻只允许一个 `run`。第二个启动会立刻拒绝并打印现有实例的 pid 与 run id。陈旧锁（持有进程已死，**包括还没被回收的僵尸进程**）会被自动接管，并打一行 `stale lock from pid N (...), taking over`；实在卡住用 `nightshift unlock`。
 
 **调度环境的两个坑**（这不是 nightshift 的问题，但会咬你）：
 

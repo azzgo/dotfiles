@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -111,13 +112,26 @@ export function resolveConfig(raw: Record<string, unknown>): Config {
   };
 }
 
+/**
+ * 进程还在不在。
+ *
+ * `kill(pid, 0)` 对**僵尸**（已退出、父进程还没 wait）也返回成功——而僵尸恰恰是
+ * "supervisor 被杀但父进程还在" 的常见形态（agent 的 bash tool、CI 包装层杀掉
+ * 进程组却不回收）。把它当活着，锁就永远解不开。所以存活之后再看一眼 ps 的 state。
+ */
 export function pidAlive(pid: number): boolean {
   try {
     process.kill(pid, 0);
-    return true;
   } catch {
     return false;
   }
+  return !isZombie(pid);
+}
+
+function isZombie(pid: number): boolean {
+  const r = spawnSync("ps", ["-o", "state=", "-p", String(pid)], { encoding: "utf8" });
+  if (r.error !== undefined || r.status !== 0) return false;
+  return r.stdout.trim().startsWith("Z");
 }
 
 export interface RunLock {
@@ -134,7 +148,14 @@ export class LockHeldError extends Error {
   }
 }
 
-export function acquireLock(base = homeBase()): RunLock {
+/**
+ * 抢单实例锁。
+ *
+ * 陈旧锁（持有者已死）**自动接管**——它是上一个 `run` 被外部杀掉的遗留物，
+ * 不是"另一个人在跑"。接管时打一行日志说清接管了谁的锁，否则用户只看到
+ * "another nightshift run is active" 之后突然又能跑了，会以为锁自己坏了。
+ */
+export function acquireLock(base = homeBase(), log?: (line: string) => void): RunLock {
   const p = lockPath(base);
   if (fs.existsSync(p)) {
     let holder: RunLock | null = null;
@@ -143,7 +164,10 @@ export function acquireLock(base = homeBase()): RunLock {
     } catch {
       holder = null;
     }
-    if (holder && typeof holder.pid === "number" && pidAlive(holder.pid)) throw new LockHeldError(holder);
+    if (holder !== null && typeof holder.pid === "number" && pidAlive(holder.pid)) throw new LockHeldError(holder);
+    if (holder !== null && typeof holder.pid === "number") {
+      log?.(`stale lock from pid ${holder.pid} (run ${holder.runId || "?"}, started ${holder.startedAt}), taking over`);
+    }
   }
   const lock: RunLock = { pid: process.pid, startedAt: new Date().toISOString(), runId: "" };
   fs.mkdirSync(base, { recursive: true });

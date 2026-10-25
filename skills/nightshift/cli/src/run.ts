@@ -333,7 +333,7 @@ export async function runNightshift(opts: RunOptions): Promise<{ archivedTo: str
   if (deadline === null) throw new Error(`unparseable window: ${opts.until ?? cfg.window}`);
   assertWindowSane(startedAt, deadline, cfg.maxWindowHours);
 
-  const lock = acquireLock(base);
+  const lock = acquireLock(base, log);
   const runId = makeRunId(startedAt);
   updateLock(lock, { runId }, base);
   // 窗口只管“还能不能派新活”；在飞的任务照跑到底，所以最坏结束时间 = 窗口关 + 单条最坏耗时
