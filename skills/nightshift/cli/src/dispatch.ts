@@ -90,6 +90,8 @@ export interface SpawnOptions {
   timeoutMs: number;
   stdin?: string;
   onStdout?: (chunk: string) => void;
+  /** 子进程每有输出就触达一次（心跳）：`ns status` 靠它区分「活着没产出」和「真挂了」。 */
+  onActivity?: () => void;
   /** 子进程起来后的回调（拿 pid）——用于落 pid 文件，好让 `ns status` / `ns stop` 能找到它。 */
   onSpawn?: (pid: number) => void;
 }
@@ -128,13 +130,14 @@ export function runChild(opts: SpawnOptions): Promise<ChildResult> {
     }
 
     child.stdout.setEncoding("utf8");
-    child.stderr.setEncoding("utf8");
     child.stdout.on("data", (d: string) => {
       stdout += d;
       opts.onStdout?.(d);
+      opts.onActivity?.();
     });
     child.stderr.on("data", (d: string) => {
       stderr += d;
+      opts.onActivity?.();
     });
 
     const settle = (exitCode: number | null, signal: NodeJS.Signals | null): void => {

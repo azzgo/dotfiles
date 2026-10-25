@@ -119,6 +119,7 @@ async function runImpl(
     timeoutMs: cfg.timeoutSec * 1000,
     stdin: prompt,
     onSpawn: (pid) => writePidFile(base, runId, spec.id, pid, "impl"),
+    onActivity: () => touchPidFile(base, runId, spec.id),
     onStdout: (chunk) => {
       output += chunk;
     },
@@ -157,8 +158,10 @@ async function runVerify(
     args,
     cwd: spec.dir,
     timeoutMs: cfg.verifyTimeoutSec * 1000,
+    timeoutMs: cfg.verifyTimeoutSec * 1000,
     stdin: prompt,
     onSpawn: (pid) => writePidFile(base, runId, spec.id, pid, "verify"),
+    onActivity: () => touchPidFile(base, runId, spec.id),
   });
   if (res.timedOut) return { verdict: "verify-error", reason: `verifier timed out after ${cfg.verifyTimeoutSec}s` };
   return parseVerdict(res.stdout, res.exitCode, { signal: res.signal, stderr: res.stderr });
@@ -172,10 +175,23 @@ function persist(spec: Spec, base: string): void {
 function writePidFile(base: string, runId: string, id: string, pid: number, phase: string): void {
   const dir = runDir(runId, base);
   fs.mkdirSync(dir, { recursive: true });
+  const now = new Date().toISOString();
   fs.writeFileSync(
     path.join(dir, `${id}.pid`),
-    JSON.stringify({ pid, phase, startedAt: new Date().toISOString() }, null, 2),
+    JSON.stringify({ pid, phase, startedAt: now, lastActivityAt: now }, null, 2),
   );
+}
+
+/** 子进程有输出时刷新心跳。只改 mtime + lastActivityAt，不重写整个文件；读不到就跳过（写竞态无害）。 */
+function touchPidFile(base: string, runId: string, id: string): void {
+  const file = path.join(runDir(runId, base), `${id}.pid`);
+  try {
+    const rec = JSON.parse(fs.readFileSync(file, "utf8")) as { lastActivityAt?: string };
+    if (rec.lastActivityAt && Date.now() - new Date(rec.lastActivityAt).getTime() < 10_000) return;
+    fs.writeFileSync(file, JSON.stringify({ ...rec, lastActivityAt: new Date().toISOString() }, null, 2));
+  } catch {
+    // pid 文件还没落或刚被清掉：心跳没有可附着的对象，忽略
+  }
 }
 
 /**
@@ -229,7 +245,7 @@ async function processSpec(
   const nowMs = Date.now();
   const perSpecWorstMs = (MAX_ATTEMPTS + MAX_INFRA_RETRIES) * (cfg.timeoutSec + cfg.verifyTimeoutSec) * 1000;
   log(
-    `${spec.id} dispatch (baseline ${shortSha(pf.baseline)}, 窗口剩 ${fmtDur(deadline.getTime() - nowMs)}, ` +
+    `${spec.id} dispatch (baseline ${shortSha(pf.baseline)}, timeout ${cfg.timeoutSec}s + verify ${cfg.verifyTimeoutSec}s, 窗口剩 ${fmtDur(deadline.getTime() - nowMs)}, ` +
       `本条最晚 ${localHM(new Date(nowMs + perSpecWorstMs))} 结束)`,
   );
 
