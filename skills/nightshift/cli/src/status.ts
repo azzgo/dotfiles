@@ -15,6 +15,10 @@ export interface StatusRow {
   pid: number | null;
   elapsedMs: number | null;
   lastOutputAgeMs: number | null;
+  /** 心跳年龄（pid 文件的 lastActivityAt 距今）；旧 pid 记录或非 running 时为 null。 */
+  heartbeatAgeMs: number | null;
+  /** 心跳来源："heartbeat"（子进程输出）| "session-mtime"（降级）| "-"（无从判断）。 */
+  heartbeatSource: string;
   liveness: Liveness;
   worstEndAt: number | null;
   note: string;
@@ -24,6 +28,7 @@ export interface PidRecord {
   pid: number;
   phase: string;
   startedAt: string;
+  lastActivityAt?: string;
 }
 
 export interface StatusOptions {
@@ -103,9 +108,9 @@ export function specLiveness(
   lock: RunLock | null,
   nowMs: number,
   stallMs: number,
-): { phase: string; pid: number | null; elapsedMs: number | null; lastOutputAgeMs: number | null; liveness: Liveness; note: string } {
+): { phase: string; pid: number | null; elapsedMs: number | null; lastOutputAgeMs: number | null; heartbeatAgeMs: number | null; heartbeatSource: string; liveness: Liveness; note: string } {
   if (spec.status !== "running") {
-    return { phase: "-", pid: null, elapsedMs: null, lastOutputAgeMs: null, liveness: "-", note: "" };
+    return { phase: "-", pid: null, elapsedMs: null, lastOutputAgeMs: null, heartbeatAgeMs: null, heartbeatSource: "-", liveness: "-", note: "" };
   }
   const rec = latestPidRecord(spec.id, base);
   const pid = rec === null ? null : rec.pid;
@@ -113,6 +118,13 @@ export function specLiveness(
   const elapsedMs = rec === null ? null : Math.max(0, nowMs - new Date(rec.startedAt).getTime());
   const session = lastSessionFile(spec.id, base);
   const lastOutputAgeMs = session === null ? null : Math.max(0, nowMs - session.mtimeMs);
+  // 心跳优先（pid 文件的 lastActivityAt），session mtime 只是降级信号：
+  // verifier 阶段会话落盘节奏和 impl 不同，mtime 沉默曾把正常 verify 误判成卡死。
+  const lastActivityIso = rec?.lastActivityAt;
+  const heartbeatAgeMs =
+    lastActivityIso === undefined ? null : Math.max(0, nowMs - new Date(lastActivityIso).getTime());
+  const silenceMs = heartbeatAgeMs ?? lastOutputAgeMs;
+  const heartbeatSource = heartbeatAgeMs !== null ? "heartbeat" : session === null ? "-" : "session-mtime";
   const supervisorAlive = lock !== null && pidAlive(lock.pid);
   const childAlive = pid !== null && pidAlive(pid);
 
@@ -124,11 +136,13 @@ export function specLiveness(
         pid,
         elapsedMs,
         lastOutputAgeMs,
+        heartbeatAgeMs,
+        heartbeatSource,
         liveness: "orphaned",
         note: "板上写着 running，但派发它的 run 已经不在了 —— 僵尸状态，需要 ns rearm 收尸",
       };
     }
-    if (lastOutputAgeMs !== null && lastOutputAgeMs > stallMs) {
+    if (silenceMs !== null && silenceMs > stallMs) {
       return {
         phase,
         pid,
@@ -138,7 +152,7 @@ export function specLiveness(
         note: "没有 pid 记录（派发时 CLI 较旧），但已很久没有新产出",
       };
     }
-    return { phase, pid, elapsedMs, lastOutputAgeMs, liveness: "-", note: "没有 pid 记录（派发时 CLI 较旧）" };
+    return { phase, pid, elapsedMs, lastOutputAgeMs, heartbeatAgeMs, heartbeatSource, liveness: "-", note: "没有 pid 记录（派发时 CLI 较旧）" };
   }
 
   if (!supervisorAlive) {
@@ -157,21 +171,28 @@ export function specLiveness(
       pid,
       elapsedMs,
       lastOutputAgeMs,
+      heartbeatAgeMs,
+      heartbeatSource,
       liveness: "gone",
       note: "子进程已经不在了（run 稍后会接手）",
     };
   }
-  if (lastOutputAgeMs !== null && lastOutputAgeMs > stallMs) {
+  if (silenceMs !== null && silenceMs > stallMs) {
     return {
       phase,
       pid,
       elapsedMs,
       lastOutputAgeMs,
+      heartbeatAgeMs,
+      heartbeatSource,
       liveness: "stalled",
-      note: "进程还在，但很久没有新产出",
+      note:
+        heartbeatSource === "heartbeat"
+          ? "进程还在，心跳（子进程输出）已停超过 stall 阈值"
+          : "进程还在，但很久没有新产出",
     };
   }
-  return { phase, pid, elapsedMs, lastOutputAgeMs, liveness: "alive", note: "" };
+  return { phase, pid, elapsedMs, lastOutputAgeMs, heartbeatAgeMs, heartbeatSource, liveness: "alive", note: "" };
 }
 
 /**
@@ -206,6 +227,8 @@ export function collectStatus(opts: StatusOptions = {}): StatusRow[] {
       pid: l.pid,
       elapsedMs: l.elapsedMs,
       lastOutputAgeMs: l.lastOutputAgeMs,
+      heartbeatAgeMs: l.heartbeatAgeMs,
+      heartbeatSource: l.heartbeatSource,
       liveness: l.liveness,
       worstEndAt: rec === null ? null : worstEndAt(rec, cfg),
       note: infraNote === "" ? l.note : infraNote,

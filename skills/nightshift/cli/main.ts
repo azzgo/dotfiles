@@ -591,10 +591,15 @@ function cmdStatus(base: string, flags: Map<string, string[]>): void {
     const phase = r.phase === "-" ? "-" : r.phase;
     const pid = r.pid === null ? "-" : String(r.pid);
     const elapsed = fmtDuration(r.elapsedMs);
-    const lastOut = r.lastOutputAgeMs === null ? "-" : `${fmtDuration(r.lastOutputAgeMs)} 前`;
+    const lastOut =
+      r.heartbeatAgeMs !== null
+        ? `心跳 ${fmtDuration(r.heartbeatAgeMs)} 前`
+        : r.lastOutputAgeMs === null
+          ? "-"
+          : `${fmtDuration(r.lastOutputAgeMs)} 前 (mtime)`;
     const worst = r.worstEndAt === null ? "-" : `最晚 ${localHM(new Date(r.worstEndAt))}`;
     console.log(
-      `${icon} ${r.id.padEnd(7)} ${r.status.padEnd(13)} ${phase.padEnd(6)} pid ${pid.padEnd(7)} ${elapsed.padStart(6)}  最后产出 ${lastOut.padEnd(12)} ${worst}` +
+      `${icon} ${r.id.padEnd(7)} ${r.status.padEnd(13)} ${phase.padEnd(6)} pid ${pid.padEnd(7)} ${elapsed.padStart(6)}  ${lastOut.padEnd(20)} ${worst}` +
         (r.note === "" ? "" : `\n    ↳ ${r.note}`),
     );
   }
