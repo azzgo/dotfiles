@@ -61,6 +61,13 @@ Pi 相关约定补充：
 - `skills/`：通用（pi 无关）skills，不再全局安装，由 project-skills 扩展按项目链接
 - `mise/`：mise 工具版本管理配置（全局 CLI 工具、node/python/uv、npm 全局包）
 
+## 子进程非交互化（防止命令卡死）
+
+子进程若在等 stdin/TTY（sudo 密码、git pager、vim、`npm init`、`(y/n)` 确认），agent 侧会以为命令还在跑而无限空等。这不是靠加大 timeout 能解决的，要在环境、提示词、检测三层同时防：
+
+1. **强制非交互环境**：跑外部命令时带上 `CI=true`、`DEBIAN_FRONTEND=noninteractive`、`PAGER=cat`、`GIT_PAGER=cat`、`GIT_EDITOR=true`、`EDITOR=true`；必要时 `timeout … </dev/null`；命令尽量带 `-y`/`--yes`/`--no-pager`。
+2. **禁止清单**：vim/nano 等交互编辑器、交互 sudo、HTTPS 密码式 git push、无 flag 的 `npm init`、会开 pager 的裸 `git log/diff`。git commit 用 `GIT_EDITOR=true` 或 `-m`；特权命令（sudo 等）交给人手动跑。
+3. **检测「在等人」早杀**：输出出现 `password:`、`(y/n)`、`Allow?`、vim 全屏界面等模式时，立即中止该命令并报告「waiting for human / interactive prompt」，不要继续等。测试/长任务优先后台运行 + 轮询中间输出，而非阻塞式等待到超时。
 ## 给后续代理的提醒
 
 1. 优先阅读 `README.md`、`justfile`、相关配置文件再改动。

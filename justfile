@@ -192,7 +192,7 @@ install-mise:
 link: install-pi
 
 # Install the PiG (pi-in-go) second configuration: own config root, own agent dir
-pig_version := "0.5.1"
+pig_version := "0.5.3"
 
 # Install PiG binary + a separate ~/.pig configuration (not shared with pi)
 install-pig:
