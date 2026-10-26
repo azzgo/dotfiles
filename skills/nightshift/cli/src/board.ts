@@ -142,8 +142,11 @@ export interface RunLock {
 
 export class LockHeldError extends Error {
   readonly holder: RunLock;
-  constructor(holder: RunLock) {
-    super(`another nightshift run is active: pid ${holder.pid} (run ${holder.runId}, since ${holder.startedAt})`);
+  constructor(holder: RunLock, base = homeBase()) {
+    super(
+      `another nightshift run is active: pid ${holder.pid} (run ${holder.runId}, since ${holder.startedAt})\n` +
+        `若确认它没在跑（ps -p ${holder.pid} 查无此进程），删掉锁文件再跑：rm ${lockPath(base)}`,
+    );
     this.holder = holder;
   }
 }
