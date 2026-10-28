@@ -184,3 +184,23 @@ Because `~/.agents/skills/` is also a pi skill search path, these skills remain 
 | **Installed** | 2026-10-22 |
 | **Adjustments** | Deliberately **not** a pi extension and **not** model-invocable (`disable-model-invocation: true`): the point is that a human decides when work is handed off, and the skill must stay usable by any agent that reads `~/.agents/skills/`. Files: `SKILL.md` (routing, rules, and a condensed Herdr SOP so the skill works even where Herdr's own skill is not installed), `scripts/bg` (dependency-free bash: `start` / `capture` / `send` / `list` / `kill` / `attach`). Plain tmux runs write `out.log` (stdout+stderr) and `rc` (exit code) under `~/.cache/bg-run/<name>/`; **completion is decided by `rc`, never by parsing the output or spotting a prompt** — guessing at a shell prompt is what cost time in the recorded sessions. Herdr runs get their lifecycle state (`idle` / `working` / `blocked` / `done` / `unknown`) from Herdr itself and are started in a **new tab**, because a narrow split pane wraps every output line into unreadable slivers. `--agent KIND` (pi, claude, codex, gemini, cursor, omp, …) hands the work to another agent; without Herdr the command refuses rather than silently falling back. Sits **beside** `sub-dispatch`, not against it: dispatch is in-process with a hard timeout (no renewal) and dies with the host TUI, while this one survives it |
 | **Upstream** | None (repo-owned; no external upstream to track) |
+
+### `create-verify-playbook`
+
+| Field | Value |
+|-------|-------|
+| **Source** | Repo-owned; design recorded in `docs/adr/0021-goal-driven-verify-playbook-and-env-harness.md` |
+| **Description** | Meta-skill: from already-aligned materials, create or refine a consuming repo's Verify Playbook skill (branchable step chain + Evidence). Does not run day-to-day acceptance |
+| **Installed** | 2026-10-28 |
+| **Adjustments** | Goal-driven verification path (not Feature Map / full-repo Drive). Design lineage: the rejected "Feature Map + maintain 日更 + 默认全仓 Drive" alternative is poteto's agent stack ([cursor/plugins pstack `poteto-mode`](https://github.com/cursor/plugins/blob/main/pstack/skills/poteto-mode/SKILL.md), public); this skill is repo-owned, not derived from its skill text. Completeness gate: goal + approach + checkable must all be aligned before authoring; Playbook references Env Harness instead of inlining bring-up. Ships a minimal in-repo template at `references/verify-playbook.SKILL.md` |
+| **Upstream** | None (repo-owned; no external upstream to track) |
+
+### `create-env-harness`
+
+| Field | Value |
+|-------|-------|
+| **Source** | Repo-owned; design recorded in `docs/adr/0021-goal-driven-verify-playbook-and-env-harness.md` |
+| **Description** | Meta-skill: create or refine a consuming repo's Env Harness skill (bring-up, readiness checks, teardown) for verification hand-off to Verify Playbooks |
+| **Installed** | 2026-10-28 |
+| **Adjustments** | Pairs with `create-verify-playbook` (same design lineage: see that entry's note on pstack `poteto-mode`). Harness owns shared environment procedure only; requirement-specific steps stay in Playbooks. Ships a minimal in-repo template at `references/env-harness.SKILL.md` |
+| **Upstream** | None (repo-owned; no external upstream to track) |
