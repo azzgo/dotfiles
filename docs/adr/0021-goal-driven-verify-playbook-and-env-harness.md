@@ -33,3 +33,4 @@ Status: accepted
 - consuming repo 内出现（或更新）项目本地的 Verify Playbook 与 Env Harness；具体路径与命名由元技能按该仓惯例选定，本 ADR 不钉死目录名。
 - 日常验收会话加载仓内 Playbook（及它所引用的 Harness），不默认加载这两份元技能来「替跑」验收。
 - 与 intake / grilling / grill-with-docs / wayfinder 的关系：对齐在上游完成；元技能消费的是已对齐材料，不替代对齐流程。
+- 路径/状态探索图（发散草图、现状可达路径与人话复现）另见 ADR 0022；不改变本 ADR 的完备门与 Playbook/Harness 职责拆分。

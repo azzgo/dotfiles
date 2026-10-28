@@ -204,3 +204,33 @@ Because `~/.agents/skills/` is also a pi skill search path, these skills remain 
 | **Installed** | 2026-10-28 |
 | **Adjustments** | Pairs with `create-verify-playbook` (same design lineage: see that entry's note on pstack `poteto-mode`). Harness owns shared environment procedure only; requirement-specific steps stay in Playbooks. Ships a minimal in-repo template at `references/env-harness.SKILL.md` |
 | **Upstream** | None (repo-owned; no external upstream to track) |
+
+### `draw-path-chart`
+
+| Field | Value |
+|-------|-------|
+| **Source** | Repo-owned; design recorded in `docs/adr/0022-on-demand-path-chart-skills.md` |
+| **Description** | Shared capability: conventions for path/state-style charts (presentation, node naming, draft vs temporary-diagnostic marks, reusable human-readable reproduction wording). Default engine is draw/list paths; optional TLA+/TLC only when the user strongly asks this turn. Followed by name from other skills |
+| **Installed** | 2026-10-28 |
+| **Adjustments** | On-demand three-piece set with `diverge-paths` / `trace-paths` (not a consuming-repo formal-verification kit). Rejected default path: poteto / pstack `/statechart` + `create-formal-verification-skill` producing in-repo formal kits with TLC-by-default ([cursor/plugins pstack](https://github.com/cursor/plugins/tree/main/pstack), public; `/statechart` + `create-formal-verification-skill` are the author's in-progress beta direction, not yet on the main branch). Cross-skill references by name only (same pattern as `grilling` → `show-me`) |
+| **Upstream** | None (repo-owned; no external upstream to track) |
+
+### `diverge-paths`
+
+| Field | Value |
+|-------|-------|
+| **Source** | Repo-owned; design recorded in `docs/adr/0022-on-demand-path-chart-skills.md` |
+| **Description** | Thin entry: from already-held understanding, diverge into path/state sketches so the user can see which paths are worth considering. Follows `draw-path-chart` by name |
+| **Installed** | 2026-10-28 |
+| **Adjustments** | Weak coupling only — may attach loose suggestions by context; does not hard-wire Playbook / alignment docs. Scenarios such as alignment-phase sketching are usage examples, not the sole purpose |
+| **Upstream** | None (repo-owned; no external upstream to track) |
+
+### `trace-paths`
+
+| Field | Value |
+|-------|-------|
+| **Source** | Repo-owned; design recorded in `docs/adr/0022-on-demand-path-chart-skills.md` |
+| **Description** | Thin entry: from code/system as-is plus bug/symptom input, infer a currently reachable path chart with human-readable reproduction steps. Chart is temporary diagnostic. Follows `draw-path-chart` by name |
+| **Installed** | 2026-10-28 |
+| **Adjustments** | Same weak-coupling stance as `diverge-paths`. Production-shaped “missing repro” is an example scenario, not the title-level sole purpose. Positive verification of aligned goals remains Verify Playbook (ADR 0021) |
+| **Upstream** | None (repo-owned; no external upstream to track) |
