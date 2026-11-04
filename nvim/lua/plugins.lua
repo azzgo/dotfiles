@@ -332,10 +332,10 @@ return require("lazy").setup({
       end
     },
     {
-      'selimacerbas/markdown-preview.nvim',
-      dependencies = { 'selimacerbas/live-server.nvim' },
+      'selimacerbas/mdkite.nvim',
+      dependencies = { 'selimacerbas/kitehost.nvim' },
       config = function()
-        require('markdown_preview').setup({})
+        require('mdkite').setup({})
       end
     },
     -- ###### lua plugin end ##########
