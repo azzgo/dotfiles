@@ -25,3 +25,10 @@ A Bash call that never returns looks identical to one that is still working. Pre
 
 - No comments. Make code self-explanatory via naming, small functions, and types.
 
+# Align Before Implementing
+
+Exploring is free; the first file write is the gate.
+
+- Implement straight away when the request already names what changes and how it's verified, when the edit is small and obvious, or when the task already came with an approved plan.
+- Otherwise say what you think the ask is, which files you'll touch, and what you're not doing — then wait for an answer.
+- Scope growth mid-task hits the same gate.
