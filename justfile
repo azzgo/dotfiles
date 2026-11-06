@@ -112,7 +112,6 @@ install-pi:
     fi
     ln -sf {{ dotfiles_dir }}/pi/agent/keybindings.json ~/.pi/agent/keybindings.json
     ln -sf {{ dotfiles_dir }}/pi/agent/APPEND_SYSTEM.md ~/.pi/agent/APPEND_SYSTEM.md
-    ln -sf {{ dotfiles_dir }}/pi/mcp.json ~/.pi/agent/mcp.json
 
     rm -rf ~/.pi/agent/extensions/track
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/track ~/.pi/agent/extensions/track
@@ -243,10 +242,9 @@ install-pig:
     fi
     ln -sf "{{ dotfiles_dir }}/pi/agent/keybindings.json" "$agent_dir/keybindings.json"
     ln -sf "{{ dotfiles_dir }}/pi/agent/APPEND_SYSTEM.md" "$agent_dir/APPEND_SYSTEM.md"
-    ln -sf "{{ dotfiles_dir }}/pi/mcp.json" "$agent_dir/mcp.json"
     rm -rf "$agent_dir/prompts"
     ln -s "{{ dotfiles_dir }}/pi/agent/prompts" "$agent_dir/prompts"
-    echo "  🔗 Linked keybindings.json, APPEND_SYSTEM.md, mcp.json, prompts/ into ${agent_dir}"
+    echo "  🔗 Linked keybindings.json, APPEND_SYSTEM.md, prompts/ into ${agent_dir}"
 
     pig install npm:pi-xfer
     pig install npm:pi-hashline-edit-pro
