@@ -101,6 +101,20 @@ function M.toggle()
   M.new()
 end
 
+local function focus_pi(term)
+  if not term then return end
+  if term:valid() then
+    term:focus()
+  else
+    term:show()
+  end
+  vim.schedule(function()
+    if term:valid() and vim.api.nvim_get_current_win() == term.win then
+      vim.cmd("startinsert")
+    end
+  end)
+end
+
 --- Ensure a Pi terminal is open and return it, creating one if needed.
 ---@return snacks.win|nil
 local function ensure_pi_open()
@@ -118,12 +132,9 @@ local function ensure_pi_open()
   end)() or nil)
 
   if term then
-    if not term:valid() then
-      term:show()
-    end
     resume_pi(term)
     last_pi_id = term.id
-    term:focus()
+    focus_pi(term)
     return term
   end
 
@@ -131,6 +142,7 @@ local function ensure_pi_open()
   term = M.new()
   if term then
     last_pi_id = term.id
+    focus_pi(term)
     return term
   end
   return nil
@@ -234,11 +246,7 @@ function M.list()
         if term then
           resume_pi(term)
           last_pi_id = term.id
-          if term:valid() then
-            term:focus()
-          else
-            term:show()
-          end
+          focus_pi(term)
         end
       end,
       close_terminal = function(picker, item)
