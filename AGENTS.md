@@ -11,8 +11,8 @@
 
 Pi 相关约定补充：
 - 外部 agent 派发与子 agent 能力由本仓库维护的 `sub-dispatch` 扩展承载（`pi/agent/extensions/sub-dispatch/`，从 pi-interactive-shell 剪裁，仅保留 dispatch 模式）。
-- Code Mode 使用 pi 内置 `codemode` 工具（`defaultTools: ["+codemode"]` 常开），MCP 工具与扩展工具经 `tools.*` 在脚本内组合调用；自研 `code-mode` 扩展已移除（见 `docs/adr/0011-built-in-mcp-codemode-migration.md`）。
-- 工作流编排骨架由 `workflow-runtime` 扩展承载（`pi/agent/extensions/workflow-runtime/`，`/wf` 命令族，设计见 `docs/adr/0006-workflow-runtime-replaces-goal-runtime.md`）；pattern 库在 `pi/agent/patterns/`（经 `install-pi` link 到 `~/.pi/agent/patterns/`）。goal-runtime 已废弃删除（ADR 0006）。
+- Code Mode 使用 pi 内置 `codemode` 工具（`defaultTools: ["+codemode"]` 常开），MCP 工具与扩展工具经 `tools.*` 在脚本内组合调用。
+- 工作流编排骨架由 `workflow-runtime` 扩展承载（`pi/agent/extensions/workflow-runtime/`，`/wf` 命令族，设计见 `docs/adr/0006-workflow-runtime-replaces-goal-runtime.md`）；pattern 库在 `pi/agent/patterns/`（经 `install-pi` link 到 `~/.pi/agent/patterns/`）。
 - 命令面板（对所有 slash command 的 fuzzy picker，`alt+.` 呼出，选中后前置插入 composer，不直接执行）由 `command-palette` 扩展承载（`pi/agent/extensions/command-palette/`）。
 - 夜间批量执行由 **`nightshift`** 承载（`skills/nightshift/`，repo-root skill + Node CLI，**不是 pi 扩展**；设计见 `docs/adr/0017-nightshift-is-a-script-not-an-extension.md`）：白天把已谈定的事写成 Spec 挂到单一全局板 `~/.cache/nightshift/board/`，夜里 `nightshift run` 按工作目录串行、跨目录并行地派发 `pi -p` 子进程，独立只读 Verifier 会话给出权威 `VERDICT`，结束后归档，次日 `nightshift report` 检查。pi 侧只有一个薄转发 prompt（`pi/agent/prompts/nightshift.md`）。**新增能力默认仍走扩展；只有「无人值守 / 独立进程 / 调度语义」这类需求才参照 ADR 0017 走脚本。**
 - **手动派发的长任务**由 **`bg-run`** 承载（`skills/bg-run/`，repo-root skill + 纯 bash 脚本，**不是 pi 扩展**，`disable-model-invocation: true`；设计见 `docs/adr/0019-bg-run-is-a-skill-not-an-extension.md`）：把长命令或另一个 coding agent 起进 detached tmux session（有 Herdr 时起进 Herdr pane），跑完把 stdout/stderr 与**退出码**落在 `~/.cache/bg-run/<name>/`，**完成与否只看退出码，不看输出、不猜提示符**。它与 `sub-dispatch` 并列而非替代：dispatch 是进程内 session、硬超时不可续期、宿主 TUI 一退出就没了；本 skill 的运行能活过会话。它是通用 skill（`~/.agents/skills/`），任何 agent 都能用，且**模型不会自作主张调用**——由人决定何时派发。
@@ -51,6 +51,12 @@ Pi 相关约定补充：
 - 涉及本地机器状态或敏感内容的文件不要放入仓库。
 - 修改 Neovim 插件相关内容时，优先检查 `nvim/lua/plugins.lua` 和 `justfile`。
 
+## 文档原则
+
+- **ADR 是唯一的历史记录层**（`docs/adr/`）：变更决策、被否决的方案、被取代的旧设计都写入 ADR，用 `Status` 标注取代关系。
+- **其余文档永远描述最新代码与当前理解**：README、AGENTS.md、CONTEXT.md、扩展 README、prompt、skill 正文一经与现状不符就直接改写，不追加“已移除 / 已废弃 / 曾经 / 迁移自”之类的沿革说明。
+- 例外：两处 `README.txt`（`pi/agent/skills/`、`skills/`）是 skill 来源与调整登记，按 Skills 维护规则保留必要的溯源记录。
+
 ## 目录速览
 
 - `nvim/`：Neovim 配置
@@ -58,7 +64,7 @@ Pi 相关约定补充：
 - `shell/`：Shell 配置
 - `alacritty/` / `ghostty/`：终端配置
 - `pi/`：Pi 共享配置
-- `skills/`：通用（pi 无关）skills，不再全局安装，由 project-skills 扩展按项目链接
+- `skills/`：通用（pi 无关）skills，由 project-skills 扩展按项目链接（不全局安装）
 - `mise/`：mise 工具版本管理配置（全局 CLI 工具、node/python/uv、npm 全局包）
 
 ## 子进程非交互化（防止命令卡死）
@@ -91,7 +97,7 @@ Agent 侧的 skill 搜索路径按优先级：
 | 2 | `~/.pi/agent/npm/node_modules/*/skills/` | npm 包自带 skill（如 pi-web-access 的 librarian），不要直接修改 |
 | 3 | `~/.agents/skills/` | 通用 skill（本仓库 `skills/` 经 `just install-skills` 全局链接）及其他手动安装的 agent skill（browser-bridge、pixso、skill-creator） |
 
-全局的 `~/.pi/agent/skills` 链接已退役：`install-pi` 会清理旧的 `~/.pi/agent/skills` 与 `~/.agents/skills` 中指向本仓库 pi 耦合 skill 的链接。pi 耦合 skill 需要的项目在项目内运行 `/pi-skills`（project-skills 扩展）按需链接到 `.pi/skills/`，项目可自行删除或覆盖个别 skill；通用 skill 则由 `just install-skills` 全局安装。
+pi 耦合 skill 不经全局链接安装：`install-pi` 会清理 `~/.pi/agent/skills` 与 `~/.agents/skills` 中指向本仓库 pi 耦合 skill 的链接。需要的项目在项目内运行 `/pi-skills`（project-skills 扩展）按需链接到 `.pi/skills/`，项目可自行删除或覆盖个别 skill；通用 skill 则由 `just install-skills` 全局安装。
 
 两处各有自己的 `README.txt`（`pi/agent/skills/README.txt`、`skills/README.txt`），仅记录本仓库维护的 skill 来源、安装日期、调整内容和上游地址，不包含其他来源的 skill。
 

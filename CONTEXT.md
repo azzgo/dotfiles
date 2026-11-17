@@ -310,7 +310,7 @@ _Avoid_: CDP evaluate_script 注入、annotation server、本地 daemon
 picker 在页面上的唯一常驻形态——一个可拖动的悬浮按钮，点击后进入 pick 模式；顶部圆点显示 broker 连接状态（灰=未连接、琥珀=连接中、绿=已连接）。另有 ⇧⌥P / ⇧⌥L 快捷键。
 
 **inject**:
-userscript 页面加载时把 fab 挂上 shadow DOM 的动作（幂等），仅此一个动作，不进入 pick 模式、不读取存储。不再是 CDP `evaluate_script` 注入。
+userscript 页面加载时把 fab 挂上 shadow DOM 的动作（幂等），仅此一个动作，不进入 pick 模式、不读取存储。
 
 **pick 模式**:
 点击 fab 后进入的选择交互态：hover 高亮、`[`/`]` 切层、Enter 选中+备注、⇧Enter/⇧click 把元素聚合成组（amber 虚线 mark，整组共用一条组备注）、Esc 退出回闲置（fab 常驻）。

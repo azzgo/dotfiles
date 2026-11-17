@@ -1,7 +1,7 @@
 # compaction
 
-Pi's compaction summary as an **orientation plus a retrieval handle** — see
-`docs/adr/0015-compaction-summary-as-pointer.md`, superseded in part by
+Pi's compaction summary as an **orientation plus a retrieval handle** — design in
+`docs/adr/0015-compaction-summary-as-pointer.md` and
 `docs/adr/0020-compaction-summary-handoff.md`. Built-in transcript
 summarization never runs.
 
