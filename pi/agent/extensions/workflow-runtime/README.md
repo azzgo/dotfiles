@@ -117,7 +117,7 @@ done-when: repro or root-cause hypothesis is recorded.
 | `/wf save-as-template <run-id>` | Promote the Run's Definition into the global pattern library (a dotfiles git diff; never overwrites) |
 | `/wf cancel [<run-id>]` | Terminal cancel; open nodes → cancelled; logged |
 
-## Relation to sub-dispatch and track
+## Relation to sub-dispatch
 
 - **sub-dispatch** executes Auto Nodes: the driving model calls
   `dispatch({ background: true, reason: "wf-<runId>-node-<nodeId>" })` and ends
@@ -128,9 +128,6 @@ done-when: repro or root-cause hypothesis is recorded.
   flips the node, appends the progress line (with the child session id), and
   cascades. Failure (non-zero exit, error/killed/timeout) → `failed`, no
   cascade.
-- **track** stays a stranger: Runs keep their own structured progress log
-  written by the extension; Track remains the model's freeform manual memory.
-  Neither reads the other.
 
 ## Files
 

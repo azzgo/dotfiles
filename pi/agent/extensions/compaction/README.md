@@ -40,7 +40,7 @@ On `session_before_compact` (`runtime.ts`):
    summarises.
 3. **Extract file operations mechanically** from the tool calls
    (`fileops.ts`). The model never lists paths; it only annotates paths it was
-   given. Temp paths and track scratchpads are filtered out.
+   given. Temp paths are filtered out.
 4. **`reason: "overflow"` — fast path.** No model call: the window is already
    blown and Pi will retry the aborted turn.
 5. **Otherwise — one tool-less `modelRegistry.complete()` call** (`compaction.ts`)
@@ -96,12 +96,6 @@ too late to have room left for the summary call.
 | `<project>/<config dir>/compaction/failures.log` | Append-only log of failures and fallbacks |
 | `<project>/<config dir>/compaction/stats.log` | One line per compaction: model, tokens, cost, duration, outcome |
 | The footer | Summary usage is returned to Pi, so it counts towards the session cost |
-
-## Relationship to track
-
-None, since ADR 0015. Track is manual working memory that an agent reaches
-through file references; the compaction summary is session infrastructure. They
-share nothing but the filesystem.
 
 ## Dotfiles integration
 

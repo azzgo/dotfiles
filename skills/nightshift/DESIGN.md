@@ -293,7 +293,7 @@ exit code 非零 + 未命中 → 仍是 verify-error（进程挂了，非代码�
 | `empty-out-of-scope` | Out of scope 是空的 |
 | `constraint-conflict` | Constraints 说「不许动 X」，Verify 说「不得引用 X」，而 Change 里没有 X 的替代品 |
 
-最后一条是**能机械判的那一类**。语义层的错（"Verify 的口径比 Change 严"——比如要求"V2 链不引用任何 V1 runtime 模块"，但泄漏发生在共用领域服务里）lint 判不了，那要靠闭包分析脚本（仓库里的 `.pi/track/closure.mjs`）或人眼。
+最后一条是**能机械判的那一类**。语义层的错（"Verify 的口径比 Change 严"——比如要求"V2 链不引用任何 V1 runtime 模块"，但泄漏发生在共用领域服务里）lint 判不了，那要靠闭包分析脚本（仓库里的 `.pi/closure.mjs`）或人眼。
 
 ## 9. Report 格式
 

@@ -24,14 +24,12 @@ const WRITE_TOOLS = new Set([
 	"notebook_edit",
 ]);
 
-/** Paths that carry no lasting information: temp files, tool scratch dirs, track scratchpads. */
+/** Paths that carry no lasting information: temp files and tool scratch dirs. */
 const NOISE_PATH_PATTERNS: RegExp[] = [
 	/^\/var\/folders\//,
 	/^\/private\/var\/folders\//,
 	/^\/tmp\//,
 	/^\/private\/tmp\//,
-	/\/\.pi\/track\//,
-	/\/\.pig\/track\//,
 ];
 
 export type FileOps = {

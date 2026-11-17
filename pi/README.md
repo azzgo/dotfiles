@@ -9,7 +9,6 @@
 - `pi/agent/prompts/`
 - `pi/agent/skills/`
 - `pi/mcp.json`
-- `pi/agent/extensions/track/`
 - `pi/agent/extensions/workflow-runtime/`
 - `pi/agent/patterns/`
 - `pi/agent/extensions/sub-dispatch/`
@@ -65,12 +64,11 @@ Code Mode 与 MCP 已迁移到 pi 内置能力：codemode 经 `settings.json` �
 
 页面元素拾取走 xfer（已迁至 [azzgo/pi-xfer](https://github.com/azzgo/pi-xfer)）的 web-picker：Tampermonkey userscript 手动连接本地 broker daemon，标注 + prompt 以 xfer handoff 推入目标 session；安装与排障见 pi-xfer 仓库的 `docs/web-picker.md`。`open-chrome-pause.md` 保留（MCP 浏览器入口），随 prompts 目录一起 link。
 
-### 8. workflow-runtime（编排骨架）+ track（工作记忆）
+### 8. workflow-runtime（编排骨架）
 
-goal-runtime 已废弃删除（ADR 0006），替代为两个扩展：
+goal-runtime 已废弃删除（ADR 0006），其位置由 `workflow-runtime` 承担：
 
 - `workflow-runtime` — 工作流编排骨架：Definition/Run 平面文件存 `.pi/workflows/`，线性 Spine + auto/human 节点，auto 节点经 sub-dispatch 派发新会话执行（事件驱动结算、auto→auto 级联），`/wf` 命令族。只编排不判优，模型不翻转状态。pattern 库在 `pi/agent/patterns/`（根目录可被 `/wf start` 直接实例化；`examples/` 下是 feature / bugfix / perf 参考样板，不参与实例化——workflow 主张按项目 setup，不维护全局通用样板）。
-- `track` — 从 goal-runtime 纯提取的工作记忆扩展：`/track`（new / update / context / status），`.pi/track/` 平面文件，与 workflow-runtime 互为陌生人。
 
 历史决策见 `docs/adr/0001-goal-runtime-on-taskmd.md`、`docs/adr/0005-goal-runtime-command-driven-lifecycle.md`（由 ADR 0006 修正/取代）。
 

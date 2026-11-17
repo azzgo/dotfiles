@@ -161,8 +161,8 @@ A second, **independent** host for the same extensions — [PiG](https://pi-in-g
 - Config root `~/.pig` (agent dir `~/.pig/agent`), project dir `<project>/.pig` — **not shared** with `~/.pi`
 - `models.json` / `auth.json` / `settings.json` are copied once into `~/.pig/agent` and stay local to that config
 - Linked from the repo (shared config): `keybindings.json`, `APPEND_SYSTEM.md`, `mcp.json`, `prompts/`
-- Installed extensions: `pi-xfer` (npm), `pi-hashline-edit-pro` (npm), `sub-dispatch`, `project-skills`, `track`, `compaction`, `command-palette` — the repo ones install as local paths, so repo edits apply after `/reload`
-- `project-skills`, `sub-dispatch` and `track` are host-aware: the project config dir follows the SDK's `CONFIG_DIR_NAME` (`.pi` under pi, `.pig` under PiG) and the dispatch forensic log follows the host agent dir
+- Installed extensions: `pi-xfer` (npm), `pi-hashline-edit-pro` (npm), `sub-dispatch`, `project-skills`, `compaction`, `command-palette` — the repo ones install as local paths, so repo edits apply after `/reload`
+- `project-skills` and `sub-dispatch` are host-aware: the project config dir follows the SDK's `CONFIG_DIR_NAME` (`.pi` under pi, `.pig` under PiG) and the dispatch forensic log follows the host agent dir
 - Code Mode: PiG ships `codemode` as a built-in tool but keeps it off by default — enable it in `~/.pig/agent/settings.json` with `"defaultTools": ["+codemode"]`
 
 **Installation**: `just install-pig` (downloads the pinned `pig` release, verifies its SHA-256, writes `~/.pig`, links the shared config files, installs the extensions)
@@ -183,7 +183,6 @@ A second, **independent** host for the same extensions — [PiG](https://pi-in-g
 | `just install-pig` | Install the PiG (pi-in-go) binary and a separate `~/.pig` configuration |
 | `just install-git-hooks` | Wire the secret-scan pre-commit hook (`core.hooksPath=.githooks`) |
 | `just secret-scan` | Calibrate and run the secret scan (fixture, tree, index, history) |
-| `just test-track` | Run the track extension's test suite (args pass through to vitest) |
 | `just install-herdr` | Symlink herdr config.toml into ~/.config/herdr |
 | `just link` | Alias for `install-pi` |
 | `just nvim-health` | Check Neovim health and dependencies |
@@ -204,7 +203,7 @@ The installation scripts create symbolic links to configuration files in this re
 - **IDEAVim**: Links `.ideavimrc` to home directory
 - **Terminals**: Links config directories to `~/.config/`
 - **Shells**: Sources shell configs in respective rc files, links tmux and starship configs
-- **Pi**: Links shared Pi config into `~/.pi/agent/`, including `workflow-runtime`, `track`, `code-mode`, `sub-dispatch`, the workflow pattern library (`pi/agent/patterns/` → `~/.pi/agent/patterns/`), and global prompt templates under `~/.pi/agent/prompts/`, while `models.json` and `auth.json` stay local per machine
+- **Pi**: Links shared Pi config into `~/.pi/agent/`, including `workflow-runtime`, `sub-dispatch`, the workflow pattern library (`pi/agent/patterns/` → `~/.pi/agent/patterns/`), and global prompt templates under `~/.pi/agent/prompts/`, while `models.json` and `auth.json` stay local per machine
 
 ## Customization
 

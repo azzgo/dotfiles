@@ -113,8 +113,6 @@ install-pi:
     ln -sf {{ dotfiles_dir }}/pi/agent/keybindings.json ~/.pi/agent/keybindings.json
     ln -sf {{ dotfiles_dir }}/pi/agent/APPEND_SYSTEM.md ~/.pi/agent/APPEND_SYSTEM.md
 
-    rm -rf ~/.pi/agent/extensions/track
-    ln -s {{ dotfiles_dir }}/pi/agent/extensions/track ~/.pi/agent/extensions/track
     rm -rf ~/.pi/agent/extensions/compaction
     ln -s {{ dotfiles_dir }}/pi/agent/extensions/compaction ~/.pi/agent/extensions/compaction
     rm -rf ~/.pi/agent/extensions/workflow-runtime
@@ -250,7 +248,6 @@ install-pig:
     pig install npm:pi-hashline-edit-pro
     pig install "{{ dotfiles_dir }}/pi/agent/extensions/sub-dispatch"
     pig install "{{ dotfiles_dir }}/pi/agent/extensions/project-skills"
-    pig install "{{ dotfiles_dir }}/pi/agent/extensions/track"
     pig install "{{ dotfiles_dir }}/pi/agent/extensions/compaction"
     pig install "{{ dotfiles_dir }}/pi/agent/extensions/command-palette"
 
@@ -326,18 +323,6 @@ install-all: install-mise install-neovim install-vim install-shell install-termi
 
 # Development helpers
 
-# Run the track extension's test suite
-# Pass vitest args directly, e.g. `just test-track guards.test.ts`
-# Track is pure — no Pi runtime needed, nothing skips.
-test-track *args:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    cd {{ dotfiles_dir }}/pi/agent/extensions/track
-    if [ ! -d node_modules ]; then
-        echo "📦 Installing track extension dev dependencies..."
-        npm install --silent
-    fi
-    npm test -- {{ args }}
 
 # Run the compaction extension's test suite
 # Requires the Pi runtime for the model-call integration test; see

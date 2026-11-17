@@ -208,7 +208,6 @@ This repo has no lint/test/typecheck gates. Suggest, only when the diff's paths 
 | Diff touches | Suggested check |
 |---|---|
 | `nvim/**` | `just nvim-health` |
-| `pi/agent/extensions/track*` | `just test-track` |
 | `justfile` install recipes | `just info` |
 
 Report each as `not run` (review-only) with the suggested command — never fabricate a pass/fail.

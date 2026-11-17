@@ -1,6 +1,6 @@
-# Pi Workflow, Track & Wayfinder
+# Pi Workflow & Wayfinder
 
-This context defines the local workflows maintained in this dotfiles repo for Pi. It distinguishes decision-oriented wayfinding (Wayfinder), execution orchestration (Workflow runtime), freeform working memory (Track), and unattended nightly execution (Nightshift) so future prompts, skills, and automation use consistent terms.
+This context defines the local workflows maintained in this dotfiles repo for Pi. It distinguishes decision-oriented wayfinding (Wayfinder), execution orchestration (Workflow runtime), and unattended nightly execution (Nightshift) so future prompts, skills, and automation use consistent terms.
 
 ## Language
 
@@ -8,9 +8,6 @@ This context defines the local workflows maintained in this dotfiles repo for Pi
 A decision-oriented planning method for work that is still foggy. It maps a destination, unresolved decisions, and dependency edges before implementation starts.
 _Avoid_: implementation plan, task runner, todo list
 
-**Track**:
-The shared, reset-able working-memory scratchpad managed by the standalone `track` extension — the freeform findings and progress narrative a session accumulates. Manually maintained: an agent reaches it through file references, not through the Compaction Summary. A stranger to the Workflow runtime: Runs keep their own structured progress logs, Track is the model's freeform memory.
-_Avoid_: compaction source, goal history, permanent log, per-run notebook
 
 **Compaction Summary**:
 The text that replaces a compacted span of the conversation. It carries what the agent needs to keep going — the request line, next intent, topics, annotated file references — plus a retrieval handle pointing at the untouched session transcript. It is an orientation, not a replacement for history, and its length is fixed rather than a function of session length.
@@ -44,7 +41,7 @@ _Avoid_: auto compact, threshold, warning banner
 The model that writes a Compaction Summary. Configured separately from the session model, and never hardcoded.
 _Avoid_: compaction model, default model
 **Project**:
-The repository scope that owns the local automation workspaces — the Workflow storage (`.pi/workflows/`), the Track scratchpad (`.pi/track/`), and a Wayfinder workspace. Many non-terminal Runs may coexist in a Project; nothing is exclusive.
+The repository scope that owns the local automation workspaces — the Workflow storage (`.pi/workflows/`) and a Wayfinder workspace. Many non-terminal Runs may coexist in a Project; nothing is exclusive.
 _Avoid_: workspace (see Wayfinder Workspace), map, global account
 
 **Local Skill**:
