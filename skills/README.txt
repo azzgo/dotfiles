@@ -143,17 +143,12 @@ Because `~/.agents/skills/` is also a pi skill search path, these skills remain 
 | **Adjustments** | Installed as-is, no modifications |
 | **Upstream** | https://github.com/cursor/plugins/tree/main/pstack — check for upstream changes regularly |
 
-### `unslop`
+### `unslop` (removed)
 
 | Field | Value |
 |-------|-------|
-| **Source** | [cursor/plugins pstack](https://github.com/cursor/plugins/tree/main/pstack/skills/unslop) |
-| **Description** | Cut AI writing tells — 33 numbered detection rules with stable ids (vague -ing phrases, rule of three, em dash overuse, metaphor nouns, over-compression, ...), rewrite + self-audit process |
-| **Installed** | 2026-09-17 |
-| **Source commit** | `5bf2b15` (2026-09-13) — `feat(pstack): setup-pstack budget ask` |
-| **Adjustments** | Installed as-is with one routing note added: unslop targets English technical/general writing; Chinese narrative/fiction stays with the `humanize` pi prompt (author-voice preservation conflicts with unslop's normalize-to-plain-prose rules). Rule ids are cited by other pstack skills; decision-log's "plain words" standard resolves to this skill |
-| **Upstream** | https://github.com/cursor/plugins/tree/main/pstack — check for upstream changes regularly |
-
+| **Source** | [cursor/plugins pstack](https://github.com/cursor/plugins/tree/main/pstack) `unslop` (commit `5bf2b15`, installed 2026-09-17) |
+| **Removed** | 2026-11-23. The directory is deleted and no replacement skill was introduced. Reasons: zero loads in two months; Chinese narrative writing already routes to the `humanize` prompt; English "say it plainly" is covered by `bro`. Where a skill used to say "apply unslop's standard", the requirement itself is now written at that spot |
 ### `nightshift`
 
 | Field | Value |

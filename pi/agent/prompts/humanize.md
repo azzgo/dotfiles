@@ -2,7 +2,7 @@
 description: Rewrite Chinese narrative prose to remove AI-sounding tells while preserving the original information, plot skeleton, prose density, and the author's voice.
 ---
 
-> Routing: this prompt targets **Chinese narrative/fiction and personal prose** (author-voice preservation, show-don't-tell). For English technical/general writing, use the `unslop` skill instead.
+> Routing: this prompt targets **Chinese narrative/fiction and personal prose** (author-voice preservation, show-don't-tell). For English technical/general writing, cut the AI tells directly: plain concrete words, whole sentences with their articles and verbs, no rule-of-three padding, no decorative em dashes, no abstract metaphor nouns, no claim without a source.
 >
 > If the same task also supplies project-level style rules or an anti-slop checklist, **their density and dialogue specs win** — this prompt only removes AI tells. It does not decide how explicit, how long, or how terse the text should be.
 >
