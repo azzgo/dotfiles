@@ -16,9 +16,11 @@
  */
 
 import { existsSync, lstatSync, mkdirSync, readdirSync, readlinkSync, realpathSync, symlinkSync, unlinkSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CONFIG_DIR_NAME, type ExtensionAPI } from '@earendil-works/pi-coding-agent';
+import { auditSkills, renderAuditJson, renderAuditReport } from './audit.ts';
 
 // Extension is symlinked into ~/.pi/agent/extensions. Native Node ESM would
 // resolve the symlink, but pi loads extensions via jiti, which keeps the
@@ -74,6 +76,20 @@ export default function projectSkills(pi: ExtensionAPI): void {
 				}
 
 				ctx?.ui?.notify(lines.length > 0 ? `/pi-skills done:\n${lines.join('\n')}` : `/pi-skills: no skills found to link (looked in ${SOURCE_DIR}).`, 'info');
+			},
+		});
+		pi.registerCommand('skills-audit', {
+			description: `Audit installed skills: last load date, loads in the last 60 days, SKILL.md size, model-invocation flag (--json for raw data)`,
+			handler: async (args: unknown, ctx: { cwd?: string; ui?: { notify(message: string, tone?: string): void } } | undefined) => {
+				const cwd = ctx?.cwd ?? process.cwd();
+				const asJson = typeof args === 'string' && args.split(/\s+/).includes('--json');
+				const result = await auditSkills({
+					piSkillsDir: join(homedir(), '.pi', 'agent', 'skills'),
+					genericSkillsDir: join(homedir(), '.agents', 'skills'),
+					projectSkillsDir: join(cwd, CONFIG_DIR_NAME, 'skills'),
+					sessionsDir: join(homedir(), CONFIG_DIR_NAME, 'agent', 'sessions'),
+				});
+				ctx?.ui?.notify(asJson ? renderAuditJson(result) : renderAuditReport(result), 'info');
 			},
 		});
 }

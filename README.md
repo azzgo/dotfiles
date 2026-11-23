@@ -150,7 +150,7 @@ Shared Pi setup with:
 - `pi/agent/prompts/` is linked to Pi's global prompt templates directory: `~/.pi/agent/prompts/`
 - `models.json` and `auth.json` remain local on each machine
 - Only cross-device-safe Pi config is linked by dotfiles
-- `pi/agent/skills/` holds pi-coupled skills (sub-dispatch / dispatch tool / pi prompts). Skills are **not linked globally** anymore — the `project-skills` pi extension provisions them per project: run `/pi-skills` inside a project to link `pi/agent/skills/` and `skills/` into `<project>/.pi/skills/` and `<project>/.agents/skills/`, then delete or override individual links as the project needs.
+- `pi/agent/skills/` holds pi-coupled skills (sub-dispatch / dispatch tool / pi prompts). Skills are **not linked globally** anymore — the `project-skills` pi extension provisions them per project: run `/pi-skills` inside a project to link `pi/agent/skills/` and `skills/` into `<project>/.pi/skills/` and `<project>/.agents/skills/`, then delete or override individual links as the project needs. The same extension exposes `/skills-audit`: a deterministic, offline report of installed skills (last load date, 60-day load count, `SKILL.md` size, model-invocation flag) built from the session transcripts' injection markers, with `--json` for raw data. It prints counts and dates only — never session content or project paths.
 
 **Installation**: `just install-pi` or `just link` (per-project skills via `/pi-skills` in the target project)
 
