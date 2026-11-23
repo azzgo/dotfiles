@@ -1,28 +1,29 @@
----
-name: why
-description: Investigate the motivation and intent behind code — "why does X work this way", "why we picked Y", design rationale, regressions, postmortems. Anchors on the code, then queries evidence sources in parallel (git/gh always; docs, chat, issue trackers, observability when available) and returns a cited, confidence-tiered read on decisions and tradeoffs. Use how for how code works; use this for why it has its shape.
-disable-model-invocation: true
----
+# Rationale track
 
-# Why (design-rationale investigation)
+Investigate the motivation and intent behind code — "why does X work this way",
+"why we picked Y", design rationale, regressions, postmortems. The code tells
+you what it does; this track collects what forces led to its shape.
 
-Investigate the motivation and intent behind code. Companion to
-**`how`**: that skill answers what the code does and how it
-works; this one answers what forces led to its shape.
+Read this file only when Phase 1 triage put the question on the rationale
+track. The confidence discipline lives next to it in `epistemics.md` — every
+claim in the final output sits in one of its five tiers (Direct / Supported /
+Inferred / Speculative / Unknown).
 
-Adapted from pstack's `why` (Cursor MCP-centric evidence sweep trimmed to
-environment-neutral sources).
+Operating posture: **careful, cautious, precise investigator**. Be honest about
+what you know versus what you're inferring.
 
-Invocation: `/skill:why [target and question]`. The user's arguments are
-appended as plain text after this content — that is the investigation target.
+## Rationale triage
 
-> Final summary is user-facing: deliver it in the user's input language (see APPEND_SYSTEM.md language rule).
+Rationale questions have their own triage, separate from the exploration
+fan-out. Do not dispatch investigators for a question one read can settle.
 
-Operating posture: **careful, cautious, precise investigator**. Be honest
-about what you know vs what you're inferring. The synthesizer must follow
-`references/epistemics.md` — every claim in the final output sits in one of
-its five confidence tiers (Direct / Supported / Inferred / Speculative /
-Unknown).
+- **Inline** (single file, single commit, one obvious referent): answer it
+  yourself with `git blame -L <start>,<end> <file>`, `git log --follow -p -- <file>`,
+  and `gh pr view <number>`. No investigator, no fan-out.
+- **Parallel** (evidence spans multiple files or categories, or the answer
+  lives in PR discussion / incident context): dispatch read-only investigators,
+  one per evidence category, using the Phase 3 dispatch shape and wait
+  discipline in `SKILL.md`.
 
 ## Step 1. Understand the target and the question
 
@@ -36,7 +37,7 @@ make your best guess from conversation context (recent edits, what was just
 discussed). State your interpretation briefly so the user can redirect if
 you're off, then proceed.
 
-## Step 2. Establish the code anchor (inline, before dispatch)
+## Step 2. Establish the code anchor
 
 Anchor the investigation in concrete code. You need:
 
@@ -62,17 +63,17 @@ gh pr view <number> --json title,body,author,createdAt,mergedAt,labels,closingIs
 Capture this as seed context (paths, symbols, commits, PR numbers, linked
 ticket IDs) and pass it to every investigator.
 
-## Step 3. Map evidence sources, then dispatch parallel investigators
+## Step 3. Map evidence sources, then dispatch investigators
 
-**Source control is the only guaranteed source — always spawn that
-investigator.** Then map whatever else the environment actually offers to an
-evidence category, and spawn one investigator per category that has a real
-source. Don't force categories that have no backing tool; do record the gap —
-a null result is a finding, not a skip.
+**Source control is the only guaranteed source — always cover it.** Then map
+whatever else the environment actually offers to an evidence category, and
+assign one investigator per category that has a real source. Don't force
+categories that have no backing tool; do record the gap — a null result is a
+finding, not a skip.
 
 | Category | Typical source in this environment | Uniquely surfaces |
 |----------|-----------------------------------|-------------------|
-| Source control history | git log / blame, `gh pr view` | implementation-time rationale captured during review — **always spawn** |
+| Source control history | git log / blame, `gh pr view` | implementation-time rationale captured during review — **always cover** |
 | Issue / ticket tracker | `gh issue`, project tracker if available | the product or business forcing function |
 | Long-form documents | `docs/`, ADRs, CONTEXT.md, RFCs, wikis | recorded design deliberation and rejected alternatives |
 | Real-time chat | Slack/IM archives if accessible | incident context, off-the-record constraints |
@@ -80,23 +81,10 @@ a null result is a finding, not a skip.
 
 Extra playbook: if the target code looks **defensive** (null checks, retry
 logic, timeouts, rate limiting, feature flags, egress guards, OOM handlers),
-explicitly task one investigator with hunting for the incident or failure
-that made the author defensive — defensive code is fossilized pain.
+explicitly assign one investigator the hunt for the incident or failure that
+made the author defensive — defensive code is fossilized pain.
 
-#### Dispatch
-
-Use the `dispatch` tool (sub-dispatch extension), same wait discipline as
-`how`: fire all investigators in a **single parallel batch**
-with `background: true`, end your turn, collect from completion
-notifications; query `dispatch({ sessionId })` only for diagnosis/recovery.
-
-Model selection: shared skill **`spawn-model-selection`**, simple /
-mechanical tier, same as exploration. Investigators are read-only in spirit —
-include the read-only constraint in every prompt (no file writes, no
-state-changing commands). Use the foreground
-`Promise.all` + `codemode` shape from `how`.
-
-#### Investigator prompt template
+### Investigator prompt template
 
 ```
 You are a read-only evidence investigator. Your only job is to search and read
@@ -123,6 +111,9 @@ and found nothing). A null result with the list of what you searched is a
 valid, valuable answer. Output findings directly; do not create files.
 ```
 
+Model selection and the dispatch/wait shape are the ones in `SKILL.md`
+(simple / mechanical tier, read-only constraint restated in every prompt).
+
 ## Step 4. Synthesize and present
 
 Merge investigator findings, de-duplicate, and write the final read:
@@ -131,9 +122,9 @@ Merge investigator findings, de-duplicate, and write the final read:
    highest confidence tier the evidence supports, with citations.
 2. **The decision trail**: chronological — what was introduced when, by which
    PR/commit, and what each step says (or doesn't) about motivation.
-3. **Confidence-tiered detail**: claims grouped by tier per
-   `references/epistemics.md`. Never flatten an Inferred claim into Direct
-   phrasing ("because" needs an adjacent citation).
+3. **Confidence-tiered detail**: claims grouped by tier per `epistemics.md`.
+   Never flatten an Inferred claim into Direct phrasing ("because" needs an
+   adjacent citation).
 4. **Competing hypotheses**: when evidence is thin, lay out the plausible
    readings side by side instead of picking one.
 5. **Coverage map**: which evidence categories were searched and came up
@@ -142,7 +133,3 @@ Merge investigator findings, de-duplicate, and write the final read:
 
 Present with **`show-me`** where a visual compresses the trail (e.g. a
 timeline of commits/PRs); keep the confidence discussion in prose.
-
----
-
-User arguments: <user arguments appear here>

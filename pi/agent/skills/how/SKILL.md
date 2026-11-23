@@ -1,6 +1,6 @@
 ---
 name: how
-description: Read-only codebase exploration to understand architecture, implementation, and placement/ownership/layering questions ("where should this live", "which module owns this"). Orchestrates parallel read-only sub-agents for complex scopes (model chosen via the shared spawn-model-selection skill); answers narrow questions in a single pass. Use when the user wants to understand or explore a codebase. For design rationale ("why was it built this way") use the why skill instead.
+description: Read-only codebase exploration to understand architecture, implementation, and placement/ownership/layering questions ("where should this live", "which module owns this"). Also owns design-rationale questions ("why does this work this way", "why was it built this way", design rationale, historical causes, rejected alternatives). Orchestrates parallel read-only sub-agents for complex scopes (model chosen via the shared spawn-model-selection skill); answers narrow questions in a single pass. Use when the user wants to understand or explore a codebase, or asks why code has its current shape.
 disable-model-invocation: true
 ---
 
@@ -29,11 +29,35 @@ Extract the key information from the user input (the arguments appended after th
 **Complexity triage before planning:**
 
 - **Complex** (a subsystem spanning multiple files/services, a cross-cutting feature, a full architectural overview): proceed with the full plan → dispatch flow below.
+- **Rationale** (motivation, tradeoffs, historical causes — "why does this work this way", "why was it built like this"): follow the **Rationale track** section below, which carries its own triage and output contract.
 - **Simple** (a single module, a small utility, a narrow question such as "how does function X work"): skip Phase 2 fan-out — answer inline in one read-through pass, or dispatch a **single** sub-agent if the reading itself is heavy. Go straight to Phase 4 with a proportionate report.
 
 When in doubt, take the simple path. Don't spawn 3 agents to answer a question one read can settle.
 
 If the user input is too vague, ask clarifying questions first — don't launch blindly.
+
+## Rationale track
+
+Rationale questions ("why does this work this way", "why was it built like
+this", what tradeoff was chosen) run the same read-only posture but a different
+procedure: the full playbook is `references/rationale.md`. Three rules decide
+whether it stays inline or fans out.
+
+1. **Rationale has its own triage.** A question about one file or one commit is
+   answered inline — `git blame -L`, `git log --follow -p`, `gh pr view`. Do not
+   dispatch investigators for what one read settles.
+2. **Fan out only when the evidence does.** Cross multiple files or evidence
+   sources, or the answer lives in PR discussion or incident context, is the
+   point where parallel read-only investigators earn their cost. One per
+   evidence category that actually exists in this environment; a category with
+   no backing tool is recorded as a gap, not skipped silently.
+3. **Output is confidence-tiered.** Every claim lands in one tier from
+   `references/epistemics.md` (Direct / Supported / Inferred / Speculative /
+   Unknown), and the report ends with a coverage map naming which sources were
+   searched and came up empty. A documented null is a result.
+
+The read-only constraint, model selection, and the dispatch shape below apply
+unchanged; do not invent a second dispatch style for rationale work.
 
 ### Phase 2: Design the exploration plan
 
