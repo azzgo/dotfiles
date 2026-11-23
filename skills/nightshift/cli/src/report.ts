@@ -18,10 +18,12 @@ export interface ReportInput {
   date: string;
   windowText: string;
   specs: Spec[];
+  /** 每条 Spec 的决策轨迹条数；只有有条目的才出现。 */
+  decisions?: Record<string, number>;
 }
 
 export function renderReport(input: ReportInput): string {
-  const { date, windowText, specs } = input;
+  const { date, windowText, specs, decisions } = input;
   const dispatched = specs.filter((s) => s.status !== "ready" && s.status !== "draft" && s.status !== "blocked");
   const passed = specs.filter((s) => s.status === "passed").length;
   const review = specs.filter((s) => s.status === "needs-review" || s.status === "verify-error").length;
@@ -50,6 +52,9 @@ export function renderReport(input: ReportInput): string {
       lines.push(`   residual: ${s.residual} uncommitted path(s) left in the worktree`);
     }
     if (s.hint !== null) lines.push(`   hint: ${s.hint}`);
+    // 条数来自该 Spec 的 <id>.decisions.tsv；这里只给指针，不展开轨迹。
+    const decisionCount = decisions?.[s.id] ?? 0;
+    if (decisionCount > 0) lines.push(`   决策 ${decisionCount} 条 → nightshift show ${s.id}`);
     if (s.baseline !== null) {
       lines.push(`   → git -C ${s.dir} log --oneline ${shortSha(s.baseline)}..HEAD`);
     }

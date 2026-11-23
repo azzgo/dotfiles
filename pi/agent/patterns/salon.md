@@ -13,7 +13,7 @@ nodes:
   - id: converge
     title: Write up the Spec
     type: auto
-    suggest: [decision-log]
+    suggest: [nightshift]
 ---
 ## intake
 The user dumps whatever raw materials exist on the topic — notes, links, constraints,

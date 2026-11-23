@@ -36,6 +36,11 @@ ns ready ns-0007                    ← 唯一的状态升级；只有 ready 会
 
 **默认从 draft 开始，不替用户决定 ready。** 一条 Spec 是不是"定了"，由用户说，不由你推断。
 
+
+每条 Spec 还有一份**决策轨迹**（`board/<id>.decisions.tsv`）：它是这条 Spec 的
+执行产物，夜里由实现 Agent 追加，随 Spec 一起归档，第二天用 `ns show <id>` 回看。
+回滚、放弃某个方案、绕过某项验证这类决策必须留下理由——格式见 `CONVENTION.md`
+的「决策轨迹」一节；琐碎实现细节不要求记录。
 ## Spec 正文模板
 
 五节全部必填（`Goal` / `Change` / `Constraints` / `Verify` / `Out of scope`）。`Goal`、`Change`、`Verify` 在 `ready` 时不允许为空。

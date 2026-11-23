@@ -322,7 +322,7 @@ pi -r --session-dir ~/.cache/nightshift/sessions/ns-0008
 合并是你的动作。脚本只负责把该看的东西按最省力的顺序摆出来，和一条可以随时丢弃的提交链。
 
 **Q: 我能在白天跑吗？**
-能。`nightshift run --until +5m` 就用 5 分钟窗口试一遍。用 `piBin` 指向假脚本可以零成本验证整个调度循环（见 `cli/test/fake-pi.mjs`）。
+能。`nightshift run --until +5m` 就用 5 分钟窗口试一遍。用 `piBin` 指向假脚本可以零成本验证整个调度循环（见 `cli/fixtures/fake-pi.mjs`）。
 
 ## 10. 开发与测试
 
@@ -330,4 +330,4 @@ pi -r --session-dir ~/.cache/nightshift/sessions/ns-0008
 just test-nightshift       # 61 个测试，全部不需要真调模型
 ```
 
-`test/fake-pi.mjs` 按环境变量返回预设 verdict（`FAKE_VERDICT` / `FAKE_REASON` / `FAKE_NO_VERDICT`），因此调度器、重试、归档、锁都能零 token 验证。
+`fixtures/fake-pi.mjs` 按环境变量返回预设 verdict（`FAKE_VERDICT` / `FAKE_REASON` / `FAKE_NO_VERDICT`），因此调度器、重试、归档、锁都能零 token 验证。

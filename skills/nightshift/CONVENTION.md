@@ -26,8 +26,10 @@ node 查找顺序：`$NIGHTSHIFT_NODE` → `~/.local/share/mise/shims/node` → 
 ```text
 ~/.cache/nightshift/
 ├── board/<id>.md              # 未结束的 Spec（draft/ready/running）
+├── board/<id>.decisions.tsv   # 该 Spec 的决策轨迹（可选，由实现 Agent 追加）
 ├── archive/<YYYY-MM-DD>/
 │   ├── <id>.md                # 已结束的 Spec（含 verdict 元数据）
+│   ├── <id>.decisions.tsv     # 随 Spec 归档的决策轨迹（无则不生成）
 │   └── report.txt             # 该夜 Report 快照
 ├── runs/<run-id>/run.json     # 每次 Run 的派发记录
 │   └── <id>.pid               # 该次派发的子进程 pid（status/stop 用）
@@ -111,6 +113,33 @@ run: "20261019-231000"     # 派发批次 id；人工判 pass 时写 "manual"
 `blocked` 是同目录串行队列的**停止标记**，只由 `run` 写入：同目录前一条落 `needs-review` / `verify-error` / `skipped` 时，该目录剩余未派发的 `ready` 全部就地变成 `blocked`，`reason` 写成 `blocked by <blocker-id> (<blocker-status>)`。`blocked` 不会被派发。放行方式有三种：`release <阻挡者 id>`（批量，按 reason 匹配）、`unblock <id>`（只放这一条）、`review <阻挡者 id> --drop`（回滚阻挡者的提交并放行）。`ready <id>` 作用在 `blocked` 上等同于显式人工覆盖，同样会把它放回队列；`unready <id>` 则把它退回 `draft`，退出队列。
 
 `order` 是**同目录队列的位置键**。同目录内所有 Spec（含 `draft`）按 `order` 升序排成一条链；秩连续（1,2,3…），`run` 按这条链派发。`order` 缺省时按 `(created, id)` 排，并由 CLI 在首次触碰该目录时一次性补齐。`add --before <id>` / `add --after <id>` 与 `queue --move <id> --before|--after <id>` 用来把新任务插到队列前面或调整次序——**新加的高优先级任务不必等已排队的旧任务跑完**。状态（`draft`/`ready`/`blocked`）只决定**是否被派发**，不改变它在链上的位置。
+
+## 决策轨迹（decisions.tsv）
+
+一条 Spec 的执行产物，不是另立的日志系统。
+
+```text
+board/<id>.decisions.tsv              # 未结束的 Spec
+archive/<YYYY-MM-DD>/<id>.decisions.tsv   # 归档时随 Spec 搬走
+```
+
+列固定六个，顺序不可变：
+
+| 列 | 内容 |
+|---|---|
+| `ts` | ISO8601 时间戳 |
+| `phase` | 阶段或工作流名 |
+| `decision` | 做了什么选择，一句话 |
+| `why` | 为什么（人话，不写行话标签） |
+| `evidence` | 指针：commit sha、PR 号、`file:line`、产物路径；**不写段落** |
+| `result` | 谓词状态：`tests green`、`reverted`、`INCONCLUSIVE`、`open` |
+
+- 一行一个决策，单元格必须单行（不留 tab、换行）。
+- 只记会改变方案的实质决策：选了哪条路、放弃了什么、为什么绕过某项验证、回滚了什么。琐碎实现细节不记。
+- 只追加，不改写历史；写错了追加一行覆盖。
+- 由实现 Agent 在执行中追加（`prompt.ts` 的纪律段要求先写表头再追加）。CLI 自己从不生成、从不修改它，只负责读取与归档搬运。
+- `show <id>` 展示轨迹，无文件时显示「（无决策记录）」；`report` 只给条数指针。
+- 归档时文件存在则搬到 `archive/<date>/`，不存在则跳过，不报错。
 
 ## 状态机
 

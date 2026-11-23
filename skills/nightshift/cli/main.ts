@@ -4,6 +4,7 @@ import path from "node:path";
 import {
   archiveDir,
   boardDir,
+  collectDecisionCounts,
   ensureLayout,
   homeBase,
   listArchiveDates,
@@ -359,7 +360,12 @@ function cmdReport(base: string, flags: Map<string, string[]>): void {
       return;
     }
     process.stdout.write(
-      renderReport({ date, windowText: "（归档报告缺失，重新渲染）", specs: archived.specs }),
+      renderReport({
+        date,
+        windowText: "（归档报告缺失，重新渲染）",
+        specs: archived.specs,
+        decisions: collectDecisionCounts(archived.specs, base),
+      }),
     );
     return;
   }
@@ -373,6 +379,7 @@ function cmdReport(base: string, flags: Map<string, string[]>): void {
       date: `${stamp}（板上待命）`,
       windowText: "",
       specs: pending,
+      decisions: collectDecisionCounts(pending, base),
     }),
   );
   const dates = listArchiveDates(base);

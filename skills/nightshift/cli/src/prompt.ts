@@ -8,6 +8,8 @@ export interface ImplPromptInput {
   feedback: string | null;
   /** 收件箱路径：Agent 每轮动手前读一次，人可以往里写临时交代。 */
   inbox: string | null;
+  /** 决策轨迹文件：执行中追加 TSV，归档时随 Spec 搬走。 */
+  decisions: string | null;
 }
 
 const IMPL_DISCIPLINE = [
@@ -18,11 +20,12 @@ const IMPL_DISCIPLINE = [
   "- 在当前分支上 `commit`；禁止 push、禁止 switch/checkout 其它分支、禁止 stash、禁止 reset、禁止开 PR。",
   "- 不要修改 `.pi/` 下的任何配置，不要修改夜班板与 `~/.cache/nightshift/`。",
   "- 不需要输出自检报告；只把活儿做完并提交。",
+  "- 执行中会改变方案的实质决策（选路、放弃方案、绕过验证、回滚）必须追加写入决策轨迹 `<base>/board/<id>.decisions.tsv`，并留下理由；不要求逐条记录，琐碎实现细节不必写。",
   "- 结束时输出一行：`REVIEW-HINT: <一句话，说明你希望人重点看哪里>`（没有就不输出）。",
 ].join("\n");
 
 export function implPrompt(input: ImplPromptInput): string {
-  const { spec, baseline, attempt, feedback, inbox } = input;
+  const { spec, baseline, attempt, feedback, inbox, decisions } = input;
   const parts = [
     `Spec ${spec.id} — ${spec.title}`,
     `工作目录: ${spec.dir}`,
@@ -39,6 +42,15 @@ export function implPrompt(input: ImplPromptInput): string {
       "── 临时交代 ──",
       `每轮动手前先读一次 \`${inbox}\`（不存在就跳过）。`,
       "那里可能有人给你临时交代（例如基线变了、范围收窄了）。读完就按它办。",
+    );
+  }
+  if (decisions !== null) {
+    parts.push(
+      "",
+      "── 决策轨迹 ──",
+      `路径：\`${decisions}\``,
+      "首次写入时先写表头（用 tab 分隔）：`ts\tphase\tdecision\twhy\tevidence\tresult`。",
+      "一行一个决策；evidence 只放指针（commit sha、PR 号、file:line、产物路径），不写段落；result 写谓词状态。",
     );
   }
   if (feedback !== null && feedback.trim() !== "") {

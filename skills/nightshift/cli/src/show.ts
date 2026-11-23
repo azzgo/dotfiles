@@ -1,6 +1,6 @@
 import { shortSha } from "./git.ts";
 import type { Spec } from "./spec.ts";
-import { sessionsDir } from "./board.ts";
+import { countDecisionRows, findDecisions, sessionsDir } from "./board.ts";
 import path from "node:path";
 import { isInfraReason } from "./infra.ts";
 
@@ -27,6 +27,18 @@ export function renderSpecDetail(spec: Spec, base: string): string {
   lines.push("");
   lines.push("body:");
   lines.push(spec.body.trimEnd());
+  lines.push("");
+  // 板上是 board/<id>.decisions.tsv，归档后在 archive/<date>/<id>.decisions.tsv。
+  const decisions = findDecisions(spec.id, base);
+  lines.push("decisions:");
+  if (decisions === null || countDecisionRows(decisions.text) === 0) {
+    lines.push("  （无决策记录）");
+  } else {
+    for (const row of decisions.text.split("\n")) {
+      if (row.trim() === "") continue;
+      lines.push(`  ${row.split("\t").join("  │  ")}`);
+    }
+  }
   lines.push("");
   lines.push("next steps:");
   if (spec.baseline) {

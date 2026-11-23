@@ -40,6 +40,50 @@ export function inboxPath(id: string, base = homeBase()): string {
   return path.join(inboxDir(base), `${id}.md`);
 }
 
+/** 该 Spec 的决策轨迹（TSV）：执行中由实现 Agent 追加，CLI 只读不写。 */
+export function decisionsPath(id: string, base = homeBase()): string {
+  return path.join(boardDir(base), `${id}.decisions.tsv`);
+}
+
+export function archivedDecisionsPath(id: string, date: string, base = homeBase()): string {
+  return path.join(archiveDir(base), date, `${id}.decisions.tsv`);
+}
+
+/** 先看板上，再按日期倒序看归档。 */
+export function findDecisions(id: string, base = homeBase()): { file: string; text: string } | null {
+  const candidates = [decisionsPath(id, base)];
+  for (const date of listArchiveDates(base).slice().reverse()) candidates.push(archivedDecisionsPath(id, date, base));
+  for (const file of candidates) {
+    try {
+      return { file, text: fs.readFileSync(file, "utf8") };
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
+export function countDecisionRows(text: string): number {
+  const rows = text.split("\n").filter((line) => line.trim() !== "");
+  const body = rows.length > 0 && rows[0].startsWith("ts\t") ? rows.slice(1) : rows;
+  return body.length;
+}
+
+export function countDecisions(id: string, base = homeBase()): number {
+  const found = findDecisions(id, base);
+  return found === null ? 0 : countDecisionRows(found.text);
+}
+
+/** report 用：只收集有条目的 Spec，避免给每条都做一次归档扫描。 */
+export function collectDecisionCounts(specs: Spec[], base = homeBase()): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const spec of specs) {
+    const n = countDecisions(spec.id, base);
+    if (n > 0) out[spec.id] = n;
+  }
+  return out;
+}
+
 export function sessionsDir(base = homeBase()): string {
   return path.join(base, SESSIONS_DIRNAME);
 }
@@ -285,6 +329,8 @@ export function archiveRun(specs: Spec[], date: string, reportText: string, base
   for (const spec of specs) {
     writeSpecTo(path.join(target, `${spec.id}.md`), spec);
     removeSpecFile(spec.id, base);
+    const decisions = decisionsPath(spec.id, base);
+    if (fs.existsSync(decisions)) fs.renameSync(decisions, archivedDecisionsPath(spec.id, date, base));
   }
   fs.writeFileSync(path.join(target, "report.txt"), reportText);
   return target;

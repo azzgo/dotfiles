@@ -27,8 +27,9 @@
     │   ├── queue.ts       # 同目录串行队列：排序 / 停止 / 放行
     │   ├── report.ts      # Report 渲染
     │   └── show.ts        # 单条详情 + 下一步命令
-    └── test/
-        ├── cli.test.ts    # 61 个测试
+    ├── test/
+    │   └── cli.test.ts    # 测试全集（含假 pi 驱动的调度循环）
+    └── fixtures/
         └── fake-pi.mjs    # 假 pi，零 token 验证整个调度循环
 <repo>/pi/agent/prompts/nightshift.md   # 薄快捷键，只转发
 ```
@@ -373,7 +374,7 @@ Phase 5 · 首次真跑（唯一烧 token 的一步）
   ✅ Q. 手写 1 条真实 Spec → `nightshift run --until +5m` → Report 可信
   ✅ R. 按 Q 的结果回调：暴露了 argv 长度限制（见 §5 第 3 条），prompt 改走 stdin
 
-已用 `test/fake-pi.mjs` 零成本验证过的路径：全绿通过、fail 后重试至 needs-review、
+已用 `fixtures/fake-pi.mjs` 零成本验证过的路径：全绿通过、fail 后重试至 needs-review、
 缺失 VERDICT 落 verify-error 且不重试、跨目录并行、同目录串行队列按 order 秩排空、
 历史被改写时判决作废（不照判错范围）、基线悬空时 review --drop 拒绝且留备份 ref、
 rearm 把归档件搬回 ready 并把上一轮理由当 feedback 喂给 Agent、

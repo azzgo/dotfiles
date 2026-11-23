@@ -7,7 +7,22 @@ import assert from "node:assert";
 import { fileURLToPath } from "node:url";
 
 import { bodyTemplate, checkSpec, missingSections, parseSpec, serializeSpec } from "../src/spec.ts";
-import { nextId, loadBoard, loadConfig, acquireLock, releaseLock, resolveConfig, readArchiveSpecs, pidAlive, DEFAULT_CONFIG } from "../src/board.ts";
+import {
+  nextId,
+  loadBoard,
+  loadConfig,
+  acquireLock,
+  releaseLock,
+  resolveConfig,
+  readArchiveSpecs,
+  pidAlive,
+  DEFAULT_CONFIG,
+  archiveRun,
+  collectDecisionCounts,
+  countDecisions,
+  decisionsPath,
+  findDecisions,
+} from "../src/board.ts";
 import { buildImplArgs, buildVerifyArgs, parseVerdict, parseReviewHint, DispatchError } from "../src/dispatch.ts";
 import { assertWindowSane, resolveDeadline, runNightshift, WindowTooLongError } from "../src/run.ts";
 import { implPrompt, verifyPrompt, extractSection } from "../src/prompt.ts";
@@ -15,10 +30,11 @@ import { preflight, revertTo, countCommits } from "../src/git.ts";
 import { collectStatus } from "../src/status.ts";
 import { lintSpec } from "../src/lint.ts";
 import { classifyDispatchError, classifyVerifyError } from "../src/infra.ts";
+import { renderSpecDetail } from "../src/show.ts";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CLI = path.join(HERE, "..", "main.ts");
-const FAKE_PI = path.join(HERE, "fake-pi.mjs");
+const FAKE_PI = path.join(HERE, "..", "fixtures", "fake-pi.mjs");
 
 function tmp(prefix) {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -1718,4 +1734,51 @@ test("run: an infra failure is retried in place before it lands", async () => {
   } finally {
     delete process.env.FAKE_FAIL_WITH;
   }
+});
+
+// ── decisions ───────────────────────────────────────────────────────────
+
+test("decisions: written rows are read back, counted, shown and archived with the spec", () => {
+  const base = tmp("ns-home-");
+  const repo = makeRepo();
+  const add = spawnSync(process.execPath, [CLI, "add", "--dir", repo.dir, "--title", "demo"], {
+    encoding: "utf8",
+    env: { ...process.env, NIGHTSHIFT_HOME: base },
+    input: specBody(),
+  });
+  assert.strictEqual(add.status, 0, add.stderr);
+  const id = add.stdout.trim().split(/\s+/)[0];
+
+  const showEmpty = runCli(["show", id], { NIGHTSHIFT_HOME: base });
+  assert.strictEqual(showEmpty.status, 0, showEmpty.err);
+  assert.ok(showEmpty.out.includes("（无决策记录）"), showEmpty.out);
+
+  const file = decisionsPath(id, base);
+  fs.writeFileSync(
+    file,
+    "ts\tphase\tdecision\twhy\tevidence\tresult\n" +
+      "2026-10-19T23:10:00Z\timpl\tchose adapter A over B\tB needed a schema change\tcommit abc1234\topen\n" +
+      "2026-10-19T23:40:00Z\tverify\treverted the helper\tits screenshots were blank\tcommit def5678\ttests green\n",
+  );
+
+  assert.strictEqual(countDecisions(id, base), 2);
+  const found = findDecisions(id, base);
+  assert.ok(found !== null);
+  assert.ok(found.text.includes("chose adapter A over B"));
+
+  const show = runCli(["show", id], { NIGHTSHIFT_HOME: base });
+  assert.ok(show.out.includes("chose adapter A over B"), show.out);
+
+  const counts = collectDecisionCounts(loadBoard(base).specs, base);
+  assert.strictEqual(counts[id], 2);
+
+  const spec = loadBoard(base).specs.find((s) => s.id === id);
+  assert.ok(spec !== undefined);
+  const target = archiveRun([spec], "2026-10-20", "report", base);
+  assert.ok(!fs.existsSync(file), "decisions leave the board with the spec");
+  assert.ok(fs.existsSync(path.join(target, `${id}.decisions.tsv`)), "decisions land in the archive");
+  assert.strictEqual(countDecisions(id, base), 2, "archived decisions are still readable");
+  const archivedSpec = readArchiveSpecs("2026-10-20", base).specs.find((s) => s.id === id);
+  assert.ok(archivedSpec !== undefined);
+  assert.ok(renderSpecDetail(archivedSpec, base).includes("chose adapter A over B"));
 });

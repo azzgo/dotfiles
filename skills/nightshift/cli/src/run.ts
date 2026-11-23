@@ -12,7 +12,7 @@ import {
   type Config,
 } from "./board.ts";
 import { buildImplArgs, buildVerifyArgs, DispatchError, parseReviewHint, parseVerdict, runChild } from "./dispatch.ts";
-import { inboxPath, runDir } from "./board.ts";
+import { collectDecisionCounts, decisionsPath, inboxPath, runDir } from "./board.ts";
 import { countCommits, isAncestor, preflight, residualCount, headOf, shortSha, updateRef } from "./git.ts";
 import { implPrompt, verifyPrompt } from "./prompt.ts";
 import { fmtDur, localHM } from "./time.ts";
@@ -110,7 +110,7 @@ async function runImpl(
 ): Promise<{ hint: string | null }> {
   let output = "";
   const baseline = spec.baseline;
-  const prompt = implPrompt({ spec, baseline, attempt, feedback, inbox: inboxPath(spec.id, base) });
+  const prompt = implPrompt({ spec, baseline, attempt, feedback, inbox: inboxPath(spec.id, base), decisions: decisionsPath(spec.id, base) });
   const args = buildImplArgs(spec, cfg, base);
   const res = await runChild({
     bin: cfg.piBin,
@@ -424,6 +424,7 @@ export async function runNightshift(opts: RunOptions): Promise<{ archivedTo: str
         `窗口 ${localHM(startedAt)}–${localHM(deadline)}` +
         (overrunMs > 0 ? ` · 实际结束 ${localHM(finishedAt)} · 超窗 ${fmtDur(overrunMs)}` : ""),
       specs: [...handled, ...leftover],
+      decisions: collectDecisionCounts([...handled, ...leftover], base),
     });
 
     const runDir = path.join(runsDir(base), runId);
